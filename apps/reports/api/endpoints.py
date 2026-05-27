@@ -139,7 +139,9 @@ def _generate_report_async(report_id: int, user_id: int | None):
         close_old_connections()
 
 
-def _regenerate_test_sections_async(report_id: int, user_id: int | None):
+def _regenerate_test_sections_async(
+    report_id: int, user_id: int | None, scope: str | None = None
+):
     close_old_connections()
     try:
         report = (
@@ -154,7 +156,9 @@ def _regenerate_test_sections_async(report_id: int, user_id: int | None):
         user = (
             request_user_model().objects.filter(id=user_id).first() if user_id else None
         )
-        SectionRegenerationService.regenerate_test_sections(report, user=user)
+        SectionRegenerationService.regenerate_test_sections(
+            report, user=user, scope=scope
+        )
     except Exception:
         logger.exception("Erro na regeneracao assincrona de testes do laudo %s", report_id)
         Report.objects.filter(id=report_id).update(status=ReportStatus.IN_REVIEW)
@@ -228,14 +232,6 @@ def _generate_report_for_evaluation(evaluation_id: int, user):
     except Exception as exc:
         return None, (400, {"message": str(exc)})
 
-    context = ReportGenerationService.construct_clinical_context(evaluation)
-    sections_config = ReportGenerationService._enabled_sections_config(context)
-    if any(ReportGenerationService._has_ai_section(key) for key, _ in sections_config):
-        try:
-            AIHealthcheckService.ensure_available(timeout=30)
-        except ValueError as exc:
-            return None, (400, {"message": str(exc)})
-
     report = Report.objects.create(
         evaluation=evaluation,
         patient=evaluation.patient,
@@ -247,6 +243,36 @@ def _generate_report_for_evaluation(evaluation_id: int, user):
     thread = threading.Thread(
         target=_generate_report_async,
         args=(report.id, getattr(user, "id", None)),
+        daemon=True,
+    )
+    thread.start()
+    return report, None
+
+
+def _generate_test_report_for_evaluation(evaluation_id: int, user):
+    evaluation = (
+        Evaluation.objects.select_related("patient").filter(id=evaluation_id).first()
+    )
+    if not evaluation:
+        return None, (400, {"message": "Avaliação não encontrada."})
+
+    try:
+        ReportValidationService.validate_for_generation(evaluation)
+    except Exception as exc:
+        return None, (400, {"message": str(exc)})
+
+    report = Report.objects.create(
+        evaluation=evaluation,
+        patient=evaluation.patient,
+        author=user,
+        interested_party=evaluation.patient.full_name,
+        purpose=evaluation.evaluation_purpose or evaluation.referral_reason,
+        status=ReportStatus.GENERATING,
+        ai_metadata={"generation_scope": "tests_only"},
+    )
+    thread = threading.Thread(
+        target=_regenerate_test_sections_async,
+        args=(report.id, getattr(user, "id", None), "tests_only"),
         daemon=True,
     )
     thread.start()
@@ -274,7 +300,17 @@ def generate_ia(request, evaluation_id: int):
     auth=bearer_auth,
 )
 def generate_from_evaluation(request, evaluation_id: int):
-    return generate_ia(request, evaluation_id)
+    mode = (request.GET.get("mode") or "full").strip().lower()
+    if mode == "full":
+        return generate_ia(request, evaluation_id)
+    if mode == "tests_only":
+        if not can_edit_reports(request.auth):
+            return 403, {"message": "Permissão negada."}
+        report, error = _generate_test_report_for_evaluation(evaluation_id, request.auth)
+        if error:
+            return error
+        return 201, serialize_report(report)
+    return 400, {"message": "Modo de geração inválido."}
 
 
 @router.post(
@@ -323,7 +359,7 @@ def regenerate_test_sections(request, report_id: int):
         report.save(update_fields=["status", "updated_at"])
         thread = threading.Thread(
             target=_regenerate_test_sections_async,
-            args=(report.id, getattr(request.auth, "id", None)),
+            args=(report.id, getattr(request.auth, "id", None), None),
             daemon=True,
         )
         thread.start()

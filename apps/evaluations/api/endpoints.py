@@ -24,6 +24,7 @@ from apps.evaluations.services import (
 from apps.anamnesis.services import get_current_response_summary
 from apps.documents.selectors import get_relevant_documents_by_evaluation
 from apps.tests.selectors import get_validated_test_applications_by_evaluation
+from apps.tests.services import TestReportPayloadService
 
 from .schemas import (
     EvaluationOut,
@@ -114,7 +115,9 @@ def serialize_evaluation(evaluation, include_details=False):
                 "instrument_code": t.instrument.code,
                 "applied_on": t.applied_on,
                 "is_validated": t.is_validated,
-                "status": "Concluído" if t.is_validated else "Pendente",
+                "status": t.status,
+                "status_display": t.get_status_display(),
+                "report_payload": TestReportPayloadService.build_for_application(t),
             }
             for t in tests
         ]

@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>NeuroAvalia • BPA-2</title>
+  <style>
+    :root {
+      --azul-profundo: #082d5f;
+      --azul-claro: #eaf4fb;
+      --cinza-texto: #424a55;
+      --cinza-linha: #b9c3cf;
+      --cinza-suave: #f5f7fa;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: #ffffff;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--cinza-texto);
+    }
+
+    .preview {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      background: #ffffff;
+      padding: 34px 30px 38px;
+      position: relative;
+      overflow: hidden;
+      page-break-after: always;
+    }
+
+    .page:last-child { page-break-after: auto; }
+
+    .brand {
+      color: var(--azul-profundo);
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 13px;
+      margin-bottom: 34px;
+      text-transform: uppercase;
+    }
+
+    .header-grid {
+      display: grid;
+      grid-template-columns: 1.7fr 0.9fr;
+      gap: 36px;
+      align-items: start;
+      margin-bottom: 38px;
+    }
+
+    .test-title {
+      color: var(--azul-profundo);
+      font-size: 48px;
+      line-height: 0.95;
+      font-weight: 900;
+      letter-spacing: 7px;
+      margin: 0 0 6px;
+    }
+
+    .subtitle {
+      color: var(--azul-profundo);
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      margin: 0;
+    }
+
+    .meta-box {
+      display: grid;
+      grid-template-columns: 1px 1fr 92px;
+      gap: 16px;
+      color: var(--azul-profundo);
+      margin-top: 6px;
+    }
+
+    .meta-line {
+      width: 2px;
+      background: var(--azul-profundo);
+      height: 92px;
+    }
+
+    .meta-label,
+    .meta-value {
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+      font-size: 11px;
+      line-height: 1.15;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1.1px;
+    }
+
+    .meta-value {
+      align-items: flex-start;
+      letter-spacing: 0;
+      white-space: nowrap;
+    }
+
+    .section-title-main {
+      color: var(--azul-profundo);
+      font-size: 17px;
+      font-weight: 900;
+      margin: 0 0 12px;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 132px 1fr;
+      row-gap: 7px;
+      column-gap: 20px;
+      max-width: 520px;
+      margin-bottom: 14px;
+    }
+
+    .info-label {
+      color: var(--azul-profundo);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .info-value {
+      color: var(--azul-profundo);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .rule-double {
+      border-top: 1px solid var(--cinza-linha);
+      height: 12px;
+      margin-top: 10px;
+    }
+
+    .content-row {
+      display: grid;
+      grid-template-columns: 170px 1fr;
+      gap: 16px;
+      border-top: 1px solid #555;
+      padding: 26px 0 26px;
+    }
+
+    .content-row + .content-row { border-top: 1px solid var(--cinza-linha); }
+
+    .side-title {
+      color: #082D5F;
+      font-size: 24px;
+      font-weight: 900;
+      line-height: 1.25;
+      margin: 0;
+    }
+
+    .content-text {
+      border-left: 1px solid var(--cinza-linha);
+      padding-left: 16px;
+      font-size: 11px;
+      line-height: 1.45;
+      text-align: justify;
+    }
+
+    .content-text p { margin: 0 0 14px; }
+
+    .small-note {
+      font-size: 10px;
+      line-height: 1.35;
+      color: #4d5560;
+    }
+
+    .compact-header {
+      display: grid;
+      grid-template-columns: 1fr 250px;
+      gap: 20px;
+      align-items: center;
+      border-top: 1px solid #555;
+      border-bottom: 1px solid #555;
+      padding: 18px 8px 18px 24px;
+      margin: -8px -16px 26px;
+    }
+
+    .bpa-logo {
+      color: var(--azul-profundo);
+      font-weight: 900;
+      display: flex;
+      align-items: flex-end;
+      gap: 5px;
+    }
+
+    .bpa-logo-main {
+      font-size: 44px;
+      line-height: 0.8;
+      letter-spacing: -3px;
+    }
+
+    .bpa-logo-main span { color: #3479c8; }
+
+    .bpa-logo-sub {
+      color: var(--azul-profundo);
+      font-size: 7px;
+      font-weight: 900;
+      line-height: 1.05;
+      margin-bottom: 2px;
+      text-transform: uppercase;
+    }
+
+    .compact-meta {
+      display: grid;
+      grid-template-columns: 1.25fr 0.8fr;
+      row-gap: 13px;
+      column-gap: 12px;
+      color: var(--azul-profundo);
+      font-size: 8px;
+      text-transform: uppercase;
+    }
+
+    .compact-meta strong { font-size: 9px; }
+
+    .result-title {
+      color: #082D5F;
+      font-size: 25px;
+      font-weight: 900;
+      margin: 0 0 24px;
+    }
+
+    .result-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      margin-bottom: 28px;
+    }
+
+    .result-table th {
+      color: #5a5a5a;
+      font-size: 12px;
+      text-align: left;
+      font-weight: 900;
+      padding: 8px 4px;
+      border-bottom: 1px solid #5f646b;
+    }
+
+    .result-table td {
+      padding: 7px 4px;
+      border-bottom: 1px solid #8c9299;
+      vertical-align: middle;
+    }
+
+    .result-table th:not(:first-child),
+    .result-table td:not(:first-child) { text-align: center; }
+
+    .badge {
+      display: inline-flex;
+      min-width: 104px;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 10px;
+      font-weight: 800;
+      background: var(--azul-claro);
+      color: var(--azul-profundo);
+    }
+
+    .badge.superior { background: #e9f7f1; color: #0e7d55; }
+    .badge.media-superior { background: #eff8ff; color: #006fb8; }
+    .badge.media { background: #f3f6f9; color: #4d5560; }
+    .badge.inferior { background: #fff1f1; color: #b84242; }
+
+    .legend-line {
+      margin: 0 0 28px;
+      font-size: 10px;
+      color: #4d5560;
+    }
+
+    .performance-section { margin-top: 22px; }
+
+    .chart-title {
+      color: #082D5F;
+      font-size: 24px;
+      font-weight: 900;
+      margin: 0 0 18px;
+    }
+
+    .chart-card {
+      position: relative;
+      height: 360px;
+      border: 1px solid #ccd7e3;
+      border-radius: 16px;
+      background: #ffffff;
+      padding: 38px 32px 44px 70px;
+    }
+
+    .chart-area {
+      position: relative;
+      height: 260px;
+      border-left: 1px solid #082D5F;
+      border-bottom: 1px solid #082D5F;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      align-items: end;
+      column-gap: 44px;
+      padding: 0 24px;
+    }
+
+    .grid-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      border-top: 1px dashed #c7d1dd;
+      z-index: 0;
+    }
+
+    .grid-line span {
+      position: absolute;
+      left: -38px;
+      top: -7px;
+      color: #082D5F;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .line-100 { bottom: 100%; }
+    .line-80 { bottom: 80%; }
+    .line-60 { bottom: 60%; }
+    .line-40 { bottom: 40%; }
+    .line-20 { bottom: 20%; }
+    .line-0 { bottom: 0; }
+
+    .bar-group {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    .bar {
+      width: 42px;
+      height: calc(var(--value) * 1%);
+      min-height: 8px;
+      background: linear-gradient(180deg, #082D5F 0%, #06336f 100%);
+      border-radius: 2px 2px 0 0;
+    }
+
+    .bar-value {
+      position: absolute;
+      bottom: calc(var(--value) * 1% + 8px);
+      min-width: 42px;
+      height: 24px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #dff1fb;
+      color: #082D5F;
+      font-size: 14px;
+      font-weight: 900;
+      text-align: center;
+      line-height: 16px;
+    }
+
+    .bar-label {
+      position: absolute;
+      bottom: -28px;
+      color: #082D5F;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .error-bar .bar {
+      background: linear-gradient(180deg, #315a8f 0%, #082D5F 100%);
+      opacity: 0.85;
+    }
+
+    .clinical-heading {
+      color: #082D5F;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      margin: 0 0 9px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #b9c3cf;
+    }
+
+    .clinical-heading.synthesis { margin-top: 10px; }
+
+    .clinical-text {
+      font-family: "Times New Roman", Times, serif;
+      color: #001f49;
+      font-size: 12px;
+      line-height: 1.5;
+      text-align: justify;
+    }
+
+    .clinical-text p {
+      margin: 0 0 6px;
+    }
+
+    .clinical-box {
+      margin: 8px 0 8px;
+      padding: 8px 11px;
+      border: 1px solid #c7d2df;
+      border-left: 10px solid #082D5F;
+      background: #f8fbff;
+      font-family: "Times New Roman", Times, serif;
+      color: #001f49;
+      font-size: 12px;
+      line-height: 1.5;
+      text-align: justify;
+    }
+
+    .clinical-page {
+      padding-top: 28px;
+      padding-bottom: 32px;
+    }
+
+    .clinical-page .compact-header {
+      padding: 12px 8px 12px 24px;
+      margin-bottom: 16px;
+    }
+
+    .clinical-page .bpa-logo-main {
+      font-size: 38px;
+    }
+
+    .clinical-page .compact-meta {
+      row-gap: 8px;
+    }
+
+    .clinical-box p { margin: 0; }
+
+    .footer {
+      position: absolute;
+      left: 30px;
+      right: 30px;
+      bottom: 20px;
+      border-top: 1px solid #d6dde6;
+      padding-top: 8px;
+      display: flex;
+      justify-content: space-between;
+      color: #7a8490;
+      font-size: 9px;
+    }
+  </style>
+</head>
+<body>
+  <main class="preview">
+    <section class="page">
+      <div class="brand">NEUROAVALIA</div>
+
+      <header class="header-grid">
+        <div>
+          <h1 class="test-title">BPA-2</h1>
+          <p class="subtitle">BATERIA PSICOLÓGICA PARA AVALIAÇÃO DA ATENÇÃO</p>
+        </div>
+
+        <div class="meta-box">
+          <div class="meta-line"></div>
+          <div class="meta-label">
+            <span>Código do<br />avaliado</span>
+            <span>Código do<br />relatório</span>
+            <span>Data da<br />aplicação</span>
+          </div>
+          <div class="meta-value">
+            <span>{{ codigo_avaliado }}</span>
+            <span>{{ codigo_relatorio }}</span>
+            <span>{{ data_aplicacao }}</span>
+          </div>
+        </div>
+      </header>
+
+      <section>
+        <h2 class="section-title-main">Dados do avaliado</h2>
+        <div class="info-grid">
+          <div class="info-label">Nome</div>
+          <div class="info-value">{{ nome }}</div>
+          <div class="info-label">Sexo</div>
+          <div class="info-value">{{ sexo }}</div>
+          <div class="info-label">Idade</div>
+          <div class="info-value">{{ idade }}</div>
+          <div class="info-label">Escolaridade</div>
+          <div class="info-value">{{ escolaridade }}</div>
+          <div class="info-label">Profissional</div>
+          <div class="info-value">{{ profissional }}</div>
+          <div class="info-label">Tabela<br />normativa</div>
+          <div class="info-value">{{ tabela_normativa }}</div>
+          <div class="info-label">Aplicação</div>
+          <div class="info-value">{{ aplicacao }}</div>
+        </div>
+        <div class="rule-double"></div>
+      </section>
+
+      <section class="content-row" style="margin-top: 24px;">
+        <h2 class="side-title">Introdução</h2>
+        <div class="content-text">
+          <p>A atenção desempenha papel central na qualidade com que uma pessoa seleciona, mantém, alterna e distribui seus recursos cognitivos diante das demandas do ambiente. Trata-se de uma função essencial para a aprendizagem, organização do comportamento, execução de tarefas e adaptação a contextos clínicos, escolares e ocupacionais.</p>
+          <p>A Bateria Psicológica para Avaliação da Atenção – 2 (BPA-2) é um instrumento destinado à investigação dos processos atencionais, permitindo avaliar o desempenho do avaliado em tarefas que envolvem atenção concentrada, atenção dividida, atenção alternada e atenção geral.</p>
+          <p>Os resultados apresentados neste relatório devem ser interpretados em conjunto com a entrevista clínica, observações comportamentais, histórico do avaliado e demais instrumentos utilizados no processo avaliativo, não constituindo, isoladamente, definição diagnóstica.</p>
+        </div>
+      </section>
+
+      <section class="content-row">
+        <h2 class="side-title">Definição</h2>
+        <div class="content-text">
+          <p>A Atenção Concentrada indica a capacidade de selecionar uma fonte específica de informação, mantendo o foco diante de estímulos distratores. A Atenção Dividida avalia a habilidade de procurar e monitorar dois ou mais estímulos simultaneamente em tempo determinado. A Atenção Alternada examina a capacidade de alternar o foco entre diferentes estímulos ou critérios de resposta. A Atenção Geral representa uma síntese quantitativa do desempenho atencional obtido na bateria.</p>
+        </div>
+      </section>
+
+      <section class="content-row">
+        <h2 class="side-title">Utilização do<br />relatório</h2>
+        <div class="content-text small-note">
+          <p>Este documento apresenta dados quantitativos e interpretação descritiva dos resultados obtidos na BPA-2. Seu uso deve ocorrer por profissional habilitado, respeitando os limites técnicos do instrumento, o contexto de aplicação e a integração clínica com outras fontes de informação.</p>
+        </div>
+      </section>
+
+      <div class="footer">
+        <span>NeuroAvalia • BPA-2</span>
+        <span>Página 1</span>
+      </div>
+    </section>
+
+    <section class="page">
+      <header class="compact-header">
+        <div class="bpa-logo">
+          <div class="bpa-logo-main">BPA<span>2</span></div>
+          <div class="bpa-logo-sub">Bateria Psicológica para<br />Avaliação da Atenção – 2</div>
+        </div>
+        <div class="compact-meta">
+          <span>Código do avaliado</span><strong>{{ codigo_avaliado }}</strong>
+          <span>Código do relatório</span><strong>{{ codigo_relatorio }}</strong>
+          <span>Data da aplicação</span><strong>{{ data_aplicacao }}</strong>
+        </div>
+      </header>
+
+      <h2 class="result-title">Resultados</h2>
+
+      <table class="result-table">
+        <thead>
+          <tr>
+            <th>Atenção</th>
+            <th>Pontos</th>
+            <th>Erros</th>
+            <th>Percentil</th>
+            <th>Classificação</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td>{{ row.label }}</td>
+            <td>{{ row.points }}</td>
+            <td>{{ row.errors }}</td>
+            <td>{{ row.percentile }}</td>
+            <td><span class="badge {{ row.badge_class }}">{{ row.classification }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <p class="legend-line">{{ referencia_normativa }}</p>
+
+      <section class="performance-section">
+        <h2 class="chart-title">Gráfico de Desempenho</h2>
+
+        <div class="chart-card">
+          <div class="chart-area">
+            <div class="grid-line line-100"><span>100</span></div>
+            <div class="grid-line line-80"><span>80</span></div>
+            <div class="grid-line line-60"><span>60</span></div>
+            <div class="grid-line line-40"><span>40</span></div>
+            <div class="grid-line line-20"><span>20</span></div>
+            <div class="grid-line line-0"><span>0</span></div>
+
+            {% for bar in chart_bars %}
+            <div class="bar-group{% if bar.is_error %} error-bar{% endif %}" style="--value: {{ bar.height }};">
+              <div class="bar-value">{{ bar.value }}</div>
+              <div class="bar"></div>
+              <div class="bar-label">{{ bar.label }}</div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+
+      <div class="footer">
+        <span>NeuroAvalia • BPA-2</span>
+        <span>Página 2</span>
+      </div>
+    </section>
+
+    <section class="page clinical-page">
+      <header class="compact-header">
+        <div class="bpa-logo">
+          <div class="bpa-logo-main">BPA<span>2</span></div>
+          <div class="bpa-logo-sub">Bateria Psicológica para<br />Avaliação da Atenção – 2</div>
+        </div>
+        <div class="compact-meta">
+          <span>Código do avaliado</span><strong>{{ codigo_avaliado }}</strong>
+          <span>Código do relatório</span><strong>{{ codigo_relatorio }}</strong>
+          <span>Data da aplicação</span><strong>{{ data_aplicacao }}</strong>
+        </div>
+      </header>
+
+      <h2 class="clinical-heading">INTERPRETAÇÃO CLÍNICA</h2>
+
+      <section class="clinical-text">
+        {% for paragraph in clinical_paragraphs_html %}
+        <p>{{ paragraph|safe }}</p>
+        {% endfor %}
+      </section>
+
+      <div class="clinical-box">
+        <p>{{ clinical_box_text_html|safe }}</p>
+      </div>
+
+      <h2 class="clinical-heading synthesis">SÍNTESE INTERPRETATIVA PARA O LAUDO</h2>
+
+      <section class="clinical-text">
+        <p>{{ synthesis_text_html|safe }}</p>
+      </section>
+
+      <div class="footer">
+        <span>NeuroAvalia • BPA-2</span>
+        <span>Página 3</span>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

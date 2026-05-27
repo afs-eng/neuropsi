@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Edit3 } from "lucide-react";
+import { ArrowLeft, Edit3, Printer } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { api } from "@/lib/api";
+import { printCurrentPage } from "@/lib/print";
+import { TestReportSummaryCard } from "@/components/tests/TestReportSummaryCard";
 
 const CRITICAL_ITEMS = new Set([2, 7, 9, 13, 14, 15]);
 
@@ -83,23 +85,29 @@ export default function MCHATResultPage() {
   const classified = result.classified_payload || {};
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
+    <div className="space-y-6 report-print-shell">
+      <div className="flex items-center justify-between gap-4 print:hidden report-print-hide">
         <Button variant="ghost" onClick={() => router.push(`/dashboard/evaluations/${evaluationId}/overview?tab=tests`)} className="gap-2">
           <ArrowLeft className="h-4 w-4" />
           Voltar
         </Button>
-        <Button
-          variant="outline"
-          onClick={() => router.push(`/dashboard/tests/mchat?evaluation_id=${evaluationId}&application_id=${params.id}&edit=true`)}
-          className="gap-2"
-        >
-          <Edit3 className="h-4 w-4" />
-          Editar
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={printCurrentPage} className="gap-2">
+            <Printer className="h-4 w-4" />
+            Imprimir / PDF
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => router.push(`/dashboard/tests/mchat?evaluation_id=${evaluationId}&application_id=${params.id}&edit=true`)}
+            className="gap-2"
+          >
+            <Edit3 className="h-4 w-4" />
+            Editar
+          </Button>
+        </div>
       </div>
 
-      <Card className="rounded-2xl border-slate-200 shadow-sm">
+      <Card className="rounded-2xl border-slate-200 shadow-sm report-print-content">
         <CardHeader>
           <CardTitle className="text-2xl font-semibold text-slate-900">M-CHAT - Resultado</CardTitle>
         </CardHeader>
@@ -120,6 +128,8 @@ export default function MCHATResultPage() {
               </div>
             </div>
           </div>
+
+          <TestReportSummaryCard reportPayload={result.report_payload} fallbackText={result.interpretation_text || result.interpretation} />
 
           <div className="rounded-2xl border border-slate-200 bg-white p-4">
             <div className="text-sm font-medium text-slate-900">Interpretação técnica</div>

@@ -26,6 +26,7 @@ const subtests: Subtest[] = [
   { code: 'CF', name: 'Completar Figuras', maxScore: 38, optional: true },
   { code: 'CA', name: 'Cancelamento', maxScore: 60, optional: true },
   { code: 'IN', name: 'Informação', maxScore: 30, optional: true },
+  { code: 'AR', name: 'Aritmética', maxScore: 34, optional: true },
   { code: 'RP', name: 'Raciocínio com Palavras', maxScore: 32, optional: true },
 ]
 
@@ -34,6 +35,16 @@ const indices = [
   { code: 'IOP', name: 'Organização Perceptual', subtests: ['CB', 'CN', 'RM'] },
   { code: 'IMO', name: 'Memória Operacional', subtests: ['DG', 'SNL'] },
   { code: 'IVP', name: 'Velocidade de Processamento', subtests: ['CD', 'PS'] },
+]
+
+const processScores: Subtest[] = [
+  { code: 'CUSB', name: 'Cubos sem Tempo de Bônus', maxScore: 50, optional: true },
+  { code: 'DIOD', name: 'Dígitos Ordem Direta', maxScore: 16, optional: true },
+  { code: 'DIOI', name: 'Dígitos Ordem Inversa', maxScore: 16, optional: true },
+  { code: 'CAA', name: 'Cancelamento Aleatório', maxScore: 68, optional: true },
+  { code: 'CAE', name: 'Cancelamento Estruturado', maxScore: 69, optional: true },
+  { code: 'UDIOD', name: 'Seq. Maior Dígitos Ordem Direta', maxScore: 11, optional: true },
+  { code: 'UDIOI', name: 'Seq. Maior Dígitos Ordem Inversa', maxScore: 11, optional: true },
 ]
 
 function WISC4FormPageContent() {
@@ -65,8 +76,8 @@ function WISC4FormPageContent() {
           if (result && result.raw_payload) {
             const raw = result.raw_payload
             const existingScores: Record<string, number> = {}
-            const codes = ['CB', 'SM', 'DG', 'CN', 'CD', 'VC', 'SNL', 'RM', 'CO', 'PS', 'CF', 'CA', 'IN', 'RP']
-            const keys = ['cubos', 'semelhancas', 'digitos', 'conceitos', 'codigos', 'vocabulario', 'sequencias', 'matricial', 'compreensao', 'procura_simbolos', 'cf', 'ca', 'in', 'rp']
+            const codes = ['CB', 'SM', 'DG', 'CN', 'CD', 'VC', 'SNL', 'RM', 'CO', 'PS', 'CF', 'CA', 'IN', 'AR', 'RP', 'CUSB', 'DIOD', 'DIOI', 'CAA', 'CAE', 'UDIOD', 'UDIOI']
+            const keys = ['cubos', 'semelhancas', 'digitos', 'conceitos', 'codigos', 'vocabulario', 'sequencias', 'matricial', 'compreensao', 'procura_simbolos', 'cf', 'ca', 'in', 'ar', 'rp', 'cusb', 'diod', 'dioi', 'caa', 'cae', 'udiod', 'udioi']
             keys.forEach((key, idx) => {
               if (raw[key] !== undefined) {
                 existingScores[codes[idx]] = raw[key]
@@ -131,7 +142,15 @@ function WISC4FormPageContent() {
       cf: scores['CF'] == null ? '' : String(scores['CF']),
       ca: scores['CA'] == null ? '' : String(scores['CA']),
       in_: scores['IN'] == null ? '' : String(scores['IN']),
+      ar: scores['AR'] == null ? '' : String(scores['AR']),
       rp: scores['RP'] == null ? '' : String(scores['RP']),
+      cusb: scores['CUSB'] == null ? '' : String(scores['CUSB']),
+      diod: scores['DIOD'] == null ? '' : String(scores['DIOD']),
+      dioi: scores['DIOI'] == null ? '' : String(scores['DIOI']),
+      caa: scores['CAA'] == null ? '' : String(scores['CAA']),
+      cae: scores['CAE'] == null ? '' : String(scores['CAE']),
+      udiod: scores['UDIOD'] == null ? '' : String(scores['UDIOD']),
+      udioi: scores['UDIOI'] == null ? '' : String(scores['UDIOI']),
     }
 
     console.log('Payload WISC-IV:', payload)
@@ -225,6 +244,32 @@ function WISC4FormPageContent() {
                     {subtest.optional && (
                       <span className="mt-1 block text-xs text-amber-600">Opcional</span>
                     )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-[28px] bg-white/70 p-5 shadow-lg ring-1 ring-black/5">
+              <h3 className="mb-4 text-lg font-semibold text-zinc-900">Escores de Processo</h3>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {processScores.map((score) => (
+                  <div key={score.code} className="rounded-2xl border border-dashed border-blue-200 bg-blue-50/50 p-4 shadow-sm">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="font-medium text-zinc-900">{score.name}</span>
+                      <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
+                        {score.code}
+                      </span>
+                    </div>
+                    <input
+                      type="number"
+                      min="0"
+                      max={score.maxScore}
+                      value={scores[score.code] ?? ''}
+                      onChange={(e) => handleScoreChange(score.code, e.target.value)}
+                      placeholder={`0 - ${score.maxScore}`}
+                      className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900/20"
+                    />
+                    <span className="mt-1 block text-xs text-blue-600">Opcional / análise de processo</span>
                   </div>
                 ))}
               </div>

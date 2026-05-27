@@ -19,6 +19,19 @@ class BaseTestModule:
     def interpret(self, context: "TestContext", merged_data: dict[str, Any]) -> str:
         return ""
 
+    def build_report_payload(
+        self, context: "TestContext", merged_data: dict[str, Any]
+    ) -> dict[str, Any]:
+        interpretation = self.interpret(context, merged_data)
+        summary = interpretation.split(". ")[0].strip() if interpretation else ""
+        return {
+            "results": [],
+            "summary_for_report": summary,
+            "technical_notes": [],
+            "clinical_flags": [],
+            "chart_payload": {},
+        }
+
 
 @dataclass
 class TestContext:

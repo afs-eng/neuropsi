@@ -38,5 +38,45 @@ class WASIModule(BaseTestModule):
     def interpret(self, context: TestContext, merged_data: dict) -> str:
         return build_wasi_interpretation(merged_data, patient_name=context.patient_name)
 
+    def build_report_payload(self, context: TestContext, merged_data: dict) -> dict:
+        composites = merged_data.get("composites") or {}
+        subtests = merged_data.get("subtests") or {}
+        interpretation = self.interpret(context, merged_data)
+        results = [
+            {
+                "scale": item.get("name") or key,
+                "raw_score": item.get("qi"),
+                "percentile": item.get("percentile_display") or item.get("percentile"),
+                "classification": item.get("classification"),
+            }
+            for key, item in composites.items()
+        ]
+        results.extend(
+            {
+                "scale": item.get("name") or key,
+                "raw_score": item.get("weighted_score") or item.get("raw_score"),
+                "percentile": item.get("percentile"),
+                "classification": item.get("classification"),
+            }
+            for key, item in subtests.items()
+        )
+        qit4 = composites.get("qit_4", {})
+        summary = (
+            f"Funcionamento intelectual global {str(qit4.get('classification') or 'não classificado').lower()}, "
+            f"com QIT-4 {qit4.get('qi', '-')} e integração entre recursos verbais e de execução."
+        )
+        return {
+            "results": results,
+            "summary_for_report": summary,
+            "technical_notes": [
+                item.get("interpretability", {}).get("warning", "")
+                for item in composites.values()
+                if item.get("interpretability", {}).get("warning")
+            ],
+            "clinical_flags": [],
+            "chart_payload": {},
+            "interpretation": interpretation,
+        }
+
 
 register_test_module(WASI_CODE, WASIModule())

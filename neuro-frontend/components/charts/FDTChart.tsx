@@ -51,8 +51,8 @@ export function FDTChart({ data }: FDTChartProps) {
   const yCenter = (index: number) => CHART.marginTop + rowHeight * index + rowHeight / 2;
 
   return (
-    <div className="overflow-x-auto rounded-[28px] bg-[#eeeeee] p-5 shadow-lg ring-1 ring-black/5">
-      <svg viewBox={`0 0 ${CHART.width} ${CHART.height}`} className="h-auto min-w-[820px] w-full">
+    <div className="overflow-x-auto rounded-[28px] bg-[#eeeeee] p-5 shadow-lg ring-1 ring-black/5 report-print-break-avoid">
+      <svg viewBox={`0 0 ${CHART.width} ${CHART.height}`} className="h-auto min-w-[820px] w-full print:min-w-0">
         <text
           x={CHART.width / 2}
           y={28}

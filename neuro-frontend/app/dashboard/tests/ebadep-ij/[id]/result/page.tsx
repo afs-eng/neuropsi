@@ -6,6 +6,8 @@ import { ArrowLeft, Download, Edit, LayoutDashboard, Printer } from 'lucide-reac
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { printCurrentPage } from '@/lib/print'
+import { TestReportSummaryCard } from '@/components/tests/TestReportSummaryCard'
 
 const ITEM_LABELS: Record<number, string> = {
   1: 'Sinto-me estranho e não sei por quê',
@@ -99,8 +101,8 @@ export default function EBADEPIJResultPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 report-print-shell">
+      <div className="flex items-center justify-between print:hidden report-print-hide">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => router.push(`/dashboard/evaluations/${result.evaluation_id}?tab=overview`)} className="rounded-full">
             <ArrowLeft className="h-5 w-5" />
@@ -123,18 +125,20 @@ export default function EBADEPIJResultPage() {
             <ArrowLeft className="h-4 w-4" />
             Voltar
           </Button>
-          <Button variant="outline" className="rounded-xl gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => window.print()}>
+          <Button variant="outline" className="rounded-xl gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={printCurrentPage}>
             <Printer className="h-4 w-4" />
             Imprimir
           </Button>
-          <Button className="rounded-xl gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-100 transition-all font-bold">
+          <Button className="rounded-xl gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-100 transition-all font-bold" onClick={printCurrentPage}>
             <Download className="h-4 w-4" />
-            Exportar PDF
+            Salvar em PDF
           </Button>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 space-y-10 print:shadow-none print:border-none print:p-0">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 space-y-10 print:shadow-none print:border-none print:p-0 report-print-content">
+        <TestReportSummaryCard reportPayload={result.report_payload} fallbackText={result.interpretation_text || result.interpretation} className="mb-6" />
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
            <section>
               <h2 className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-4 flex items-center gap-2">

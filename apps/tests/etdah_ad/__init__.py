@@ -50,5 +50,26 @@ class ETDAHADModule(BaseTestModule):
 
         return generate_report(raw_scores, schooling, patient_name=context.patient_name)
 
+    def build_report_payload(self, context: TestContext, merged_data: dict) -> dict:
+        results = merged_data.get("results") or {}
+        interpretation = self.interpret(context, merged_data)
+        return {
+            "results": [
+                {
+                    "scale": value.get("label") or key,
+                    "raw_score": value.get("raw_score") or value.get("score"),
+                    "percentile": value.get("percentile") or value.get("percentile_text"),
+                    "classification": value.get("classification"),
+                }
+                for key, value in results.items()
+                if isinstance(value, dict)
+            ],
+            "summary_for_report": interpretation.split(". ")[0].strip() if interpretation else "",
+            "technical_notes": [f"Escolaridade normativa: {merged_data.get('schooling', 'elementary')}"],
+            "clinical_flags": [value.get("label") or key for key, value in results.items() if isinstance(value, dict) and value.get("classification") in {"Superior", "Média Superior"}],
+            "chart_payload": {},
+            "interpretation": interpretation,
+        }
+
 
 register_test_module(ETDAHAD_CODE, ETDAHADModule())

@@ -9,7 +9,6 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarHidden, setSidebarHidden] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -22,7 +21,6 @@ export function AppLayout({ children }: AppLayoutProps) {
         setSidebarHidden(true);
       } else {
         setSidebarHidden(false);
-        setSidebarCollapsed(false);
       }
     };
     handler(mql);
@@ -33,51 +31,41 @@ export function AppLayout({ children }: AppLayoutProps) {
   const toggleSidebar = useCallback(() => {
     if (isMobile) {
       setSidebarHidden(!sidebarHidden);
-      setSidebarCollapsed(false);
-    } else {
-      setSidebarHidden(!sidebarHidden);
     }
   }, [isMobile, sidebarHidden]);
 
   const sidebarVisible = !sidebarHidden;
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 app-shell">
       <AppSidebar
-        collapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        collapsed={false}
         onHide={() => setSidebarHidden(true)}
         hidden={sidebarHidden}
         isMobile={isMobile}
         onNavClick={() => isMobile && setSidebarHidden(true)}
       />
       <AppHeader
-        sidebarCollapsed={sidebarCollapsed}
-        sidebarHidden={sidebarHidden}
         onToggleSidebar={toggleSidebar}
         isMobile={isMobile}
       />
 
       {isMobile && sidebarVisible && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300"
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300 app-shell-overlay"
           onClick={() => setSidebarHidden(true)}
           aria-hidden="true"
         />
       )}
 
       <main
-        className={`pt-16 transition-all duration-300 ${
+        className={`pt-16 transition-all duration-300 app-shell-main ${
           isMobile
             ? "px-4"
-            : sidebarHidden
-              ? "pl-4"
-              : sidebarCollapsed
-                ? "pl-[72px]"
-                : "pl-[260px]"
+            : "pl-[260px]"
         }`}
       >
-        <div className="mx-auto max-w-7xl py-4">
+        <div className="mx-auto max-w-7xl py-4 app-shell-content">
           {children}
         </div>
       </main>

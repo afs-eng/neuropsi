@@ -2,7 +2,7 @@ import re
 import csv
 from pathlib import Path
 
-from .paths import TABELAS_NCP, TABELAS_EQUIVALENTES
+from .paths import TABELAS_A8, TABELAS_CD, TABELAS_NCP, TABELAS_EQUIVALENTES
 
 
 WISC4_CODE = "wisc4"
@@ -26,6 +26,7 @@ WISC4_SUPPLEMENTAL_SUBTESTS = {
     "cf": {"name": "Completar Figuras", "code": "CF", "max": 38},
     "ca": {"name": "Cancelamento", "code": "CA", "max": 60},
     "in": {"name": "Informação", "code": "IN", "max": 30},
+    "ar": {"name": "Aritmética", "code": "AR", "max": 34},
     "rp": {"name": "Raciocínio com Palavras", "code": "RP", "max": 32},
 }
 
@@ -43,7 +44,7 @@ WISC4_INDICES = {
     "imt": {
         "name": "Índice de Memória de Trabalho",
         "subtests": ["digitos", "sequencias"],
-        "supplemental": [],
+        "supplemental": ["ar"],
     },
     "ivp": {
         "name": "Índice de Velocidade de Processamento",
@@ -76,6 +77,19 @@ SUBTEST_SEM: dict[str, float] = {
     "CB": 1.36, "CN": 1.50, "RM": 1.22,
     "DG": 1.00, "SNL": 1.22,
     "CD": 1.22, "PS": 1.36,
+}
+
+PROCESS_SCORE_CONFIG = {
+    "cusb": {"name": "Cubos sem Tempo de Bônus", "code": "CUSB"},
+    "diod": {"name": "Dígitos Ordem Direta", "code": "DIOD"},
+    "dioi": {"name": "Dígitos Ordem Inversa", "code": "DIOI"},
+    "caa": {"name": "Cancelamento Aleatório", "code": "CAA"},
+    "cae": {"name": "Cancelamento Estruturado", "code": "CAE"},
+}
+
+SEQUENCE_SCORE_CONFIG = {
+    "udiod": {"name": "Sequência Maior de Dígitos Ordem Direta", "code": "UDIOD", "column": "Direta"},
+    "udioi": {"name": "Sequência Maior de Dígitos Ordem Inversa", "code": "UDIOI", "column": "Inversa"},
 }
 
 
@@ -123,6 +137,55 @@ def _carregar_tabela_ncp(anos: int, meses: int) -> list[dict]:
         return list(reader)
 
 
+def _obter_arquivo_a8(anos: int, meses: int) -> Path:
+    idade_meses = _idade_em_meses(anos, meses)
+    faixas = []
+    for arquivo in TABELAS_A8.glob("*.csv"):
+        age_range = _parse_a8_age_range(arquivo.stem)
+        if not age_range:
+            continue
+        a1, m1, a2, m2 = age_range
+        min_meses = _idade_em_meses(a1, m1)
+        max_exclusivo = _idade_em_meses(a2, m2) + 1
+        faixas.append({"min": min_meses, "max": max_exclusivo, "arquivo": arquivo})
+
+    faixas.sort(key=lambda faixa: faixa["min"])
+    for faixa in faixas:
+        if faixa["min"] <= idade_meses < faixa["max"]:
+            return faixa["arquivo"]
+
+    raise ValueError(f"Tabela A8 não encontrada para idade WISC-IV: {anos}a {meses}m")
+
+
+def _parse_a8_age_range(stem: str) -> tuple[int, int, int, int] | None:
+    patterns = [
+        r"(\d+)_(\d+)[_-]a[_-](\d+)_(\d+)$",
+        r"(\d+)_(\d+)-(\d+)_(\d+)$",
+        r"(\d+)_(\d+)a(\d+)_(\d+)$",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, stem)
+        if match:
+            return tuple(map(int, match.groups()))
+
+    match = re.search(r"(\d+)_(\d+)a(\d+)$", stem)
+    if match:
+        year, start_month, end_month = map(int, match.groups())
+        return year, start_month, year, end_month
+    return None
+
+
+def _carregar_tabela_a8(anos: int, meses: int) -> list[dict]:
+    arquivo = _obter_arquivo_a8(anos, meses)
+    with open(arquivo, "r", encoding="utf-8-sig") as f:
+        reader = csv.DictReader(f)
+        rows = []
+        for row in reader:
+            normalized = {("PP" if key in {"PontoP", "Ponto Ponderado"} else key): value for key, value in row.items()}
+            rows.append(normalized)
+        return rows
+
+
 def _valor_no_intervalo(valor: int, celula: str) -> bool:
     if not celula or celula.strip() in ("", "-"):
         return False
@@ -147,6 +210,192 @@ def buscar_ponderado(tabela: list[dict], coluna: str, valor_bruto: int) -> int:
             if pp and pp.strip().isdigit():
                 return int(pp.strip())
     raise ValueError(f"Valor bruto {valor_bruto} não encontrado para {coluna}")
+
+
+def _parse_float(value) -> float | None:
+    if value in (None, "", ".", "-"):
+        return None
+    try:
+        number = float(str(value).strip().replace(",", "."))
+    except ValueError:
+        return None
+    if number > 50:
+        number = number / 100
+    return number
+
+
+def _format_process_number(value) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+    return str(round(value, 2)).replace(".", ",")
+
+
+def _b7_column_indexes(anos: int) -> tuple[int, int]:
+    if anos <= 7:
+        return 1, 2
+    if anos <= 9:
+        return 3, 4
+    if anos <= 11:
+        return 5, 6
+    if anos <= 13:
+        return 7, 8
+    if anos <= 15:
+        return 9, 10
+    return 11, 12
+
+
+def _b8_column_name(anos: int) -> str:
+    if anos <= 6:
+        return "6:0-6:11"
+    if anos <= 16:
+        return f"{anos}:0-{anos}:11"
+    return "Todas as idades"
+
+
+def _load_csv_rows(path: Path) -> list[list[str]]:
+    with path.open("r", encoding="utf-8-sig", newline="") as f:
+        return list(csv.reader(f))
+
+
+def _lookup_b7_frequency(raw_score: int | None, column_index: int) -> float | None:
+    if raw_score is None:
+        return None
+    for row in _load_csv_rows(TABELAS_CD / "tabela_B7_1.csv"):
+        if not row or not row[0].strip().isdigit():
+            continue
+        if int(row[0]) == raw_score and column_index < len(row):
+            return _parse_float(row[column_index])
+    return None
+
+
+def _lookup_b8_frequency(difference: int | None, anos: int) -> float | None:
+    if difference is None:
+        return None
+    with (TABELAS_CD / "tabela_B8.csv").open("r", encoding="utf-8-sig", newline="") as f:
+        reader = csv.DictReader(f)
+        column = _b8_column_name(anos)
+        for row in reader:
+            if row.get("Tamanho da Discrepância") == str(difference):
+                return _parse_float(row.get(column) or row.get("Todas as idades"))
+    return None
+
+
+def _lookup_b9_critical(first_code: str, second_code: str, significance: str = "0.05") -> float | None:
+    fallback = None
+    with (TABELAS_CD / "tabela_B9.csv").open("r", encoding="utf-8-sig", newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            row_code = row.get("")
+            if row_code != first_code:
+                continue
+            value = _parse_float(row.get(second_code))
+            if row.get("Nível de Significância") == significance and value is not None:
+                return value
+            if value is not None and fallback is None:
+                fallback = value
+    return fallback
+
+
+def _lookup_b10_frequency(first_code: str, second_code: str, difference: int | None) -> float | None:
+    if difference is None:
+        return None
+    direction = "<" if difference < 0 else ">"
+    column = f"{first_code} {direction} {second_code} ({'-' if direction == '<' else '+'})"
+    abs_difference = abs(difference)
+    with (TABELAS_CD / "tabela_B10.csv").open("r", encoding="utf-8-sig", newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            key = row.get("Tamanho da\nDiscrepância") or row.get("Tamanho da Discrepância")
+            if key == str(abs_difference):
+                return _parse_float(row.get(column))
+    return None
+
+
+def build_process_scores(raw_scores: dict, anos: int, meses: int, computed_data: dict) -> dict:
+    a8_table = _carregar_tabela_a8(anos, meses)
+    scaled_rows = []
+    process_by_code = {}
+    for raw_key, config in PROCESS_SCORE_CONFIG.items():
+        raw_value = raw_scores.get(raw_key)
+        scaled_score = None
+        if raw_value is not None:
+            try:
+                scaled_score = buscar_ponderado(a8_table, config["code"], raw_value)
+            except ValueError:
+                scaled_score = None
+        row = {
+            "name": config["name"],
+            "code": config["code"],
+            "raw_score": raw_value,
+            "scaled_score": scaled_score,
+        }
+        scaled_rows.append(row)
+        process_by_code[config["code"]] = row
+
+    direct_col, inverse_col = _b7_column_indexes(anos)
+    sequence_rows = []
+    sequence_by_code = {}
+    for raw_key, config in SEQUENCE_SCORE_CONFIG.items():
+        raw_value = raw_scores.get(raw_key)
+        frequency = _lookup_b7_frequency(raw_value, direct_col if config["column"] == "Direta" else inverse_col)
+        row = {
+            "name": config["name"],
+            "code": config["code"],
+            "raw_score": raw_value,
+            "frequency": frequency,
+        }
+        sequence_rows.append(row)
+        sequence_by_code[config["code"]] = row
+
+    udiod = sequence_by_code.get("UDIOD", {}).get("raw_score")
+    udioi = sequence_by_code.get("UDIOI", {}).get("raw_score")
+    raw_difference = udiod - udioi if udiod is not None and udioi is not None else None
+    raw_discrepancy_rows = [
+        {
+            "label": "UDIOD - UDIOI",
+            "first": udiod,
+            "second": udioi,
+            "difference": raw_difference,
+            "frequency": _lookup_b8_frequency(raw_difference, anos),
+        }
+    ]
+
+    subtest_scores = {
+        "CB": (computed_data.get("cubos") or {}).get("escore_padrao"),
+        "DIOD": process_by_code.get("DIOD", {}).get("scaled_score"),
+        "CAA": process_by_code.get("CAA", {}).get("scaled_score"),
+    }
+    discrepancy_pairs = [
+        ("Cubos - Cubos sem Tempo de Bônus", "CB", "CUSB", subtest_scores.get("CB"), process_by_code.get("CUSB", {}).get("scaled_score")),
+        ("Dígitos Ordem Direta - Dígitos Ordem Inversa", "DIOD", "DIOI", subtest_scores.get("DIOD"), process_by_code.get("DIOI", {}).get("scaled_score")),
+        ("Cancelamento Aleatório - Estruturado", "CAA", "CAE", subtest_scores.get("CAA"), process_by_code.get("CAE", {}).get("scaled_score")),
+    ]
+    process_discrepancy_rows = []
+    for label, first_code, second_code, first_value, second_value in discrepancy_pairs:
+        difference = first_value - second_value if first_value is not None and second_value is not None else None
+        critical = _lookup_b9_critical(first_code, second_code)
+        process_discrepancy_rows.append(
+            {
+                "label": label,
+                "first_code": first_code,
+                "second_code": second_code,
+                "first": first_value,
+                "second": second_value,
+                "difference": difference,
+                "critical": critical,
+                "significant": abs(difference) >= critical if difference is not None and critical is not None else None,
+                "frequency": _lookup_b10_frequency(first_code, second_code, difference),
+            }
+        )
+
+    return {
+        "scaled_rows": scaled_rows,
+        "sequence_frequency_rows": sequence_rows,
+        "raw_discrepancy_rows": raw_discrepancy_rows,
+        "process_discrepancy_rows": process_discrepancy_rows,
+    }
 
 
 def get_classification_padrao(escore_padrao: int) -> str:

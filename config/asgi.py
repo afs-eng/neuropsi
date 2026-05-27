@@ -17,7 +17,7 @@ if _env_file.is_file():
     try:
         from dotenv import load_dotenv
 
-        load_dotenv(_env_file, override=True)
+        load_dotenv(_env_file, override=False)
     except ImportError:
         pass
 

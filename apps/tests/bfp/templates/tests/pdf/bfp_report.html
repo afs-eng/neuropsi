@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BFP | Relatório de Resultados</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 16mm 18mm 22mm;
+
+      @bottom-left {
+        content: "NEUROAVALIA";
+        font-size: 14px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        color: #00649b;
+        font-family: Arial, Helvetica, sans-serif;
+        white-space: nowrap;
+      }
+
+      @bottom-center {
+        content: "Relatório psicológico automatizado • Uso profissional restrito • Resultados devem ser interpretados por psicólogo habilitado.";
+        font-size: 8px;
+        color: #7d8b99;
+        text-align: center;
+        font-family: Arial, Helvetica, sans-serif;
+      }
+
+      @bottom-right {
+        content: counter(page) " / " counter(pages);
+        font-size: 8px;
+        font-weight: 700;
+        color: #607085;
+        font-family: Arial, Helvetica, sans-serif;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      color: #001f4a;
+    }
+
+    .page {
+      background: #ffffff;
+      page-break-after: always;
+    }
+
+    .page-content {
+      padding: 16mm 0 0;
+    }
+
+    .top-header {
+      display: grid;
+      grid-template-columns: 1fr 260px;
+      gap: 18px;
+      align-items: start;
+      padding: 8px 0 18px;
+      border-bottom: 1px solid #8e9dad;
+      margin-bottom: 18px;
+    }
+
+    .logo-bfp {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 42px;
+      line-height: .95;
+      font-weight: 900;
+      letter-spacing: -1px;
+      color: #020b1f;
+      margin: 0;
+    }
+
+    .logo-subtitle {
+      margin-top: 8px;
+      font-size: 10px;
+      line-height: 1.3;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: #2c3d5b;
+      text-transform: uppercase;
+    }
+
+    .code-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9px;
+      color: #6a7280;
+      text-transform: uppercase;
+    }
+
+    .code-table td {
+      padding: 5px 0;
+      border: 0;
+    }
+
+    .code-table td:last-child {
+      text-align: right;
+      color: #404957;
+      font-weight: 800;
+    }
+
+    h2 {
+      margin: 0 0 15px;
+      color: #00649b;
+      font-size: 23px;
+      line-height: 1.12;
+      font-weight: 800;
+    }
+
+    .page-1-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 26px;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 22px;
+      font-size: 11px;
+    }
+
+    .data-table td {
+      padding: 10px 10px;
+      border: 0;
+    }
+
+    .data-table tr:nth-child(even) td {
+      background: #eaf6fb;
+    }
+
+    .data-table tr.compact-row td {
+      width: auto;
+      padding: 10px 10px;
+    }
+
+    .field-inline {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .field-inline-label {
+      color: #7a8490;
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      flex: 0 0 auto;
+    }
+
+    .field-inline-value {
+      font-weight: 800;
+      color: #4c5563;
+    }
+
+
+    .personality-row {
+      display: grid;
+      grid-template-columns: 175px 1fr;
+      gap: 18px;
+      border-top: 1px solid #b7c2cf;
+      border-bottom: 1px solid #b7c2cf;
+      padding: 14px 0;
+      margin-bottom: 18px;
+      align-items: start;
+    }
+
+    .personality-row h2 {
+      margin: 0;
+    }
+
+    .personality-row .text {
+      border-left: 1px solid #9ba8b5;
+      padding-left: 16px;
+    }
+
+    p {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 11.5px;
+      line-height: 1.52;
+      margin: 0 0 8px;
+      text-align: justify;
+    }
+
+    .chart-section {
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 32px;
+      margin-top: 16px;
+    }
+
+    .chart-title {
+      text-align: center;
+      text-transform: uppercase;
+      color: #00649b;
+      font-size: 16px;
+      font-weight: 900;
+      margin: 0 0 14px;
+    }
+
+    .legend {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      font-size: 10px;
+      color: #697587;
+      margin-bottom: 14px;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend i {
+      display: inline-block;
+      width: 38px;
+      height: 12px;
+      border-radius: 2px;
+    }
+
+    .legend .teal {
+      background: rgba(15, 127, 140, 0.38);
+      border: 3px solid #0f7f8c;
+    }
+
+    .legend .orange {
+      background: transparent;
+      border: 3px solid #f39a18;
+    }
+
+    .radar-domain {
+      width: 100%;
+      height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .radar-domain svg {
+      width: 325px;
+      height: 325px;
+      overflow: visible;
+    }
+
+    .radar-facets svg {
+      width: 500px;
+      height: 500px;
+      overflow: visible;
+    }
+
+    .radar-label {
+      font-size: 9px;
+      fill: #6b7280;
+    }
+
+    .radar-small {
+      font-size: 7px;
+      fill: #6b7280;
+    }
+
+    .grid-line {
+      fill: none;
+      stroke: #e1e8ef;
+      stroke-width: 1;
+    }
+
+    .axis-line {
+      stroke: #eef2f6;
+      stroke-width: 1;
+    }
+
+    .domain-list h3,
+    .facet-list h3 {
+      margin: 0 0 14px;
+      color: #00649b;
+      text-transform: uppercase;
+      font-size: 16px;
+      font-weight: 900;
+    }
+
+    .domain-list p,
+    .facet-list p {
+      font-size: 11px;
+      line-height: 1.35;
+      margin: 0 0 13px;
+      color: #4a5665;
+      font-family: Arial, Helvetica, sans-serif;
+      text-align: justify;
+    }
+
+    .domain-list strong,
+    .facet-list strong {
+      color: #00649b;
+    }
+
+    .page-2-body {
+      display: grid;
+      grid-template-columns: 1fr 190px;
+      gap: 30px;
+      margin-top: 30px;
+    }
+
+    .radar-facets {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .facet-list {
+      padding-top: 18px;
+    }
+
+    .facet-group {
+      margin-bottom: 24px;
+      font-size: 11px;
+      color: #5a6675;
+      line-height: 1.35;
+    }
+
+    .facet-group strong {
+      display: block;
+      margin-bottom: 4px;
+      color: #00649b;
+    }
+
+    .tiny-title {
+      display: block;
+      margin-top: 2px;
+      color: #7890ad;
+      font-size: 7px;
+      letter-spacing: 2.3px;
+      text-transform: uppercase;
+      font-weight: 900;
+    }
+
+    .result-title {
+      margin: 3px 0 8px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 29px;
+      line-height: 1;
+      color: #000;
+    }
+
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #001f4a;
+      font-size: 12px;
+      page-break-inside: avoid;
+    }
+
+    .results-table th {
+      padding: 6px 8px;
+      border-top: 1px solid #8aa0c2;
+      border-bottom: 1px solid #8aa0c2;
+      font-weight: 900;
+      text-align: center;
+      color: #001f4a;
+    }
+
+    .results-table td {
+      padding: 9px 8px;
+      border-bottom: 1px solid #d6e1ed;
+      text-align: center;
+    }
+
+    .results-table td:first-child,
+    .results-table th:first-child {
+      text-align: left;
+    }
+
+    .results-table .factor-row td {
+      padding: 6px 8px;
+      font-weight: 900;
+      text-transform: uppercase;
+      border-top: 1px solid #8aa0c2;
+      border-bottom: 1px solid #8aa0c2;
+      background: #fbfdff;
+    }
+
+    .clinical h2 {
+      color: #000;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 29px;
+      margin-bottom: 18px;
+    }
+
+    .clinical h3 {
+      color: #00649b;
+      font-size: 14px;
+      margin: 15px 0 5px;
+    }
+
+    .clinical p {
+      font-size: 11.6px;
+      line-height: 1.5;
+    }
+
+
+
+    svg, table, tr, td, th, .chart, .card, .section {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+  </style>
+</head>
+<body>
+  <section class="page">
+    <header class="top-header">
+      <div>
+        <h1 class="logo-bfp">BFP</h1>
+        <div class="logo-subtitle">Bateria Fatorial de Personalidade</div>
+      </div>
+      <table class="code-table">
+        <tr><td>Código do avaliado</td><td>{{ codigo_avaliado }}</td></tr>
+        <tr><td>Código do relatório</td><td>{{ codigo_relatorio }}</td></tr>
+        <tr><td>Data da aplicação</td><td>{{ applied_on }}</td></tr>
+      </table>
+    </header>
+
+    <h2>Dados do avaliado</h2>
+    <div class="page-1-grid">
+      <table class="data-table">
+        <tr class="compact-row"><td colspan="2"><div class="field-inline"><span class="field-inline-label">Nome</span><span class="field-inline-value">{{ patient_name }}</span></div></td></tr>
+        <tr class="compact-row"><td colspan="2"><div class="field-inline"><span class="field-inline-label">CPF</span><span class="field-inline-value">{{ patient_cpf }}</span></div></td></tr>
+        <tr class="compact-row"><td colspan="2"><div class="field-inline"><span class="field-inline-label">Sexo</span><span class="field-inline-value">{{ patient_sex }}</span></div></td></tr>
+        <tr class="compact-row"><td colspan="2"><div class="field-inline"><span class="field-inline-label">Idade</span><span class="field-inline-value">{{ patient_age }}</span></div></td></tr>
+        <tr class="compact-row"><td colspan="2"><div class="field-inline"><span class="field-inline-label">Escolaridade</span><span class="field-inline-value">{{ patient_schooling }}</span></div></td></tr>
+      </table>
+      <table class="data-table">
+        <tr class="compact-row"><td colspan="2"><div class="field-inline"><span class="field-inline-label">E-mail</span><span class="field-inline-value">{{ patient_email }}</span></div></td></tr>
+        <tr class="compact-row"><td colspan="2"><div class="field-inline"><span class="field-inline-label">Profissional</span><span class="field-inline-value">{{ responsible_professional }}</span></div></td></tr>
+        <tr class="compact-row"><td colspan="2"><div class="field-inline"><span class="field-inline-label">Tabela normativa</span><span class="field-inline-value">{{ sample_label }}</span></div></td></tr>
+        <tr class="compact-row"><td colspan="2"><div class="field-inline"><span class="field-inline-label">Itens válidos</span><span class="field-inline-value">{{ items_valid }} / 126</span></div></td></tr>
+      </table>
+    </div>
+
+    <div class="personality-row">
+      <h2>Personalidade</h2>
+      <div class="text">
+        <p>A Bateria Fatorial de Personalidade – BFP é um instrumento psicológico baseado no modelo dos Cinco Grandes Fatores da personalidade, utilizado para avaliar tendências relativamente estáveis do funcionamento emocional, interpessoal, motivacional, comportamental e de abertura à experiência.</p>
+        <p>Por meio dessa avaliação, é possível obter uma visão abrangente das características individuais, identificar pontos fortes, vulnerabilidades e compreender padrões de regulação emocional, sociabilidade, persistência, confiança interpessoal e flexibilidade diante de novas experiências.</p>
+      </div>
+    </div>
+
+    <div class="chart-section">
+      <div>
+        <h3 class="chart-title">Radar de avaliação dos domínios</h3>
+        <div class="legend"><span><i class="teal"></i>Resultado do avaliado</span><span><i class="orange"></i>Amostra normativa</span></div>
+        <div class="radar-domain">
+          {{ factor_radar_svg|safe }}
+        </div>
+      </div>
+
+      <div class="domain-list">
+        <h3>Domínios avaliados</h3>
+        {% for item in factor_overview_texts %}
+          <p>{{ item.summary }}</p>
+        {% endfor %}
+      </div>
+    </div>
+
+  </section>
+
+  <section class="page">
+    <header class="top-header">
+      <div><h1 class="logo-bfp">BFP</h1><div class="logo-subtitle">Bateria Fatorial de Personalidade</div></div>
+      <table class="code-table"><tr><td>Código do avaliado</td><td>{{ codigo_avaliado }}</td></tr><tr><td>Código do relatório</td><td>{{ codigo_relatorio }}</td></tr><tr><td>Data da aplicação</td><td>{{ applied_on }}</td></tr></table>
+    </header>
+
+    <div class="page-2-body">
+      <div class="radar-facets">
+        <h3 class="chart-title">Radar de avaliação das facetas</h3>
+        <div class="legend"><span><i class="teal"></i>Resultado do avaliado</span><span><i class="orange"></i>Amostra normativa</span></div>
+        {{ facet_radar_svg|safe }}
+      </div>
+
+      <div class="facet-list">
+        <h3>Facetas avaliadas</h3>
+        {% for group in facet_groups %}
+          <div class="facet-group">
+            <strong>{{ group.name }}:</strong>
+            {% for facet in group.facets %}{% if not forloop.first %};<br>{% endif %}• {{ facet }}{% endfor %}.
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </section>
+
+  <section class="page">
+    <span class="tiny-title">Resultados normativos</span>
+    <h2 class="result-title">Tabela de resultados</h2>
+    <table class="results-table">
+      <thead><tr><th>Faceta/Dimensão</th><th>Escore Bruto</th><th>Percentil</th><th>Classificação</th></tr></thead>
+      <tbody>
+        {% for group in table_groups %}
+          {% if group.summary_row %}
+            <tr class="factor-row">
+              <td>{{ group.summary_row.name }}</td>
+              <td>{{ group.summary_row.raw_score }}</td>
+              <td>{{ group.summary_row.percentile }}</td>
+              <td>{{ group.summary_row.classification }}</td>
+            </tr>
+          {% endif %}
+          {% for row in group.rows %}
+            <tr>
+              <td>{{ row.name }}</td>
+              <td>{{ row.raw_score }}</td>
+              <td>{{ row.percentile }}</td>
+              <td>{{ row.classification }}</td>
+            </tr>
+          {% endfor %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="page clinical">
+    <span class="tiny-title">Interpretação clínica</span>
+    <h2>Síntese dos resultados</h2>
+    <p>A Bateria Fatorial de Personalidade permite compreender tendências relativamente estáveis do funcionamento emocional, interpessoal, motivacional e comportamental. Os resultados devem ser interpretados em conjunto com entrevista clínica, observação comportamental e demais instrumentos utilizados.</p>
+    {% for item in factor_interpretations %}
+      <h3>{{ item.title }}</h3>
+      <p>{{ item.text }}</p>
+    {% endfor %}
+  </section>
+</body>
+</html>

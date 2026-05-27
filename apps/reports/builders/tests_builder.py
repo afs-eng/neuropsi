@@ -5,6 +5,7 @@ from apps.tests.bpa2.calculators import load_table as _load_bpa2_table
 from apps.tests.base.types import TestContext
 from apps.tests.registry import get_test_module
 from apps.tests.selectors import get_test_applications_by_evaluation
+from apps.tests.services.report_payload_service import TestReportPayloadService
 from apps.tests.selectors import get_validated_test_applications_by_evaluation
 from apps.tests.wais3.constants import WAIS3_ALL_SUBTESTS, classify_scaled_score
 from apps.tests.wais3.loaders import WAIS3NormLoader
@@ -670,6 +671,7 @@ def build_validated_tests_snapshot(evaluation) -> list[dict]:
         clinical_interpretation = (item.interpretation_text or "").strip()
 
         module = get_test_module(item.instrument.code)
+        report_payload = TestReportPayloadService.build_for_application(item)
         if module:
             try:
                 context = TestContext(
@@ -691,9 +693,8 @@ def build_validated_tests_snapshot(evaluation) -> list[dict]:
                 )
 
         summary = (
-            clinical_interpretation.split(". ")[0].strip()
-            if clinical_interpretation
-            else ""
+            (report_payload.get("summary_for_report") or "").strip()
+            or (clinical_interpretation.split(". ")[0].strip() if clinical_interpretation else "")
         )
         if not clinical_interpretation:
             warnings.append(
@@ -734,6 +735,7 @@ def build_validated_tests_snapshot(evaluation) -> list[dict]:
                 "computed_payload": item.computed_payload or {},
                 "clinical_interpretation": clinical_interpretation,
                 "interpretation_text": clinical_interpretation,
+                "report_payload": report_payload,
                 "result_rows": result_rows,
                 "wisc_tables": wisc_tables,
                 "wais3_tables": wais3_tables,

@@ -84,6 +84,31 @@ class BAIModule(BaseTestModule):
         """Gera interpretação do BAI."""
         return get_report_interpretation(merged_data)
 
+    def build_report_payload(self, context: TestContext, merged_data: dict) -> dict:
+        classification = merged_data.get("classificacao") or {}
+        tables = merged_data.get("tables") or {}
+        details = tables.get("detail_table") or []
+        interpretation = self.interpret(context, merged_data)
+        return {
+            "results": [
+                {
+                    "scale": item.get("label") or item.get("item") or "BAI",
+                    "raw_score": item.get("raw_score") or item.get("value"),
+                    "percentile": item.get("percentile"),
+                    "classification": item.get("classification") or item.get("band"),
+                }
+                for item in details
+            ],
+            "summary_for_report": (
+                f"Sintomatologia ansiosa classificada como {str(classification.get('label') or 'não classificada').lower()}, "
+                f"com escore total {merged_data.get('escore_total', 0)} e escore T {merged_data.get('t_score', '-')}."
+            ),
+            "technical_notes": [classification.get("interpretation", "")],
+            "clinical_flags": [classification.get("label")] if classification.get("key") in {"grave"} else [],
+            "chart_payload": (merged_data.get("charts") or {}).get("profile") or {},
+            "interpretation": interpretation,
+        }
+
 
 # Registra no sistema
 register_test_module(BAI_CODE, BAIModule())

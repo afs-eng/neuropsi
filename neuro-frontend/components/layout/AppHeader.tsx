@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { NeuroavaliaLogo } from "@/components/brand/NeuroavaliaLogo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export function AppHeader({ sidebarCollapsed, sidebarHidden, onToggleSidebar, isMobile }: { sidebarCollapsed: boolean; sidebarHidden?: boolean; onToggleSidebar?: () => void; isMobile?: boolean }) {
+export function AppHeader({ onToggleSidebar, isMobile }: { onToggleSidebar?: () => void; isMobile?: boolean }) {
   const router = useRouter();
   const [user, setUser] = React.useState<any>(null);
 
@@ -68,25 +69,19 @@ export function AppHeader({ sidebarCollapsed, sidebarHidden, onToggleSidebar, is
 
   return (
     <header
-      className={`fixed top-0 right-0 z-40 h-16 border-b border-slate-100 bg-white/80 backdrop-blur-md transition-all duration-300 ${
-        isMobile
-          ? "left-0"
-          : sidebarHidden
-            ? "left-0"
-            : sidebarCollapsed
-              ? "left-[72px]"
-              : "left-[260px]"
+      className={`fixed top-0 right-0 z-40 h-16 border-b border-slate-100 bg-white/80 backdrop-blur-md transition-all duration-300 app-shell-header ${
+        isMobile ? "left-0" : "left-[260px]"
       }`}
     >
       <div className="flex h-full items-center justify-between px-4 md:px-8">
         <div className="flex items-center gap-2 md:gap-3 flex-1 md:max-w-xl md:pr-8">
-          {(isMobile || sidebarHidden) && (
+          {isMobile && (
             <button onClick={onToggleSidebar} className="group flex shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50/80 h-10 w-10 text-slate-400 shadow-inner shadow-slate-50 hover:bg-white hover:text-slate-700 hover:border-slate-200 hover:shadow-sm transition-all duration-200 ease-out active:scale-95" title="Mostrar menu">
               <PanelLeftOpen className="h-4 w-4 group-hover:text-primary transition-colors duration-200" />
             </button>
           )}
           {isMobile && (
-            <span className="text-base font-bold tracking-tight text-slate-900 whitespace-nowrap">Neuro<span className="text-primary font-extrabold">Avalia</span></span>
+            <NeuroavaliaLogo className="h-12 w-[176px] shrink-0" />
           )}
           {/* Search */}
           <div className="group relative flex-1 md:block hidden">

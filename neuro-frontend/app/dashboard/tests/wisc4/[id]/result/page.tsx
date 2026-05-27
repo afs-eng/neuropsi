@@ -3,12 +3,15 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import { getToken, resolveApiUrl } from '@/lib/api'
+import { TestReportSummaryCard } from '@/components/tests/TestReportSummaryCard'
 
 export default function WISC4ResultPage() {
   const subtestOrder = ['CB', 'SM', 'DG', 'CN', 'CD', 'VC', 'SNL', 'RM', 'CO', 'PS']
   const params = useParams()
   const [result, setResult] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [exportingPdf, setExportingPdf] = useState(false)
 
   useEffect(() => {
     const fetchResult = async () => {
@@ -26,6 +29,37 @@ export default function WISC4ResultPage() {
       fetchResult()
     }
   }, [params.id])
+
+  const handleExportPdf = async () => {
+    if (!params.id || exportingPdf) return
+    setExportingPdf(true)
+    try {
+      const token = getToken() || ''
+      const response = await fetch(resolveApiUrl(`/api/tests/applications/${params.id}/export-pdf`), {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        cache: 'no-store',
+      })
+
+      if (!response.ok) {
+        let message = `Falha ao gerar PDF (${response.status})`
+        try {
+          const payload = await response.json()
+          if (payload?.message) message = `${message}: ${payload.message}`
+        } catch {}
+        throw new Error(message)
+      }
+
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      window.open(url, '_blank', 'noopener,noreferrer')
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
+    } catch (error: any) {
+      console.error(error)
+      alert(error?.message || 'Não foi possível gerar o PDF do WISC-IV.')
+    } finally {
+      setExportingPdf(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -69,11 +103,11 @@ export default function WISC4ResultPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-300 p-6 md:p-10">
-      <div className="mx-auto max-w-7xl rounded-[36px] bg-[#f3f0e4] p-5 shadow-2xl ring-1 ring-black/5 md:p-7">
-        <div className="rounded-[28px] bg-gradient-to-r from-[#f6f4ed] via-[#f2efe4] to-[#efe7bf] p-5 md:p-6">
+    <div className="min-h-screen bg-slate-300 p-6 md:p-10 report-print-shell">
+      <div className="mx-auto max-w-7xl rounded-[36px] bg-[#f3f0e4] p-5 shadow-2xl ring-1 ring-black/5 md:p-7 report-print-card">
+        <div className="rounded-[28px] bg-gradient-to-r from-[#f6f4ed] via-[#f2efe4] to-[#efe7bf] p-5 md:p-6 report-print-content">
           {/* Header */}
-          <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between print:hidden report-print-hide">
             <div className="flex items-center gap-4">
               <div className="rounded-full border border-black/20 bg-white/70 px-5 py-2 text-lg font-medium tracking-tight text-zinc-800 shadow-sm">
                 NeuroAvalia
@@ -94,15 +128,20 @@ export default function WISC4ResultPage() {
                 {result.patient_name} • {computed.faixa || '—'}
               </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 print:hidden report-print-hide">
               <Link href={`/dashboard/tests/wisc4?evaluation_id=${result.evaluation_id}&application_id=${params.id}&edit=true`} className="rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50">
                 Editar
               </Link>
+              <button onClick={handleExportPdf} disabled={exportingPdf} className="rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60">
+                {exportingPdf ? 'Gerando PDF...' : 'Imprimir / PDF'}
+              </button>
               <Link href={`/dashboard/evaluations/${result.evaluation_id}?tab=overview`} className="rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white shadow-lg">
                 Voltar
               </Link>
             </div>
           </div>
+
+          <TestReportSummaryCard reportPayload={result.report_payload} fallbackText={result.interpretation_text} className="mb-6" />
 
           {/* Resumo dos Índices */}
           <div className="bg-white rounded-xl border border-slate-200 overflow-hidden mb-6">

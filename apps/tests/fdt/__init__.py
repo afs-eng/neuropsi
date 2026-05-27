@@ -32,5 +32,33 @@ class FDTModule(BaseTestModule):
     def interpret(self, context: TestContext, merged_data: dict) -> str:
         return interpret_fdt_result(merged_data, patient_name=context.patient_name)
 
+    def build_report_payload(self, context: TestContext, merged_data: dict) -> dict:
+        metric_results = merged_data.get("metric_results") or []
+        derived = merged_data.get("derived_scores") or {}
+        interpretation = self.interpret(context, merged_data)
+        return {
+            "results": [
+                {
+                    "scale": item.get("nome") or item.get("codigo"),
+                    "raw_score": item.get("valor"),
+                    "percentile": item.get("percentil_num"),
+                    "classification": item.get("classificacao"),
+                }
+                for item in metric_results
+            ],
+            "summary_for_report": interpretation.split(". ")[0].strip() if interpretation else "",
+            "technical_notes": [
+                f"Inibição: {derived.get('inibicao')}" if derived.get("inibicao") is not None else "",
+                f"Flexibilidade: {derived.get('flexibilidade')}" if derived.get("flexibilidade") is not None else "",
+            ],
+            "clinical_flags": [
+                item.get("nome") or item.get("codigo")
+                for item in metric_results
+                if item.get("classificacao") in {"Inferior", "Muito Inferior", "Deficitario"}
+            ],
+            "chart_payload": {},
+            "interpretation": interpretation,
+        }
+
 
 register_test_module(FDT_CODE, FDTModule())

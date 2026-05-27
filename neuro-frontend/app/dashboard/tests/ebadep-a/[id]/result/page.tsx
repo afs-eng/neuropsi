@@ -6,6 +6,8 @@ import { ArrowLeft, Download, Edit, LayoutDashboard, Printer } from 'lucide-reac
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { getToken, resolveApiUrl } from '@/lib/api'
+import { TestReportSummaryCard } from '@/components/tests/TestReportSummaryCard'
 
 const ITEM_LABELS: Record<number, string> = {
   1: 'Choro',
@@ -80,6 +82,7 @@ export default function EBADEPAResultPage() {
   const router = useRouter()
   const [result, setResult] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [exportingPdf, setExportingPdf] = useState(false)
 
   useEffect(() => {
     const fetchResult = async () => {
@@ -95,6 +98,37 @@ export default function EBADEPAResultPage() {
     }
     if (params.id) fetchResult()
   }, [params.id])
+
+  const handleExportPdf = async () => {
+    if (!params.id || exportingPdf) return
+    setExportingPdf(true)
+    try {
+      const token = getToken() || ''
+      const response = await fetch(resolveApiUrl(`/api/tests/applications/${params.id}/export-pdf`), {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        cache: 'no-store',
+      })
+
+      if (!response.ok) {
+        let message = `Falha ao gerar PDF (${response.status})`
+        try {
+          const payload = await response.json()
+          if (payload?.message) message = `${message}: ${payload.message}`
+        } catch {}
+        throw new Error(message)
+      }
+
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      window.open(url, '_blank', 'noopener,noreferrer')
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
+    } catch (exportError: any) {
+      console.error(exportError)
+      alert(exportError?.message || 'Não foi possível gerar o PDF do EBADEP-A.')
+    } finally {
+      setExportingPdf(false)
+    }
+  }
 
   if (loading) {
     return <div className="min-h-screen bg-slate-300 p-6 md:p-10 flex items-center justify-center"><div className="text-zinc-600">Carregando...</div></div>
@@ -114,8 +148,8 @@ export default function EBADEPAResultPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 report-print-shell">
+      <div className="flex items-center justify-between print:hidden report-print-hide">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => router.push(`/dashboard/evaluations/${result.evaluation_id}?tab=overview`)} className="rounded-full">
             <ArrowLeft className="h-5 w-5" />
@@ -138,18 +172,20 @@ export default function EBADEPAResultPage() {
             <ArrowLeft className="h-4 w-4" />
             Voltar
           </Button>
-          <Button variant="outline" className="rounded-xl gap-2">
+          <Button variant="outline" className="rounded-xl gap-2" onClick={handleExportPdf} disabled={exportingPdf}>
             <Printer className="h-4 w-4" />
-            Imprimir
+            {exportingPdf ? 'Gerando...' : 'Imprimir'}
           </Button>
-          <Button className="rounded-xl gap-2">
+          <Button className="rounded-xl gap-2" onClick={handleExportPdf} disabled={exportingPdf}>
             <Download className="h-4 w-4" />
-            Exportar PDF
+            {exportingPdf ? 'Gerando...' : 'Salvar em PDF'}
           </Button>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 space-y-8">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 space-y-8 report-print-content">
+        <TestReportSummaryCard reportPayload={result.report_payload} fallbackText={result.interpretation_text} className="mb-6" />
+
         <div className="text-center border-b pb-6">
           <h1 className="text-2xl font-bold text-slate-900">EBADEP-A</h1>
           <p className="text-lg text-slate-600">Escala Baptista de Depressão - Versão Adulto</p>

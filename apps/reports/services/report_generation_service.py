@@ -102,8 +102,6 @@ class ReportGenerationService:
     def generate_full_report(cls, report: Report, user=None):
         context = cls.construct_clinical_context(report.evaluation)
         sections_config = cls._enabled_sections_config(context)
-        if any(ReportAIService.supports_section(key) for key, _ in sections_config):
-            AIHealthcheckService.ensure_available()
         from apps.reports.services.report_pipeline_service import ReportPipelineService
 
         ReportPipelineService.generate_full_report(report, context, user=user)
@@ -511,6 +509,23 @@ class ReportGenerationService:
             **(test.get("classified_payload") or test.get("structured_results") or {}),
         }
         return (interpret_srs2_results(merged_data) or "").strip()
+
+    @staticmethod
+    def _test_report_payload(test: dict | None) -> dict:
+        return (test or {}).get("report_payload") or {}
+
+    @classmethod
+    def _test_interpretation(cls, test: dict | None) -> str:
+        payload = cls._test_report_payload(test)
+        return (
+            payload.get("interpretation")
+            or payload.get("summary_for_report")
+            or (test or {}).get("clinical_interpretation")
+            or (test or {}).get("interpretation_text")
+            or (test or {}).get("summary")
+            or cls._fallback_test_interpretation(test or {})
+            or ""
+        )
 
     @staticmethod
     def _patient_name(context: dict) -> str:
@@ -922,13 +937,7 @@ class ReportGenerationService:
         blocks = []
         include_instrument_name = len(tests) > 1
         for test in tests:
-            interpretation = cls._clean_clinical_interpretation(
-                test.get("clinical_interpretation") or test.get("summary") or ""
-            )
-            if not interpretation:
-                interpretation = cls._clean_clinical_interpretation(
-                    cls._fallback_test_interpretation(test)
-                )
+            interpretation = cls._clean_clinical_interpretation(cls._test_interpretation(test))
             if not interpretation:
                 continue
 

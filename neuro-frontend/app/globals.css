@@ -75,3 +75,140 @@
     display: none; /* Safari and Chrome */
   }
 }
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+  }
+
+  .report-print-shell {
+    min-height: auto !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+  }
+
+  .app-shell-sidebar,
+  .app-shell-header,
+  .app-shell-overlay {
+    display: none !important;
+  }
+
+  .app-shell,
+  .app-shell-main,
+  .app-shell-content {
+    background: #ffffff !important;
+  }
+
+  .app-shell-main {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .app-shell-content {
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .report-print-card {
+    max-width: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  .report-print-content {
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .report-print-hide {
+    display: none !important;
+  }
+
+  .report-print-break-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .report-print-content .overflow-x-auto {
+    overflow: visible !important;
+  }
+
+  .report-print-content table {
+    width: 100% !important;
+  }
+
+  .report-print-content svg {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+  }
+
+  .report-print-content tr,
+  .report-print-content td,
+  .report-print-content th,
+  .report-print-content img,
+  .report-print-content svg {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .fdt-print-page {
+    break-after: page;
+    page-break-after: always;
+    margin: 0 !important;
+  }
+
+  .fdt-print-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .a4-print-page {
+    width: 100% !important;
+    min-height: calc(297mm - 24mm) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .a4-print-page-body {
+    min-height: calc(297mm - 33mm) !important;
+    padding-bottom: 24mm !important;
+    box-sizing: border-box !important;
+  }
+
+  .a4-print-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .a4-print-inner {
+    min-height: calc(297mm - 24mm) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+  }
+
+  .a4-print-tight p,
+  .a4-print-tight li,
+  .a4-print-tight div {
+    orphans: 3;
+    widows: 3;
+  }
+}

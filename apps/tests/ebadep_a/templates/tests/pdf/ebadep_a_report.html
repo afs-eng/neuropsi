@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Relatório EBADEP-A - Neuroavalia</title>
+  <style>
+    :root {
+      --azul-profundo: #123A5A;
+      --azul-petroleo: #1B7F8C;
+      --azul-claro: #27BBD0;
+      --cinza-texto: #6F8491;
+      --cinza-linha: #D6E2E8;
+      --texto: #17324D;
+      --pagina: #FFFFFF;
+      --fundo: #E9EEF2;
+      --margem-superior: 3cm;
+      --margem-esquerda: 2cm;
+      --margem-inferior: 2cm;
+      --margem-direita: 2cm;
+    }
+
+    * { box-sizing: border-box; }
+
+    @page { size: A4; margin: 0; }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--fundo);
+      color: var(--texto);
+      font-family: "Times New Roman", Times, serif;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto;
+      padding: var(--margem-superior) var(--margem-direita) var(--margem-inferior) var(--margem-esquerda);
+      background: var(--pagina);
+      position: relative;
+      page-break-after: always;
+      overflow: hidden;
+    }
+
+    .cover { padding: 0; background: #ffffff; }
+
+    .cover-top {
+      position: absolute;
+      top: 10mm;
+      left: 11mm;
+      right: 11mm;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .cover-brand,
+    .report-header-logo,
+    .footer-logo,
+    h1,
+    h2,
+    h3,
+    .meta,
+    .label,
+    table { font-family: Arial, Helvetica, sans-serif; }
+
+    .cover-brand {
+      display: flex;
+      align-items: center;
+      gap: 6mm;
+      font-size: 0;
+      font-weight: 800;
+      color: var(--azul-profundo);
+      letter-spacing: -0.1px;
+    }
+
+    .cover-brand-mark {
+      width: 24.8mm;
+      height: auto;
+      flex: 0 0 auto;
+    }
+
+    .cover-brand-text-main {
+      display: block;
+      font: 800 18.3pt/0.9 Arial, Helvetica, sans-serif;
+      letter-spacing: -1.5px;
+      color: var(--azul-profundo);
+    }
+
+    .cover-brand-text-sub {
+      display: block;
+      margin-top: 2.4mm;
+      font: 800 5.1pt/1 Arial, Helvetica, sans-serif;
+      letter-spacing: 0.32em;
+      color: #7E929F;
+      text-transform: uppercase;
+    }
+
+    .cover-brand span,
+    .footer-logo span { color: var(--azul-petroleo); }
+
+    .cover-badge {
+      color: #49647d;
+      font: 700 7pt Arial, Helvetica, sans-serif;
+    }
+
+    .cover-main {
+      position: absolute;
+      left: 9mm;
+      right: 9mm;
+      top: 37mm;
+    }
+
+    .instrument-title {
+      color: var(--azul-profundo);
+      font: 800 52pt/0.92 Georgia, "Times New Roman", serif;
+      letter-spacing: -2px;
+      margin: 7mm 0 1mm;
+    }
+
+    .instrument-subtitle {
+      color: var(--azul-profundo);
+      font: 800 19pt/1.15 Arial, Helvetica, sans-serif;
+      margin: 0;
+    }
+
+    .format-label {
+      display: inline-block;
+      color: var(--azul-profundo);
+      background: #e7f2fd;
+      border-radius: 2mm;
+      font: 800 7.4pt Arial, Helvetica, sans-serif;
+      letter-spacing: 0.25em;
+      padding: 2mm 3mm;
+      text-transform: uppercase;
+    }
+
+    .title-rule {
+      width: 38mm;
+      height: 1.1mm;
+      margin-top: 8mm;
+      background: linear-gradient(90deg, var(--azul-profundo), var(--azul-claro));
+      border-radius: 999px;
+    }
+
+    .cover-panel {
+      position: absolute;
+      left: 9mm;
+      right: 9mm;
+      top: 117mm;
+      border: 1px solid #c8deef;
+      border-radius: 5mm;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: 0 12mm 22mm rgba(18, 58, 90, 0.08);
+      padding: 6mm 6.5mm;
+    }
+
+    .panel-title {
+      color: var(--azul-profundo);
+      font: 800 20pt Arial, Helvetica, sans-serif;
+      letter-spacing: -0.6px;
+      margin-bottom: 3mm;
+      padding-bottom: 3.5mm;
+      border-bottom: 1px solid #bfd4e4;
+    }
+
+    .cover-data-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      column-gap: 16mm;
+      row-gap: 3.8mm;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .cover-data-item .label {
+      display: block;
+      color: #6e8398;
+      font-size: 6.7pt;
+      font-weight: 800;
+      letter-spacing: 0.25em;
+      line-height: 1.15;
+      text-transform: uppercase;
+    }
+
+    .cover-data-item .value {
+      display: block;
+      margin-top: 1mm;
+      color: var(--azul-profundo);
+      font-size: 9.3pt;
+      font-weight: 800;
+      line-height: 1.22;
+    }
+
+    .report-header {
+      position: absolute;
+      top: 0.65cm;
+      left: var(--margem-esquerda);
+      right: var(--margem-direita);
+      height: 2.05cm;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--cinza-linha);
+      background: #FFFFFF;
+    }
+
+    .report-header-gradient {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -2.2px;
+      height: 2.2px;
+      background: linear-gradient(90deg, var(--azul-profundo), var(--azul-petroleo), var(--azul-claro));
+    }
+
+    .report-header-logo {
+      color: var(--azul-profundo);
+      font-size: 20pt;
+      font-weight: 800;
+      letter-spacing: -0.8px;
+    }
+
+    .page-logo {
+      position: absolute;
+      top: 0.75cm;
+      left: var(--margem-esquerda);
+      display: flex;
+      align-items: center;
+      gap: 3mm;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--azul-profundo);
+    }
+
+    .page-logo-mark {
+      width: 15mm;
+      height: auto;
+      flex: 0 0 auto;
+    }
+
+    .page-logo-main {
+      display: block;
+      font-size: 12pt;
+      font-weight: 800;
+      line-height: 0.95;
+      letter-spacing: -0.4px;
+    }
+
+    .page-logo-main span { color: var(--azul-petroleo); }
+
+    .page-logo-sub {
+      display: block;
+      margin-top: 1.4mm;
+      color: #7E929F;
+      font-size: 4.2pt;
+      font-weight: 800;
+      letter-spacing: 0.24em;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: 32mm 30mm;
+      column-gap: 4mm;
+      row-gap: 1.6mm;
+      color: var(--azul-profundo);
+      font-size: 6.8pt;
+      text-transform: uppercase;
+    }
+
+    .meta strong { font-weight: 800; }
+
+    .footer {
+      position: absolute;
+      left: var(--margem-esquerda);
+      right: var(--margem-direita);
+      bottom: 0.75cm;
+      height: 1cm;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--cinza-linha);
+      padding-top: 0.16cm;
+      background: #FFFFFF;
+      color: var(--cinza-texto);
+      font: 8pt Arial, Helvetica, sans-serif;
+    }
+
+    .footer-logo { color: var(--azul-profundo); font-weight: 800; }
+    .footer-right { text-align: right; white-space: nowrap; }
+
+    h1 { color: var(--azul-profundo); font-size: 26pt; margin: 0 0 9mm; }
+    h2 { color: var(--azul-profundo); font-size: 18pt; margin: 0 0 5mm; }
+    h3 { color: var(--azul-petroleo); font-size: 12pt; margin: 0 0 3mm; }
+    p { font-size: 10.2pt; line-height: 1.48; margin: 0 0 4mm; text-align: justify; }
+
+    .two-col-section {
+      display: grid;
+      grid-template-columns: 42mm 1fr;
+      gap: 8mm;
+      padding: 5mm 0;
+      border-bottom: 1px solid var(--cinza-linha);
+    }
+
+    .section-title { color: var(--azul-petroleo); font: 800 16pt Arial, Helvetica, sans-serif; }
+    .result-table { width: 100%; border-collapse: collapse; margin: 5mm 0 7mm; font: 9pt Arial, Helvetica, sans-serif; }
+    .result-table th { color: var(--azul-profundo); border-bottom: 1.2px solid #203545; padding: 2.8mm; text-align: center; }
+    .result-table td { border-bottom: 1px solid var(--cinza-linha); padding: 3mm; text-align: center; font-weight: 700; }
+    .classification-pill { display: inline-block; padding: 2mm 4mm; border-radius: 999px; font-size: 8pt; font-weight: 800; }
+    .classification-pill.minimal { background: #e8f7ef; color: #17663c; }
+    .classification-pill.light { background: #eef8fc; color: #0b6b79; }
+    .classification-pill.moderate { background: #fff4df; color: #9a5a00; }
+    .classification-pill.severe { background: #fde8e8; color: #a61b1b; }
+    .classification-pill.neutral { background: #eef2f6; color: #536273; }
+    .note-box { border-left: 4px solid var(--azul-petroleo); background: #f5fbfd; padding: 4mm; font-size: 10pt; line-height: 1.45; }
+    .alert-box { border-left-color: #d97706; background: #fff7ed; color: #754c09; margin-top: 4mm; }
+
+    .legend { font-size: 9.4pt; margin-bottom: 5mm; }
+    .response-table { width: 100%; border-collapse: collapse; font: 8pt Arial, Helvetica, sans-serif; }
+    .response-table th { background: var(--azul-profundo); color: #fff; padding: 2.4mm 1.6mm; }
+    .response-table td { border: 1px solid #d8e2e8; padding: 2mm 1.4mm; text-align: center; }
+    .response-table .item { font-weight: 800; color: var(--azul-profundo); background: #f6fafc; }
+    .response-table .critical { background: #fff1f2; color: #a61b1b; font-weight: 800; }
+    .critical-list { display: flex; flex-wrap: wrap; gap: 2mm; margin-top: 4mm; }
+    .critical-item { border: 1px solid #fecdd3; background: #fff1f2; color: #9f1239; padding: 2mm 3mm; border-radius: 4mm; font: 700 8pt Arial, Helvetica, sans-serif; }
+  </style>
+</head>
+
+<body>
+  <section class="page cover">
+    <div class="cover-top">
+      <div class="cover-brand">
+        <svg class="cover-brand-mark" viewBox="0 0 164 162" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <g transform="translate(82 82)">
+            <line x1="0" y1="0" x2="-46" y2="-48" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="18" y2="-62" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="58" y2="-42" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="68" y2="4" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="34" y2="56" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="-32" y2="54" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="-66" y2="12" stroke="#9EB4C2" stroke-width="1.8" />
+            <path d="M-46 -48 L18 -62 L58 -42 L68 4 L34 56 L-32 54 L-66 12 Z" fill="none" stroke="#D6E2E8" stroke-width="1.6" stroke-linejoin="round" />
+            <path d="M-46 -48 C-20 -72, 25 -84, 58 -42" fill="none" stroke="#D6E2E8" stroke-width="1.4" stroke-linecap="round" />
+            <path d="M-66 12 C-42 38, -5 70, 34 56" fill="none" stroke="#D6E2E8" stroke-width="1.4" stroke-linecap="round" />
+            <circle cx="0" cy="0" r="8.5" fill="#123A5A" />
+            <circle cx="-46" cy="-48" r="7" fill="#CBD6DE" />
+            <circle cx="18" cy="-62" r="7" fill="#27BBD0" />
+            <circle cx="58" cy="-42" r="7" fill="#CBD6DE" />
+            <circle cx="68" cy="4" r="7" fill="#123A5A" />
+            <circle cx="34" cy="56" r="7" fill="#CBD6DE" />
+            <circle cx="-32" cy="54" r="7" fill="#27BBD0" />
+            <circle cx="-66" cy="12" r="7" fill="#CBD6DE" />
+            <circle cx="1" cy="-35" r="4" fill="#D6E2E8" />
+            <circle cx="38" cy="-7" r="4" fill="#D6E2E8" />
+            <circle cx="8" cy="36" r="4" fill="#D6E2E8" />
+            <circle cx="-36" cy="-8" r="4" fill="#D6E2E8" />
+          </g>
+        </svg>
+        <div>
+          <span class="cover-brand-text-main">Neuro<span>avalia</span></span>
+          <span class="cover-brand-text-sub">Avaliação Neuropsicológica</span>
+        </div>
+      </div>
+      <div class="cover-badge">Relatório técnico completo</div>
+    </div>
+
+    <div class="cover-main">
+      <div class="format-label">Escala Baptista de Depressão</div>
+      <h1 class="instrument-title">EBADEP-A</h1>
+      <p class="instrument-subtitle">Relatório Técnico Completo</p>
+      <div class="title-rule"></div>
+    </div>
+
+    <div class="cover-panel">
+      <div class="panel-title">Dados do avaliado</div>
+      <div class="cover-data-grid" aria-label="Dados do avaliado">
+        <div class="cover-data-item"><span class="label">Nome</span><span class="value">{{ patient_name }}</span></div>
+        <div class="cover-data-item"><span class="label">Sexo</span><span class="value">{{ patient_sex }}</span></div>
+        <div class="cover-data-item"><span class="label">Idade</span><span class="value">{{ patient_age }}</span></div>
+        <div class="cover-data-item"><span class="label">Escolaridade</span><span class="value">{{ patient_schooling }}</span></div>
+        <div class="cover-data-item"><span class="label">Profissional</span><span class="value">{{ professional }}</span></div>
+        <div class="cover-data-item"><span class="label">Tabela normativa</span><span class="value">{{ normative_table }}</span></div>
+        <div class="cover-data-item"><span class="label">Código do avaliado</span><span class="value">{{ application_code }}</span></div>
+        <div class="cover-data-item"><span class="label">Data da aplicação</span><span class="value">{{ applied_on }}</span></div>
+      </div>
+    </div>
+
+    <div class="footer" aria-label="Rodapé Neuroavalia"><div class="footer-logo">Neuro<span>avalia</span></div><div class="footer-right">Página 1 de {{ page_count }}</div></div>
+  </section>
+
+  <section class="page">
+    <div class="page-logo" aria-label="Neuroavalia">
+      <svg class="page-logo-mark" viewBox="0 0 164 162" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <g transform="translate(82 82)">
+          <line x1="0" y1="0" x2="-46" y2="-48" stroke="#9EB4C2" stroke-width="1.8" />
+          <line x1="0" y1="0" x2="18" y2="-62" stroke="#9EB4C2" stroke-width="1.8" />
+          <line x1="0" y1="0" x2="58" y2="-42" stroke="#9EB4C2" stroke-width="1.8" />
+          <line x1="0" y1="0" x2="68" y2="4" stroke="#9EB4C2" stroke-width="1.8" />
+          <line x1="0" y1="0" x2="34" y2="56" stroke="#9EB4C2" stroke-width="1.8" />
+          <line x1="0" y1="0" x2="-32" y2="54" stroke="#9EB4C2" stroke-width="1.8" />
+          <line x1="0" y1="0" x2="-66" y2="12" stroke="#9EB4C2" stroke-width="1.8" />
+          <path d="M-46 -48 L18 -62 L58 -42 L68 4 L34 56 L-32 54 L-66 12 Z" fill="none" stroke="#D6E2E8" stroke-width="1.6" stroke-linejoin="round" />
+          <path d="M-46 -48 C-20 -72, 25 -84, 58 -42" fill="none" stroke="#D6E2E8" stroke-width="1.4" stroke-linecap="round" />
+          <path d="M-66 12 C-42 38, -5 70, 34 56" fill="none" stroke="#D6E2E8" stroke-width="1.4" stroke-linecap="round" />
+          <circle cx="0" cy="0" r="8.5" fill="#123A5A" />
+          <circle cx="-46" cy="-48" r="7" fill="#CBD6DE" />
+          <circle cx="18" cy="-62" r="7" fill="#27BBD0" />
+          <circle cx="58" cy="-42" r="7" fill="#CBD6DE" />
+          <circle cx="68" cy="4" r="7" fill="#123A5A" />
+          <circle cx="34" cy="56" r="7" fill="#CBD6DE" />
+          <circle cx="-32" cy="54" r="7" fill="#27BBD0" />
+          <circle cx="-66" cy="12" r="7" fill="#CBD6DE" />
+          <circle cx="1" cy="-35" r="4" fill="#D6E2E8" />
+          <circle cx="38" cy="-7" r="4" fill="#D6E2E8" />
+          <circle cx="8" cy="36" r="4" fill="#D6E2E8" />
+          <circle cx="-36" cy="-8" r="4" fill="#D6E2E8" />
+        </g>
+      </svg>
+      <div><span class="page-logo-main">Neuro<span>avalia</span></span><span class="page-logo-sub">Avaliação Neuropsicológica</span></div>
+    </div>
+
+    <div class="two-col-section">
+      <div class="section-title">Introdução</div>
+      <div>
+        <p>Os transtornos depressivos vêm sendo considerados altamente frequentes na atualidade. No entanto, os sintomas depressivos podem ser observados independentemente da presença de transtornos mentais. Assim, com a visão dimensional dos transtornos mentais, pode haver variação em termos de sintomas depressivos como traço latente, desde ausência de sintomas até presença ampla de sintomas em diferentes intensidades e durações.</p>
+        <p>Os sintomas clinicamente significativos de depressão podem estar relacionados a fatores de risco e proteção, sofrimento importante, interferência nas relações sociais e alterações cognitivas, afetivas e comportamentais. A EBADEP-A contribui para avaliar frequência, intensidade e duração desses sintomas em categorias progressivas comparadas à amostra normativa.</p>
+      </div>
+    </div>
+
+    <div class="two-col-section">
+      <div class="section-title">Definição</div>
+      <div><p>A Escala Baptista de Depressão Versão Adulto avalia a presença de sintomatologia depressiva, independentemente de diagnóstico prévio, servindo como ferramenta de rastreamento e apoio à investigação clínica de sintomas de humor.</p></div>
+    </div>
+
+    <div class="two-col-section">
+      <div class="section-title">Utilização do relatório</div>
+      <div><p>Este documento não se constitui em laudo técnico isolado e não substitui entrevista, observação clínica, anamnese e demais instrumentos do processo avaliativo. Seus dados devem ser interpretados de forma integrada e contextualizada.</p></div>
+    </div>
+
+    <div class="footer" aria-label="Rodapé Neuroavalia"><div class="footer-logo">Neuro<span>avalia</span></div><div class="footer-right">Página 2 de {{ page_count }}</div></div>
+  </section>
+
+  <section class="page">
+    <div class="page-logo" aria-label="Neuroavalia">
+      <svg class="page-logo-mark" viewBox="0 0 164 162" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <g transform="translate(82 82)">
+          <line x1="0" y1="0" x2="-46" y2="-48" stroke="#9EB4C2" stroke-width="1.8" />
+          <line x1="0" y1="0" x2="18" y2="-62" stroke="#9EB4C2" stroke-width="1.8" />
+          <line x1="0" y1="0" x2="58" y2="-42" stroke="#9EB4C2" stroke-width="1.8" />
+          <line x1="0" y1="0" x2="68" y2="4" stroke="#9EB4C2" stroke-width="1.8" />
+          <line x1="0" y1="0" x2="34" y2="56" stroke="#9EB4C2" stroke-width="1.8" />
+          <line x1="0" y1="0" x2="-32" y2="54" stroke="#9EB4C2" stroke-width="1.8" />
+          <line x1="0" y1="0" x2="-66" y2="12" stroke="#9EB4C2" stroke-width="1.8" />
+          <path d="M-46 -48 L18 -62 L58 -42 L68 4 L34 56 L-32 54 L-66 12 Z" fill="none" stroke="#D6E2E8" stroke-width="1.6" stroke-linejoin="round" />
+          <path d="M-46 -48 C-20 -72, 25 -84, 58 -42" fill="none" stroke="#D6E2E8" stroke-width="1.4" stroke-linecap="round" />
+          <path d="M-66 12 C-42 38, -5 70, 34 56" fill="none" stroke="#D6E2E8" stroke-width="1.4" stroke-linecap="round" />
+          <circle cx="0" cy="0" r="8.5" fill="#123A5A" />
+          <circle cx="-46" cy="-48" r="7" fill="#CBD6DE" />
+          <circle cx="18" cy="-62" r="7" fill="#27BBD0" />
+          <circle cx="58" cy="-42" r="7" fill="#CBD6DE" />
+          <circle cx="68" cy="4" r="7" fill="#123A5A" />
+          <circle cx="34" cy="56" r="7" fill="#CBD6DE" />
+          <circle cx="-32" cy="54" r="7" fill="#27BBD0" />
+          <circle cx="-66" cy="12" r="7" fill="#CBD6DE" />
+          <circle cx="1" cy="-35" r="4" fill="#D6E2E8" />
+          <circle cx="38" cy="-7" r="4" fill="#D6E2E8" />
+          <circle cx="8" cy="36" r="4" fill="#D6E2E8" />
+          <circle cx="-36" cy="-8" r="4" fill="#D6E2E8" />
+        </g>
+      </svg>
+      <div><span class="page-logo-main">Neuro<span>avalia</span></span><span class="page-logo-sub">Avaliação Neuropsicológica</span></div>
+    </div>
+
+    <h1>Resultados</h1>
+    <h3>{{ normative_table }}</h3>
+    <table class="result-table" aria-label="Resumo dos resultados">
+      <thead><tr><th>Pontos</th><th>Percentil</th><th>Classificação</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>{{ score }}</td>
+          <td>{{ percentile }}</td>
+          <td><span class="classification-pill {{ classification_level }}">{{ classification }}</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Interpretação dos resultados</h2>
+    <p>{{ patient_name }} foi submetido(a) à EBADEP-A e obteve pontuação bruta total de <strong>{{ score }}</strong> ponto(s), correspondente ao percentil <strong>{{ percentile }}</strong>.</p>
+    <p>{{ interpretation_text }}</p>
+    {% if clinical_alert %}<div class="note-box alert-box">{{ clinical_alert }}</div>{% endif %}
+
+    <h2 style="margin-top: 10mm;">Síntese interpretativa</h2>
+    <div class="note-box">O resultado é descrito como {{ synthesis }}. A leitura clínica deve considerar que a EBADEP-A é um instrumento de rastreio e deve ser integrada aos demais dados do processo avaliativo.</div>
+
+    {% if critical_items %}
+    <h2 style="margin-top: 10mm;">Itens de atenção</h2>
+    <p>Itens com pontuação máxima registrada no protocolo:</p>
+    <div class="critical-list">
+      {% for item in critical_items %}<span class="critical-item">Item {{ item.item }} · {{ item.label }}</span>{% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="footer" aria-label="Rodapé Neuroavalia"><div class="footer-logo">Neuro<span>avalia</span></div><div class="footer-right">Página 3 de {{ page_count }}</div></div>
+  </section>
+
+  <section class="page">
+    <div class="report-header">
+      <div class="report-header-gradient"></div>
+      <div class="report-header-logo">Neuro<span>avalia</span></div>
+      <div class="meta">
+        <span>Código do Avaliado</span><strong>{{ application_code }}</strong>
+        <span>Código do Relatório</span><strong>{{ report_code }}</strong>
+        <span>Data da Aplicação</span><strong>{{ applied_on }}</strong>
+      </div>
+    </div>
+
+    <h1>Registro de respostas</h1>
+    <div class="legend">Legenda: <strong>0</strong> primeiro círculo · <strong>1</strong> segundo círculo · <strong>2</strong> terceiro círculo · <strong>3</strong> quarto círculo · <strong>99</strong> sem resposta</div>
+    <table class="response-table" aria-label="Registro de respostas EBADEP-A">
+      <thead>
+        <tr>
+          {% for i in "12345" %}<th>#</th><th>R</th>{% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in response_rows %}
+        <tr>
+          {% for cell in row.cells %}<td class="item" title="{{ cell.label }}">{{ cell.item }}</td><td class="{% if cell.is_critical %}critical{% endif %}">{{ cell.response }}</td>{% endfor %}
+          {% for empty in row.empty_cells %}<td></td><td></td>{% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="footer" aria-label="Rodapé Neuroavalia"><div class="footer-logo">Neuro<span>avalia</span></div><div class="footer-right">Página 4 de {{ page_count }}</div></div>
+  </section>
+</body>
+
+</html>

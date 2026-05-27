@@ -61,5 +61,25 @@ class EPQJModule(BaseTestModule):
         fatores = merged_data.get("fatores", {})
         return get_report_interpretation(fatores, context.patient_name)
 
+    def build_report_payload(self, context: TestContext, merged_data: dict) -> dict:
+        fatores = merged_data.get("fatores") or {}
+        interpretation = self.interpret(context, merged_data)
+        return {
+            "results": [
+                {
+                    "scale": key,
+                    "raw_score": value.get("escore"),
+                    "percentile": value.get("percentil"),
+                    "classification": value.get("classificacao"),
+                }
+                for key, value in fatores.items()
+            ],
+            "summary_for_report": merged_data.get("sintese") or interpretation.split(". ")[0].strip(),
+            "technical_notes": [f"Sexo normativo: {merged_data.get('sexo', 'M')}"],
+            "clinical_flags": [key for key, value in fatores.items() if value.get("classificacao") in {"ALTO", "MUITO ALTO"}],
+            "chart_payload": {},
+            "interpretation": interpretation,
+        }
+
 
 register_test_module(EPQJ_CODE, EPQJModule())

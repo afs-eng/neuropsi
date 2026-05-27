@@ -17,6 +17,7 @@ from .calculators import (
     calculate_index_score,
     calculate_qi_total,
     calculate_confidence_interval,
+    build_process_scores,
     lookup_composite_score,
     lookup_gai_score,
     lookup_cpi_score,
@@ -148,6 +149,13 @@ class WISC4Module(BaseTestModule):
         for code, config in {**WISC4_SUBTESTS, **WISC4_SUPPLEMENTAL_SUBTESTS}.items():
             eb = context.raw_scores.get(code)
             subtest_results[code] = self._build_subtest_result(tabela, code, config, eb)
+
+        subtest_results["process_scores"] = build_process_scores(
+            context.raw_scores,
+            anos,
+            meses,
+            subtest_results,
+        )
 
         return subtest_results
 
@@ -288,11 +296,48 @@ class WISC4Module(BaseTestModule):
             "pontos_fragilizados": pontos_fragilizados,
             "diferencas_significativas": diferencas,
             "confidence_level": confidence_level,
+            "process_scores": computed_data.get("process_scores") or {},
         }
 
     def interpret(self, context: TestContext, merged_data: dict) -> str:
         first_name = (context.patient_name or "Paciente").split(" ", 1)[0]
         return interpret_wisc4_profile(merged_data, first_name)
+
+    def build_report_payload(self, context: TestContext, merged_data: dict) -> dict:
+        interpretation = self.interpret(context, merged_data)
+        qit = merged_data.get("qit_data") or {}
+        indices = merged_data.get("indices") or []
+        subtestes = merged_data.get("subtestes") or []
+        results = [
+            {
+                "scale": item.get("nome") or item.get("indice"),
+                "raw_score": item.get("escore_composto"),
+                "percentile": item.get("percentil"),
+                "classification": item.get("classificacao"),
+            }
+            for item in indices
+        ]
+        results.extend(
+            {
+                "scale": item.get("subteste") or item.get("codigo"),
+                "raw_score": item.get("escore_padrao"),
+                "percentile": item.get("percentil"),
+                "classification": item.get("classificacao"),
+            }
+            for item in subtestes
+        )
+        summary = (
+            f"Funcionamento cognitivo global com QI total {qit.get('escore_composto', '-')}, "
+            f"classificado como {str(qit.get('classificacao') or 'não classificado').lower()}."
+        )
+        return {
+            "results": results,
+            "summary_for_report": summary,
+            "technical_notes": [],
+            "clinical_flags": merged_data.get("pontos_fragilizados") or [],
+            "chart_payload": {},
+            "interpretation": interpretation,
+        }
 
 
 register_test_module(WISC4_CODE, WISC4Module())

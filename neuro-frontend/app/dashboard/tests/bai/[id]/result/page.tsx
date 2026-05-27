@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
+import { printCurrentPage } from "@/lib/print";
+import { TestReportSummaryCard } from "@/components/tests/TestReportSummaryCard";
 
 function ReportSection({
   title,
@@ -271,8 +273,8 @@ function BAIResultPageContent() {
   const confidenceInterval = computed.confidence_interval || [Math.max(20, tScore - 5), Math.min(80, tScore + 5)];
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8">
-      <div className="flex items-center justify-between gap-4">
+    <div className="mx-auto max-w-5xl space-y-8 report-print-shell">
+      <div className="flex items-center justify-between gap-4 print:hidden report-print-hide">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => router.push(backHref)} className="rounded-full">
             <ArrowLeft className="h-5 w-5" />
@@ -282,13 +284,18 @@ function BAIResultPageContent() {
             <p className="text-sm text-slate-500">Inventário de Ansiedade de Beck</p>
           </div>
         </div>
-        <Button variant="outline" className="gap-2 rounded-xl" onClick={() => router.push(backHref)}>
-          <LayoutDashboard className="h-4 w-4" />
-          Voltar à Avaliação
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" className="gap-2 rounded-xl" onClick={printCurrentPage}>
+            Imprimir / PDF
+          </Button>
+          <Button variant="outline" className="gap-2 rounded-xl" onClick={() => router.push(backHref)}>
+            <LayoutDashboard className="h-4 w-4" />
+            Voltar à Avaliação
+          </Button>
+        </div>
       </div>
 
-      <div className="rounded-[30px] border border-slate-200 bg-white px-6 py-6 shadow-sm sm:px-8">
+      <div className="rounded-[30px] border border-slate-200 bg-white px-6 py-6 shadow-sm sm:px-8 report-print-content">
         <div className="flex flex-col gap-5 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">Visão Geral</p>
@@ -343,6 +350,8 @@ function BAIResultPageContent() {
         </Card>
         </div>
       </div>
+
+      <TestReportSummaryCard reportPayload={applicationData.report_payload} fallbackText={interpretation} />
 
       <ReportSection title="Perfil" eyebrow="Perfil BAI">
         <div className="overflow-x-auto">

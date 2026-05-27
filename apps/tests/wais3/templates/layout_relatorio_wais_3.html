@@ -1,0 +1,1966 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Relatório WAIS-III - NeuroAvalia</title>
+  <style>
+    :root {
+      --navy: #073763;
+      --navy-2: #0b3f6f;
+      --blue-soft: #dff1f8;
+      --blue-soft-2: #eef8fc;
+      --grid: #c7d6df;
+      --line: #8fa6b4;
+      --text: #17324d;
+      --page: #ffffff;
+      --azul-profundo: #123A5A;
+      --azul-petroleo: #1B7F8C;
+      --azul-claro: #27BBD0;
+      --cinza-texto: #6F8491;
+      --cinza-linha: #D6E2E8;
+      --margem-superior: 3cm;
+      --margem-esquerda: 2cm;
+      --margem-inferior: 2cm;
+      --margem-direita: 2cm;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    @page {
+      size: A4;
+      margin: 0;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: #E9EEF2;
+      color: var(--text);
+      font-family: "Times New Roman", Times, serif;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto;
+      padding-top: var(--margem-superior);
+      padding-left: var(--margem-esquerda);
+      padding-right: var(--margem-direita);
+      padding-bottom: var(--margem-inferior);
+      background: var(--page);
+      position: relative;
+      page-break-after: always;
+      overflow: hidden;
+    }
+
+    .header-line {
+      border-top: 1.5px solid #1e2f3c;
+      padding-top: 6mm;
+    }
+
+    .report-header {
+      position: absolute;
+      top: 0.65cm;
+      left: var(--margem-esquerda);
+      right: var(--margem-direita);
+      height: 2.05cm;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      border-bottom: 1px solid var(--cinza-linha);
+      background: #FFFFFF;
+    }
+
+    .report-header-gradient {
+      position: absolute;
+      top: 2.17cm;
+      left: 0;
+      right: 0;
+      height: 2.2px;
+      background: linear-gradient(90deg, var(--azul-profundo), var(--azul-petroleo), var(--azul-claro));
+    }
+
+    .report-header-logo {
+      height: 2.05cm;
+      display: flex;
+      align-items: center;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .report-header-logo svg {
+      width: 5.8cm;
+      height: auto;
+      display: block;
+      overflow: visible;
+    }
+
+    .report-header-logo .logo-circle,
+    .report-header-logo .logo-circle::before,
+    .report-header-logo .logo-circle::after {
+      display: none;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr 70mm;
+      gap: 10mm;
+      align-items: start;
+    }
+
+    .brand-main {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 34pt;
+      line-height: .9;
+      color: var(--navy);
+      font-weight: 800;
+      letter-spacing: -2px;
+    }
+
+    .brand-sub {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 6.5pt;
+      color: var(--navy);
+      font-weight: 700;
+      text-transform: uppercase;
+      max-width: 82mm;
+    }
+
+    .meta {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 6.8pt;
+      color: var(--navy);
+      display: grid;
+      grid-template-columns: 1fr 24mm;
+      row-gap: 3.2mm;
+      column-gap: 5mm;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .meta .value {
+      font-weight: 800;
+    }
+
+    .divider {
+      border-bottom: 1.5px solid #1e2f3c;
+      margin-top: 6mm;
+    }
+
+    .footer {
+      position: absolute;
+      left: var(--margem-esquerda);
+      right: var(--margem-direita);
+      bottom: 0.75cm;
+      height: 1cm;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--cinza-linha);
+      padding-top: 0.16cm;
+      background: #FFFFFF;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 8pt;
+      color: var(--cinza-texto);
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .footer-logo {
+      width: 50%;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      color: var(--azul-profundo);
+      font-weight: 800;
+    }
+
+    .footer-logo span {
+      color: var(--azul-petroleo);
+    }
+
+    .footer-right {
+      width: 50%;
+      color: var(--cinza-texto);
+      text-align: right;
+      white-space: nowrap;
+      font-size: 8pt;
+    }
+
+    h1,
+    h2,
+    h3 {
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--navy);
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 24pt;
+      margin: 8mm 0 5mm;
+    }
+
+    h2 {
+      font-size: 17pt;
+      margin: 7mm 0 4mm;
+    }
+
+    .neuro {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 18pt;
+      letter-spacing: 10px;
+      color: var(--navy);
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 13mm;
+    }
+
+    .wais-title {
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--navy);
+      font-size: 29pt;
+      font-weight: 800;
+      letter-spacing: 1px;
+      margin-bottom: 2mm;
+    }
+
+    $1 .cover {
+      padding: 0;
+      background: linear-gradient(135deg, #f8fbff, #ffffff 42%, #edf7ff);
+    }
+
+    .cover .cover-top {
+      position: absolute;
+      left: 13mm;
+      right: 13mm;
+      top: 13mm;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .cover-brand svg {
+      width: 42mm;
+      height: auto;
+      display: block;
+      overflow: visible;
+    }
+
+    .cover-small {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 8pt;
+      color: #66788f;
+      line-height: 1.25;
+      font-weight: 700;
+    }
+
+    .cover-title-block {
+      position: absolute;
+      left: 13mm;
+      top: 43mm;
+      width: 150mm;
+    }
+
+    .cover-kicker {
+      display: inline-block;
+      background: #e5f2ff;
+      color: #174b7b;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 8pt;
+      font-weight: 900;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      margin-bottom: 7mm;
+    }
+
+    .cover-title-block h1 {
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--navy);
+      font-size: 64pt;
+      line-height: .96;
+      letter-spacing: -4px;
+      margin: 0 0 2mm;
+    }
+
+    .cover-title-block .cover-sub {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 22pt;
+      color: #174b7b;
+      font-weight: 900;
+    }
+
+    .cover-title-block::after {
+      content: "";
+      display: block;
+      width: 36mm;
+      height: 4px;
+      border-radius: 10px;
+      background: linear-gradient(90deg, var(--navy), #3b9ee5);
+      margin-top: 7mm;
+    }
+
+    .patient-card {
+      position: absolute;
+      left: 13mm;
+      right: 13mm;
+      top: 118mm;
+      background: rgba(255, 255, 255, .94);
+      border: 1px solid #d7e6f4;
+      border-radius: 22px;
+      box-shadow: 0 18px 46px rgba(11, 47, 91, .11);
+      padding: 18px 22px;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .patient-card .title {
+      font-size: 21pt;
+      color: var(--navy);
+      font-weight: 900;
+      margin-bottom: 13px;
+      border-bottom: 1px solid #d7e6f4;
+      padding-bottom: 11px;
+    }
+
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 13px 26px;
+    }
+
+    .data-grid span {
+      display: block;
+      font-size: 8pt;
+      color: #6a7e97;
+      text-transform: uppercase;
+      letter-spacing: .14em;
+      font-weight: 900;
+      margin-bottom: 4px;
+    }
+
+    .data-grid strong {
+      display: block;
+      color: var(--navy);
+      font-size: 11pt;
+      font-weight: 900;
+    }
+
+    .cover-note {
+      position: absolute;
+      left: 13mm;
+      right: 13mm;
+      bottom: 23mm;
+      border-radius: 16px;
+      background: #f7fbff;
+      border: 1px solid #d7e6f4;
+      padding: 12px 14px;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .cover-note h3 {
+      margin: 0 0 2mm;
+      color: var(--navy);
+      font-size: 15pt;
+      line-height: 1.1;
+      font-weight: 300;
+    }
+
+    .cover-note p {
+      font-size: 10pt;
+      line-height: 1.38;
+      text-align: justify;
+      margin: 0;
+      color: #26364d;
+    }
+
+    .cover .footer {
+      left: var(--margem-esquerda);
+      right: var(--margem-direita);
+      bottom: 0.75cm;
+      border-top: 1px solid var(--cinza-linha);
+      padding-top: 0.16cm;
+      background: transparent;
+      color: var(--cinza-texto);
+      font-size: 8pt;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .cover-grid {
+      display: grid;
+      grid-template-columns: 52mm 1fr;
+      column-gap: 10mm;
+      margin-top: 12mm;
+    }
+
+    .cover-codes {
+      display: grid;
+      gap: 6mm;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--navy);
+      font-size: 8pt;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .cover-codes .big {
+      font-size: 11pt;
+      margin-top: 1mm;
+      color: var(--text);
+    }
+
+    .info-list {
+      display: grid;
+      grid-template-columns: 38mm 1fr;
+      row-gap: 3.8mm;
+      font-size: 11pt;
+    }
+
+    .label-spaced {
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--navy);
+      font-size: 8pt;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 5px;
+    }
+
+    .section-text {
+      display: grid;
+      grid-template-columns: 34mm 1fr;
+      gap: 6mm;
+      margin-top: 7mm;
+      font-size: 10.3pt;
+      line-height: 1.35;
+      text-align: justify;
+    }
+
+    .section-text .side-title {
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--navy);
+      font-weight: 800;
+      font-size: 10pt;
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5mm;
+      align-items: stretch;
+      grid-template-areas:
+        "top top"
+        "middle middle"
+        "left right";
+    }
+
+    .results-page h1 {
+      margin: 0 0 3mm;
+    }
+
+    .results-page .results-grid {
+      gap: 3mm;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .results-page .area-top {
+      width: 125mm;
+      margin-bottom: 0;
+    }
+
+    .results-page .card>table,
+    .results-page .card>.wais-profile-two,
+    .results-page .card>.wais-ruler {
+      margin: 2.2mm;
+      width: calc(100% - 4.4mm);
+    }
+
+    .results-page .card-title {
+      font-size: 7.8pt;
+      padding: 1.35mm 2mm;
+    }
+
+    .results-page table {
+      font-size: 5.9pt;
+    }
+
+    .results-page th {
+      font-size: 5.8pt;
+    }
+
+    .results-page th,
+    .results-page td {
+      padding: .75mm .85mm;
+    }
+
+    .results-page .wais-ruler {
+      height: 102mm;
+    }
+
+    .results-page .mini-grid-chart {
+      height: 92mm;
+    }
+
+    .results-page .mini-heads {
+      height: 6mm;
+      font-size: 5.7pt;
+    }
+
+    .results-page .mini-y,
+    .results-page .ruler-scale,
+    .results-page .ruler-labels {
+      font-size: 5.55pt;
+    }
+
+    .area-left,
+    .area-right {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .area-top {
+      grid-area: top;
+      width: 110mm;
+      margin: 0 auto 2mm;
+    }
+
+    .area-middle {
+      grid-area: middle;
+      width: 100%;
+    }
+
+    .area-left {
+      grid-area: left;
+      align-self: stretch;
+    }
+
+    .area-right {
+      grid-area: right;
+      align-self: stretch;
+    }
+
+    .card {
+      border: 1px solid #c8d7e0;
+      border-radius: 10px;
+      padding: 0;
+      background: #fff;
+      overflow: hidden;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .card>table,
+    .card>.wais-profile-two,
+    .card>.wais-ruler {
+      margin: 3mm;
+      width: calc(100% - 6mm);
+    }
+
+    .card-title {
+      background: var(--navy);
+      color: #fff;
+      font-family: Arial, Helvetica, sans-serif;
+      font-weight: 800;
+      font-size: 8.2pt;
+      line-height: 1.15;
+      text-align: left;
+      padding: 1.7mm 2.3mm;
+      margin: 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      font-size: 6.2pt;
+    }
+
+    th,
+    td {
+      border: .7px solid var(--line);
+      padding: 1mm 1.1mm;
+      text-align: center;
+      vertical-align: middle;
+      line-height: 1.1;
+    }
+
+    th {
+      background: var(--blue-soft);
+      color: var(--navy);
+      font-weight: 800;
+      font-size: 6.1pt;
+    }
+
+    td:first-child,
+    th:first-child {
+      text-align: left;
+      font-weight: 700;
+    }
+
+    .blue-cell {
+      background: var(--blue-soft);
+    }
+
+    .sum-row td {
+      background: #f6fbfd;
+      font-weight: 800;
+    }
+
+    .sep-left {
+      border-left: 2px solid #8298a6 !important;
+    }
+
+    .chart-box {
+      border: 1px solid var(--line);
+      background: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .subtest-chart {
+      height: 102mm;
+      display: grid;
+      grid-template-columns: 7mm 1fr;
+      grid-template-rows: 13mm 1fr;
+      border: 1px solid var(--line);
+    }
+
+    .subtest-groups {
+      grid-column: 2;
+      display: grid;
+      grid-template-columns: 5fr 4fr 3fr 3fr;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 5.6pt;
+      font-weight: 800;
+      color: var(--navy);
+      text-align: center;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .subtest-groups span {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-left: 1px solid var(--line);
+    }
+
+    .subtest-groups span:first-child {
+      border-left: 0;
+    }
+
+    .subtest-heads {
+      position: absolute;
+      left: 10mm;
+      right: 3mm;
+      top: 8mm;
+      height: 5mm;
+      display: grid;
+      grid-template-columns: repeat(15, 1fr);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 5.7pt;
+      font-weight: 800;
+      color: var(--navy);
+      text-align: center;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .y-axis {
+      grid-column: 1;
+      grid-row: 2;
+      display: grid;
+      grid-template-rows: repeat(19, 1fr);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 6pt;
+      color: var(--navy);
+      text-align: center;
+      border-right: 1px solid var(--line);
+    }
+
+    .y-axis span {
+      border-bottom: 1px solid var(--grid);
+      padding-top: .7mm;
+    }
+
+    .subtest-body {
+      grid-column: 2;
+      grid-row: 2;
+      position: relative;
+      background-image:
+        linear-gradient(to bottom, transparent 42.1%, rgba(151, 206, 230, .28) 42.1%, rgba(151, 206, 230, .28) 57.9%, transparent 57.9%),
+        repeating-linear-gradient(to bottom, transparent 0, transparent calc(100% / 19 - 1px), var(--grid) calc(100% / 19)),
+        repeating-linear-gradient(to right, transparent 0, transparent calc(100% / 15 - 1px), var(--grid) calc(100% / 15));
+    }
+
+    .domain-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 1.5px;
+      background: #7f9aaa;
+    }
+
+    .dl1 {
+      left: 33.33%;
+    }
+
+    .dl2 {
+      left: 60%;
+    }
+
+    .dl3 {
+      left: 80%;
+    }
+
+    .dot {
+      width: 4.5px;
+      height: 4.5px;
+      border-radius: 50%;
+      background: #1976a2;
+      position: absolute;
+      transform: translate(-50%, -50%);
+    }
+
+    .s1 {
+      left: 3.33%;
+      top: 31%;
+    }
+
+    .s2 {
+      left: 10%;
+      top: 31%;
+    }
+
+    .s3 {
+      left: 16.66%;
+      top: 26%;
+    }
+
+    .s4 {
+      left: 23.33%;
+      top: 29%;
+    }
+
+    .s5 {
+      left: 30%;
+      top: 33%;
+    }
+
+    .s6 {
+      left: 36.66%;
+      top: 28%;
+    }
+
+    .s7 {
+      left: 43.33%;
+      top: 30%;
+    }
+
+    .s8 {
+      left: 50%;
+      top: 35%;
+    }
+
+    .s9 {
+      left: 56.66%;
+      top: 39%;
+    }
+
+    .s10 {
+      left: 63.33%;
+      top: 43%;
+    }
+
+    .s11 {
+      left: 70%;
+      top: 45%;
+    }
+
+    .s12 {
+      left: 76.66%;
+      top: 46%;
+    }
+
+    .s13 {
+      left: 83.33%;
+      top: 52%;
+    }
+
+    .s14 {
+      left: 90%;
+      top: 50%;
+    }
+
+    .s15 {
+      left: 96.66%;
+      top: 48%;
+    }
+
+    .compound-chart {
+      height: 86mm;
+      display: grid;
+      grid-template-columns: 10mm 1fr;
+      grid-template-rows: 12mm 1fr;
+      border: 1px solid var(--line);
+      position: relative;
+    }
+
+    .compound-heads {
+      grid-column: 2;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--navy);
+      font-weight: 800;
+      font-size: 6.3pt;
+      text-align: center;
+      align-items: center;
+    }
+
+    .compound-values {
+      position: absolute;
+      left: 10mm;
+      right: 0;
+      top: 6mm;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--navy);
+      font-weight: 800;
+      font-size: 6.2pt;
+      text-align: center;
+      background: var(--blue-soft);
+      height: 6mm;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .compound-y {
+      grid-column: 1;
+      grid-row: 2;
+      display: grid;
+      grid-template-rows: repeat(13, 1fr);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 6pt;
+      color: var(--navy);
+      text-align: center;
+      border-right: 1px solid var(--line);
+    }
+
+    .compound-y span {
+      border-bottom: 1px solid var(--grid);
+      padding-top: .7mm;
+    }
+
+    .compound-body {
+      grid-column: 2;
+      grid-row: 2;
+      position: relative;
+      background-image:
+        linear-gradient(to bottom, transparent 38.5%, rgba(151, 206, 230, .28) 38.5%, rgba(151, 206, 230, .28) 53.9%, transparent 53.9%),
+        repeating-linear-gradient(to bottom, transparent 0, transparent calc(100% / 13 - 1px), var(--grid) calc(100% / 13)),
+        repeating-linear-gradient(to right, transparent 0, transparent calc(100% / 7 - 1px), var(--grid) calc(100% / 7));
+    }
+
+    .c1 {
+      left: 7.14%;
+      top: 38%;
+    }
+
+    .c2 {
+      left: 21.42%;
+      top: 50%;
+    }
+
+    .c3 {
+      left: 35.71%;
+      top: 45%;
+    }
+
+    .c4 {
+      left: 50%;
+      top: 36%;
+    }
+
+    .c5 {
+      left: 64.28%;
+      top: 48%;
+    }
+
+    .c6 {
+      left: 78.57%;
+      top: 49%;
+    }
+
+    .c7 {
+      left: 92.85%;
+      top: 61%;
+    }
+
+    .analysis-block {
+      border: 1px solid #c8d7e0;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 4mm;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .analysis-title {
+      background: var(--navy);
+      color: #fff;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 8.2pt;
+      font-weight: 800;
+      line-height: 1.15;
+      padding: 1.7mm 2.3mm;
+    }
+
+    .analysis-block table {
+      font-size: 6.2pt;
+    }
+
+    .analysis-block.cluster-table table {
+      table-layout: fixed;
+      font-size: 6pt;
+    }
+
+    .analysis-block.cluster-table th,
+    .analysis-block.cluster-table td {
+      padding: .9mm 1mm;
+    }
+
+    .analysis-block.cluster-table .abbr {
+      color: var(--navy);
+      font-weight: 800;
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    .analysis-block.cluster-table .classification-high {
+      background: #e7f8ec;
+      color: #1b7f3a;
+      font-weight: 800;
+    }
+
+    .analysis-block.cluster-table .not-interpretable {
+      background: #fff4c2;
+      color: #b00000;
+      font-weight: 900;
+    }
+
+    .analysis-block.cluster-table .negative {
+      background: #d92525;
+      color: #fff;
+      font-weight: 900;
+    }
+
+    .analysis-block.cluster-table .relation {
+      color: var(--navy);
+      font-size: 7.4pt;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5mm;
+    }
+
+    .wais-profile-two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5mm;
+    }
+
+    .mini-profile {
+      border: 1px solid var(--line);
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .mini-profile-title {
+      background: var(--blue-soft);
+      color: var(--navy);
+      font-family: Arial, Helvetica, sans-serif;
+      font-weight: 800;
+      font-size: 7pt;
+      text-align: center;
+      padding: 1.6mm;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .mini-heads {
+      display: grid;
+      grid-template-columns: 7mm repeat(7, 1fr);
+      height: 6mm;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 6pt;
+      color: var(--navy);
+      text-align: center;
+    }
+
+    .mini-heads>* {
+      border-left: 1px solid var(--grid);
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mini-heads>*:first-child {
+      border-left: 0;
+    }
+
+    .mini-grid-chart {
+      display: grid;
+      grid-template-columns: 7mm 1fr;
+      height: 92mm;
+    }
+
+    .mini-y {
+      display: grid;
+      grid-template-rows: repeat(19, 1fr);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 6pt;
+      color: var(--navy);
+      text-align: center;
+      border-right: 1px solid var(--line);
+    }
+
+    .mini-y span {
+      border-bottom: 1px solid var(--grid);
+      padding-top: .6mm;
+    }
+
+    .mini-body {
+      position: relative;
+      background-image:
+        linear-gradient(to bottom, transparent 42.1%, rgba(151, 206, 230, .28) 42.1%, rgba(151, 206, 230, .28) 52.6%, transparent 52.6%),
+        repeating-linear-gradient(to bottom, transparent 0, transparent calc(100% / 19 - 1px), var(--grid) calc(100% / 19)),
+        repeating-linear-gradient(to right, transparent 0, transparent calc(100% / 7 - 1px), var(--grid) calc(100% / 7));
+    }
+
+    .dot-standard {
+      width: 3.1mm;
+      height: 3.1mm;
+      border-radius: 50%;
+      background: #1c95c3;
+      border: .45mm solid #ffffff;
+      box-shadow: 0 0 0 .35px #1976a2;
+      position: absolute;
+      transform: translate(-50%, -50%);
+    }
+
+    .v1 {
+      left: 7.14%;
+      top: 28.95%
+    }
+
+    .v2 {
+      left: 21.42%;
+      top: 23.68%
+    }
+
+    .v3 {
+      left: 35.71%;
+      top: 28.95%
+    }
+
+    .v4 {
+      left: 50%;
+      top: 34.21%
+    }
+
+    .v5 {
+      left: 64.28%;
+      top: 44.74%
+    }
+
+    .v6 {
+      left: 78.57%;
+      top: 39.47%
+    }
+
+    .v7 {
+      left: 92.85%;
+      top: 50%
+    }
+
+    .e1 {
+      left: 7.14%;
+      top: 50%
+    }
+
+    .e2 {
+      left: 21.42%;
+      top: 44.74%
+    }
+
+    .e3 {
+      left: 35.71%;
+      top: 39.47%
+    }
+
+    .e4 {
+      left: 50%;
+      top: 34.21%
+    }
+
+    .e5 {
+      left: 64.28%;
+      top: 55.26%
+    }
+
+    .e6 {
+      left: 78.57%;
+      top: 50%
+    }
+
+    .e7 {
+      left: 92.85%;
+      top: 44.74%
+    }
+
+    .wais-ruler {
+      display: grid;
+      grid-template-columns: 7mm repeat(7, minmax(0, 1fr));
+      grid-template-rows: 7mm 1fr;
+      height: 105mm;
+      border: 1px solid var(--line);
+      padding: 2mm;
+      column-gap: 2mm;
+    }
+
+    .ruler-labels {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 7mm repeat(7, minmax(0, 1fr));
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 6.2pt;
+      color: var(--navy);
+      text-align: center;
+      align-items: center;
+    }
+
+    .ruler-scale {
+      display: grid;
+      grid-template-rows: repeat(23, 1fr);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 6pt;
+      color: var(--navy);
+      text-align: right;
+      padding-right: 1mm;
+    }
+
+    .ruler-col {
+      position: relative;
+      background: linear-gradient(to right, transparent calc(50% - .5px), #86b8ce calc(50% - .5px), #86b8ce calc(50% + .5px), transparent calc(50% + .5px));
+    }
+
+    .ruler-col::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: calc(50% - 3mm);
+      width: 6mm;
+      background:
+        linear-gradient(#86b8ce, #86b8ce) bottom / 100% .35mm no-repeat,
+        repeating-linear-gradient(to bottom, #86b8ce 0, #86b8ce .35mm, transparent .35mm, transparent calc(100% / 22));
+    }
+
+    .ruler-col::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: var(--score, 45%);
+      width: 5.6mm;
+      height: 1.1mm;
+      background: #1976a2;
+      border-radius: 999px;
+      transform: translate(-50%, -50%);
+    }
+
+    .rc1 {
+      --score: 38%
+    }
+
+    .rc2 {
+      --score: 50%
+    }
+
+    .rc3 {
+      --score: 45%
+    }
+
+    .rc4 {
+      --score: 36%
+    }
+
+    .rc5 {
+      --score: 48%
+    }
+
+    .rc6 {
+      --score: 49%
+    }
+
+    .rc7 {
+      --score: 61%
+    }
+
+    .clinical-title,
+    .summary-title {
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--navy);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+    }
+
+    .clinical-title {
+      font-size: 17pt;
+      margin: 9mm 0 5mm;
+    }
+
+    .summary-title {
+      font-size: 15pt;
+      margin: 8mm 0 5mm;
+    }
+
+    .clinical {
+      margin-top: 8mm;
+      font-size: 11pt;
+      line-height: 1.42;
+      text-align: justify;
+    }
+
+    .clinical p {
+      margin: 0 0 4mm;
+    }
+
+    .note-box {
+      background: #f3f8fc;
+      border-left: 4px solid var(--navy);
+      padding: 4mm;
+      border-radius: 8px;
+      font-size: 10.8pt;
+      text-align: justify;
+    }
+
+    .clinical-page {
+      padding-bottom: 18mm;
+    }
+
+    .clinical-title,
+    .summary-title {
+      break-after: avoid;
+      page-break-after: avoid;
+    }
+
+    .clinical p,
+    .note-box {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .page {
+        margin: 0;
+        box-shadow: none;
+      }
+    }
+
+    @media screen {
+      .page {
+        margin: 18px auto;
+        box-shadow: 0 18px 48px rgba(18, 58, 90, 0.16);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <section class="page cover">
+    <div class="cover-top">
+      <div class="cover-brand">
+        <svg viewBox="0 0 760 210" xmlns="http://www.w3.org/2000/svg" aria-label="Neuroavalia Logo">
+          <g transform="translate(100 105)">
+            <line x1="0" y1="0" x2="-46" y2="-48" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="18" y2="-62" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="58" y2="-42" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="68" y2="4" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="34" y2="56" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="-32" y2="54" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="-66" y2="12" stroke="#9EB4C2" stroke-width="1.8" />
+            <path d="M-46 -48 L18 -62 L58 -42 L68 4 L34 56 L-32 54 L-66 12 Z" fill="none" stroke="#D6E2E8"
+              stroke-width="1.6" stroke-linejoin="round" />
+            <path d="M-46 -48 C-20 -72, 25 -84, 58 -42" fill="none" stroke="#D6E2E8" stroke-width="1.4"
+              stroke-linecap="round" />
+            <path d="M-66 12 C-42 38, -5 70, 34 56" fill="none" stroke="#D6E2E8" stroke-width="1.4"
+              stroke-linecap="round" />
+            <circle cx="0" cy="0" r="8.5" fill="#123A5A" />
+            <circle cx="-46" cy="-48" r="7" fill="#CBD6DE" />
+            <circle cx="18" cy="-62" r="7" fill="#27BBD0" />
+            <circle cx="58" cy="-42" r="7" fill="#CBD6DE" />
+            <circle cx="68" cy="4" r="7" fill="#123A5A" />
+            <circle cx="34" cy="56" r="7" fill="#CBD6DE" />
+            <circle cx="-32" cy="54" r="7" fill="#27BBD0" />
+            <circle cx="-66" cy="12" r="7" fill="#CBD6DE" />
+            <circle cx="1" cy="-35" r="4" fill="#D6E2E8" />
+            <circle cx="38" cy="-7" r="4" fill="#D6E2E8" />
+            <circle cx="8" cy="36" r="4" fill="#D6E2E8" />
+            <circle cx="-36" cy="-8" r="4" fill="#D6E2E8" />
+          </g>
+          <text x="220" y="112" font-family="Arial, Helvetica, sans-serif" font-size="62" font-weight="700"
+            letter-spacing="-1.8">
+            <tspan fill="#123A5A">Neuro</tspan>
+            <tspan fill="#1B7F8C">avalia</tspan>
+          </text>
+          <text x="224" y="144" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="600"
+            letter-spacing="3" fill="#7E929F">AVALIAÇÃO NEUROPSICOLÓGICA</text>
+        </svg>
+      </div>
+      <div class="cover-small">Relatório técnico completo</div>
+    </div>
+
+    <div class="cover-title-block">
+      <span class="cover-kicker">Escala Wechsler de Inteligência</span>
+      <h1>WAIS-III</h1>
+      <div class="cover-sub">Relatório Técnico Completo</div>
+    </div>
+
+    <div class="patient-card">
+      <div class="title">Dados do avaliado</div>
+      <div class="data-grid">
+        <div><span>Nome</span><strong>Nome do Avaliado</strong></div>
+        <div><span>Sexo</span><strong>Masculino</strong></div>
+        <div><span>Idade</span><strong>32 anos e 4 meses</strong></div>
+        <div><span>Escolaridade</span><strong>Ensino superior completo</strong></div>
+        <div><span>Profissional</span><strong>Andre Alekhine</strong></div>
+        <div><span>Tabela normativa</span><strong>WAIS-III / Brasil / Faixa etária correspondente</strong></div>
+        <div><span>Código do avaliado</span><strong>AVL-102</strong></div>
+        <div><span>Data da aplicação</span><strong>13/05/2026</strong></div>
+      </div>
+    </div>
+
+    <div class="cover-note">
+      <h3>Finalidade do relatório técnico</h3>
+      <p>Este documento apresenta os resultados psicométricos do WAIS-III, incluindo quocientes intelectuais, índices
+        fatoriais, perfil dos subtestes, comparações entre discrepâncias e interpretação clínica. Os achados devem ser
+        interpretados por profissional habilitado e integrados à entrevista clínica, observações comportamentais,
+        histórico funcional e demais instrumentos utilizados na avaliação neuropsicológica.</p>
+    </div>
+
+    <div class="footer"><span>NeuroAvalia · WAIS-III Técnico</span><span>PÁGINA 1 DE 4</span></div>
+  </section>
+
+  <section class="page results-page">
+    <div class="report-header">
+      <div class="report-header-gradient"></div>
+      <div class="report-header-logo">
+        <svg viewBox="0 0 760 210" xmlns="http://www.w3.org/2000/svg" aria-label="Neuroavalia Logo">
+          <g transform="translate(100 105)">
+            <line x1="0" y1="0" x2="-46" y2="-48" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="18" y2="-62" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="58" y2="-42" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="68" y2="4" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="34" y2="56" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="-32" y2="54" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="-66" y2="12" stroke="#9EB4C2" stroke-width="1.8" />
+
+            <path d="M-46 -48 L18 -62 L58 -42 L68 4 L34 56 L-32 54 L-66 12 Z" fill="none" stroke="#D6E2E8"
+              stroke-width="1.6" stroke-linejoin="round" />
+
+            <path d="M-46 -48 C-20 -72, 25 -84, 58 -42" fill="none" stroke="#D6E2E8" stroke-width="1.4"
+              stroke-linecap="round" />
+
+            <path d="M-66 12 C-42 38, -5 70, 34 56" fill="none" stroke="#D6E2E8" stroke-width="1.4"
+              stroke-linecap="round" />
+
+            <circle cx="0" cy="0" r="8.5" fill="#123A5A" />
+            <circle cx="-46" cy="-48" r="7" fill="#CBD6DE" />
+            <circle cx="18" cy="-62" r="7" fill="#27BBD0" />
+            <circle cx="58" cy="-42" r="7" fill="#CBD6DE" />
+            <circle cx="68" cy="4" r="7" fill="#123A5A" />
+            <circle cx="34" cy="56" r="7" fill="#CBD6DE" />
+            <circle cx="-32" cy="54" r="7" fill="#27BBD0" />
+            <circle cx="-66" cy="12" r="7" fill="#CBD6DE" />
+
+            <circle cx="1" cy="-35" r="4" fill="#D6E2E8" />
+            <circle cx="38" cy="-7" r="4" fill="#D6E2E8" />
+            <circle cx="8" cy="36" r="4" fill="#D6E2E8" />
+            <circle cx="-36" cy="-8" r="4" fill="#D6E2E8" />
+          </g>
+
+          <text x="220" y="112" font-family="Arial, Helvetica, sans-serif" font-size="62" font-weight="700"
+            letter-spacing="-1.8">
+            <tspan fill="#123A5A">Neuro</tspan>
+            <tspan fill="#1B7F8C">avalia</tspan>
+          </text>
+        </svg>
+      </div>
+    </div>
+
+    <h1>Resultados</h1>
+
+    <div class="results-grid">
+      <div class="card area-top">
+        <div class="card-title">QI / Índices Fatoriais</div>
+        <table>
+          <thead>
+            <tr>
+              <th>QI / Índices Fatoriais</th>
+              <th>QIV</th>
+              <th>QIE</th>
+              <th>QIT</th>
+              <th class="sep-left">ICV</th>
+              <th>IOP</th>
+              <th>IMO</th>
+              <th>IVP</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Soma dos escores ponderados</td>
+              <td>81</td>
+              <td>69</td>
+              <td>150</td>
+              <td class="sep-left">50</td>
+              <td>43</td>
+              <td>30</td>
+              <td>17</td>
+            </tr>
+            <tr>
+              <td>QI / Índices Fatoriais</td>
+              <td>110</td>
+              <td>98</td>
+              <td>105</td>
+              <td class="sep-left">112</td>
+              <td>101</td>
+              <td>100</td>
+              <td>89</td>
+            </tr>
+            <tr>
+              <td>Percentil</td>
+              <td>75</td>
+              <td>45</td>
+              <td>63</td>
+              <td class="sep-left">79</td>
+              <td>53</td>
+              <td>50</td>
+              <td>23</td>
+            </tr>
+            <tr>
+              <td>Intervalo de Confiança 95%</td>
+              <td>104-115</td>
+              <td>92-104</td>
+              <td>100-110</td>
+              <td class="sep-left">105-118</td>
+              <td>94-108</td>
+              <td>93-107</td>
+              <td>82-98</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card area-right">
+        <div class="card-title">Perfil dos Quocientes Intelectuais e Índices Fatoriais</div>
+        <div class="wais-ruler">
+          <div class="ruler-labels"><span></span><b>QIV</b><b>QIE</b><b>QIT</b><b>ICV</b><b>IOP</b><b>IMO</b><b>IVP</b>
+          </div>
+          <div class="ruler-scale">
+            <span>155</span><span>150</span><span>145</span><span>140</span><span>135</span><span>130</span><span>125</span><span>120</span><span>115</span><span>110</span><span>105</span><span>100</span><span>95</span><span>90</span><span>85</span><span>80</span><span>75</span><span>70</span><span>65</span><span>60</span><span>55</span><span>50</span><span>45</span>
+          </div>
+          <div class="ruler-col rc1"></div>
+          <div class="ruler-col rc2"></div>
+          <div class="ruler-col rc3"></div>
+          <div class="ruler-col rc4"></div>
+          <div class="ruler-col rc5"></div>
+          <div class="ruler-col rc6"></div>
+          <div class="ruler-col rc7"></div>
+        </div>
+      </div>
+
+      <div class="card area-left">
+        <div class="card-title">Perfil dos Pontos Ponderados dos Subtestes</div>
+        <div class="wais-profile-two">
+          <div class="mini-profile">
+            <div class="mini-profile-title">Escala Verbal</div>
+            <div class="mini-heads"><span></span><b>V</b><b>S</b><b>I</b><b>C</b><b>A</b><b>D</b><b>SNL</b></div>
+            <div class="mini-grid-chart verbal">
+              <div class="mini-y">
+                <span>19</span><span>18</span><span>17</span><span>16</span><span>15</span><span>14</span><span>13</span><span>12</span><span>11</span><span>10</span><span>9</span><span>8</span><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span>
+              </div>
+              <div class="mini-body"><i class="dot-standard v1"></i><i class="dot-standard v2"></i><i
+                  class="dot-standard v3"></i><i class="dot-standard v4"></i><i class="dot-standard v5"></i><i
+                  class="dot-standard v6"></i><i class="dot-standard v7"></i></div>
+            </div>
+          </div>
+          <div class="mini-profile">
+            <div class="mini-profile-title">Escala de Execução</div>
+            <div class="mini-heads"><span></span><b>AF</b><b>CF</b><b>CB</b><b>RM</b><b>CD</b><b>PS</b><b>AO</b></div>
+            <div class="mini-grid-chart exec">
+              <div class="mini-y">
+                <span>19</span><span>18</span><span>17</span><span>16</span><span>15</span><span>14</span><span>13</span><span>12</span><span>11</span><span>10</span><span>9</span><span>8</span><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span>
+              </div>
+              <div class="mini-body"><i class="dot-standard e1"></i><i class="dot-standard e2"></i><i
+                  class="dot-standard e3"></i><i class="dot-standard e4"></i><i class="dot-standard e5"></i><i
+                  class="dot-standard e6"></i><i class="dot-standard e7"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card area-middle">
+        <div class="card-title">Resumo Técnico dos Índices</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Escala</th>
+              <th>Soma dos PP</th>
+              <th>Ponto Composto</th>
+              <th>Percentil</th>
+              <th>IC 95%</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>QI Verbal</td>
+              <td>81</td>
+              <td>QIV 110</td>
+              <td>75</td>
+              <td>104-115</td>
+            </tr>
+            <tr>
+              <td>QI de Execução</td>
+              <td>69</td>
+              <td>QIE 98</td>
+              <td>45</td>
+              <td>92-104</td>
+            </tr>
+            <tr>
+              <td>QI Total</td>
+              <td>150</td>
+              <td>QIT 105</td>
+              <td>63</td>
+              <td>100-110</td>
+            </tr>
+            <tr>
+              <td>Compreensão Verbal</td>
+              <td>50</td>
+              <td>ICV 112</td>
+              <td>79</td>
+              <td>105-118</td>
+            </tr>
+            <tr>
+              <td>Organização Perceptual</td>
+              <td>43</td>
+              <td>IOP 101</td>
+              <td>53</td>
+              <td>94-108</td>
+            </tr>
+            <tr>
+              <td>Memória Operacional</td>
+              <td>30</td>
+              <td>IMO 100</td>
+              <td>50</td>
+              <td>93-107</td>
+            </tr>
+            <tr>
+              <td>Velocidade de Processamento</td>
+              <td>17</td>
+              <td>IVP 89</td>
+              <td>23</td>
+              <td>82-98</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="footer"><span>NeuroAvalia · WAIS-III Técnico</span><span>PÁGINA 2 DE 4</span></div>
+  </section>
+
+  <section class="page">
+    <div class="report-header">
+      <div class="report-header-gradient"></div>
+      <div class="report-header-logo">
+        <svg viewBox="0 0 760 210" xmlns="http://www.w3.org/2000/svg" aria-label="Neuroavalia Logo">
+          <g transform="translate(100 105)">
+            <line x1="0" y1="0" x2="-46" y2="-48" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="18" y2="-62" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="58" y2="-42" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="68" y2="4" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="34" y2="56" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="-32" y2="54" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="-66" y2="12" stroke="#9EB4C2" stroke-width="1.8" />
+
+            <path d="M-46 -48 L18 -62 L58 -42 L68 4 L34 56 L-32 54 L-66 12 Z" fill="none" stroke="#D6E2E8"
+              stroke-width="1.6" stroke-linejoin="round" />
+
+            <path d="M-46 -48 C-20 -72, 25 -84, 58 -42" fill="none" stroke="#D6E2E8" stroke-width="1.4"
+              stroke-linecap="round" />
+
+            <path d="M-66 12 C-42 38, -5 70, 34 56" fill="none" stroke="#D6E2E8" stroke-width="1.4"
+              stroke-linecap="round" />
+
+            <circle cx="0" cy="0" r="8.5" fill="#123A5A" />
+            <circle cx="-46" cy="-48" r="7" fill="#CBD6DE" />
+            <circle cx="18" cy="-62" r="7" fill="#27BBD0" />
+            <circle cx="58" cy="-42" r="7" fill="#CBD6DE" />
+            <circle cx="68" cy="4" r="7" fill="#123A5A" />
+            <circle cx="34" cy="56" r="7" fill="#CBD6DE" />
+            <circle cx="-32" cy="54" r="7" fill="#27BBD0" />
+            <circle cx="-66" cy="12" r="7" fill="#CBD6DE" />
+
+            <circle cx="1" cy="-35" r="4" fill="#D6E2E8" />
+            <circle cx="38" cy="-7" r="4" fill="#D6E2E8" />
+            <circle cx="8" cy="36" r="4" fill="#D6E2E8" />
+            <circle cx="-36" cy="-8" r="4" fill="#D6E2E8" />
+          </g>
+
+          <text x="220" y="112" font-family="Arial, Helvetica, sans-serif" font-size="62" font-weight="700"
+            letter-spacing="-1.8">
+            <tspan fill="#123A5A">Neuro</tspan>
+            <tspan fill="#1B7F8C">avalia</tspan>
+          </text>
+        </svg>
+      </div>
+    </div>
+
+    <h1>Página de Análise</h1>
+
+    <div class="analysis-block">
+      <div class="analysis-title">Comparações entre as Discrepâncias</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Comparação</th>
+            <th>Escore 1</th>
+            <th>Escore 2</th>
+            <th>Diferença</th>
+            <th>Significância Estatística</th>
+            <th>Frequência da Diferença na Amostra de Padronização</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>QI Verbal - QI de Execução</td>
+            <td>QIV</td>
+            <td>QIE</td>
+            <td>12</td>
+            <td>Sim</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Compreensão Verbal - Organização Perceptual</td>
+            <td>ICV</td>
+            <td>IOP</td>
+            <td>11</td>
+            <td>Sim</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Compreensão Verbal - Memória Operacional</td>
+            <td>ICV</td>
+            <td>IMO</td>
+            <td>12</td>
+            <td>Sim</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Organização Perceptual - Velocidade de Processamento</td>
+            <td>IOP</td>
+            <td>IVP</td>
+            <td>12</td>
+            <td>Não</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Compreensão Verbal - Velocidade de Processamento</td>
+            <td>ICV</td>
+            <td>IVP</td>
+            <td>23</td>
+            <td>Sim</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Organização Perceptual - Memória Operacional</td>
+            <td>IOP</td>
+            <td>IMO</td>
+            <td>1</td>
+            <td>Não</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Memória Operacional - Velocidade de Processamento</td>
+            <td>IMO</td>
+            <td>IVP</td>
+            <td>11</td>
+            <td>Não</td>
+            <td>—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="analysis-block">
+      <div class="analysis-title">Nível Subteste</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Escores de Processo</th>
+            <th>Escore 1</th>
+            <th>Escore 2</th>
+            <th>Diferença</th>
+            <th>Frequência Acumulada</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Maior Sequência Dígitos Ordem Direta</td>
+            <td>Direta</td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Maior Sequência Dígitos Ordem Inversa</td>
+            <td>Inversa</td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Dígitos Ordem Direta - Ordem Inversa</td>
+            <td>Direta</td>
+            <td>Inversa</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="analysis-block cluster-table">
+      <div class="analysis-title">Análise de Clusters</div>
+      <table aria-label="Análise de Clusters">
+        <colgroup>
+          <col style="width: 31%">
+          <col style="width: 8%">
+          <col style="width: 8%">
+          <col style="width: 9%">
+          <col style="width: 10%">
+          <col style="width: 9%">
+          <col style="width: 11%">
+          <col style="width: 7%">
+          <col style="width: 12%">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Cluster</th>
+            <th>Código</th>
+            <th># Maior/Menor<br>subteste</th>
+            <th>Interpretável?<br>(≠ &lt; 5)</th>
+            <th>Soma dos<br>pontos ponderados</th>
+            <th>Pontos<br>compostos</th>
+            <th>IC 95%</th>
+            <th>Percentil</th>
+            <th>Classificação</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Raciocínio Fluido (RM + AF + AR)</td>
+            <td class="abbr">Gf</td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="analysis-block cluster-table">
+      <div class="analysis-title">Comparações Clínicas</div>
+      <table aria-label="Comparações Clínicas">
+        <colgroup>
+          <col style="width: 25%">
+          <col style="width: 10%">
+          <col style="width: 7%">
+          <col style="width: 10%">
+          <col style="width: 7%">
+          <col style="width: 8%">
+          <col style="width: 8%">
+          <col style="width: 12%">
+          <col style="width: 7%">
+          <col style="width: 3%">
+          <col style="width: 7%">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Comparação</th>
+            <th colspan="2">Pontos Compostos 1</th>
+            <th colspan="2">Pontos Compostos 2</th>
+            <th>Diferença</th>
+            <th>Valor<br>crítico</th>
+            <th>Raro/<br>Não raro</th>
+            <th colspan="3">Direção</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Gf x Gv</td>
+            <td class="abbr">Gf</td>
+            <td>—</td>
+            <td class="abbr">Gv</td>
+            <td>—</td>
+            <td>—</td>
+            <td>21</td>
+            <td>—</td>
+            <td class="abbr">Gf</td>
+            <td class="relation">—</td>
+            <td class="abbr">Gv</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="footer"><span>NeuroAvalia · WAIS-III Técnico</span><span>PÁGINA 3 DE 4</span></div>
+  </section>
+
+  <section class="page clinical-page">
+    <div class="report-header">
+      <div class="report-header-gradient"></div>
+      <div class="report-header-logo">
+        <svg viewBox="0 0 760 210" xmlns="http://www.w3.org/2000/svg" aria-label="Neuroavalia Logo">
+          <g transform="translate(100 105)">
+            <line x1="0" y1="0" x2="-46" y2="-48" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="18" y2="-62" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="58" y2="-42" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="68" y2="4" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="34" y2="56" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="-32" y2="54" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="-66" y2="12" stroke="#9EB4C2" stroke-width="1.8" />
+
+            <path d="M-46 -48 L18 -62 L58 -42 L68 4 L34 56 L-32 54 L-66 12 Z" fill="none" stroke="#D6E2E8"
+              stroke-width="1.6" stroke-linejoin="round" />
+
+            <path d="M-46 -48 C-20 -72, 25 -84, 58 -42" fill="none" stroke="#D6E2E8" stroke-width="1.4"
+              stroke-linecap="round" />
+
+            <path d="M-66 12 C-42 38, -5 70, 34 56" fill="none" stroke="#D6E2E8" stroke-width="1.4"
+              stroke-linecap="round" />
+
+            <circle cx="0" cy="0" r="8.5" fill="#123A5A" />
+            <circle cx="-46" cy="-48" r="7" fill="#CBD6DE" />
+            <circle cx="18" cy="-62" r="7" fill="#27BBD0" />
+            <circle cx="58" cy="-42" r="7" fill="#CBD6DE" />
+            <circle cx="68" cy="4" r="7" fill="#123A5A" />
+            <circle cx="34" cy="56" r="7" fill="#CBD6DE" />
+            <circle cx="-32" cy="54" r="7" fill="#27BBD0" />
+            <circle cx="-66" cy="12" r="7" fill="#CBD6DE" />
+
+            <circle cx="1" cy="-35" r="4" fill="#D6E2E8" />
+            <circle cx="38" cy="-7" r="4" fill="#D6E2E8" />
+            <circle cx="8" cy="36" r="4" fill="#D6E2E8" />
+            <circle cx="-36" cy="-8" r="4" fill="#D6E2E8" />
+          </g>
+
+          <text x="220" y="112" font-family="Arial, Helvetica, sans-serif" font-size="62" font-weight="700"
+            letter-spacing="-1.8">
+            <tspan fill="#123A5A">Neuro</tspan>
+            <tspan fill="#1B7F8C">avalia</tspan>
+          </text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="clinical-title">Interpretação Clínica</div>
+    <div class="clinical">
+      <p>Os resultados obtidos na Escala Wechsler de Inteligência para Adultos – Terceira Edição (WAIS-III) indicam
+        funcionamento intelectual global situado na faixa Média (QIT = 105; percentil 63; IC 95% = 100-110). Embora o
+        QIT represente um indicador global adequado do desempenho intelectual geral, sua interpretação deve ser
+        realizada com cautela clínica, considerando a presença de variações entre os índices fatoriais, especialmente
+        pela diferença entre recursos verbais mais elevados e menor eficiência relativa em velocidade de processamento.
+      </p>
+
+      <p>O perfil evidencia melhor desempenho em habilidades mediadas pela linguagem, com Quociente de Inteligência
+        Verbal situado na faixa Média Superior (QIV = 110; percentil 75) e Índice de Compreensão Verbal também na faixa
+        Média Superior (ICV = 112; percentil 79). Esses achados sugerem boa capacidade de formação conceitual,
+        raciocínio verbal, compreensão de informações complexas, uso de conhecimentos previamente adquiridos e
+        elaboração abstrata por meio da linguagem.</p>
+
+      <p>O Quociente de Inteligência de Execução (QIE = 98; percentil 45) e o Índice de Organização Perceptual (IOP =
+        101; percentil 53) situaram-se na faixa Média, indicando recursos preservados para raciocínio não verbal,
+        análise visuoespacial, integração perceptiva e resolução de problemas com apoio visual. Esse padrão sugere que o
+        avaliado apresenta desempenho funcional em tarefas de organização perceptual, embora sem o mesmo destaque
+        observado no domínio verbal.</p>
+
+      <p>O Índice de Memória Operacional (IMO = 100; percentil 50) também se situou na faixa Média, apontando capacidade
+        compatível com o esperado para retenção temporária, manipulação mental de informações, atenção auditiva imediata
+        e controle executivo em tarefas estruturadas. Esse resultado indica preservação dos mecanismos básicos de
+        sustentação mental da informação, especialmente quando as demandas são claras e organizadas.</p>
+
+      <p>O Índice de Velocidade de Processamento (IVP = 89; percentil 23) situou-se na faixa Média Inferior,
+        constituindo a principal vulnerabilidade relativa do perfil. Esse desempenho sugere menor eficiência em tarefas
+        que exigem rapidez visuomotora, rastreio visual contínuo, automatização, precisão grafomotora e resposta sob
+        pressão temporal. Em termos funcionais, esse padrão pode se manifestar como maior tempo para concluir tarefas
+        repetitivas, lentificação operacional, maior desgaste em demandas prolongadas e redução da eficiência quando há
+        limite de tempo.</p>
+
+      <p>Em análise clínica, a discrepância entre Compreensão Verbal e Velocidade de Processamento sugere um perfil
+        cognitivo caracterizado por boa capacidade de raciocínio, compreensão e elaboração conceitual, porém com maior
+        custo executivo em tarefas rápidas, seriadas ou dependentes de automatização. Assim, o desempenho tende a ser
+        mais favorável em situações que permitam tempo adequado para análise, organização da resposta e uso de recursos
+        verbais, podendo apresentar queda relativa em contextos que exigem rapidez, precisão e execução simultânea sob
+        pressão.</p>
+    </div>
+
+    <div class="summary-title">Síntese Interpretativa para o Laudo</div>
+    <div class="note-box">Em análise clínica, o avaliado apresenta funcionamento intelectual global na faixa Média, com
+      perfil heterogêneo e melhor eficiência relativa em habilidades verbais, raciocínio conceitual e compreensão de
+      informações complexas. Observa-se preservação dos recursos de organização perceptual e memória operacional,
+      contrastando com menor rendimento em velocidade de processamento. O conjunto dos achados sugere recursos
+      cognitivos gerais preservados, com vulnerabilidade específica em tarefas que demandam rapidez operacional,
+      rastreio visual, automatização e resposta sob pressão temporal. Tais resultados devem ser integrados aos dados da
+      anamnese, observações clínicas, funcionamento adaptativo e demais instrumentos utilizados na avaliação
+      neuropsicológica.</div>
+
+    <div class="summary-title">Pontos de Atenção Clínica</div>
+    <div class="note-box">O WAIS-III não deve ser utilizado isoladamente para estabelecimento de hipótese diagnóstica.
+      Quando houver queixas de lentificação, desatenção, baixa produtividade, fadiga cognitiva ou dificuldade em tarefas
+      cronometradas, recomenda-se integrar estes achados com medidas específicas de atenção, funções executivas,
+      memória, humor, comportamento adaptativo e histórico funcional.</div>
+
+    <div class="footer"><span>NeuroAvalia · WAIS-III Técnico</span><span>PÁGINA 4 DE 4</span></div>
+  </section>
+</body>
+
+</html>

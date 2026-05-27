@@ -5,6 +5,8 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 
 import { FDTChart } from "@/components/charts/FDTChart";
+import { openPrintRoute } from "@/lib/print";
+import { TestReportSummaryCard } from "@/components/tests/TestReportSummaryCard";
 
 const CLASSIFICATION_STYLES: Record<string, string> = {
   "Muito Superior": "bg-emerald-600 text-white",
@@ -95,12 +97,17 @@ export default function FDTResultPage() {
     return acc;
   }, {});
   const metricGroupEntries = Object.entries(metricGroups) as [string, any[]][];
+  const handlePrint = () => {
+    if (!params.id) return;
+    const evaluationQuery = result.evaluation_id ? `?evaluation_id=${result.evaluation_id}&autoprint=1` : "?autoprint=1";
+    openPrintRoute(`/print/fdt/${params.id}${evaluationQuery}`);
+  };
 
   return (
-    <div className="min-h-screen bg-slate-300 p-6 md:p-10">
-      <div className="mx-auto max-w-7xl rounded-[36px] bg-[#f3f0e4] p-5 shadow-2xl ring-1 ring-black/5 md:p-7">
-        <div className="rounded-[28px] bg-gradient-to-r from-[#f6f4ed] via-[#f2efe4] to-[#efe7bf] p-5 md:p-6">
-          <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <div className="min-h-screen bg-slate-300 p-6 md:p-10 report-print-shell">
+      <div className="mx-auto max-w-7xl rounded-[36px] bg-[#f3f0e4] p-5 shadow-2xl ring-1 ring-black/5 md:p-7 report-print-card">
+        <div className="rounded-[28px] bg-gradient-to-r from-[#f6f4ed] via-[#f2efe4] to-[#efe7bf] p-5 md:p-6 report-print-content">
+          <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between print:hidden report-print-hide">
             <div className="flex items-center gap-4">
               <div className="rounded-full border border-black/20 bg-white/70 px-5 py-2 text-lg font-medium tracking-tight text-zinc-800 shadow-sm">
                 Florescer
@@ -119,17 +126,22 @@ export default function FDTResultPage() {
                 {result.patient_name} • Faixa normativa {classified.faixa || "—"}
               </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 print:hidden report-print-hide">
               <Link href={`/dashboard/tests/fdt?evaluation_id=${result.evaluation_id}&application_id=${params.id}&edit=true`} className="rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50">
                 Editar
               </Link>
+              <button onClick={handlePrint} className="rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50">
+                Imprimir / PDF
+              </button>
               <Link href={`/dashboard/evaluations/${result.evaluation_id}?tab=overview`} className="rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white shadow-lg">
                 Voltar
               </Link>
             </div>
           </div>
 
-          <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+          <TestReportSummaryCard reportPayload={result.report_payload} fallbackText={result.interpretation_text} className="mb-6 report-print-break-avoid" />
+
+          <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3 report-print-break-avoid">
             <div className="rounded-[28px] bg-blue-500 p-5 text-white shadow-lg">
               <div className="text-sm text-blue-100">Inibição</div>
               <div className="mt-2 text-4xl font-light">{derivedScores.inibicao ?? "—"}</div>
@@ -144,7 +156,7 @@ export default function FDTResultPage() {
             </div>
           </div>
 
-          <div className="mb-6 rounded-[28px] bg-white/70 p-5 shadow-lg ring-1 ring-black/5">
+          <div className="mb-6 rounded-[28px] bg-white/70 p-5 shadow-lg ring-1 ring-black/5 report-print-break-avoid">
             <h3 className="mb-4 text-lg font-semibold text-zinc-900">Métricas normativas</h3>
             <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-2">
               {metricGroupEntries.map(([groupKey, items]) => (
@@ -199,7 +211,7 @@ export default function FDTResultPage() {
             </div>
           </div>
 
-          <div className="mb-6 rounded-[28px] bg-white/70 p-5 shadow-lg ring-1 ring-black/5">
+          <div className="mb-6 rounded-[28px] bg-white/70 p-5 shadow-lg ring-1 ring-black/5 report-print-break-avoid">
             <h3 className="mb-4 text-lg font-semibold text-zinc-900">Tempos e erros informados</h3>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
               {Object.entries(stageTotals).map(([stage, values]: [string, any]) => (
@@ -213,7 +225,7 @@ export default function FDTResultPage() {
           </div>
 
           {(chartData.automaticos || chartData.controlados) && (
-            <div className="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
+            <div className="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-2 report-print-break-avoid">
               <div>
                 <h3 className="mb-3 text-lg font-semibold text-zinc-900">Processos automáticos</h3>
                 <FDTChart data={chartData.automaticos} />
@@ -226,7 +238,7 @@ export default function FDTResultPage() {
           )}
 
           {errorResults.length > 0 && (
-            <div className="mb-6 rounded-[28px] bg-white/70 p-5 shadow-lg ring-1 ring-black/5">
+            <div className="mb-6 rounded-[28px] bg-white/70 p-5 shadow-lg ring-1 ring-black/5 report-print-break-avoid">
               <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-zinc-900">Análise de erros</h3>
@@ -301,7 +313,7 @@ export default function FDTResultPage() {
           )}
 
           {interpretationParagraphs.length > 0 && (
-            <div className="rounded-[28px] bg-white/70 p-5 shadow-lg ring-1 ring-black/5">
+            <div className="rounded-[28px] bg-white/70 p-5 shadow-lg ring-1 ring-black/5 report-print-break-avoid">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
                   <h3 className="text-lg font-semibold text-zinc-900">Interpretação Clínica</h3>

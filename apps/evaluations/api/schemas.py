@@ -66,6 +66,8 @@ class TestApplicationOut(Schema):
     applied_on: Optional[date] = None
     is_validated: bool
     status: str
+    status_display: Optional[str] = None
+    report_payload: dict = {}
 
 
 class DocumentOut(Schema):

@@ -79,5 +79,27 @@ class EBADEPIJModule(BaseTestModule):
 
         return "\n".join(report)
 
+    def build_report_payload(self, context: TestContext, merged_data: dict) -> dict:
+        normas = merged_data.get("normas") or {}
+        interpretation = self.interpret(context, merged_data)
+        return {
+            "results": [
+                {
+                    "scale": "EBADEP-IJ",
+                    "raw_score": merged_data.get("pontuacao_total"),
+                    "percentile": normas.get("percentil"),
+                    "classification": merged_data.get("classificacao"),
+                }
+            ],
+            "summary_for_report": merged_data.get("sintese") or interpretation.split(". ")[0].strip(),
+            "technical_notes": [
+                f"Escore T: {normas.get('T', '—')}",
+                f"Estanino: {normas.get('estanino', '—')}",
+            ],
+            "clinical_flags": [f"item_{item.get('item')}" for item in merged_data.get("items_criticos") or []],
+            "chart_payload": {},
+            "interpretation": interpretation,
+        }
+
 
 register_test_module(EBADEPIJ_CODE, EBADEPIJModule())

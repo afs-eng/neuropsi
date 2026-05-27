@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import { printCurrentPage } from '@/lib/print'
+import { TestReportSummaryCard } from '@/components/tests/TestReportSummaryCard'
 
 const FACTOR_NAMES: Record<string, string> = {
   D: "Fator 1 - Desatenção (D)",
@@ -102,10 +104,10 @@ export default function ETDAHADResultPage() {
     .filter(Boolean)
 
   return (
-    <div className="min-h-screen bg-slate-300 p-6 md:p-10">
-      <div className="mx-auto max-w-7xl rounded-[36px] bg-[#f3f0e4] p-5 shadow-2xl ring-1 ring-black/5 md:p-7">
-        <div className="rounded-[28px] bg-gradient-to-r from-[#f6f4ed] via-[#f2efe4] to-[#efe7bf] p-5 md:p-6">
-          <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <div className="min-h-screen bg-slate-300 p-6 md:p-10 report-print-shell">
+      <div className="mx-auto max-w-7xl rounded-[36px] bg-[#f3f0e4] p-5 shadow-2xl ring-1 ring-black/5 md:p-7 report-print-card">
+        <div className="rounded-[28px] bg-gradient-to-r from-[#f6f4ed] via-[#f2efe4] to-[#efe7bf] p-5 md:p-6 report-print-content">
+          <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between print:hidden report-print-hide">
             <div className="flex items-center gap-4">
               <div className="rounded-full border border-black/20 bg-white/70 px-5 py-2 text-lg font-medium tracking-tight text-zinc-800 shadow-sm">
                 Florescer
@@ -124,12 +126,12 @@ export default function ETDAHADResultPage() {
                 {result.patient_name} • Aplicado em {formatAppliedOn(result.applied_on)}
               </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 print:hidden report-print-hide">
               <Link href={`/dashboard/tests/etdah-ad?evaluation_id=${result.evaluation_id}&application_id=${params.id}&edit=true`} className="rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50">
                 Editar
               </Link>
-              <button className="rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm">
-                Exportar PDF
+              <button onClick={printCurrentPage} className="rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm">
+                Imprimir / PDF
               </button>
               <Link href={`/dashboard/evaluations/${result.evaluation_id}?tab=overview`} className="rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white shadow-lg">
                 Voltar
@@ -138,6 +140,7 @@ export default function ETDAHADResultPage() {
           </div>
 
           <div className="rounded-[28px] bg-white/70 p-5 shadow-lg ring-1 ring-black/5 mb-6">
+            <TestReportSummaryCard reportPayload={result.report_payload} fallbackText={result.interpretation || ''} className="mb-4" />
             <h3 className="mb-4 text-lg font-semibold text-zinc-900">Escores por Fator</h3>
             <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
               {factorOrder.map((factor) => {

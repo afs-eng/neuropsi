@@ -4,6 +4,12 @@ from .constants import WAIS3_ALL_SUBTESTS, WAIS3_INDEXES, WAIS3_MAX_AGE, WAIS3_M
 from .schemas import WAIS3RawInput
 
 
+_WAIS3_OPTIONAL_MISSING_BY_INDEX = {
+    "qi_execucao": {"arranjo_figuras"},
+    "qi_total": {"arranjo_figuras"},
+}
+
+
 def validate_wais3_input(data: WAIS3RawInput) -> list[str]:
     errors: list[str] = []
 
@@ -19,7 +25,8 @@ def validate_wais3_input(data: WAIS3RawInput) -> list[str]:
             errors.append(f"{WAIS3_ALL_SUBTESTS.get(key, key)}: pontos brutos não podem ser negativos.")
 
     for index_key, index_cfg in WAIS3_INDEXES.items():
-        missing = [code for code in index_cfg["subtests"] if code not in data.subtestes]
+        optional_missing = _WAIS3_OPTIONAL_MISSING_BY_INDEX.get(index_key, set())
+        missing = [code for code in index_cfg["subtests"] if code not in data.subtestes and code not in optional_missing]
         if index_key in {"qi_verbal", "qi_execucao", "qi_total"} and missing:
             errors.append(
                 f"Subtestes obrigatórios ausentes para {index_cfg['label']}: {', '.join(missing)}"

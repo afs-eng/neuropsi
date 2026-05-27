@@ -25,6 +25,8 @@ class AIHealthcheckService:
         
         if client is None:
             return {"status": "disabled", "provider": provider_name}
+        if provider_name == "ollama" and hasattr(client, "check_available"):
+            return client.check_available(timeout=cls._timeout(timeout))
         result = client.generate(
             system_prompt=cls.HEALTHCHECK_SYSTEM_PROMPT,
             user_prompt=cls.HEALTHCHECK_USER_PROMPT,

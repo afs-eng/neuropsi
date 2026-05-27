@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAVLT - Relatório A4 para Impressão</title>
+  <style>
+    @page { size: A4; margin: 0; }
+    * { box-sizing: border-box; }
+
+    :root {
+      --navy: #0d2948;
+      --blue: #314d70;
+      --muted: #6b7f99;
+      --line: #c8d2df;
+      --soft: #f6f8fb;
+      --soft-blue: #eef3f8;
+      --text: #0b1f38;
+      --gray: #6b7280;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Times New Roman", Times, serif;
+      color: var(--text);
+      background: #f3f4f6;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .page {
+      width: 210mm;
+      height: 297mm;
+      margin: 24px auto;
+      background: #ffffff;
+      padding: 14mm 12mm 20mm 12mm;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+      page-break-after: always;
+      break-after: page;
+    }
+
+    .footer {
+      position: absolute;
+      left: 12mm;
+      right: 12mm;
+      bottom: 10mm;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 9px;
+      color: #6b7280;
+      border-top: 1px solid #d1d5db;
+      padding-top: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      letter-spacing: 0.04em;
+      background: #ffffff;
+    }
+
+    .footer-meta {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .footer-ai-badge {
+      font-size: 8px;
+      letter-spacing: 0.02em;
+      color: #8b95a5;
+      text-transform: none;
+      white-space: nowrap;
+    }
+
+    .report-cover {
+      padding-bottom: 11px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 15px;
+    }
+
+    .brand {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.55em;
+      color: var(--navy);
+      margin-bottom: 40px;
+    }
+
+    .hero-row {
+      display: grid;
+      grid-template-columns: 1fr 225px;
+      gap: 28px;
+      align-items: start;
+      margin-bottom: 10px;
+    }
+
+    .test-acronym {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 42px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      color: var(--navy);
+      line-height: 0.9;
+      margin: 0 0 4px 0;
+    }
+
+    .test-name {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 0.16em;
+      color: var(--navy);
+      line-height: 1.1;
+      margin: 0;
+      text-transform: uppercase;
+      max-width: 430px;
+    }
+
+    .meta-panel {
+      border-left: 2px solid var(--navy);
+      padding-left: 16px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      column-gap: 18px;
+      row-gap: 9px;
+      align-items: start;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .meta-label,
+    .patient-label {
+      color: var(--blue);
+      font-family: Arial, Helvetica, sans-serif;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .meta-label {
+      font-size: 10.5px;
+      line-height: 1.15;
+    }
+
+    .meta-value {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10.5px;
+      line-height: 1.15;
+      color: var(--navy);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .patient-block {
+      margin-top: 18px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .patient-title {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 15px;
+      font-weight: 900;
+      color: var(--navy);
+      margin-bottom: 12px;
+    }
+
+    .patient-grid {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      row-gap: 7px;
+      column-gap: 12px;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 11.5px;
+    }
+
+    .patient-value {
+      color: var(--navy);
+      font-weight: 900;
+    }
+
+    .page-header-simple {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 9px;
+      margin-bottom: 13px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .page-header-brand {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.45em;
+      color: var(--navy);
+      text-transform: uppercase;
+    }
+
+    .page-header-section {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 9.5px;
+      font-weight: 900;
+      letter-spacing: 0.16em;
+      color: var(--blue);
+      text-transform: uppercase;
+    }
+
+    .section-title {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--navy);
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 5px;
+      margin: 14px 0 9px 0;
+    }
+
+    .section-title.first { margin-top: 0; }
+
+    p {
+      font-size: 12px;
+      line-height: 1.43;
+      text-align: justify;
+      margin: 0 0 7px 0;
+    }
+
+    .intro-box,
+    .note-box,
+    .clinical-box {
+      background: var(--soft);
+      border: 1px solid #d8e1ec;
+      padding: 10px 12px;
+    }
+
+    .intro-box p:last-child,
+    .note-box p:last-child,
+    .clinical-box p:last-child { margin-bottom: 0; }
+
+    .clinical-box {
+      border-left: 4px solid var(--navy);
+      margin: 9px 0;
+      background: #fafbfc;
+    }
+
+    .chart-panel {
+      border: 1px solid #d1d5db;
+      background: #ffffff;
+      padding: 12px 14px 10px 14px;
+      margin-top: 8px;
+    }
+
+    .chart-box {
+      width: 100%;
+      height: 250px;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 7px;
+      margin-bottom: 11px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    th {
+      background: var(--soft-blue);
+      border: 1px solid #9ca3af;
+      padding: 5px 6px;
+      font-weight: bold;
+      text-align: center;
+      color: var(--navy);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 9.2px;
+    }
+
+    td {
+      border: 1px solid #d1d5db;
+      padding: 4.1px 6px;
+      text-align: center;
+      font-size: 9.8px;
+      line-height: 1.22;
+    }
+
+    .results-table td:nth-child(2),
+    .results-table td:nth-child(4) {
+      text-align: left;
+    }
+
+    .indicators-table td:nth-child(4) {
+      text-align: left;
+    }
+
+    .indicators-table td:nth-child(1),
+    .indicators-table td:nth-child(2),
+    .indicators-table td:nth-child(3) {
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .page-2-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      row-gap: 8px;
+    }
+
+    .page-2-section {
+      padding: 0;
+      margin: 0;
+    }
+
+    @media print {
+      html, body {
+        width: 210mm;
+        min-height: 297mm;
+        background: white;
+      }
+
+      .page {
+        width: 210mm;
+        height: 297mm;
+        margin: 0;
+        box-shadow: none;
+        page-break-after: always;
+        break-after: page;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="report-cover">
+      <div class="brand">NEUROAVALIA</div>
+
+      <div class="hero-row">
+        <div>
+          <h1 class="test-acronym">RAVLT</h1>
+          <h2 class="test-name">REY AUDITORY VERBAL LEARNING TEST</h2>
+        </div>
+
+        <div class="meta-panel">
+          <div class="meta-label">Código do<br>avaliado</div>
+          <div class="meta-value">{{ codigo_avaliado }}</div>
+          <div class="meta-label">Código do<br>relatório</div>
+          <div class="meta-value">{{ codigo_relatorio }}</div>
+          <div class="meta-label">Data da<br>aplicação</div>
+          <div class="meta-value">{{ data_aplicacao }}</div>
+        </div>
+      </div>
+
+      <div class="patient-block">
+        <div class="patient-title">Dados do avaliado</div>
+        <div class="patient-grid">
+          <div class="patient-label">Nome</div>
+          <div class="patient-value">{{ nome }}</div>
+          <div class="patient-label">Sexo</div>
+          <div class="patient-value">{{ sexo }}</div>
+          <div class="patient-label">Idade</div>
+          <div class="patient-value">{{ idade }}</div>
+          <div class="patient-label">Escolaridade</div>
+          <div class="patient-value">{{ escolaridade }}</div>
+          <div class="patient-label">Profissional</div>
+          <div class="patient-value">{{ profissional }}</div>
+          <div class="patient-label">Tabela normativa</div>
+          <div class="patient-value">{{ tabela_normativa }}</div>
+          <div class="patient-label">Aplicação</div>
+          <div class="patient-value">{{ status_aplicacao }}</div>
+        </div>
+      </div>
+    </header>
+
+    <section>
+      <div class="section-title first">1. Síntese do instrumento</div>
+      <div class="intro-box">
+        <p>O Rey Auditory Verbal Learning Test – RAVLT é um instrumento utilizado para avaliação da aprendizagem verbal episódica, memória imediata, curva de aquisição, susceptibilidade à interferência, evocação tardia e reconhecimento verbal. Seu desempenho permite analisar o modo como o avaliado registra, consolida, recupera e reconhece informações verbais após exposições sucessivas e após a presença de material interferente.</p>
+        <p>A interpretação dos resultados deve ser realizada por profissional habilitado e integrada à entrevista clínica, observação comportamental e demais instrumentos utilizados no processo avaliativo. Os resultados apresentados neste relatório refletem o desempenho do avaliado durante a aplicação do instrumento, não devendo ser utilizados de forma isolada para definição diagnóstica.</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-title">2. Curva de aprendizagem verbal</div>
+      <div class="chart-panel">
+        <div class="chart-box">{{ chart_svg|safe }}</div>
+      </div>
+    </section>
+
+    <div class="footer">
+      <span class="footer-meta">
+        <span>N E U R O A V A L I A&nbsp;&nbsp;Relatório neuropsicológico automatizado • Uso profissional restrito.</span>
+        <span class="footer-ai-badge">{{ interpretation_source_label }}</span>
+      </span>
+      <span>Página 1</span>
+    </div>
+  </main>
+
+  <main class="page">
+    <div class="page-header-simple">
+      <div class="page-header-brand">NEUROAVALIA</div>
+      <div class="page-header-section">Resultados e Indicadores</div>
+    </div>
+
+    <div class="page-2-grid">
+      <section class="page-2-section">
+        <div class="section-title first">3. Resultados quantitativos</div>
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th style="width: 16%;">Processo</th>
+              <th style="width: 38%;">Descrição</th>
+              <th style="width: 15%;">Resultado</th>
+              <th style="width: 31%;">Classificação</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in quantitative_rows %}
+              <tr><td>{{ row.label }}</td><td>{{ row.description }}</td><td>{{ row.result }}</td><td>{{ row.classification }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+
+      <section class="page-2-section">
+        <div class="section-title">4. Indicadores técnicos calculados</div>
+        <table class="indicators-table">
+          <thead>
+            <tr>
+              <th style="width: 22%;">Indicador</th>
+              <th style="width: 25%;">Fórmula</th>
+              <th style="width: 15%;">Resultado</th>
+              <th style="width: 38%;">Interpretação funcional</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in indicator_rows %}
+              <tr><td>{{ row.label }}</td><td>{{ row.formula }}</td><td>{{ row.result }}</td><td>{{ row.interpretation }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+    </div>
+
+    <div class="footer">
+      <span class="footer-meta">
+        <span>N E U R O A V A L I A&nbsp;&nbsp;Relatório neuropsicológico automatizado • Uso profissional restrito.</span>
+        <span class="footer-ai-badge">{{ interpretation_source_label }}</span>
+      </span>
+      <span>Página 2</span>
+    </div>
+  </main>
+
+  <main class="page">
+    <div class="page-header-simple">
+      <div class="page-header-brand">NEUROAVALIA</div>
+      <div class="page-header-section">Interpretação Clínica</div>
+    </div>
+
+    <section>
+      <div class="section-title first">5. Interpretação clínica</div>
+      {% for paragraph in clinical_paragraphs %}
+        <p>{{ paragraph }}</p>
+      {% endfor %}
+      <div class="clinical-box">
+        <p><strong>Em análise clínica,</strong> {{ clinical_box_text }}</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-title">6. Síntese interpretativa para o laudo</div>
+      <p>{{ summary_for_report }}</p>
+    </section>
+
+    <div class="footer">
+      <span class="footer-meta">
+        <span>N E U R O A V A L I A&nbsp;&nbsp;Relatório neuropsicológico automatizado • Uso profissional restrito.</span>
+        <span class="footer-ai-badge">{{ interpretation_source_label }}</span>
+      </span>
+      <span>Página 3</span>
+    </div>
+  </main>
+</body>
+</html>

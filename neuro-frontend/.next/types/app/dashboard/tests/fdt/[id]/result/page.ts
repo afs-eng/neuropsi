@@ -1,4 +1,4 @@
-// File: /home/andre/neuro/neuro-frontend/app/dashboard/tests/fdt/[id]/result/page.tsx
+// File: /home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/fdt/[id]/result/page.tsx
 import * as entry from '../../../../../../../../app/dashboard/tests/fdt/[id]/result/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

@@ -23,5 +23,30 @@ class SCAREDModule(BaseTestModule):
     def interpret(self, context: TestContext, merged_data: dict) -> str:
         return interpret_scared_results(merged_data, context.patient_name)
 
+    def build_report_payload(self, context: TestContext, merged_data: dict) -> dict:
+        factors = merged_data.get("factor_results") or merged_data.get("results") or {}
+        interpretation = self.interpret(context, merged_data)
+        results = []
+        if isinstance(factors, dict):
+            for key, item in factors.items():
+                if not isinstance(item, dict):
+                    continue
+                results.append(
+                    {
+                        "scale": item.get("label") or key,
+                        "raw_score": item.get("raw_score") or item.get("score"),
+                        "percentile": item.get("percentile"),
+                        "classification": item.get("classification") or item.get("classificacao"),
+                    }
+                )
+        return {
+            "results": results,
+            "summary_for_report": interpretation.split(". ")[0].strip() if interpretation else "",
+            "technical_notes": [],
+            "clinical_flags": [item.get("scale") for item in results if item.get("classification") in {"Elevado", "Muito Elevado", "Clinicamente significativo"}],
+            "chart_payload": {},
+            "interpretation": interpretation,
+        }
+
 
 register_test_module(SCARED_CODE, SCAREDModule())

@@ -9,7 +9,7 @@ function normalizeApiBaseUrl() {
     window.location.hostname === '127.0.0.1'
   );
 
-  // Se estiver local, usa o back-end local
+  // Em desenvolvimento local fora do Docker, o navegador fala direto com o Django.
   if (isLocalHost) return 'http://127.0.0.1:8000';
 
   // Fallback para produção (deve ser configurado via NEXT_PUBLIC_API_BASE_URL)
@@ -80,15 +80,24 @@ async function fetchAPI<T>(
   const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData
   
   const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`
-  const res = await fetch(`${API_URL}${normalizedEndpoint}`, {
-    ...options,
-    cache: isGetRequest ? 'no-store' : undefined,
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
-      ...options.headers,
-    },
-  })
+  let res: Response
+
+  try {
+    res = await fetch(`${API_URL}${normalizedEndpoint}`, {
+      ...options,
+      cache: isGetRequest ? 'no-store' : undefined,
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+        ...options.headers,
+      },
+    })
+  } catch {
+    throw {
+      message: 'Nao foi possivel conectar ao servidor. Verifique se o backend esta em execucao.',
+      status: 0,
+    } satisfies ApiError
+  }
 
   if (!res.ok) {
     let errorMessage = `Erro: ${res.status}`

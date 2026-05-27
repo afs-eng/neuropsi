@@ -218,6 +218,10 @@ function getWiscChartData(test: any) {
 }
 
 function getMissingSectionsFromTests(report: any, completedTests: any[]) {
+  if (report?.ai_metadata?.generation_scope === "tests_only") {
+    return [];
+  }
+
   const currentSectionKeys = new Set((report?.sections || []).map((section: any) => section.key));
   const missing = new Set<string>();
 
@@ -543,6 +547,7 @@ export default function ReportDetailPage() {
   }
 
   const isFinalized = report.status === "finalized";
+  const isTestsOnlyReport = report.ai_metadata?.generation_scope === "tests_only";
   const generationMetadata = activeSection?.generation_metadata || {};
   const warnings = activeSection?.warnings_payload || [];
   const generatedText = activeSection?.generated_text || "";
@@ -566,11 +571,11 @@ export default function ReportDetailPage() {
                 Voltar
               </Button>
             </Link>
-            <Button variant="outline" className="gap-2" onClick={handleExportHtml}>
+            <Button variant="outline" className="gap-2" onClick={handleExportHtml} disabled={isTestsOnlyReport}>
               <Download className="h-4 w-4" />
               Exportar HTML
             </Button>
-            <Button variant="outline" className="gap-2" onClick={handleExportDocx}>
+            <Button variant="outline" className="gap-2" onClick={handleExportDocx} disabled={isTestsOnlyReport}>
               <FileText className="h-4 w-4" />
               Exportar DOCX
             </Button>
@@ -580,6 +585,18 @@ export default function ReportDetailPage() {
 
       {error && <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
       {notice && <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{notice}</div>}
+      {isTestsOnlyReport && (
+        <div className="mb-4 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-800">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="rounded-full bg-indigo-600 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
+              Somente testes
+            </span>
+            <span>
+              Este laudo foi gerado apenas com as secoes de testes validados. Finalizacao e exportacao ficam disponiveis apos gerar o laudo completo.
+            </span>
+          </div>
+        </div>
+      )}
       {missingSections.length > 0 && (
         <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -687,7 +704,11 @@ export default function ReportDetailPage() {
           <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">{isWiscSubscaleActive ? "Subscalas-Wisc" : activeSection?.title || "Selecione uma secao"}</h2>
-              <p className="text-sm text-slate-500">Edite o rascunho gerado e regenere a secao quando necessario.</p>
+              <p className="text-sm text-slate-500">
+                {isTestsOnlyReport
+                  ? "Edite e regenere as secoes de testes. Gere o laudo completo quando quiser concluir e exportar o documento final."
+                  : "Edite o rascunho gerado e regenere a secao quando necessario."}
+              </p>
             </div>
             <div className="flex gap-2">
               {!isFinalized && (
@@ -706,7 +727,7 @@ export default function ReportDetailPage() {
                   </Button>
                 </>
               )}
-              <Button variant="outline" disabled={saving || isFinalized} onClick={handleFinalize}>
+              <Button variant="outline" disabled={saving || isFinalized || isTestsOnlyReport} onClick={handleFinalize}>
                 Finalizar
               </Button>
             </div>

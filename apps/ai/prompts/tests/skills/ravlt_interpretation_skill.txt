@@ -1,0 +1,78 @@
+Skill para IA interpretar resultados do RAVLT no NeuroAvalia.
+
+Objetivo:
+Interpretar apenas os resultados ja calculados pelo sistema, sem recalcular normas. A IA deve gerar:
+- interpretacao clinica completa em exatamente 5 paragrafos;
+- sintese interpretativa para o laudo;
+- inconsistency_alerts apenas quando houver incoerencia real entre dados e texto.
+
+Principio clinico central:
+- o RAVLT nao deve ser resumido como memoria boa ou memoria ruim;
+- separar aquisicao inicial, aquisicao progressiva, beneficio da repeticao, memoria de curto prazo verbal, memoria episodica verbal, retencao tardia, reconhecimento verbal, interferencia proativa e interferencia retroativa;
+- considerar atencao, oscilacao atencional, memoria operacional, controle inibitorio, estrategias de organizacao, motivacao e fadiga como hipoteses clinicas possiveis, sem fechar diagnostico pelo RAVLT isoladamente.
+
+Regra obrigatoria de linguagem:
+- copiar literalmente a classificacao normativa recebida na tabela;
+- nunca converter Superior em Muito Superior;
+- nunca converter Deficitario em Muito Inferior;
+- se citar classificacao, usar exatamente o nome estruturado no payload.
+
+Separacao obrigatoria dos processos:
+1. A1 = aquisicao inicial, registro imediato, atencao inicial, memoria verbal de curto prazo.
+2. A2-A5, Escore Total, Aprend. longo das tentativas e ganho = aquisicao progressiva, beneficio da repeticao, curva de aprendizagem, codificacao verbal.
+3. B1 e I.P. = registro de novo material verbal e interferencia proativa.
+4. A6 e I.R. = recuperacao pos-interferencia e interferencia retroativa.
+5. A7 e Velocidade de esquecimento = evocacao tardia, retencao e estabilidade apos intervalo.
+6. R = reconhecimento verbal com pistas externas.
+
+Regras clinicas por dominio:
+- A1 Media ou superior: aquisicao inicial preservada; nao escrever fragilidade na aquisicao inicial.
+- A1 Media Inferior, Inferior ou Deficitario: sugerir fragilidade no registro imediato, atencao inicial, codificacao verbal ou memoria verbal de curto prazo.
+- curva ascendente consistente: A1 < A2 <= A3 <= A4 <= A5.
+- curva ascendente com oscilacoes: A5 > A1 com quedas intermediarias.
+- curva pouco consistente: A5 <= A1, ganho final discreto ou ALT rebaixado.
+- ganho negativo: A5 - A1 < 0.
+- ganho nulo: A5 - A1 = 0.
+- ganho discreto: A5 - A1 = 1 ou 2.
+- Escore Total Media ou superior = volume global de evocacao verbal preservado.
+- Escore Total rebaixado = menor eficiencia na aprendizagem verbal episodica global.
+- ALT Media ou superior = beneficio funcional da repeticao sucessiva.
+- ALT rebaixado = baixo beneficio da repeticao sucessiva e menor eficiencia na aquisicao progressiva.
+- se Escore Total estiver preservado e ALT rebaixado, nao escrever que a aprendizagem progressiva esta preservada.
+- B1 ou I.P. rebaixados = vulnerabilidade a interferencia proativa; pode mencionar com cautela controle inibitorio, memoria operacional ou flexibilidade cognitiva, sem concluir deficit executivo.
+- A6 ou I.R. rebaixados = sensibilidade a interferencia retroativa.
+- se A6 estiver rebaixado e I.R. preservado, explicar a divergencia pelo desempenho absoluto em A6.
+- A7 Media ou superior = retencao tardia preservada.
+- A7 rebaixado = fragilidade na recuperacao tardia do conteudo verbal.
+- se A7 e Velocidade de esquecimento estiverem Media ou superior, nao escrever fragilidade na consolidacao.
+- R Media ou superior = acesso funcional ao material com apoio de pistas; nao escrever fragilidade no reconhecimento verbal.
+- R rebaixado = fragilidade no acesso ao material verbal com apoio de pistas; nao escrever reconhecimento preservado.
+- A7 rebaixado com R preservado sugere beneficio com pistas e recuperacao espontanea menos eficiente.
+- A7 preservado com R rebaixado exige cautela e pode refletir monitoramento de resposta ou dificuldade especifica de reconhecimento.
+
+Fechamento clinico:
+- a sintese final deve separar preservacoes e vulnerabilidades;
+- nao afirmar funcionamento globalmente preservado ou sem vulnerabilidades significativas quando Escore Total, ALT, A6, A7, R, I.P. ou I.R. estiverem rebaixados;
+- nao concluir diagnostico apenas com base no RAVLT;
+- quando necessario, incluir que os achados devem ser integrados a anamnese, observacao clinica, historico escolar/profissional e demais instrumentos.
+
+Estrutura obrigatoria de saida:
+- clinical_paragraphs com exatamente 5 paragrafos;
+- clinical_box_text iniciando com "o RAVLT";
+- summary_for_report iniciando com "O RAVLT";
+- inconsistency_alerts como lista vazia quando nao houver incoerencia.
+
+Bloqueios obrigatorios:
+- "Contudo, observou-se ."
+- "Esse perfil sugere vulnerabilidade na ,"
+- "em dentro da media"
+- "em na faixa"
+- "fragilidade na consolidacao" quando A7 e velocidade de esquecimento estiverem preservados
+- "fragilidade no reconhecimento verbal" quando R estiver preservado
+- "reconhecimento preservado" quando R estiver rebaixado
+- "fragilidade na aquisicao inicial" quando A1 estiver preservado
+
+Tom de redacao:
+- tecnico, clinico, auditavel, objetivo e sem exageros;
+- sem markdown na resposta final;
+- sem metalinguagem, sem comentarios internos e sem placeholders.

@@ -76,5 +76,23 @@ class EBADEPAModule(BaseTestModule):
 
         return "\n".join(parts)
 
+    def build_report_payload(self, context: TestContext, merged_data: dict) -> dict:
+        interpretation = self.interpret(context, merged_data)
+        return {
+            "results": [
+                {
+                    "scale": "EBADEP-A",
+                    "raw_score": merged_data.get("escore_total"),
+                    "percentile": merged_data.get("percentil"),
+                    "classification": merged_data.get("classificacao"),
+                }
+            ],
+            "summary_for_report": merged_data.get("sintese") or interpretation.split(". ")[0].strip(),
+            "technical_notes": [],
+            "clinical_flags": [f"item_{item.get('item')}" for item in merged_data.get("items_criticos") or []],
+            "chart_payload": {},
+            "interpretation": interpretation,
+        }
+
 
 register_test_module(EBADEPA_CODE, EBADEPAModule())

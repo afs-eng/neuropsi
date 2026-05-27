@@ -2,6 +2,8 @@ from apps.tests.models import TestApplication
 
 
 def create_test_application(**data) -> TestApplication:
+    if data.get("status") is None:
+        data.pop("status", None)
     return TestApplication.objects.create(**data)
 
 

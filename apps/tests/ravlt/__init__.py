@@ -16,6 +16,7 @@ from .norms import (
     percentile_from_z,
     classify_by_percentile,
 )
+from .pdf_service import RAVLTPdfService
 from datetime import date
 
 
@@ -360,89 +361,57 @@ class RAVLTModule(BaseTestModule):
         if not result_map:
             return "Sem resultados para interpretação."
 
-        name = _first_name(context.patient_name)
-        a1 = result_map.get("A1", {})
-        a2 = result_map.get("A2", {})
-        a3 = result_map.get("A3", {})
-        a4 = result_map.get("A4", {})
-        a5 = result_map.get("A5", {})
-        b1 = result_map.get("B1", {})
-        a6 = result_map.get("A6", {})
-        a7 = result_map.get("A7", {})
-        r = result_map.get("Reconhecimento Lista A", {})
-        alt = result_map.get("Aprend. longo das Tentativas", {})
-        ret = result_map.get("Velocidade de Esquecimento", {})
-        ip = result_map.get("Interferência Proativa", {})
-        ir = result_map.get("Interferência Retroativa", {})
+        raw_payload = {
+            "a1": merged_data.get("a1", {}).get("escore"),
+            "a2": merged_data.get("a2", {}).get("escore"),
+            "a3": merged_data.get("a3", {}).get("escore"),
+            "a4": merged_data.get("a4", {}).get("escore"),
+            "a5": merged_data.get("a5", {}).get("escore"),
+            "b": merged_data.get("b", {}).get("escore"),
+            "a6": merged_data.get("a6", {}).get("escore"),
+            "a7": merged_data.get("a7", {}).get("escore"),
+            "reconhecimento": merged_data.get("reconhecimento", {}).get("escore"),
+        }
+        paragraphs = RAVLTPdfService._clinical_paragraphs(context.patient_name, raw_payload, result_map)
+        summary = RAVLTPdfService._summary_for_report(context.patient_name, raw_payload, result_map)
+        return "\n\n".join([*paragraphs, summary])
 
-        a1_score = _format_score(a1.get('bruto'))
-        a2_score = _format_score(a2.get('bruto'))
-        a3_score = _format_score(a3.get('bruto'))
-        a4_score = _format_score(a4.get('bruto'))
-        a5_score = _format_score(a5.get('bruto'))
-        b1_score = _format_score(b1.get('bruto'))
-        a6_score = _format_score(a6.get('bruto'))
-        a7_score = _format_score(a7.get('bruto'))
-        r_score = _format_score(r.get('bruto'))
-        alt_score = _format_score(alt.get('bruto'))
-        ret_score = _format_score(ret.get('bruto'))
-        ip_score = _format_score(ip.get('bruto'))
-        ir_score = _format_score(ir.get('bruto'))
-
-        parts = []
-        parts.append(
-            "Interpretação e Observações Clínicas: "
-            f"{name} apresentou desempenho {_global_memory_phrase(alt.get('classificacao', 'Média'))} na memória episódica auditivo-verbal, "
-            "com curva de aprendizagem "
-            f"{('adequada' if alt.get('classificacao') in {'Média', 'Média Superior', 'Superior', 'Muito Superior'} else 'oscilante')} "
-            "e resultados globalmente "
-            f"{('dentro ou acima do esperado' if alt.get('classificacao') in {'Média', 'Média Superior', 'Superior', 'Muito Superior'} else 'com oscilações em relação ao esperado')} "
-            "nas etapas de aquisição, retenção e evocação do material verbal. "
-            f"Observou-se evocação imediata inicial {_expected_phrase(a1.get('classificacao', 'Média'))} na primeira tentativa (A1 = {a1_score}), "
-            f"com progressão consistente nas tentativas subsequentes (A2 = {a2_score}, A3 = {a3_score}, A4 = {a4_score}, A5 = {a5_score}), "
-            "evidenciando "
-            f"{('boa' if a5.get('classificacao') in {'Média', 'Média Superior', 'Superior', 'Muito Superior'} else 'menor')} capacidade de codificação, armazenamento progressivo e aproveitamento do efeito de repetição."
-        )
-
-        parts.append(
-            f"Clinicamente, esse perfil indica que {name} apresenta "
-            f"{('boa' if alt.get('classificacao') in {'Média', 'Média Superior', 'Superior', 'Muito Superior'} else 'oscilante')} capacidade para registrar, manter e ampliar informações verbais apresentadas em sequência, "
-            "com desempenho funcional em tarefas que exigem aprendizagem cumulativa, memorização sequencial e evocação espontânea de conteúdos."
-        )
-
-        parts.append(
-            f"A evocação da lista interferente (B1 = {b1_score}) situou-se {_expected_phrase(b1.get('classificacao', 'Média'))}, "
-            "sugerindo boa capacidade de registro imediato de uma nova série verbal, mesmo após exposição repetida à lista anterior. "
-            f"Após a interferência, a evocação da lista original (A6 = {a6_score}) permaneceu {_expected_phrase(a6.get('classificacao', 'Média'))}, "
-            "indicando manutenção adequada das informações previamente aprendidas. "
-            f"Na evocação tardia (A7 = {a7_score}), o desempenho também se mostrou {_expected_phrase(a7.get('classificacao', 'Média'))}, "
-            f"{_consolidation_phrase(a7.get('classificacao', 'Média'))}."
-        )
-
-        parts.append(
-            f"O desempenho em reconhecimento (R = {r_score}) situou-se {_expected_phrase(r.get('classificacao', 'Média'))}, "
-            f"{_storage_phrase(r.get('classificacao', 'Média'))}. "
-            f"A aprendizagem total do material verbal (ALT = {alt_score}) ficou {_expected_phrase(alt.get('classificacao', 'Média'))}, "
-            "indicando desempenho global "
-            f"{('satisfatório' if alt.get('classificacao') in {'Média', 'Média Superior', 'Superior', 'Muito Superior'} else 'com limitações')} na aquisição cumulativa das palavras ao longo das tentativas. "
-            f"O índice de retenção (RET = {ret_score}) mostrou-se {_expected_phrase(ret.get('classificacao', 'Média'))}, sugerindo preservação da informação aprendida ao longo do intervalo. "
-            f"O índice de interferência proativa (I.P. = {ip_score}) também se manteve {_expected_phrase(ip.get('classificacao', 'Média'))}, "
-            "indicando ausência de prejuízo relevante da aprendizagem anterior sobre a aquisição de novas informações. "
-            f"Já o índice de interferência retroativa (I.R. = {ir_score}) permaneceu {_expected_phrase(ir.get('classificacao', 'Média'))}, "
-            "sugerindo que a lista interferente não produziu impacto clinicamente significativo sobre o material originalmente aprendido."
-        )
-
-        parts.append(
-            _clinical_summary(
-                name,
-                alt.get("classificacao", "Média"),
-                a7.get("classificacao", "Média"),
-                r.get("classificacao", "Média"),
-                ip.get("classificacao", "Média"),
-            )
-        )
-
-        return "\n\n".join(parts)
+    def build_report_payload(self, context: TestContext, merged_data: dict) -> dict:
+        resultados = merged_data.get("resultados") or []
+        faixa = merged_data.get("faixa_etaria") or "21-30"
+        interpretation = self.interpret(context, merged_data)
+        raw_payload = {
+            "a1": merged_data.get("a1", {}).get("escore"),
+            "a2": merged_data.get("a2", {}).get("escore"),
+            "a3": merged_data.get("a3", {}).get("escore"),
+            "a4": merged_data.get("a4", {}).get("escore"),
+            "a5": merged_data.get("a5", {}).get("escore"),
+            "b": merged_data.get("b", {}).get("escore"),
+            "a6": merged_data.get("a6", {}).get("escore"),
+            "a7": merged_data.get("a7", {}).get("escore"),
+            "reconhecimento": merged_data.get("reconhecimento", {}).get("escore"),
+        }
+        result_map = _result_map(merged_data)
+        return {
+            "results": [
+                {
+                    "scale": item.get("variavel"),
+                    "raw_score": item.get("bruto"),
+                    "percentile": item.get("percentil"),
+                    "classification": item.get("classificacao"),
+                }
+                for item in resultados
+            ],
+            "summary_for_report": RAVLTPdfService._summary_for_report(context.patient_name, raw_payload, result_map),
+            "technical_notes": [f"Faixa etária normativa: {faixa}"],
+            "clinical_flags": [
+                item.get("variavel")
+                for item in resultados
+                if item.get("classificacao") in {"Inferior", "Muito Inferior", "Limítrofe"}
+            ],
+            "chart_payload": merged_data.get("chart") or {},
+            "interpretation": interpretation,
+        }
 
 
 register_test_module(RAVLT_CODE, RAVLTModule())

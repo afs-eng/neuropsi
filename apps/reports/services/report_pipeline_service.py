@@ -57,6 +57,7 @@ class ReportPipelineService:
         report.generated_at = timezone.now()
         report.ai_metadata = {
             **(report.ai_metadata or {}),
+            "generation_scope": "full",
             "mode": "hybrid"
             if result["ai_sections"] and result["fallback_sections"]
             else ("ai" if result["ai_sections"] else "deterministic"),

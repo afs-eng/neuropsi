@@ -10,10 +10,31 @@ from apps.reports.services.report_section_service import ReportSectionService
 from apps.reports.services.report_version_service import ReportVersionService
 from .section_workflow_service import SectionWorkflowService
 from .report_ai_service import ReportAIService
-from .section_registry import get_section_config
+from .section_registry import get_section_config, list_section_configs
 
 
 class SectionRegenerationService:
+    @staticmethod
+    def _validated_codes(context: dict) -> set[str]:
+        return {
+            item.get("instrument_code")
+            for item in (context.get("validated_tests") or [])
+            if item.get("instrument_code")
+        }
+
+    @classmethod
+    def _enabled_test_section_keys(cls, context: dict) -> list[str]:
+        validated_codes = cls._validated_codes(context)
+        enabled_keys: list[str] = []
+        for section_key, config in list_section_configs():
+            if config.get("kind") != "test":
+                continue
+            required_codes = set(config.get("required_any_codes") or ())
+            if required_codes and not (required_codes & validated_codes):
+                continue
+            enabled_keys.append(section_key)
+        return enabled_keys
+
     @classmethod
     def _regenerate_section_in_place(
         cls,
@@ -27,15 +48,16 @@ class SectionRegenerationService:
         if not section or section.is_locked:
             return None
 
-        if ensure_ai_available and ReportAIService.supports_section(section_key):
-            AIHealthcheckService.ensure_available()
+        config = get_section_config(section_key)
+        title = section.title or config["title"]
+        order = section.order if section.order is not None else config.get("order", 0)
 
         result = ReportPipelineService._generate_single_section(report, section_key, context)
         ReportPipelineService._save_section_result(
             report,
             section_key,
-            section.title,
-            section.order,
+            title,
+            order,
             result,
         )
 
@@ -81,20 +103,41 @@ class SectionRegenerationService:
 
     @classmethod
     def regenerate_test_sections(
-        cls, report: Report, context: dict | None = None, user=None
+        cls,
+        report: Report,
+        context: dict | None = None,
+        user=None,
+        scope: str | None = None,
     ) -> list[str]:
         context = context or build_report_snapshot(report.evaluation)
         report.status = ReportStatus.GENERATING
         report.context_payload = context
         report.save(update_fields=["status", "context_payload", "updated_at"])
 
-        section_keys = [
-            section.key
+        section_keys = cls._enabled_test_section_keys(context)
+        enabled_key_set = set(section_keys)
+        existing_test_sections = [
+            section
             for section in report.sections.all()
             if get_section_config(section.key).get("kind") == "test"
         ]
-        if any(ReportAIService.supports_section(key) for key in section_keys):
-            AIHealthcheckService.ensure_available()
+        for section in existing_test_sections:
+            if section.key in enabled_key_set:
+                continue
+            if section.is_locked:
+                continue
+            section.delete()
+
+        existing_keys = {section.key for section in report.sections.all()}
+        for section_key in section_keys:
+            if section_key in existing_keys:
+                continue
+            config = get_section_config(section_key)
+            report.sections.create(
+                key=section_key,
+                title=config["title"],
+                order=config.get("order", 0),
+            )
 
         regenerated_keys: list[str] = []
         for section_key in section_keys:
@@ -109,6 +152,7 @@ class SectionRegenerationService:
 
         report.ai_metadata = {
             **(report.ai_metadata or {}),
+            **({"generation_scope": scope} if scope else {}),
             "last_test_regeneration": {
                 "regenerated_sections": regenerated_keys,
                 "regenerated_at": timezone.now().isoformat(),

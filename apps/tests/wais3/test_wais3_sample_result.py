@@ -288,3 +288,57 @@ def test_wais3_age_16_17_marks_icv_iop_as_significant_at_015():
     assert discrepancy["significance_level"] == "0,15"
     assert discrepancy["status"] == "significant"
     assert discrepancy["base_rate"] == 41.1
+
+
+def test_wais3_keeps_partial_sums_when_arranjo_figuras_is_missing():
+    raw_scores = {
+        "idade": {"anos": 19, "meses": 0},
+        "subtestes": {
+            "cubos": {"pontos_brutos": 56},
+            "codigos": {"pontos_brutos": 69},
+            "digitos": {"pontos_brutos": 18},
+            "aritmetica": {"pontos_brutos": 17},
+            "informacao": {"pontos_brutos": 23},
+            "compreensao": {"pontos_brutos": 30},
+            "semelhancas": {"pontos_brutos": 31},
+            "vocabulario": {"pontos_brutos": 50},
+            "completar_figuras": {"pontos_brutos": 22},
+            "procurar_simbolos": {"pontos_brutos": 40},
+            "raciocinio_matricial": {"pontos_brutos": 22},
+            "sequencia_numeros_letras": {"pontos_brutos": 12},
+        },
+    }
+
+    payload = compute_wais3_payload(raw_scores)
+    indices = payload.get("indices") or {}
+
+    qi_exec = indices.get("qi_execucao") or {}
+    qi_total = indices.get("qi_total") or {}
+
+    assert qi_exec["subtestes_ausentes"] == ["arranjo_figuras"]
+    assert qi_exec["subtestes_utilizados"] == [
+        "completar_figuras",
+        "codigos",
+        "cubos",
+        "raciocinio_matricial",
+    ]
+    assert qi_exec["soma_ponderada"] == 53
+    assert qi_exec["pontuacao_composta"] == 103
+    assert qi_exec["percentil"] == 58
+
+    assert qi_total["subtestes_ausentes"] == ["arranjo_figuras"]
+    assert qi_total["subtestes_utilizados"] == [
+        "vocabulario",
+        "semelhancas",
+        "aritmetica",
+        "digitos",
+        "informacao",
+        "compreensao",
+        "completar_figuras",
+        "codigos",
+        "cubos",
+        "raciocinio_matricial",
+    ]
+    assert qi_total["soma_ponderada"] == 141
+    assert qi_total["pontuacao_composta"] == 117
+    assert qi_total["percentil"] == 87

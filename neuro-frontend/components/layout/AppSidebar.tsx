@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { NeuroavaliaLogo } from "@/components/brand/NeuroavaliaLogo";
 import {
   LayoutDashboard,
   Users,
@@ -18,11 +19,7 @@ import {
   FileQuestion,
   Stethoscope,
   LogOut,
-  PanelLeftClose,
-  PanelLeftOpen,
-  EyeOff,
   X,
-  Menu,
 } from "lucide-react";
 
 interface NavItem {
@@ -48,7 +45,6 @@ const NAV_ITEMS: NavItem[] = [
 
 export function AppSidebar({ 
   collapsed, 
-  onToggle,
   onNewEvaluation,
   hidden,
   onHide,
@@ -56,7 +52,6 @@ export function AppSidebar({
   onNavClick,
 }: { 
   collapsed: boolean; 
-  onToggle: () => void;
   onNewEvaluation?: () => void;
   hidden?: boolean;
   onHide?: () => void;
@@ -108,7 +103,7 @@ export function AppSidebar({
   };
 
   return (
-    <aside className={`fixed left-0 top-0 z-50 flex h-screen flex-col border-r border-slate-200 bg-white transition-all duration-300 ${
+    <aside className={`fixed left-0 top-0 z-50 flex h-screen flex-col border-r border-slate-200 bg-white transition-all duration-300 app-shell-sidebar ${
         isMobile
           ? hidden
             ? "-translate-x-full w-[260px] shadow-xl"
@@ -119,29 +114,19 @@ export function AppSidebar({
               ? "w-[72px]"
               : "w-[260px]"
       }`}>
-      <div className="flex h-16 items-center justify-between px-4">
-        <Link href="/dashboard" className="flex items-center gap-3" onClick={onNavClick}>
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-            <Brain className="h-6 w-6" />
-          </div>
-          {!collapsed && <span className="text-xl font-bold tracking-tight text-slate-900">Neuro<span className="text-primary font-extrabold">Avalia</span></span>}
+      <div className="flex h-[118px] items-center justify-between px-1.5">
+        <Link href="/dashboard" className="flex min-w-0 flex-1 items-center" onClick={onNavClick} aria-label="Ir para dashboard Neuroavalia">
+          {collapsed ? (
+            <NeuroavaliaLogo compact className="h-12 w-12 shrink-0" />
+          ) : (
+            <NeuroavaliaLogo className="h-[114px] w-full" />
+          )}
         </Link>
         {isMobile ? (
           <button onClick={onHide} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors" title="Fechar menu">
             <X className="h-5 w-5" />
           </button>
-        ) : (
-          <div className="flex items-center gap-0.5 rounded-lg border border-slate-100 bg-slate-50/80 p-0.5 shadow-inner shadow-slate-50">
-            <button onClick={onToggle} className="rounded-md p-1.5 text-slate-400 hover:bg-white hover:text-slate-700 hover:shadow-sm transition-all duration-200 ease-out active:scale-95" title={collapsed ? "Expandir menu" : "Recolher menu"}>
-              {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-            </button>
-            {!collapsed && (
-              <button onClick={onHide} className="rounded-md p-1.5 text-slate-400 hover:bg-white hover:text-slate-700 hover:shadow-sm transition-all duration-200 ease-out active:scale-95" title="Esconder menu">
-                <EyeOff className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-        )}
+        ) : null}
       </div>
 
       <div className="p-4">

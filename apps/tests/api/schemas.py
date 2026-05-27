@@ -37,6 +37,8 @@ class TestApplicationOut(Schema):
     id: int
     evaluation_id: int
     patient_name: str
+    patient_sex: Optional[str] = None
+    patient_schooling: Optional[str] = None
     instrument_id: int
     instrument_code: str
     instrument_name: str
@@ -46,7 +48,10 @@ class TestApplicationOut(Schema):
     classified_payload: dict[str, Any]
     reviewed_payload: dict[str, Any]
     interpretation_text: str
+    report_payload: dict[str, Any] = {}
     is_validated: bool
+    status: str
+    status_display: str
 
 
 class TestApplicationCreateIn(Schema):
@@ -57,6 +62,7 @@ class TestApplicationCreateIn(Schema):
     reviewed_payload: dict[str, Any] = {}
     interpretation_text: Optional[str] = ""
     is_validated: bool = False
+    status: Optional[str] = None
 
 
 class TestApplicationUpdateIn(Schema):
@@ -69,6 +75,7 @@ class TestApplicationUpdateIn(Schema):
     reviewed_payload: Optional[dict[str, Any]] = None
     interpretation_text: Optional[str] = None
     is_validated: Optional[bool] = None
+    status: Optional[str] = None
 
 
 class MessageOut(Schema):
@@ -273,7 +280,15 @@ class WISC4SubmitIn(Schema):
     cf: Optional[str] = ""
     ca: Optional[str] = ""
     in_: Optional[str] = ""
+    ar: Optional[str] = ""
     rp: Optional[str] = ""
+    cusb: Optional[str] = ""
+    diod: Optional[str] = ""
+    dioi: Optional[str] = ""
+    caa: Optional[str] = ""
+    cae: Optional[str] = ""
+    udiod: Optional[str] = ""
+    udioi: Optional[str] = ""
 
 
 class WAIS3SubmitIn(Schema):

@@ -3,11 +3,11 @@ import os
 
 
 FACTOR_MAP = {
-    "Motivação Social": "motivacao_social",
-    "Percepção Social": "percepcao_social",
-    "Cognição Social": "cognicao_social",
-    "Comunicação Social": "comunicacao_social",
-    "Padrões Restritos e Repetitivos": "padroes_restritos",
+    "Motivação Social": "motivação_social",
+    "Percepção Social": "percepção_social",
+    "Cognição Social": "cognição_social",
+    "Comunicação Social": "comunicação_social",
+    "Padrões Restritos e Repetitivos": "padrões_restritos",
 }
 
 ITENS_INVERTIDOS = {3, 7, 11, 12, 15, 17, 21, 22, 26, 32, 38, 40, 43, 45, 48, 52, 55}
@@ -53,11 +53,11 @@ def calculate_factor_score(responses: dict, items: list[int]) -> int:
 
 def get_factor_name(factor_key: str) -> str:
     names = {
-        "percepcao_social": "Percepção Social",
-        "cognicao_social": "Cognição Social",
-        "comunicacao_social": "Comunicação Social",
-        "motivacao_social": "Motivação Social",
-        "padroes_restritos": "Padrões Restritos e Repetitivos",
+        "percepção_social": "Percepção Social",
+        "cognição_social": "Cognição Social",
+        "comunicação_social": "Comunicação Social",
+        "motivação_social": "Motivação Social",
+        "padrões_restritos": "Padrões Restritos e Repetitivos",
     }
     return names.get(factor_key, factor_key)
 
@@ -84,17 +84,17 @@ def compute_srs2_scores(raw_responses: dict, form: str) -> dict:
         }
 
     cis = (
-        results.get("percepcao_social", {}).get("escore", 0)
-        + results.get("cognicao_social", {}).get("escore", 0)
-        + results.get("comunicacao_social", {}).get("escore", 0)
-        + results.get("motivacao_social", {}).get("escore", 0)
+        results.get("percepção_social", {}).get("escore", 0)
+        + results.get("cognição_social", {}).get("escore", 0)
+        + results.get("comunicação_social", {}).get("escore", 0)
+        + results.get("motivação_social", {}).get("escore", 0)
     )
 
     max_cis = (
-        results.get("percepcao_social", {}).get("max", 0)
-        + results.get("cognicao_social", {}).get("max", 0)
-        + results.get("comunicacao_social", {}).get("max", 0)
-        + results.get("motivacao_social", {}).get("max", 0)
+        results.get("percepção_social", {}).get("max", 0)
+        + results.get("cognição_social", {}).get("max", 0)
+        + results.get("comunicação_social", {}).get("max", 0)
+        + results.get("motivação_social", {}).get("max", 0)
     )
 
     results["cis"] = {
@@ -103,7 +103,7 @@ def compute_srs2_scores(raw_responses: dict, form: str) -> dict:
         "max": max_cis,
     }
 
-    total = cis + results.get("padroes_restritos", {}).get("escore", 0)
+    total = cis + results.get("padrões_restritos", {}).get("escore", 0)
     results["total"] = {
         "nome": "Pontuação SRS-2 Total",
         "escore": total,

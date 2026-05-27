@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Save, User } from "lucide-react";
+import { AlertCircle, ArrowLeft, Save, User } from "lucide-react";
 import { api } from "@/lib/api";
 
 type ItemData = {
@@ -32,6 +32,7 @@ function SRS2PageContent() {
   const [respondentName, setRespondentName] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showValidationErrors, setShowValidationErrors] = useState(false);
   const [patientName, setPatientName] = useState<string>("");
 
   const evaluationId = searchParams.get("evaluation_id");
@@ -133,30 +134,45 @@ function SRS2PageContent() {
     setResponses({});
     setRespondentName("");
     setError(null);
+    setShowValidationErrors(false);
   };
+
+  const missingItems: number[] = [];
+  for (let i = 1; i <= 65; i++) {
+    const val = parseInt(responses[String(i)]);
+    if (!(val >= 1 && val <= 4)) {
+      missingItems.push(i);
+    }
+  }
+  const answeredCount = 65 - missingItems.length;
+  const hasValidationErrors = showValidationErrors && missingItems.length > 0;
 
   const handleSave = async () => {
     if (!evaluationId) {
-      alert("evaluation_id não encontrado na URL");
+      setError("ID da avaliação não encontrado. Acesse este teste a partir de uma avaliação.");
       return;
     }
-    setSaving(true);
+    setError(null);
     
     const responsesPayload: Record<string, number> = {};
-    let answeredCount = 0;
     for (let i = 1; i <= 65; i++) {
       const val = parseInt(responses[String(i)]);
       if (val >= 1 && val <= 4) {
         responsesPayload[String(i)] = val;
-        answeredCount++;
       }
     }
 
-    if (answeredCount < 65) {
-      alert(`Por favor, responda todos os 65 itens. Respondidos: ${answeredCount}/65`);
-      setSaving(false);
+    if (missingItems.length > 0) {
+      setShowValidationErrors(true);
+      requestAnimationFrame(() => {
+        const firstMissingInput = document.querySelector(`input[name="item_${missingItems[0] - 1}"]`) as HTMLInputElement | null;
+        firstMissingInput?.focus();
+        firstMissingInput?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
       return;
     }
+    setShowValidationErrors(false);
+    setSaving(true);
     
     try {
       const result = await api.post<{ application_id: number }>("/api/tests/srs2/submit", {
@@ -170,7 +186,7 @@ function SRS2PageContent() {
       router.push(`/dashboard/tests/srs2/${result.application_id}/result?evaluation_id=${evaluationId}`);
     } catch (err: any) {
       console.error("Erro ao salvar:", err);
-      alert("Erro ao salvar: " + (err?.message || "Tente novamente"));
+      setError("Erro ao salvar: " + (err?.message || "Tente novamente"));
     } finally {
       setSaving(false);
     }
@@ -216,6 +232,38 @@ function SRS2PageContent() {
             <CardDescription>Marque a frequência para cada item.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {(hasValidationErrors || error) && (
+              <div
+                role="alert"
+                className={`rounded-2xl border p-4 shadow-sm ${
+                  hasValidationErrors
+                    ? "border-rose-200 bg-rose-50 text-rose-900"
+                    : "border-amber-200 bg-amber-50 text-amber-900"
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <div className={`mt-0.5 rounded-full p-2 ${hasValidationErrors ? "bg-rose-100" : "bg-amber-100"}`}>
+                    <AlertCircle className="h-5 w-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="font-semibold">
+                      {hasValidationErrors ? `Faltam ${missingItems.length} item(ns) para concluir o SRS-2` : "Não foi possível salvar"}
+                    </p>
+                    <p className="text-sm">
+                      {hasValidationErrors
+                        ? `Respondidos: ${answeredCount}/65. Os campos pendentes foram destacados em vermelho para facilitar a revisão.`
+                        : error}
+                    </p>
+                    {hasValidationErrors && (
+                      <p className="text-sm font-medium">
+                        Itens pendentes: {missingItems.slice(0, 12).join(", ")}{missingItems.length > 12 ? "..." : ""}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="rounded-lg bg-slate-50 p-4 text-sm text-slate-600">
               <p className="font-medium mb-2">Escala de frequência:</p>
               <div className="grid grid-cols-4 gap-2">
@@ -233,40 +281,59 @@ function SRS2PageContent() {
                 <div className="text-center">Resp.</div>
               </div>
               <div className="max-h-[500px] overflow-y-auto">
-                {items.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className={`grid grid-cols-[60px_1fr_80px] items-center px-4 py-3 border-t ${
-                      idx % 2 === 0 ? "bg-white" : "bg-slate-50/50"
-                    }`}
-                  >
-                    <div className="text-sm font-medium text-slate-900">{String(item.item).padStart(2, "0")}</div>
-                    <div className="text-sm text-slate-700 pr-4">{item.pergunta}</div>
-                    <div className="flex justify-center">
-                      <Input
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={1}
-                        className="h-8 w-12 rounded-lg text-center"
-                        value={responses[String(item.item)] || ""}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val === "" || ["1", "2", "3", "4"].includes(val)) {
-                            setResponses({ ...responses, [String(item.item)]: val });
-                          }
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && idx < items.length - 1) {
-                            const nextInput = document.querySelector(`input[name="item_${idx + 1}"]`) as HTMLInputElement;
-                            if (nextInput) nextInput.focus();
-                          }
-                        }}
-                        placeholder="1-4"
-                        name={`item_${idx}`}
-                      />
+                {items.map((item, idx) => {
+                  const isMissing = hasValidationErrors && missingItems.includes(item.item);
+
+                  return (
+                    <div
+                      key={idx}
+                      className={`grid grid-cols-[60px_1fr_80px] items-center px-4 py-3 border-t transition-colors ${
+                        isMissing
+                          ? "border-l-4 border-l-rose-500 border-t-rose-100 bg-rose-50"
+                          : idx % 2 === 0
+                            ? "bg-white"
+                            : "bg-slate-50/50"
+                      }`}
+                    >
+                      <div className={`text-sm font-medium ${isMissing ? "text-rose-900" : "text-slate-900"}`}>
+                        {String(item.item).padStart(2, "0")}
+                      </div>
+                      <div className={`text-sm pr-4 ${isMissing ? "text-rose-950" : "text-slate-700"}`}>
+                        {item.pergunta}
+                        {isMissing && <span className="ml-2 text-xs font-semibold text-rose-700">Não respondido</span>}
+                      </div>
+                      <div className="flex justify-center">
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={1}
+                          aria-invalid={isMissing}
+                          aria-label={`Resposta do item ${item.item}`}
+                          className={`h-8 w-12 rounded-lg text-center ${
+                            isMissing
+                              ? "border-rose-500 bg-white text-rose-950 shadow-sm ring-2 ring-rose-100 placeholder:text-rose-300 focus-visible:ring-rose-500"
+                              : ""
+                          }`}
+                          value={responses[String(item.item)] || ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === "" || ["1", "2", "3", "4"].includes(val)) {
+                              setResponses({ ...responses, [String(item.item)]: val });
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && idx < items.length - 1) {
+                              const nextInput = document.querySelector(`input[name="item_${idx + 1}"]`) as HTMLInputElement;
+                              if (nextInput) nextInput.focus();
+                            }
+                          }}
+                          placeholder="1-4"
+                          name={`item_${idx}`}
+                        />
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 

@@ -42,7 +42,7 @@ export default function TestsPage() {
   );
 
   const handleApplyTest = (testCode: string) => {
-    router.push(`/dashboard/tests/${testCode.replace(/_/g, "-")}`);
+    router.push(`/dashboard/tests/quick?test=${testCode.replace(/_/g, "-")}`);
   };
 
   return (
@@ -52,6 +52,9 @@ export default function TestsPage() {
         subtitle="Catalogação técnica de testes psicométricos e escalas clínicas."
         actions={
           <div className="flex gap-2">
+             <Button className="h-11 rounded-xl font-bold gap-2" onClick={() => router.push('/dashboard/tests/quick')}>
+               <Play className="h-4 w-4" /> Teste rapido
+             </Button>
              <div className="relative group">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
                 <input 
@@ -124,6 +127,20 @@ export default function TestsPage() {
           ))}
         </div>
       )}
+
+      <div className="mt-10 rounded-[32px] border border-indigo-200 bg-indigo-50 p-6 text-indigo-900">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h4 className="text-lg font-bold">Aplicacao sem montar avaliacao manualmente</h4>
+            <p className="mt-1 text-sm text-indigo-800">
+              Use o fluxo de <span className="font-semibold">Teste rapido</span> para escolher o instrumento, cadastrar os dados do paciente e abrir o formulario ja pronto para gerar a analise e exportar em PDF na tela de resultado.
+            </p>
+          </div>
+          <Button className="rounded-2xl" onClick={() => router.push('/dashboard/tests/quick')}>
+            Iniciar teste rapido
+          </Button>
+        </div>
+      </div>
 
       {/* Info Card Sidebar Style */}
       <div className="mt-12 p-8 rounded-[40px] bg-slate-900 border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-8 animate-in zoom-in-95 duration-1000">

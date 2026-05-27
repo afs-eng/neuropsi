@@ -34,6 +34,7 @@ import { Badge } from "@/components/ui/badge";
 import { api, resolveApiUrl } from "@/lib/api";
 import { getEvaluationDeadlineMeta } from "@/lib/evaluation-deadline";
 import { AnamnesisResponseViewer } from "@/components/anamnesis/AnamnesisResponseViewer";
+import { TestWorkflowBadge } from "@/components/tests/TestWorkflowBadge";
 
 interface Instrument {
   id: number;
@@ -83,6 +84,7 @@ interface TestApp {
   applied_on: string | null;
   is_validated: boolean;
   status: string;
+  status_display?: string | null;
   raw_payload?: Record<string, unknown>;
   classified_payload?: Record<string, unknown>;
 }
@@ -1290,17 +1292,12 @@ export default function EvaluationDetailPage() {
                         {evaluation.tests.map((test) => (
                           <tr key={test.id} className="group border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
                             <td className="py-5 font-bold text-slate-900">{getTestDisplayName(test)}</td>
+                            
                             <td className="py-5 text-sm text-slate-500 font-bold">
                               {test.applied_on ? new Date(test.applied_on).toLocaleDateString("pt-BR") : "Aguardando"}
                             </td>
                             <td className="py-5">
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${
-                                test.is_validated 
-                                ? "bg-emerald-50 text-emerald-600 border-emerald-100" 
-                                : "bg-amber-50 text-amber-600 border-amber-100"
-                              }`}>
-                                {test.status}
-                              </span>
+                              <TestWorkflowBadge status={test.status} statusDisplay={test.status_display} />
                             </td>
                             <td className="py-5 text-right">
                               <div className="flex justify-end gap-2">

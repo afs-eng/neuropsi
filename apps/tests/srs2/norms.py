@@ -46,11 +46,11 @@ def load_norm_data():
     
     # Mapeamento flexível de nomes de coluna em vários arquivos para o fator interno
     factor_mapping = {
-        "percepcao_social": ["percepcao_social", "ps"],
-        "cognicao_social": ["cognicao_social", "cs"],
-        "comunicacao_social": ["comunicacao_social", "coms"],
-        "motivacao_social": ["motivacao_social", "ms"],
-        "padroes_restritos": ["padroes_restritos_repetitivos", "prr"],
+        "percepção_social": ["percepcao_social", "ps"],
+        "cognição_social": ["cognicao_social", "cs"],
+        "comunicação_social": ["comunicacao_social", "coms"],
+        "motivação_social": ["motivacao_social", "ms"],
+        "padrões_restritos": ["padroes_restritos_repetitivos", "prr"],
         "cis": ["comunicacao_interacao_social", "cis"],
         "total": ["pontuacao_srs2_total", "total", "srs2_total"]
     }
@@ -164,13 +164,13 @@ def classify_tscore(t: Optional[float]) -> str:
     
     # Regras universais de classificação para SRS-2 com base no T-Score
     if t <= 59:
-        return "Dentro dos limites Normais"
+        return "Dentro dos limites normais"
     elif 60 <= t <= 65:
         return "Leve"
     elif 66 <= t <= 75:
         return "Moderado"
     else:
-        return "Grave"
+        return "Severo"
 
 def get_age_band(age: int, form: str) -> str:
     if form == "pre_escola":

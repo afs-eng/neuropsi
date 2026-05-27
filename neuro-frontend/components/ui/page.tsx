@@ -10,8 +10,8 @@ interface PageContainerProps {
 
 export function PageContainer({ children, className }: PageContainerProps) {
   return (
-    <div className={cn("min-h-[calc(100vh-4rem)] bg-background p-8 lg:p-10", className)}>
-      <div className="mx-auto max-w-7xl animate-in fade-in slide-in-from-bottom-2 duration-500">
+    <div className={cn("min-h-[calc(100vh-4rem)] bg-background p-8 lg:p-10 print:min-h-0 print:bg-white print:p-0 report-print-shell", className)}>
+      <div className="mx-auto max-w-7xl animate-in fade-in slide-in-from-bottom-2 duration-500 print:max-w-none report-print-card">
         {children}
       </div>
     </div>
@@ -27,8 +27,8 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, subtitle, actions, breadcrumbs }: PageHeaderProps) {
   return (
-    <div className="mb-8">
-      {breadcrumbs && <div className="mb-4">{breadcrumbs}</div>}
+    <div className="mb-8 print:mb-4">
+      {breadcrumbs && <div className="mb-4 print:hidden">{breadcrumbs}</div>}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">{title}</h1>
@@ -38,7 +38,7 @@ export function PageHeader({ title, subtitle, actions, breadcrumbs }: PageHeader
             </p>
           )}
         </div>
-        {actions && <div className="flex items-center gap-3">{actions}</div>}
+        {actions && <div className="flex items-center gap-3 print:hidden report-print-hide">{actions}</div>}
       </div>
     </div>
   );
@@ -55,9 +55,9 @@ interface SectionCardProps {
 
 export function SectionCard({ title, description, children, actions, className, icon }: SectionCardProps) {
   return (
-    <div className={cn("spike-card overflow-hidden", className)}>
+    <div className={cn("spike-card overflow-hidden print:break-inside-avoid print:shadow-none report-print-break-avoid", className)}>
       {(title || actions || icon) && (
-        <div className="flex items-center justify-between border-b border-slate-50 px-6 py-5 bg-slate-50/30">
+        <div className="flex items-center justify-between border-b border-slate-50 px-6 py-5 bg-slate-50/30 print:bg-white">
           <div className="flex items-center gap-3">
             {icon && <div className="shrink-0">{icon}</div>}
             <div>
@@ -65,7 +65,7 @@ export function SectionCard({ title, description, children, actions, className, 
               {description && <p className="mt-1 text-sm font-medium text-slate-500">{description}</p>}
             </div>
           </div>
-          {actions && <div className="flex items-center gap-2">{actions}</div>}
+          {actions && <div className="flex items-center gap-2 print:hidden report-print-hide">{actions}</div>}
         </div>
       )}
       <div className="p-6">{children}</div>

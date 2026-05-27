@@ -31,14 +31,15 @@ export default function GenerateReportPage() {
     loadExistingReport();
   }, [params.evaluationId]);
 
-  async function handleGenerate() {
+  async function handleGenerate(mode: "full" | "tests_only") {
     setGenerating(true);
     setError("");
     try {
-      const report = await reportService.generateFromEvaluation(params.evaluationId);
-      router.push(`/dashboard/reports/${report.id}?autobuild=1`);
+      const report = await reportService.generateFromEvaluation(params.evaluationId, mode);
+      const query = mode === "full" ? "?autobuild=1" : "";
+      router.push(`/dashboard/reports/${report.id}${query}`);
     } catch (err: any) {
-      setError(err?.message || "Nao foi possivel gerar o laudo.");
+      setError(err?.message || "Nao foi possivel iniciar a geracao.");
     } finally {
       setGenerating(false);
     }
@@ -78,12 +79,16 @@ export default function GenerateReportPage() {
           {existingReport ? (
             <>
               <h2 className="text-2xl font-semibold text-slate-900">Ja existe um laudo para esta avaliacao</h2>
-              <p className="mt-3 text-sm text-slate-500">Abra o laudo existente para continuar a revisao ou gere um novo rascunho se precisar reiniciar o processo.</p>
+              <p className="mt-3 text-sm text-slate-500">Abra o laudo existente para continuar a revisao ou inicie uma nova geracao completa ou somente das secoes de testes.</p>
               <div className="mt-8 flex justify-center gap-3">
                 <Button variant="outline" onClick={() => router.push(`/dashboard/reports/${existingReport.id}`)}>
                   Abrir laudo existente
                 </Button>
-                <Button className="gap-2" disabled={generating} onClick={handleGenerate}>
+                <Button variant="outline" className="gap-2" disabled={generating} onClick={() => handleGenerate("tests_only")}>
+                  {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+                  Gerar somente testes
+                </Button>
+                <Button className="gap-2" disabled={generating} onClick={() => handleGenerate("full")}>
                   {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                   Gerar novo rascunho
                 </Button>
@@ -92,9 +97,13 @@ export default function GenerateReportPage() {
           ) : (
             <>
               <h2 className="text-2xl font-semibold text-slate-900">Preparado para gerar o rascunho</h2>
-              <p className="mt-3 text-sm text-slate-500">Testes validados, anamnese, documentos relevantes e observacoes clinicas serao consolidados antes da geracao.</p>
-              <div className="mt-8 flex justify-center">
-                <Button className="gap-2" disabled={generating} onClick={handleGenerate}>
+              <p className="mt-3 text-sm text-slate-500">Escolha entre gerar o laudo completo ou montar apenas as secoes de testes validados para revisao incremental.</p>
+              <div className="mt-8 flex justify-center gap-3">
+                <Button variant="outline" className="gap-2" disabled={generating} onClick={() => handleGenerate("tests_only")}>
+                  {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+                  Gerar somente testes
+                </Button>
+                <Button className="gap-2" disabled={generating} onClick={() => handleGenerate("full")}>
                   {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                   Gerar laudo com IA
                 </Button>

@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NeuroAvalia • WISC-IV</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 0;
+    }
+
+    :root {
+      --azul: #082D5F;
+      --azul-2: #1f6fb2;
+      --azul-claro: #dff1fb;
+      --linha: #b9c3cf;
+      --fundo: #dfe5ec;
+      --texto: #4a5563;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--fundo);
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--texto);
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .preview {
+      width: 100%;
+      min-height: 100vh;
+      padding: 28px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .page {
+      width: 794px;
+      height: 1123px;
+      background: #fff;
+      padding: 34px 30px 72px;
+      box-shadow: 0 10px 30px rgba(12, 31, 54, 0.16);
+      position: relative;
+      overflow: hidden;
+      page-break-inside: avoid;
+      page-break-after: always;
+    }
+
+    .page:last-child { page-break-after: auto; }
+
+    .brand {
+      color: var(--azul);
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 13px;
+      margin-bottom: 34px;
+    }
+
+    .header-grid {
+      display: grid;
+      grid-template-columns: 1.7fr 0.9fr;
+      gap: 36px;
+      align-items: start;
+      margin-bottom: 38px;
+    }
+
+    .test-title {
+      color: var(--azul);
+      font-size: 54px;
+      line-height: 0.95;
+      font-weight: 900;
+      letter-spacing: 5px;
+      margin: 0 0 8px;
+    }
+
+    .subtitle {
+      color: var(--azul);
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin: 0;
+      max-width: 470px;
+    }
+
+    .meta-box {
+      display: grid;
+      grid-template-columns: 2px 1fr;
+      gap: 16px;
+      color: var(--azul);
+      margin-top: 4px;
+    }
+
+    .meta-line { width: 2px; height: 94px; background: var(--azul); }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 104px;
+      column-gap: 16px;
+      row-gap: 13px;
+      align-items: start;
+    }
+
+    .meta-label,
+    .meta-value {
+      font-size: 11px;
+      line-height: 1.15;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .meta-value {
+      white-space: nowrap;
+      text-align: left;
+    }
+
+    .section-title-main {
+      color: var(--azul);
+      font-size: 17px;
+      font-weight: 900;
+      margin: 0 0 12px;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 132px 1fr;
+      row-gap: 7px;
+      column-gap: 20px;
+      max-width: 520px;
+      margin-bottom: 14px;
+    }
+
+    .info-label {
+      color: var(--azul);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .info-value {
+      color: var(--azul);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .rule-simple {
+      border-top: 1px solid var(--linha);
+      height: 12px;
+      margin-top: 10px;
+    }
+
+    .content-row {
+      display: grid;
+      grid-template-columns: 170px 1fr;
+      gap: 16px;
+      border-top: 1px solid #555;
+      padding: 26px 0;
+    }
+
+    .content-row + .content-row { border-top: 1px solid var(--linha); }
+
+    .side-title {
+      color: var(--azul);
+      font-size: 24px;
+      font-weight: 900;
+      line-height: 1.25;
+      margin: 0;
+    }
+
+    .content-text {
+      border-left: 1px solid var(--linha);
+      padding-left: 16px;
+      font-size: 11px;
+      line-height: 1.45;
+      text-align: justify;
+    }
+
+    .content-text p { margin: 0 0 14px; }
+
+    .compact-header {
+      display: grid;
+      grid-template-columns: 1fr 255px;
+      gap: 20px;
+      align-items: center;
+      border-top: 1px solid #555;
+      border-bottom: 1px solid #555;
+      padding: 18px 8px 18px 24px;
+      margin: -8px -16px 24px;
+    }
+
+    .wisc-logo {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      color: var(--azul);
+    }
+
+    .wisc-logo-main {
+      font-size: 44px;
+      font-weight: 900;
+      line-height: 0.85;
+      letter-spacing: -2px;
+    }
+
+    .wisc-logo-main span { color: var(--azul-2); }
+
+    .wisc-logo-sub {
+      font-size: 7px;
+      line-height: 1.05;
+      font-weight: 900;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .compact-meta {
+      display: grid;
+      grid-template-columns: 1.35fr 0.8fr;
+      row-gap: 13px;
+      column-gap: 12px;
+      color: var(--azul);
+      font-size: 8px;
+      text-transform: uppercase;
+    }
+
+    .compact-meta strong { font-size: 9px; }
+
+    .result-title {
+      color: var(--azul);
+      font-size: 25px;
+      font-weight: 900;
+      margin: 0 0 16px;
+    }
+
+    .results-grid-2x2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .result-box {
+      border: 1px solid #d3dce7;
+      border-radius: 12px;
+      background: #ffffff;
+      padding: 10px;
+      overflow: hidden;
+      align-self: start;
+    }
+
+    .result-box-top {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      align-self: stretch;
+    }
+
+    .result-box-profile {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      align-self: stretch;
+    }
+
+    .result-box-conversion {
+      height: auto;
+      align-self: start;
+    }
+
+    .box-title {
+      color: var(--azul);
+      text-align: center;
+      font-size: 10.5px;
+      font-weight: 900;
+      margin: 0 0 8px;
+      letter-spacing: 0.2px;
+    }
+
+    .box-title-tight {
+      font-size: 8.8px;
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .compact-table,
+    .mini-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      color: var(--azul);
+      font-size: 7.35px;
+    }
+
+    .compact-table th,
+    .compact-table td,
+    .mini-table th,
+    .mini-table td {
+      border: 1px solid #8ea1b8;
+      text-align: center;
+      padding: 2px 2px;
+      height: 18px;
+    }
+
+    .compact-table th,
+    .mini-table th {
+      background: #ffffff;
+      color: var(--azul);
+      font-weight: 900;
+    }
+
+    .left-col { text-align: left !important; font-weight: 800; }
+    .fill { background: #dff1fb; }
+    .value-cell { background: #ffffff; font-weight: 900; }
+    .optional { background: #ffffff; color: #4b6584; font-style: italic; font-weight: 800; }
+    .sum-label { text-align: center; font-weight: 900; }
+
+    .foot-tag {
+      display: block;
+      font-size: 6px;
+      margin-top: 1px;
+      color: var(--azul);
+      font-weight: 900;
+    }
+
+    .mini-table th,
+    .mini-table td {
+      height: 24px;
+      font-size: 7.6px;
+    }
+
+    .mini-table th {
+      line-height: 1.05;
+      overflow-wrap: normal;
+      word-break: keep-all;
+    }
+
+    .profile-panel {
+      border: 1px solid #8ea1b8;
+      min-height: 421px;
+      height: 100%;
+      flex: 1;
+      position: relative;
+      display: grid;
+      grid-template-columns: 26px repeat(15, 1fr);
+      grid-template-rows: 32px 22px 22px repeat(19, 1fr);
+      color: var(--azul);
+      font-size: 6.6px;
+      overflow: hidden;
+    }
+
+    .profile-panel > div {
+      border-right: 1px solid #b9c3cf;
+      border-bottom: 1px solid #d6dde6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .profile-panel .blank { grid-row: 1 / span 3; border-right: 2px solid #8ea1b8; }
+    .profile-panel .group { font-weight: 900; line-height: 1.05; text-align: center; border-bottom: 2px solid #8ea1b8; }
+    .profile-panel .end { border-right: 2px solid #8ea1b8; }
+    .profile-panel .avg { background: rgba(223, 241, 251, 0.72); }
+    .profile-panel .score { font-weight: 900; background: #f7fbff; border-right: 2px solid #8ea1b8; }
+    .dot { width: 5.5px; height: 5.5px; border-radius: 50%; background: var(--azul-2); display: inline-block; }
+
+    .composite-profile {
+      border: 1px solid #8ea1b8;
+      height: 320px;
+      display: grid;
+      grid-template-columns: 34px repeat(5, 1fr);
+      grid-template-rows: 24px 24px repeat(13, 1fr);
+      color: var(--azul);
+      font-size: 7px;
+      overflow: hidden;
+    }
+
+    .composite-profile > div {
+      border-right: 1px solid #b9c3cf;
+      border-bottom: 1px solid #d6dde6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .composite-profile .blank { grid-row: 1 / span 2; border-right: 2px solid #8ea1b8; }
+    .composite-profile .head { font-weight: 900; }
+    .composite-profile .value { background: #dff1fb; font-weight: 900; }
+    .composite-profile .score { font-weight: 900; background: #f7fbff; border-right: 2px solid #8ea1b8; }
+    .composite-profile .avg { background: rgba(223, 241, 251, 0.68); }
+
+    .analysis-page-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .analysis-block {
+      border: 1px solid #d3dce7;
+      border-radius: 12px;
+      background: #ffffff;
+      padding: 8px;
+      overflow: hidden;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .analysis-block.compact {
+      padding: 6px;
+    }
+
+    .analysis-block-title {
+      margin: 0 0 8px;
+      padding: 4px 8px;
+      background: var(--azul);
+      color: #ffffff;
+      font-size: 10.2px;
+      font-weight: 900;
+      letter-spacing: 0.2px;
+      border-radius: 8px 8px 0 0;
+    }
+
+    .analysis-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      color: var(--azul);
+      font-size: 6.9px;
+    }
+
+    .analysis-table th,
+    .analysis-table td {
+      border: 1px solid #8ea1b8;
+      text-align: center;
+      padding: 1px 2px;
+      height: 16px;
+      line-height: 1.05;
+    }
+
+    .analysis-table th {
+      background: #dff1fb;
+      font-weight: 900;
+    }
+
+    .analysis-table .left-col {
+      text-align: left !important;
+      font-weight: 800;
+    }
+
+    .analysis-note {
+      margin: 6px 0 0;
+      font-size: 7.2px;
+      color: #4a5563;
+      line-height: 1.25;
+    }
+
+    .analysis-two-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      align-items: start;
+    }
+
+    .analysis-block-processo {
+      padding: 6px;
+      height: auto;
+      min-height: unset;
+      align-self: start;
+    }
+
+    .analysis-block-processo .analysis-block-title {
+      margin-bottom: 5px;
+    }
+
+    .analysis-block-processo .analysis-table {
+      border: 1px solid #8ea1b8;
+      border-collapse: collapse;
+      margin: 0;
+    }
+
+    .analysis-three-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    .subtest-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 16px; }
+    .subtest-card { border: 1px solid #d1dbe6; border-radius: 12px; padding: 14px 12px; background: #fff; }
+    .subtest-card h3 { margin: 0 0 10px; color: var(--azul); font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px; }
+    .subtest-item { display: flex; justify-content: space-between; border-bottom: 1px solid #edf1f5; padding: 6px 0; font-size: 10px; color: #334155; }
+    .subtest-item:last-child { border-bottom: none; }
+    .subtest-item strong { color: var(--azul); }
+
+    .clinical-heading {
+      color: var(--azul);
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      margin: 0 0 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--linha);
+    }
+
+    .legend-line { margin: 0 0 22px; font-size: 10px; color: #4d5560; }
+
+    .clinical-text {
+      font-family: "Times New Roman", Times, serif;
+      color: #001f49;
+      font-size: 14px;
+      line-height: 1.24;
+      text-align: justify;
+    }
+
+    .clinical-text p { margin: 0 0 9px; }
+
+    .clinical-box {
+      margin: 14px 0 12px;
+      padding: 11px 14px;
+      border: 1px solid #c7d2df;
+      border-left: 14px solid var(--azul);
+      background: #f8fbff;
+      font-family: "Times New Roman", Times, serif;
+      color: #001f49;
+      font-size: 14px;
+      line-height: 1.24;
+      text-align: justify;
+    }
+
+    .clinical-box p { margin: 0; }
+
+    .page-clinical {
+      padding-bottom: 64px;
+    }
+
+    .page-clinical .compact-header {
+      margin-bottom: 16px;
+      padding-top: 14px;
+      padding-bottom: 14px;
+    }
+
+    .page-clinical .clinical-heading {
+      font-size: 14px;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+    }
+
+    .page-clinical .clinical-text,
+    .page-clinical .clinical-box {
+      font-size: 13px;
+      line-height: 1.16;
+    }
+
+    .page-clinical .clinical-text p {
+      margin-bottom: 7px;
+    }
+
+    .page-clinical .clinical-box {
+      margin: 10px 0 10px;
+      padding: 9px 12px;
+    }
+
+    .footer {
+      position: absolute;
+      left: 30px;
+      right: 30px;
+      bottom: 38px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 9px;
+      color: var(--azul);
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding-top: 10px;
+      border-top: 1px solid var(--azul);
+    }
+
+    @media print {
+      body { background: #fff; }
+      .preview { padding: 0; gap: 0; }
+      .page {
+        width: 210mm;
+        height: 297mm;
+        box-shadow: none;
+        margin: 0;
+        page-break-inside: avoid;
+        page-break-after: always;
+        break-after: page;
+      }
+      .page:last-child {
+        page-break-after: auto;
+        break-after: auto;
+      }
+      table { page-break-inside: avoid; }
+      .clinical-text, .clinical-box { page-break-inside: avoid; }
+      .analysis-block, .result-box { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <main class="preview">
+    <section class="page">
+      <div class="brand">NEUROAVALIA</div>
+      <header class="header-grid">
+        <div>
+          <h1 class="test-title">WISC-IV</h1>
+          <p class="subtitle">ESCALA WECHSLER DE INTELIGÊNCIA PARA CRIANÇAS</p>
+        </div>
+        <div class="meta-box">
+          <div class="meta-line"></div>
+          <div class="meta-grid">
+            <div class="meta-label">Código do<br />avaliado</div>
+            <div class="meta-value">{{ codigo_avaliado }}</div>
+            <div class="meta-label">Código do<br />relatório</div>
+            <div class="meta-value">{{ codigo_relatorio }}</div>
+            <div class="meta-label">Data da<br />aplicação</div>
+            <div class="meta-value">{{ data_aplicacao }}</div>
+          </div>
+        </div>
+      </header>
+      <section>
+        <h2 class="section-title-main">Dados do avaliado</h2>
+        <div class="info-grid">
+          <div class="info-label">Nome</div><div class="info-value">{{ nome }}</div>
+          <div class="info-label">Sexo</div><div class="info-value">{{ sexo }}</div>
+          <div class="info-label">Idade</div><div class="info-value">{{ idade }}</div>
+          <div class="info-label">Escolaridade</div><div class="info-value">{{ escolaridade }}</div>
+          <div class="info-label">Profissional</div><div class="info-value">{{ profissional }}</div>
+          <div class="info-label">Tabela<br />normativa</div><div class="info-value">{{ tabela_normativa }}</div>
+          <div class="info-label">Aplicação</div><div class="info-value">{{ aplicacao }}</div>
+        </div>
+        <div class="rule-simple"></div>
+      </section>
+      <section class="content-row" style="margin-top: 24px;">
+        <h2 class="side-title">Introdução</h2>
+        <div class="content-text">
+          <p>A Escala Wechsler de Inteligência para Crianças – Quarta Edição (WISC-IV) é um instrumento destinado à avaliação do funcionamento intelectual de crianças e adolescentes, permitindo investigar habilidades cognitivas gerais e específicas por meio de índices compostos e subtestes padronizados.</p>
+          <p>O instrumento fornece indicadores sobre compreensão verbal, organização perceptual, memória operacional, velocidade de processamento e quociente de inteligência total, contribuindo para a análise do perfil cognitivo em contexto clínico, escolar e neuropsicológico.</p>
+          <p>Os resultados devem ser interpretados de forma integrada à entrevista clínica, observações comportamentais, histórico escolar, desenvolvimento, contexto sociocultural e demais instrumentos aplicados.</p>
+        </div>
+      </section>
+      <section class="content-row">
+        <h2 class="side-title">Definição</h2>
+        <div class="content-text">
+          <p>O Índice de Compreensão Verbal avalia raciocínio verbal, formação de conceitos e repertório linguístico. O Índice de Organização Perceptual investiga raciocínio não verbal, análise visuoespacial e resolução de problemas visuais. O Índice de Memória Operacional avalia manutenção e manipulação mental de informações. O Índice de Velocidade de Processamento examina rapidez, precisão visual e eficiência grafomotora. O QI Total sintetiza o funcionamento intelectual global, devendo ser interpretado com cautela quando houver discrepâncias importantes entre os índices.</p>
+        </div>
+      </section>
+      <section class="content-row">
+        <h2 class="side-title">Utilização do<br />relatório</h2>
+        <div class="content-text"><p>Este relatório apresenta dados quantitativos e interpretação clínica descritiva do desempenho no WISC-IV. O documento não deve ser utilizado isoladamente para definição diagnóstica, sendo necessária integração com dados clínicos, comportamentais, escolares e adaptativos.</p></div>
+      </section>
+      <div class="footer"><span>NeuroAvalia • WISC-IV</span><span>Página 1</span></div>
+    </section>
+
+    <section class="page">
+      <header class="compact-header">
+        <div class="wisc-logo"><div class="wisc-logo-main">WISC<span>IV</span></div><div class="wisc-logo-sub">Escala Wechsler de Inteligência<br />para Crianças – Quarta Edição</div></div>
+        <div class="compact-meta"><span>Código do avaliado</span><strong>{{ codigo_avaliado }}</strong><span>Código do relatório</span><strong>{{ codigo_relatorio }}</strong><span>Data da aplicação</span><strong>{{ data_aplicacao }}</strong></div>
+      </header>
+      <h2 class="result-title">Resultados</h2>
+      <div class="results-grid-2x2">
+        <div class="result-box result-box-conversion">
+          <h3 class="box-title">Conversão dos Pontos Brutos em Pontos Ponderados</h3>
+          <table class="compact-table">
+            <colgroup><col style="width:128px"><col style="width:22px"><col style="width:22px"><col style="width:24px"><col style="width:24px"><col style="width:24px"><col style="width:24px"><col style="width:24px"></colgroup>
+            <thead><tr><th>Subtestes</th><th>PB</th><th>PP</th><th colspan="5">Pontos Ponderados</th></tr><tr><th></th><th></th><th></th><th>ICV</th><th>IOP</th><th>IMO</th><th>IVP</th><th>QIT</th></tr></thead>
+            <tbody>
+              {% for row in conversion_rows %}
+              <tr>
+                <td class="left-col">{{ row.label }}</td>
+                <td>{{ row.raw_score }}</td>
+                <td class="value-cell">{{ row.scaled_score }}</td>
+                <td class="{{ row.icv.class }}">{{ row.icv.value }}</td>
+                <td class="{{ row.iop.class }}">{{ row.iop.value }}</td>
+                <td class="{{ row.imo.class }}">{{ row.imo.value }}</td>
+                <td class="{{ row.ivp.class }}">{{ row.ivp.value }}</td>
+                <td class="{{ row.qit.class }}">{{ row.qit.value }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot><tr><td colspan="3" class="sum-label">Soma dos Pontos Ponderados</td><td><strong>{{ conversion_sums.ICV }}</strong><span class="foot-tag">ICV</span></td><td><strong>{{ conversion_sums.IOP }}</strong><span class="foot-tag">IOP</span></td><td><strong>{{ conversion_sums.IMO }}</strong><span class="foot-tag">IMO</span></td><td><strong>{{ conversion_sums.IVP }}</strong><span class="foot-tag">IVP</span></td><td><strong>{{ conversion_sums.QIT }}</strong><span class="foot-tag">QIT</span></td></tr></tfoot>
+          </table>
+        </div>
+
+        <div class="result-box result-box-top result-box-profile">
+          <h3 class="box-title">Perfil dos Pontos Ponderados dos Subtestes</h3>
+          <div class="profile-panel">
+            <div class="blank"></div><div class="group" style="grid-column:span 5">Compreensão<br>Verbal</div><div class="group" style="grid-column:span 4">Organização<br>Perceptual</div><div class="group" style="grid-column:span 3">Memória<br>Operacional</div><div class="group" style="grid-column:span 3">Velocidade<br>de Proc.</div>
+            <div>SM</div><div>VC</div><div>CO</div><div>(IN)</div><div class="end">(RP)</div><div>CB</div><div>CN</div><div>RM</div><div class="end">(CF)</div><div>DG</div><div>SNL</div><div class="end">(AR)</div><div>CD</div><div>PS</div><div class="end">(CA)</div>
+            {% for column in profile_columns %}<div class="{% if column.end %}end{% endif %}">{{ column.value }}</div>{% endfor %}
+            {% for row in profile_score_rows %}
+            <div class="score {% if row.average %}avg{% endif %}">{{ row.score }}</div>{% for cell in row.cells %}<div class="{% if cell.average %}avg{% endif %} {% if cell.end %}end{% endif %}">{% if cell.dot %}<span class="dot"></span>{% endif %}</div>{% endfor %}
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="result-box">
+          <h3 class="box-title box-title-tight">Conv. da Soma dos Pontos Ponderados em Ponto Composto</h3>
+          <table class="mini-table">
+            <colgroup><col style="width:100px"><col style="width:64px"><col style="width:46px"><col style="width:39px"><col style="width:57px"></colgroup>
+            <thead><tr><th>Escala</th><th>Soma dos<br>Pontos<br>Ponderados</th><th>Ponto<br>Composto</th><th>Rank<br>Percentil</th><th>Intervalo de<br>Confiança<br>95%</th></tr></thead>
+            <tbody>
+              {% for row in composite_table_rows %}
+              <tr><td class="left-col">{{ row.name }}</td><td>{{ row.scaled_sum }}</td><td>{{ row.abbreviation }} {{ row.score }}</td><td>{{ row.percentile }}</td><td>{{ row.confidence_interval }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="result-box">
+          <h3 class="box-title">Perfil dos Pontos Compostos</h3>
+          <div class="composite-profile">
+            <div class="blank"></div><div class="head">ICV</div><div class="head">IOP</div><div class="head">IMO</div><div class="head">IVP</div><div class="head">QIT</div>
+            {% for item in composite_profile_values %}<div class="value">{{ item.value }}</div>{% endfor %}
+            {% for row in composite_profile_rows %}
+            <div class="score {% if row.average %}avg{% endif %}">{{ row.score }}</div>{% for cell in row.cells %}<div class="{% if cell.average %}avg{% endif %}">{% if cell.dot %}<span class="dot"></span>{% endif %}</div>{% endfor %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      <div class="footer"><span>NeuroAvalia • WISC-IV</span><span>Página 2</span></div>
+    </section>
+
+    <section class="page">
+      <header class="compact-header">
+        <div class="wisc-logo"><div class="wisc-logo-main">WISC<span>IV</span></div><div class="wisc-logo-sub">Escala Wechsler de Inteligência<br />para Crianças – Quarta Edição</div></div>
+        <div class="compact-meta"><span>Código do avaliado</span><strong>{{ codigo_avaliado }}</strong><span>Código do relatório</span><strong>{{ codigo_relatorio }}</strong><span>Data da aplicação</span><strong>{{ data_aplicacao }}</strong></div>
+      </header>
+      <h2 class="result-title">Página de Análise</h2>
+
+      <div class="analysis-page-grid">
+        <div class="analysis-block compact">
+          <h3 class="analysis-block-title">Comparação entre Discrepâncias</h3>
+          <table class="analysis-table">
+            <colgroup><col style="width: 140px"><col style="width: 54px"><col style="width: 54px"><col style="width: 54px"><col style="width: 54px"><col style="width: 70px"><col style="width: 70px"></colgroup>
+            <thead>
+              <tr><th>Índices/Subtestes</th><th>Pontos Ponderados 1</th><th>Pontos Ponderados 2</th><th>Diferença</th><th>Valor Crítico</th><th>Diferença Significativa</th><th>Frequência Acumulada</th></tr>
+            </thead>
+            <tbody>
+              {% for row in analysis_discrepancy_rows %}
+              <tr><td class="left-col">{{ row.label }}</td><td>{{ row.first }}</td><td>{{ row.second }}</td><td>{{ row.difference }}</td><td>{{ row.critical }}</td><td>{{ row.significant }}</td><td>{{ row.frequency }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="analysis-block compact">
+          <h3 class="analysis-block-title">Determinação das Facilidades e Dificuldades</h3>
+          <table class="analysis-table">
+            <colgroup><col style="width: 150px"><col style="width: 60px"><col style="width: 70px"><col style="width: 58px"><col style="width: 58px"><col style="width: 75px"><col style="width: 70px"></colgroup>
+            <thead>
+              <tr><th>Subtestes</th><th>Pontos Ponderados</th><th>Média dos Pontos Ponderados</th><th>Diferença da Média</th><th>Valor Crítico</th><th>Facilidade ou Dificuldade</th><th>Frequência Acumulada</th></tr>
+            </thead>
+            <tbody>
+              {% for row in facility_rows %}
+              <tr><td class="left-col">{{ row.name }}</td><td>{{ row.score }}</td><td>{{ row.average }}</td><td>{{ row.difference }}</td><td>{{ row.critical }}</td><td>{{ row.label }}</td><td>{{ row.frequency }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          <table class="analysis-table" style="margin-top: 5px;">
+            <thead><tr><th></th><th>10 Subtestes</th><th>3 Subtestes Compreensão Verbal</th><th>3 Subtestes Organização Perceptual</th></tr></thead>
+            <tbody>
+              <tr><td class="left-col">Soma dos Pontos Ponderados</td>{% for row in facility_summary_rows %}<td>{{ row.sum }}</td>{% endfor %}</tr>
+              <tr><td class="left-col">Número de Subtestes</td>{% for row in facility_summary_rows %}<td>{{ row.divisor }}</td>{% endfor %}</tr>
+              <tr><td class="left-col">Média dos Escores</td>{% for row in facility_summary_rows %}<td>{{ row.average }}</td>{% endfor %}</tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="analysis-two-cols">
+          <div class="analysis-block compact analysis-block-processo">
+            <h3 class="analysis-block-title">Análise dos Escores de Processo</h3>
+            <table class="analysis-table">
+              <thead><tr><th>Escores de Processo</th><th>Pontos Brutos</th><th>Pontos Ponderados</th></tr></thead>
+              <tbody>
+                {% for row in process_scaled_rows %}
+                <tr><td class="left-col">{{ row.name }}</td><td>{{ row.raw_score }}</td><td>{{ row.scaled_score }}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="analysis-block compact">
+            <h3 class="analysis-block-title">Conversão dos Pontos Brutos em Frequência Acumulada</h3>
+            <table class="analysis-table">
+              <thead><tr><th>Escores de Processo</th><th>Pontos Brutos</th><th>Freq. Acumulada</th></tr></thead>
+              <tbody>
+                {% for row in sequence_frequency_rows %}
+                <tr><td class="left-col">{{ row.name }}</td><td>{{ row.raw_score }}</td><td>{{ row.frequency }}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            <h3 class="analysis-block-title" style="margin-top: 6px;">Comparação entre Discrepâncias</h3>
+            <table class="analysis-table">
+              <thead><tr><th>Escores de Processo</th><th>Pontos Brutos 1</th><th>Pontos Brutos 2</th><th>Diferença</th><th>Freq. Acumulada</th></tr></thead>
+              <tbody>
+                {% for row in raw_process_discrepancy_rows %}
+                <tr><td class="left-col">{{ row.label }}</td><td>{{ row.first }}</td><td>{{ row.second }}</td><td>{{ row.difference }}</td><td>{{ row.frequency }}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="analysis-block compact">
+          <h3 class="analysis-block-title">Comparação entre Discrepâncias dos Escores de Processo</h3>
+          <table class="analysis-table">
+            <colgroup><col style="width: 155px"><col style="width: 55px"><col style="width: 55px"><col style="width: 55px"><col style="width: 55px"><col style="width: 75px"><col style="width: 70px"></colgroup>
+            <thead><tr><th>Subtestes/Escores de Processo</th><th>Pontos Ponderados 1</th><th>Pontos Ponderados 2</th><th>Diferença</th><th>Valor Crítico</th><th>Diferença Significativa</th><th>Frequência Acumulada</th></tr></thead>
+            <tbody>
+              {% for row in process_discrepancy_rows %}
+              <tr><td class="left-col">{{ row.label }}</td><td>{{ row.first }}</td><td>{{ row.second }}</td><td>{{ row.difference }}</td><td>{{ row.critical }}</td><td>{{ row.significant }}</td><td>{{ row.frequency }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="footer"><span>NeuroAvalia • WISC-IV</span><span>Página 3</span></div>
+    </section>
+
+    <section class="page page-clinical">
+      <header class="compact-header">
+        <div class="wisc-logo"><div class="wisc-logo-main">WISC<span>IV</span></div><div class="wisc-logo-sub">Escala Wechsler de Inteligência<br />para Crianças – Quarta Edição</div></div>
+        <div class="compact-meta"><span>Código do avaliado</span><strong>{{ codigo_avaliado }}</strong><span>Código do relatório</span><strong>{{ codigo_relatorio }}</strong><span>Data da aplicação</span><strong>{{ data_aplicacao }}</strong></div>
+      </header>
+      <h2 class="clinical-heading">INTERPRETAÇÃO CLÍNICA</h2>
+      <section class="clinical-text">
+        {% if clinical_paragraphs %}
+          {% for paragraph in clinical_paragraphs %}<p>{{ paragraph }}</p>{% endfor %}
+        {% else %}
+          <p>O WISC-IV indicou funcionamento intelectual global situado na faixa {{ qit_classification }}, com QI Total de {{ qit_score }}, rank percentil {{ qit_percentile }} e intervalo de confiança de {{ qit_interval }}. Esse resultado deve ser interpretado com cautela e integrado aos demais dados clínicos, escolares e comportamentais.</p>
+        {% endif %}
+      </section>
+      <div class="clinical-box">
+        <p><strong>Em análise clínica</strong>, {{ clinical_box_text }}</p>
+      </div>
+      <h2 class="clinical-heading">SÍNTESE INTERPRETATIVA PARA O LAUDO</h2>
+      <section class="clinical-text">
+        <p>{{ synthesis_text }}</p>
+      </section>
+      <div class="footer"><span>NeuroAvalia • WISC-IV</span><span>Página 4</span></div>
+    </section>
+  </main>
+</body>
+</html>

@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, Printer, Edit, LayoutDashboard } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { api } from "@/lib/api";
+import { printCurrentPage } from "@/lib/print";
+import { TestReportSummaryCard } from "@/components/tests/TestReportSummaryCard";
 
 const FEMININO = {
   P: [[0,0,5,"MUITO BAIXO"], [1,1,20,"BAIXO"], [2,2,40,"MEDIO"], [3,3,60,"MEDIO"], [4,4,70,"MEDIO"], [5,6,80,"ALTO"], [7,7,90,"ALTO"], [8,14,99,"MUITO ALTO"]],
@@ -182,8 +184,8 @@ function EPQJResultPageContent() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 report-print-shell">
+      <div className="flex items-center justify-between print:hidden report-print-hide">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => router.push(backHref)} className="rounded-full">
             <ArrowLeft className="h-5 w-5" />
@@ -206,18 +208,20 @@ function EPQJResultPageContent() {
             <ArrowLeft className="h-4 w-4" />
             Voltar
           </Button>
-          <Button variant="outline" className="rounded-xl gap-2">
+          <Button variant="outline" className="rounded-xl gap-2" onClick={printCurrentPage}>
             <Printer className="h-4 w-4" />
             Imprimir
           </Button>
-          <Button className="rounded-xl gap-2">
+          <Button className="rounded-xl gap-2" onClick={printCurrentPage}>
             <Download className="h-4 w-4" />
-            Exportar PDF
+            Salvar em PDF
           </Button>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 space-y-8">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 space-y-8 report-print-content">
+        <TestReportSummaryCard reportPayload={application.report_payload} fallbackText={application.interpretation_text || application.interpretation} className="mb-6" />
+
         {/* Header */}
         <div className="text-center border-b pb-6">
           <h1 className="text-2xl font-bold text-slate-900">EPQ-J</h1>

@@ -1,5 +1,7 @@
 from ninja import Router, Query
 from ninja.errors import HttpError
+from django.http import HttpResponse
+from django.utils.text import slugify
 
 from apps.api.auth import bearer_auth
 from apps.accounts.models import UserRole
@@ -27,7 +29,10 @@ from apps.tests.services import (
     create_test_application,
     update_test_application,
     TestScoringService,
+    TestReportPayloadService,
 )
+from apps.tests.fdt.pdf_service import FDTPdfService
+from apps.tests.services.pdf_export_service import TestPdfExportService
 from apps.audit.services import AuditService
 from datetime import date as date_cls
 from dateutil.relativedelta import relativedelta
@@ -154,6 +159,8 @@ def serialize_test_application(application):
         "id": application.id,
         "evaluation_id": application.evaluation_id,
         "patient_name": patient.full_name if patient else None,
+        "patient_sex": patient.sex if patient else None,
+        "patient_schooling": patient.schooling if patient else None,
         "instrument_id": application.instrument_id,
         "instrument_code": application.instrument.code,
         "instrument_name": application.instrument.name,
@@ -163,7 +170,10 @@ def serialize_test_application(application):
         "classified_payload": application.classified_payload or {},
         "reviewed_payload": application.reviewed_payload or {},
         "interpretation_text": application.interpretation_text or "",
+        "report_payload": TestReportPayloadService.build_for_application(application),
         "is_validated": application.is_validated,
+        "status": application.status,
+        "status_display": application.get_status_display(),
     }
 
 
@@ -337,6 +347,7 @@ def create_test_application_endpoint(
         reviewed_payload=payload.reviewed_payload or {},
         interpretation_text=payload.interpretation_text or "",
         is_validated=payload.is_validated,
+        status=payload.status or None,
     )
     AuditService.track_create(
         request,
@@ -763,6 +774,48 @@ def fdt_submit(request, payload: FDTSubmitIn) -> tuple[int, dict]:
     }
 
 
+@router.get(
+    "/applications/{application_id}/export-pdf",
+    response={403: MessageOut, 404: MessageOut, 500: MessageOut},
+    auth=bearer_auth,
+)
+def export_test_application_pdf(request, application_id: int, report_type: str = "summary"):
+    if not can_view_tests(request.auth):
+        return 403, {"message": "Você não tem permissão para visualizar testes."}
+
+    application = get_test_application_by_id(application_id)
+    if not application:
+        return 404, {"message": "Aplicação de teste não encontrada."}
+
+    try:
+        payload = TestPdfExportService.build_pdf_bytes(application, report_type=report_type)
+    except ValueError as exc:
+        return 404, {"message": str(exc)}
+    except Exception as exc:
+        return 500, {"message": f"Erro ao exportar PDF: {exc}"}
+
+    patient_name = application.evaluation.patient.full_name if application.evaluation_id else f"test-{application_id}"
+    if application.instrument.code == "srs2" and report_type == "complete":
+        suffix = "completo"
+    elif application.instrument.code == "ebadep_a":
+        suffix = "completo"
+    else:
+        suffix = "resumido"
+    filename = f"{application.instrument.code.upper()}-{slugify(patient_name)}-{suffix}.pdf"
+    response = HttpResponse(payload, content_type="application/pdf")
+    response["Content-Disposition"] = f'inline; filename="{filename}"'
+    return response
+
+
+@router.get(
+    "/fdt/{application_id}/export-pdf",
+    response={403: MessageOut, 404: MessageOut, 500: MessageOut},
+    auth=bearer_auth,
+)
+def export_fdt_pdf(request, application_id: int):
+    return export_test_application_pdf(request, application_id)
+
+
 @router.post(
     "/bpa2/submit",
     response={200: dict, 400: MessageOut, 403: MessageOut, 404: MessageOut},
@@ -958,7 +1011,15 @@ def wisc4_submit(request, payload: WISC4SubmitIn) -> tuple[int, dict]:
         "cf": int(payload.cf) if payload.cf else None,
         "ca": int(payload.ca) if payload.ca else None,
         "in": int(payload.in_) if payload.in_ else None,
+        "ar": int(payload.ar) if payload.ar else None,
         "rp": int(payload.rp) if payload.rp else None,
+        "cusb": int(payload.cusb) if payload.cusb else None,
+        "diod": int(payload.diod) if payload.diod else None,
+        "dioi": int(payload.dioi) if payload.dioi else None,
+        "caa": int(payload.caa) if payload.caa else None,
+        "cae": int(payload.cae) if payload.cae else None,
+        "udiod": int(payload.udiod) if payload.udiod else None,
+        "udioi": int(payload.udioi) if payload.udioi else None,
     }
 
     faixa = get_faixa_wisc(age)
@@ -1213,6 +1274,8 @@ def get_application_result(request, application_id: int) -> tuple[int, dict]:
         "evaluation_id": application.evaluation_id,
         "patient_name": application.evaluation.patient.full_name,
         "patient_birth_date": application.evaluation.patient.birth_date,
+        "patient_sex": application.evaluation.patient.sex,
+        "patient_schooling": application.evaluation.patient.schooling,
         "instrument_code": application.instrument.code,
         "instrument_name": application.instrument.name,
         "applied_on": application.applied_on,
@@ -1221,6 +1284,9 @@ def get_application_result(request, application_id: int) -> tuple[int, dict]:
         "classified_payload": application.classified_payload or {},
         "interpretation_text": application.interpretation_text or "",
         "is_validated": application.is_validated,
+        "status": application.status,
+        "status_display": application.get_status_display(),
+        "report_payload": TestReportPayloadService.build_for_application(application),
     }
 
 
@@ -1535,9 +1601,13 @@ def etdah_ad_result(request, application_id: int) -> tuple[int, dict]:
         "raw_scores": classified.get("raw_scores", {}),
         "results": classified.get("results", {}),
         "interpretation": application.interpretation_text or "",
+        "interpretation_text": application.interpretation_text or "",
         "raw_payload": application.raw_payload or {},
         "computed_payload": application.computed_payload or {},
         "classified_payload": application.classified_payload or {},
+        "report_payload": TestReportPayloadService.build_for_application(application),
+        "status": getattr(application, "status", None),
+        "status_display": application.get_status_display(),
     }
 
 
@@ -1668,9 +1738,13 @@ def etdah_pais_result(request, application_id: int) -> tuple[int, dict]:
         "raw_scores": classified.get("raw_scores", {}),
         "results": classified.get("results", {}),
         "interpretation": interpretation,
+        "interpretation_text": interpretation,
         "raw_payload": application.raw_payload or {},
         "computed_payload": computed,
         "classified_payload": application.classified_payload or {},
+        "report_payload": TestReportPayloadService.build_for_application(application),
+        "status": getattr(application, "status", None),
+        "status_display": application.get_status_display(),
     }
 
 
@@ -1794,6 +1868,9 @@ def ravlt_result(request, application_id: int) -> tuple[int, dict]:
         "evaluation_id": application.evaluation_id,
         "patient_name": application.evaluation.patient.full_name,
         "applied_on": application.applied_on,
+        "status": application.status,
+        "status_display": application.get_status_display(),
+        "report_payload": TestReportPayloadService.build_for_application(application),
         "results": classified,
         "interpretation": application.interpretation_text or "",
         "raw_payload": application.raw_payload or {},
@@ -1933,6 +2010,9 @@ def srs2_result(request, application_id: int) -> tuple[int, dict]:
         "evaluation_id": application.evaluation_id,
         "patient_name": application.evaluation.patient.full_name,
         "applied_on": application.applied_on,
+        "status": application.status,
+        "status_display": application.get_status_display(),
+        "report_payload": TestReportPayloadService.build_for_application(application),
         "results": classified,
         "interpretation": application.interpretation_text or "",
         "raw_payload": application.raw_payload or {},
@@ -2072,6 +2152,9 @@ def scared_result(request, application_id: int) -> tuple[int, dict]:
         "evaluation_id": application.evaluation_id,
         "patient_name": application.evaluation.patient.full_name,
         "applied_on": application.applied_on,
+        "status": application.status,
+        "status_display": application.get_status_display(),
+        "report_payload": TestReportPayloadService.build_for_application(application),
         "results": classified,
         "interpretation": application.interpretation_text or "",
         "raw_payload": application.raw_payload or {},
@@ -2182,6 +2265,9 @@ def bai_result(request, application_id: int) -> tuple[int, dict]:
         "evaluation_id": application.evaluation_id,
         "patient_name": application.evaluation.patient.full_name,
         "applied_on": application.applied_on,
+        "status": application.status,
+        "status_display": application.get_status_display(),
+        "report_payload": TestReportPayloadService.build_for_application(application),
         "escore_total": classified.get("escore_total", 0),
         "classificacao": classificacao,
         "interpretation": application.interpretation_text or "",

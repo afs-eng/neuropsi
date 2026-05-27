@@ -10,6 +10,14 @@ class TestApplicationQuerySet(models.QuerySet):
 
 
 class TestApplication(models.Model):
+    class Status(models.TextChoices):
+        DRAFT = "draft", "Rascunho"
+        COMPLETED = "completed", "Aplicação concluída"
+        SCORED = "scored", "Corrigido"
+        INTERPRETED = "interpreted", "Interpretação gerada"
+        REVIEWED = "reviewed", "Revisado"
+        LOCKED = "locked", "Travado"
+
     evaluation = models.ForeignKey(
         Evaluation,
         on_delete=models.CASCADE,
@@ -31,6 +39,13 @@ class TestApplication(models.Model):
 
     interpretation_text = models.TextField("interpretação", blank=True)
 
+    status = models.CharField(
+        "status",
+        max_length=20,
+        choices=Status.choices,
+        default=Status.DRAFT,
+    )
+
     is_validated = models.BooleanField("validado", default=False)
 
     created_at = models.DateTimeField("criado em", auto_now_add=True)
@@ -42,6 +57,29 @@ class TestApplication(models.Model):
         verbose_name_plural = "Aplicações de teste"
 
     objects = TestApplicationQuerySet.as_manager()
+
+    def _derived_status(self) -> str:
+        if self.status == self.Status.LOCKED:
+            return self.Status.LOCKED
+        if self.is_validated:
+            return self.Status.REVIEWED
+        if (self.interpretation_text or "").strip():
+            return self.Status.INTERPRETED
+        if self.classified_payload or self.computed_payload:
+            return self.Status.SCORED
+        if self.raw_payload or self.reviewed_payload or self.applied_on:
+            return self.Status.COMPLETED
+        return self.Status.DRAFT
+
+    def sync_workflow_state(self):
+        self.status = self._derived_status()
+
+    def save(self, *args, **kwargs):
+        self.sync_workflow_state()
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None:
+            kwargs["update_fields"] = set(update_fields) | {"status"}
+        return super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.evaluation.patient.full_name} - {self.instrument.code}"

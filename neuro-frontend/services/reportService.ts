@@ -14,8 +14,8 @@ export const reportService = {
   create: (data: Record<string, unknown>) =>
     api.post<Report>('/api/reports/', data),
 
-  generateFromEvaluation: (evaluationId: number | string) =>
-    api.post<Report>(`/api/reports/generate-from-evaluation/${evaluationId}`, {}),
+  generateFromEvaluation: (evaluationId: number | string, mode: 'full' | 'tests_only' = 'full') =>
+    api.post<Report>(`/api/reports/generate-from-evaluation/${evaluationId}?mode=${mode}`, {}),
 
   regenerateReport: (reportId: number | string) =>
     api.post<Record<string, unknown>>(`/api/reports/${reportId}/regenerate`, {}),

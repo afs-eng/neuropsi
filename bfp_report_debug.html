@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <title>BFP - Maria Silva de Souza</title>
+  <style>
+    @page { size: A4; margin: 12mm; }
+    body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: #1f2937; background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .page { height: 270mm; box-sizing: border-box; padding: 18px 20px; page-break-after: always; position: relative; }
+    .page-header-sep { border: none; border-top: 1.5px solid #cbd5e1; margin: 10px 0 12px; }
+    .page:last-child { page-break-after: auto; }
+    .top-grid { display: grid; grid-template-columns: 1.02fr 0.98fr; gap: 22px; align-items: start; }
+    .bottom-grid { display: grid; grid-template-columns: 1.02fr 0.98fr; gap: 22px; align-items: start; margin-top: 14px; }
+    .title { font-family: Georgia, "Times New Roman", serif; font-size: 32px; font-weight: 700; line-height: 1; color: #0f172a; margin: 0; }
+    .subtitle { margin-top: 8px; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #94a3b8; font-weight: 600; }
+    .meta-top { text-align: right; font-size: 11px; color: #64748b; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
+    .meta-top strong { display: block; margin-top: 4px; color: #0f172a; letter-spacing: 0; text-transform: none; font-size: 14px; }
+    .section-title { color: #0f766e; font-size: 20px; font-weight: 700; margin: 18px 0 10px; }
+    .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; }
+    .card-label { font-size: 9px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: #94a3b8; margin-bottom: 4px; }
+    .card-value { font-size: 13px; font-weight: 600; color: #0f172a; line-height: 1.35; }
+    .justified { text-align: justify; font-size: 13.5px; line-height: 1.55; margin: 0 0 10px; }
+    .legend { display: flex; flex-wrap: wrap; gap: 18px; font-size: 12px; color: #475569; margin: 8px 0 12px; align-items: center; }
+    .legend-swatch { display: inline-block; width: 30px; height: 9px; border-radius: 999px; margin-right: 8px; vertical-align: middle; }
+    .radar-block { margin-top: 4px; }
+    .info-box { margin-top: 10px; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 8px; padding: 12px 14px; }
+    .info-box h3 { margin: 0 0 8px; color: #0f766e; font-size: 16px; }
+    .domain-item, .summary-item { text-align: justify; font-size: 13px; line-height: 1.55; margin-bottom: 8px; }
+    .summary-item strong, .domain-item strong { color: #0f172a; }
+    .facets-grid { display: block; }
+    .radar-panel { background: #fff; padding: 6px 0 0; text-align: center; }
+    .radar-panel .radar-svg.facet-radar { max-width: 110mm; margin: 0 auto; }
+    .radar-panel .radar-svg.factor-radar { max-width: 85mm; margin: 0 auto; }
+    .facet-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 14px; }
+    .facet-card { border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; padding: 10px 12px; }
+    .facet-card-title { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 700; }
+    .facet-card-title.nn { color: #ea580c; }
+    .facet-card-title.ee { color: #3b82f6; }
+    .facet-card-title.ss { color: #0f766e; }
+    .facet-card-title.rr { color: #d97706; }
+    .facet-card-title.aa { color: #6366f1; }
+    .facet-card ul { margin: 0; padding: 0; list-style: none; line-height: 1.55; font-size: 13px; }
+    .result-group { margin-top: 14px; }
+    .result-group:first-of-type { margin-top: 0; }
+    .table-page table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+    .table-page thead tr { background: #f8fafc; border-top: 2px solid #0f766e; border-bottom: 1px solid #e2e8f0; }
+    .table-page th { color: #475569; text-align: center; padding: 6px 8px; font-size: 11px; font-weight: 700; }
+    .table-page td { text-align: center; padding: 6px 8px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+    .table-page td:first-child, .table-page th:first-child { text-align: left; padding-left: 12px; }
+    .table-page .summary-row { background: #f0fdfa; font-weight: 700; }
+    .table-page .summary-row td { border-top: 1px solid #0f766e; border-bottom: 2px solid #0f766e; color: #0f766e; }
+    .table-page .summary-row td:first-child { text-transform: uppercase; }
+    .summary-title { color: #0f766e; font-size: 22px; font-weight: 700; margin: 0 0 14px; }
+    .chapter-title { color: #0f766e; font-size: 15px; font-weight: 700; margin: 12px 0 6px; }
+    .radar-svg { width: 100%; height: auto; display: block; }
+  </style>
+</head>
+<body>
+  <section class="page">
+    <div class="top-grid">
+      <div>
+        <h1 class="title">BFP</h1>
+        <div class="subtitle">Bateria Fatorial de Personalidade</div>
+        <div class="section-title">Dados do avaliado</div>
+        <div class="cards">
+          <div class="card"><div class="card-label">Nome</div><div class="card-value">Maria Silva de Souza</div></div>
+          <div class="card"><div class="card-label">Tabela normativa</div><div class="card-value">Percentil - Feminino</div></div>
+          <div class="card"><div class="card-label">Aplicação</div><div class="card-value">20/05/2026</div></div>
+          <div class="card"><div class="card-label">Sexo</div><div class="card-value">Feminino</div></div>
+          <div class="card"><div class="card-label">Escolaridade</div><div class="card-value">Superior Complete</div></div>
+          <div class="card"><div class="card-label">Itens válidos</div><div class="card-value">126 / 126</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="meta-top">Data da aplicação<strong>20/05/2026</strong></div>
+        <div class="section-title" style="margin-top: 8px; font-size: 22px;">Radar de avaliação dos domínios</div>
+        <div class="legend">
+          <div><span class="legend-swatch" style="background:#0f766e"></span>Resultado do avaliado</div>
+          <div><span class="legend-swatch" style="background:#f59e0b"></span>Amostra normativa</div>
+        </div>
+        <div class="radar-panel radar-block">
+        <svg viewBox="0 0 560.0 430.0" class="radar-svg factor-radar" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="280.00,193.00 305.68,211.66 295.87,241.84 264.13,241.84 254.32,211.66" fill="none" stroke="#d6dde8" stroke-width="1" /><polygon points="280.00,166.00 331.36,203.31 311.74,263.69 248.26,263.69 228.64,203.31" fill="none" stroke="#d6dde8" stroke-width="1" /><polygon points="280.00,139.00 357.04,194.97 327.61,285.53 232.39,285.53 202.96,194.97" fill="none" stroke="#d6dde8" stroke-width="1" /><polygon points="280.00,112.00 382.71,186.63 343.48,307.37 216.52,307.37 177.29,186.63" fill="none" stroke="#d6dde8" stroke-width="1" /><polygon points="280.00,85.00 408.39,178.28 359.35,329.22 200.65,329.22 151.61,178.28" fill="none" stroke="#d6dde8" stroke-width="1" />
+          <line x1="280.00" y1="220.00" x2="280.00" y2="85.00" stroke="#e5e7eb" stroke-width="1" /><text x="280.00" y="51.00" text-anchor="middle" font-size="12" fill="#1f2937">Neuroticismo</text><line x1="280.00" y1="220.00" x2="408.39" y2="178.28" stroke="#e5e7eb" stroke-width="1" /><text x="440.73" y="167.78" text-anchor="middle" font-size="12" fill="#1f2937">Extroversão</text><line x1="280.00" y1="220.00" x2="359.35" y2="329.22" stroke="#e5e7eb" stroke-width="1" /><text x="379.34" y="356.72" text-anchor="middle" font-size="12" fill="#1f2937">Socialização</text><line x1="280.00" y1="220.00" x2="200.65" y2="329.22" stroke="#e5e7eb" stroke-width="1" /><text x="180.66" y="356.72" text-anchor="middle" font-size="12" fill="#1f2937">Realização</text><line x1="280.00" y1="220.00" x2="151.61" y2="178.28" stroke="#e5e7eb" stroke-width="1" /><text x="119.27" y="167.78" text-anchor="middle" font-size="12" fill="#1f2937">Abertura</text>
+          <polygon points="280.00,152.50 344.20,199.14 319.68,274.61 240.32,274.61 215.80,199.14" fill="rgba(245,158,11,0.06)" stroke="#f59e0b" stroke-width="2.2" />
+          <polygon points="280.00,98.91 300.54,213.33 288.49,231.69 269.21,234.85 226.97,202.77" fill="rgba(13,148,136,0.20)" stroke="#0f766e" stroke-width="2.8" />
+        </svg>
+        </div>
+      </div>
+    </div>
+    <hr class="page-header-sep">
+    <div class="bottom-grid">
+      <div>
+        <div class="section-title" style="margin-top: 0;">Personalidade</div>
+        <p class="justified">A Bateria Fatorial de Personalidade – BFP é um instrumento psicológico baseado no modelo dos Cinco Grandes Fatores da personalidade, destinado à avaliação de tendências relativamente estáveis do funcionamento emocional, interpessoal, motivacional, comportamental e de abertura à experiência. Seus resultados devem ser interpretados de forma integrada à entrevista clínica, observação comportamental e demais informações do processo avaliativo, não devendo ser utilizados isoladamente para definição diagnóstica.</p>
+      </div>
+      <div>
+        <div class="info-box">
+          <h3>Domínios avaliados</h3>
+          <div class="domain-item"><strong>Neuroticismo:</strong> Relaciona-se à vulnerabilidade emocional, oscilação afetiva, passividade e tendência a interpretações negativas do cotidiano.</div><div class="domain-item"><strong>Extroversão:</strong> Descreve comunicação, senso de valor pessoal, dinamismo e busca por interação social.</div><div class="domain-item"><strong>Socialização:</strong> Refere-se à amabilidade, postura pró-social e confiança nas outras pessoas.</div><div class="domain-item"><strong>Realização:</strong> Avalia busca de objetivos, prudência para agir e nível de comprometimento com tarefas.</div><div class="domain-item"><strong>Abertura:</strong> Descreve abertura a ideias, flexibilização de valores e busca por novidades.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="page">
+    <div class="facets-grid">
+      <div>
+        <div class="section-title" style="margin-top: 0;">Radar de avaliação das facetas</div>
+        <div class="legend" style="justify-content:center;">
+          <div><span class="legend-swatch" style="background:#e11d48"></span>Resultado do avaliado</div>
+          <div><span class="legend-swatch" style="background:#2563eb"></span>Amostra normativa</div>
+        </div>
+        <div class="radar-panel">
+        <svg viewBox="0 0 700.0 700.0" class="radar-svg facet-radar" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="350.00,311.00 365.89,313.97 379.64,322.48 389.39,335.39 393.81,350.94 392.32,367.04 385.11,381.52 373.16,392.41 358.08,398.25 341.92,398.25 326.84,392.41 314.89,381.52 307.68,367.04 306.19,350.94 310.61,335.39 320.36,322.48 334.11,313.97" fill="none" stroke="#d6dde8" stroke-width="1" /><polygon points="350.00,267.00 381.79,272.94 409.29,289.97 428.77,315.78 437.62,346.88 434.64,379.08 420.23,408.03 396.33,429.82 366.17,441.50 333.83,441.50 303.67,429.82 279.77,408.03 265.36,379.08 262.38,346.88 271.23,315.78 290.71,289.97 318.21,272.94" fill="none" stroke="#d6dde8" stroke-width="1" /><polygon points="350.00,223.00 397.68,231.91 438.93,257.45 468.16,296.16 481.44,342.82 476.96,391.12 455.34,434.55 419.49,467.23 374.25,484.75 325.75,484.75 280.51,467.23 244.66,434.55 223.04,391.12 218.56,342.82 231.84,296.16 261.07,257.45 302.32,231.91" fill="none" stroke="#d6dde8" stroke-width="1" /><polygon points="350.00,179.00 413.58,190.88 468.57,224.93 507.55,276.55 525.25,338.76 519.28,403.16 490.45,461.06 442.65,504.64 382.34,528.00 317.66,528.00 257.35,504.64 209.55,461.06 180.72,403.16 174.75,338.76 192.45,276.55 231.43,224.93 286.42,190.88" fill="none" stroke="#d6dde8" stroke-width="1" /><polygon points="350.00,135.00 429.47,149.86 498.21,192.42 546.94,256.94 569.06,334.70 561.60,415.21 525.56,487.58 465.82,542.05 390.42,571.25 309.58,571.25 234.18,542.05 174.44,487.58 138.40,415.21 130.94,334.70 153.06,256.94 201.79,192.42 270.53,149.86" fill="none" stroke="#d6dde8" stroke-width="1" />
+          <line x1="350.00" y1="355.00" x2="350.00" y2="135.00" stroke="#e5e7eb" stroke-width="1" /><text x="350.00" y="101.00" text-anchor="middle" font-size="11" fill="#1f2937">Vulnerabilidade</text><line x1="350.00" y1="355.00" x2="429.47" y2="149.86" stroke="#e5e7eb" stroke-width="1" /><text x="441.76" y="118.15" text-anchor="start" font-size="11" fill="#1f2937">Instabilidade Emocional</text><line x1="350.00" y1="355.00" x2="498.21" y2="192.42" stroke="#e5e7eb" stroke-width="1" /><text x="521.12" y="167.29" text-anchor="start" font-size="11" fill="#1f2937">Passividade/Falta de Energia</text><line x1="350.00" y1="355.00" x2="546.94" y2="256.94" stroke="#e5e7eb" stroke-width="1" /><text x="577.37" y="241.78" text-anchor="start" font-size="11" fill="#1f2937">Depressão</text><line x1="350.00" y1="355.00" x2="569.06" y2="334.70" stroke="#e5e7eb" stroke-width="1" /><text x="602.92" y="331.56" text-anchor="start" font-size="11" fill="#1f2937">Comunicação</text><line x1="350.00" y1="355.00" x2="561.60" y2="415.21" stroke="#e5e7eb" stroke-width="1" /><text x="594.30" y="424.51" text-anchor="start" font-size="11" fill="#1f2937">Altivez</text><line x1="350.00" y1="355.00" x2="525.56" y2="487.58" stroke="#e5e7eb" stroke-width="1" /><text x="552.70" y="508.07" text-anchor="start" font-size="11" fill="#1f2937">Dinamismo</text><line x1="350.00" y1="355.00" x2="465.82" y2="542.05" stroke="#e5e7eb" stroke-width="1" /><text x="483.71" y="570.96" text-anchor="start" font-size="11" fill="#1f2937">Interações Sociais</text><line x1="350.00" y1="355.00" x2="390.42" y2="571.25" stroke="#e5e7eb" stroke-width="1" /><text x="396.67" y="604.68" text-anchor="start" font-size="11" fill="#1f2937">Amabilidade</text><line x1="350.00" y1="355.00" x2="309.58" y2="571.25" stroke="#e5e7eb" stroke-width="1" /><text x="303.33" y="604.68" text-anchor="end" font-size="11" fill="#1f2937">Pró-Sociabilidade</text><line x1="350.00" y1="355.00" x2="234.18" y2="542.05" stroke="#e5e7eb" stroke-width="1" /><text x="216.29" y="570.96" text-anchor="end" font-size="11" fill="#1f2937">Confiança nas Pessoas</text><line x1="350.00" y1="355.00" x2="174.44" y2="487.58" stroke="#e5e7eb" stroke-width="1" /><text x="147.30" y="508.07" text-anchor="end" font-size="11" fill="#1f2937">Competência</text><line x1="350.00" y1="355.00" x2="138.40" y2="415.21" stroke="#e5e7eb" stroke-width="1" /><text x="105.70" y="424.51" text-anchor="end" font-size="11" fill="#1f2937">Ponderação/Prudência</text><line x1="350.00" y1="355.00" x2="130.94" y2="334.70" stroke="#e5e7eb" stroke-width="1" /><text x="97.08" y="331.56" text-anchor="end" font-size="11" fill="#1f2937">Empenho/Comprometimento</text><line x1="350.00" y1="355.00" x2="153.06" y2="256.94" stroke="#e5e7eb" stroke-width="1" /><text x="122.63" y="241.78" text-anchor="end" font-size="11" fill="#1f2937">Abertura a Ideias</text><line x1="350.00" y1="355.00" x2="201.79" y2="192.42" stroke="#e5e7eb" stroke-width="1" /><text x="178.88" y="167.29" text-anchor="end" font-size="11" fill="#1f2937">Liberalismo</text><line x1="350.00" y1="355.00" x2="270.53" y2="149.86" stroke="#e5e7eb" stroke-width="1" /><text x="258.24" y="118.15" text-anchor="end" font-size="11" fill="#1f2937">Busca por Novidades</text>
+          <polygon points="350.00,245.00 389.74,252.43 424.11,273.71 448.47,305.97 459.53,344.85 455.80,385.10 437.78,421.29 407.91,448.52 370.21,463.13 329.79,463.13 292.09,448.52 262.22,421.29 244.20,385.10 240.47,344.85 251.53,305.97 275.89,273.71 310.26,252.43" fill="rgba(37,99,235,0.04)" stroke="#2563eb" stroke-width="2.2" />
+          <polygon points="350.00,163.38 383.06,269.66 449.75,245.58 546.54,257.13 438.94,346.76 481.19,392.33 354.92,358.71 357.30,366.78 351.78,364.52 327.93,473.07 336.10,377.45 302.95,390.53 331.38,360.30 273.55,347.92 249.17,304.79 322.28,324.60 298.82,222.89" fill="rgba(225,29,72,0.18)" stroke="#e11d48" stroke-width="2.8" />
+        </svg>
+        </div>
+        <div class="facet-cards">
+          
+            <div class="facet-card">
+              <strong class="facet-card-title nn">Neuroticismo</strong>
+              <ul><li>· Vulnerabilidade</li><li>· Instabilidade Emocional</li><li>· Passividade/Falta de Energia</li><li>· Depressão</li></ul>
+            </div>
+          
+            <div class="facet-card">
+              <strong class="facet-card-title ee">Extroversão</strong>
+              <ul><li>· Comunicação</li><li>· Altivez</li><li>· Dinamismo</li><li>· Interações Sociais</li></ul>
+            </div>
+          
+            <div class="facet-card">
+              <strong class="facet-card-title ss">Socialização</strong>
+              <ul><li>· Amabilidade</li><li>· Pró-Sociabilidade</li><li>· Confiança nas Pessoas</li></ul>
+            </div>
+          
+            <div class="facet-card">
+              <strong class="facet-card-title rr">Realização</strong>
+              <ul><li>· Competência</li><li>· Ponderação/Prudência</li><li>· Empenho/Comprometimento</li></ul>
+            </div>
+          
+            <div class="facet-card">
+              <strong class="facet-card-title aa">Abertura</strong>
+              <ul><li>· Abertura a Ideias</li><li>· Liberalismo</li><li>· Busca por Novidades</li></ul>
+            </div>
+          
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="page table-page">
+    <div class="summary-title" style="margin-top: 0;">Tabela de resultados</div>
+    
+      
+      <div class="result-group">
+        <table>
+          <colgroup><col style="width:42%"><col style="width:18%"><col style="width:18%"><col style="width:22%"></colgroup>
+          <thead><tr><th>Faceta/Dimensão</th><th>Escore Bruto</th><th>Percentil</th><th>Classificação</th></tr></thead>
+          <tbody>
+            <tr><td>Vulnerabilidade</td><td>5,0</td><td>87,1</td><td>Muito Alto</td></tr><tr><td>Instabilidade Emocional</td><td>3,5</td><td>41,6</td><td>Médio</td></tr><tr><td>Passividade/Falta de Energia</td><td>4,0</td><td>67,3</td><td>Médio</td></tr><tr><td>Depressão</td><td>5,5</td><td>99,8</td><td>Muito Alto</td></tr>
+            <tr class="summary-row"><td>Neuroticismo</td><td>4,5</td><td>89,7</td><td>Muito Alto</td></tr>
+          </tbody>
+        </table>
+      </div>
+    
+      
+      <div class="result-group">
+        <table>
+          <colgroup><col style="width:42%"><col style="width:18%"><col style="width:18%"><col style="width:22%"></colgroup>
+          <thead><tr><th>Faceta/Dimensão</th><th>Escore Bruto</th><th>Percentil</th><th>Classificação</th></tr></thead>
+          <tbody>
+            <tr><td>Comunicação</td><td>4,0</td><td>40,6</td><td>Médio</td></tr><tr><td>Altivez</td><td>4,0</td><td>62,0</td><td>Médio</td></tr><tr><td>Dinamismo</td><td>2,8</td><td>2,8</td><td>Muito Baixo</td></tr><tr><td>Interações Sociais</td><td>3,1429</td><td>6,3</td><td>Muito Baixo</td></tr>
+            <tr class="summary-row"><td>Extroversão</td><td>3,4857</td><td>16,0</td><td>Baixo</td></tr>
+          </tbody>
+        </table>
+      </div>
+    
+      
+      <div class="result-group">
+        <table>
+          <colgroup><col style="width:42%"><col style="width:18%"><col style="width:18%"><col style="width:22%"></colgroup>
+          <thead><tr><th>Faceta/Dimensão</th><th>Escore Bruto</th><th>Percentil</th><th>Classificação</th></tr></thead>
+          <tbody>
+            <tr><td>Amabilidade</td><td>4,25</td><td>4,4</td><td>Muito Baixo</td></tr><tr><td>Pró-Sociabilidade</td><td>5,875</td><td>54,6</td><td>Médio</td></tr><tr><td>Confiança nas Pessoas</td><td>3,625</td><td>12,0</td><td>Muito Baixo</td></tr>
+            <tr class="summary-row"><td>Socialização</td><td>4,5833</td><td>10,7</td><td>Muito Baixo</td></tr>
+          </tbody>
+        </table>
+      </div>
+    
+      
+        </section>
+        <section class="page table-page">
+          <div class="summary-title" style="margin-top: 0;">Tabela de resultados (continuação)</div>
+      
+      <div class="result-group">
+        <table>
+          <colgroup><col style="width:42%"><col style="width:18%"><col style="width:18%"><col style="width:22%"></colgroup>
+          <thead><tr><th>Faceta/Dimensão</th><th>Escore Bruto</th><th>Percentil</th><th>Classificação</th></tr></thead>
+          <tbody>
+            <tr><td>Competência</td><td>4,6</td><td>26,8</td><td>Baixo</td></tr><tr><td>Ponderação/Prudência</td><td>3,25</td><td>8,8</td><td>Muito Baixo</td></tr><tr><td>Empenho/Comprometimento</td><td>4,4286</td><td>34,9</td><td>Médio</td></tr>
+            <tr class="summary-row"><td>Realização</td><td>4,0929</td><td>13,6</td><td>Muito Baixo</td></tr>
+          </tbody>
+        </table>
+      </div>
+    
+      
+      <div class="result-group">
+        <table>
+          <colgroup><col style="width:42%"><col style="width:18%"><col style="width:18%"><col style="width:22%"></colgroup>
+          <thead><tr><th>Faceta/Dimensão</th><th>Escore Bruto</th><th>Percentil</th><th>Classificação</th></tr></thead>
+          <tbody>
+            <tr><td>Abertura a Ideias</td><td>4,6</td><td>51,2</td><td>Médio</td></tr><tr><td>Liberalismo</td><td>4,0</td><td>18,7</td><td>Baixo</td></tr><tr><td>Busca por Novidades</td><td>5,0</td><td>64,4</td><td>Médio</td></tr>
+            <tr class="summary-row"><td>Abertura</td><td>4,5333</td><td>41,3</td><td>Médio</td></tr>
+          </tbody>
+        </table>
+      </div>
+    
+  </section>
+  <section class="page">
+    <div class="summary-title" style="margin-top: 0;">Síntese dos resultados</div>
+    <p class="justified">A Bateria Fatorial de Personalidade (BFP) é um instrumento psicológico fundamentado no modelo dos Cinco Grandes Fatores da personalidade, utilizado para avaliação de padrões emocionais, interpessoais, motivacionais e comportamentais relativamente estáveis. Paciente respondeu ao instrumento com correção pela amostra feminino, e seus resultados devem ser interpretados de forma integrada aos demais dados clínicos.</p>
+    
+      
+      <div class="chapter-title">Neuroticismo</div>
+      <p class="justified">No fator Neuroticismo, Paciente apresentou classificação muito alto, sugerindo maior sensibilidade ao estresse, autocrítica e vulnerabilidade afetiva, com destaque para Vulnerabilidade e Depressão. Esse perfil pode estar associado a maior dificuldade de regulação emocional diante de pressões cotidianas e a tendência a vivenciar desconforto psíquico com maior intensidade.</p>
+    
+      
+      <div class="chapter-title">Extroversão</div>
+      <p class="justified">No fator Extroversão, Paciente apresentou classificação baixo, sugerindo maior reserva social e menor busca por estimulação interpessoal, especialmente em Dinamismo e Interações Sociais. O perfil pode refletir preferência por ambientes menos intensos e por interações mais seletivas ou previsíveis.</p>
+    
+      
+      <div class="chapter-title">Socialização</div>
+      <p class="justified">No fator Socialização, Paciente apresentou classificação muito baixo, sugerindo maior cautela relacional, postura defensiva e menor confiança interpessoal, com destaque para Amabilidade e Confiança nas Pessoas. Esse padrão pode estar associado a vínculos mais seletivos e a maior dificuldade de flexibilização diante de conflitos ou frustrações nas relações.</p>
+    
+      
+        </section>
+        <section class="page">
+          <div class="summary-title" style="margin-top: 0;">Síntese dos resultados (continuação)</div>
+      
+      <div class="chapter-title">Realização</div>
+      <p class="justified">No fator Realização, Paciente apresentou classificação muito baixo, indicando fragilidade em planejamento, persistência e organização comportamental, com destaque para Competência e Ponderação/Prudência. Esse funcionamento pode repercutir em tarefas prolongadas, metas pouco estruturadas e situações que exigem constância ou monitoramento continuado.</p>
+    
+      
+      <div class="chapter-title">Abertura</div>
+      <p class="justified">O fator Abertura situou-se na classificação média, sugerindo equilíbrio entre manutenção de referências conhecidas e abertura a novas experiências. Há nuances internas, com Liberalismo em nível reduzido, o que pode modular a flexibilidade cognitiva e a disposição para novidades em situações específicas.</p>
+    
+    <p class="justified">Em análise clínica, o perfil de personalidade sugere maior sensibilidade ao estresse, autocrítica e dificuldade relativa de regulação emocional, maior reserva social e menor busca por estimulação interpessoal, postura defensiva e desconfiança interpessoal e fragilidade em planejamento, persistência e monitoramento de metas. Observa-se impacto potencial sobre autorregulação emocional, interações sociais, estabelecimento de vínculos e funcionamento executivo comportamental, com possíveis repercussões no funcionamento adaptativo cotidiano, devendo esses achados ser integrados aos demais dados do processo avaliativo.</p>
+  </section>
+</body>
+</html>

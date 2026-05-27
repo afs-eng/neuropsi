@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import csv
 from pathlib import Path
-from typing import Any
 
 
 def classify_wais3_payload(computed_data: dict) -> dict:
@@ -38,6 +37,8 @@ def classify_wais3_payload(computed_data: dict) -> dict:
     gai_data = {
         "calculado": False,
         "interpretavel": False,
+        "normativo": False,
+        "fonte_normativa": None,
         "soma_ponderados": None,
         "escore_composto": None,
         "percentil": None,
@@ -73,41 +74,18 @@ def classify_wais3_payload(computed_data: dict) -> dict:
                 gai_data["percentil"] = row.get("percentil")
                 gai_data["intervalo_confianca"] = [row.get("ic_95_inferior"), row.get("ic_95_superior")]
                 gai_data["classificacao"] = _classify_wechsler(row.get("gai"))
+                gai_data["normativo"] = True
+                gai_data["fonte_normativa"] = "Apêndice C - Norm Tables for Computing Standard Scores on the General Ability Index (GAI) and Clinical Clusters"
             else:
                 warnings.append(f"GAI: soma {soma_gai} fora da tabela normativa")
         except Exception as exc:
             warnings.append(f"GAI lookup failed: {exc}")
-
-    # Calculate CPI
-    dg = get_scaled_score("digitos")
-    snl = get_scaled_score("sequencia_numeros_letras")
-    cd = get_scaled_score("codigos")
-    ps = get_scaled_score("procurar_simbolos")
-
-    cpi_data = {
-        "calculado": False,
-        "soma_ponderados": None,
-        "escore_composto": None,
-        "percentil": None,
-        "intervalo_confianca": None,
-        "classificacao": None,
-    }
-
-    if all(s is not None for s in [dg, snl, cd, ps]):
-        soma_cpi = dg + snl + cd + ps
-        cpi_data["soma_ponderados"] = soma_cpi
-        cpi_data["calculado"] = True
-
-        # For CPI, use simple classification based on sum (no dedicated table yet)
-        cpi_data["escore_composto"] = _estimate_cpi(soma_cpi)
-        cpi_data["classificacao"] = _classify_wechsler(cpi_data["escore_composto"])
 
     # Calculate clusters (C.2 to C.9)
     clusters = _calculate_clusters(subtestes)
     result["clusters"] = clusters
 
     result["gai_data"] = gai_data
-    result["cpi_data"] = cpi_data
     if warnings:
         result["warnings"] = warnings
 
@@ -342,7 +320,7 @@ def _calculate_clusters(subtestes: dict) -> dict:
 def _classify_wechsler(valor: int | float) -> str:
     """Classify Wechsler scale score."""
     if valor <= 69:
-        return "Deficitário"
+        return "Extremamente Baixo"
     elif valor <= 79:
         return "Limítrofe"
     elif valor <= 89:
@@ -355,25 +333,3 @@ def _classify_wechsler(valor: int | float) -> str:
         return "Superior"
     else:
         return "Muito Superior"
-
-
-def _estimate_cpi(soma: int) -> int:
-    """Estimate CPI from sum of scaled scores."""
-    if soma <= 10:
-        return 55
-    elif soma <= 14:
-        return 65
-    elif soma <= 18:
-        return 75
-    elif soma <= 22:
-        return 85
-    elif soma <= 26:
-        return 95
-    elif soma <= 30:
-        return 105
-    elif soma <= 34:
-        return 115
-    elif soma <= 38:
-        return 125
-    else:
-        return 135

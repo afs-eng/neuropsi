@@ -152,3 +152,242 @@ def build_clinical_summary(subtests: list[dict], name: str) -> str:
         f"Em análise clínica, o perfil atencional de {name} deve ser interpretado de forma integrada, considerando o peso maior da atenção geral e a variação observada nos componentes específicos. "
         "Os achados sugerem que o funcionamento atencional pode oscilar conforme a complexidade da tarefa, a necessidade de sustentar o foco e a exigência de adaptação entre diferentes demandas cognitivas."
     )
+
+
+def build_gold_standard_interpretation(subtests: list[dict], name: str) -> dict:
+    by_code = {item.get("codigo"): item for item in subtests}
+    ac = by_code.get("ac") or {}
+    ad = by_code.get("ad") or {}
+    aa = by_code.get("aa") or {}
+    ag = by_code.get("ag") or {}
+    short_name = (name or "Paciente").split(" ", 1)[0]
+    total_errors = sum(_num((by_code.get(code) or {}).get("erros")) for code in ["ac", "ad", "aa"])
+    specific_classes = [_classification(ac), _classification(ad), _classification(aa)]
+    heterogeneous = _has_relevant_discrepancy(specific_classes)
+
+    paragraphs = [
+        _opening_paragraph(ag, heterogeneous),
+        _domain_paragraph("Atenção Concentrada", ac, _ac_interpretation),
+        _domain_paragraph("Atenção Dividida", ad, _ad_interpretation),
+        _domain_paragraph("Atenção Alternada", aa, _aa_interpretation),
+        _ag_and_qualitative_paragraph(ag, total_errors, heterogeneous),
+    ]
+    clinical_box_text = _clinical_box_text(short_name, ac, ad, aa, ag, total_errors)
+    synthesis_text = _synthesis_text(short_name, ac, ad, aa, ag, total_errors)
+    return {
+        "clinical_paragraphs": paragraphs,
+        "clinical_box_text": clinical_box_text,
+        "synthesis_text": synthesis_text,
+    }
+
+
+def _opening_paragraph(ag: dict, heterogeneous: bool) -> str:
+    ag_class = _classification(ag)
+    if heterogeneous:
+        caution = (
+            " Contudo, esse índice deve ser interpretado com cautela, pois houve variação entre os domínios específicos avaliados. "
+            "Assim, a análise clínica deve priorizar o perfil por domínio, uma vez que a medida geral pode mascarar fragilidades ou pontos fortes específicos."
+        )
+    else:
+        caution = " Esse resultado evidencia desempenho convergente entre atenção concentrada, atenção dividida e atenção alternada."
+    return (
+        f"A BPA-2 indicou desempenho atencional geral situado na faixa {ag_class}, sugerindo funcionamento atencional global {_global_level_text(ag_class)} para a faixa etária e tabela normativa utilizada. "
+        f"Esse resultado deve ser compreendido como indicador do desempenho em contexto estruturado de avaliação.{caution}"
+    )
+
+
+def _domain_paragraph(title: str, result: dict, interpretation_builder) -> str:
+    classification = _classification(result)
+    percentile = _format_number(result.get("percentil"))
+    points = _format_number(result.get("total"))
+    errors = _format_number(result.get("erros"))
+    return (
+        f"Na {title}, o desempenho foi classificado como {classification} (pontuação {points}; percentil {percentile}), {interpretation_builder(classification)} "
+        f"{_domain_error_sentence(_num(result.get('erros')), title)}"
+    )
+
+
+def _ag_and_qualitative_paragraph(ag: dict, total_errors: int, heterogeneous: bool) -> str:
+    ag_class = _classification(ag)
+    if heterogeneous:
+        profile_text = "perfil heterogêneo entre os componentes atencionais"
+        integration = "Esse índice deve ser interpretado com cautela e integrado ao padrão específico de AC, AD e AA."
+    else:
+        profile_text = f"desempenho global {_global_level_text(ag_class)}"
+        integration = "Como os domínios específicos apresentaram padrão homogêneo e convergente, esse índice pode ser considerado representativo do funcionamento atencional global no contexto estruturado de avaliação."
+    return (
+        f"A Atenção Geral apresentou classificação {ag_class}, refletindo {profile_text} na bateria. "
+        f"{integration} {_errors_text(total_errors)}"
+    )
+
+
+def _clinical_box_text(short_name: str, ac: dict, ad: dict, aa: dict, ag: dict, total_errors: int) -> str:
+    strengths = _domain_labels_by_level([("atenção concentrada", ac), ("atenção dividida", ad), ("atenção alternada", aa)], high=True)
+    fragilities = _domain_labels_by_level([("atenção concentrada", ac), ("atenção dividida", ad), ("atenção alternada", aa)], high=False)
+    ag_class = _classification(ag)
+
+    if fragilities:
+        profile = f"funcionamento atencional com fragilidades específicas em {_join(fragilities)}"
+    elif strengths:
+        profile = f"funcionamento atencional global preservado, com maior eficiência em {_join(strengths)}"
+    else:
+        profile = "funcionamento atencional preservado e compatível com o esperado para a tabela normativa utilizada"
+
+    discrepancy_note = (
+        "A Atenção Geral deve ser integrada ao padrão dos domínios específicos para evitar que a medida global mascare discrepâncias clínicas relevantes. "
+        if fragilities else ""
+    )
+    return (
+        f"Em análise clínica, o perfil atencional de {short_name} sugere {profile}. "
+        f"{discrepancy_note}O conjunto dos resultados aponta para {_global_outcome(ag_class, bool(fragilities))}. "
+        f"{_clinical_error_closing(total_errors)}"
+    )
+
+
+def _synthesis_text(short_name: str, ac: dict, ad: dict, aa: dict, ag: dict, total_errors: int) -> str:
+    strengths = _domain_labels_by_level([("atenção concentrada", ac), ("atenção dividida", ad), ("atenção alternada", aa)], high=True)
+    fragilities = _domain_labels_by_level([("atenção concentrada", ac), ("atenção dividida", ad), ("atenção alternada", aa)], high=False)
+    complement = f"com pontos fortes em {_join(strengths)}" if strengths else "sem pontos fortes normativos destacados"
+    if fragilities:
+        complement += f" e fragilidades em {_join(fragilities)}"
+    else:
+        complement += " e sem fragilidades normativas nos domínios específicos"
+
+    return (
+        f"A BPA-2 indicou desempenho atencional geral na faixa {_classification(ag)}, com atenção concentrada classificada como {_classification(ac)}, atenção dividida como {_classification(ad)} e atenção alternada como {_classification(aa)}. "
+        f"Em análise clínica, o perfil de {short_name} sugere funcionamento atencional {_global_level_text(_classification(ag))}, {complement}. "
+        f"{_synthesis_error_closing(total_errors)}"
+    )
+
+
+def _ac_interpretation(classification: str) -> str:
+    if classification in {"Muito Inferior", "Inferior"}:
+        return "sugerindo dificuldade na seleção de estímulos relevantes e na manutenção do foco diante de distratores em tempo determinado. Esse resultado pode indicar fragilidade em atenção seletiva, monitoramento visual e controle da resposta."
+    if classification in {"Média Inferior", "Médio Inferior"}:
+        return "sugerindo rendimento reduzido em tarefa que exige seleção de estímulos relevantes e manutenção do foco diante de distratores. Esse resultado pode indicar vulnerabilidade em atenção seletiva ou sustentação do desempenho quando integrado a outros achados clínicos."
+    if classification == "Média":
+        return "indicando capacidade adequada para selecionar estímulos relevantes, manter o foco e responder diante de distratores em tempo determinado."
+    return "indicando boa eficiência na seleção de estímulos relevantes e na manutenção do foco diante de distratores. Esse resultado sugere preservação e/ou maior eficiência dos mecanismos de atenção seletiva no contexto estruturado da tarefa."
+
+
+def _ad_interpretation(classification: str) -> str:
+    if classification in {"Muito Inferior", "Inferior"}:
+        return "sugerindo dificuldade para monitorar simultaneamente mais de uma fonte de informação e distribuir recursos atencionais diante de estímulos concorrentes."
+    if classification in {"Média Inferior", "Médio Inferior"}:
+        return "indicando rendimento reduzido em tarefa que exige monitoramento simultâneo de estímulos, podendo sugerir vulnerabilidade na distribuição dos recursos atencionais em situações com múltiplas demandas."
+    if classification == "Média":
+        return "indicando capacidade adequada para monitorar mais de um estímulo simultaneamente e distribuir recursos atencionais em tempo determinado."
+    return "indicando boa ou elevada eficiência para monitorar estímulos simultâneos, distribuir recursos atencionais e responder diante de demandas concorrentes."
+
+
+def _aa_interpretation(classification: str) -> str:
+    if classification in {"Muito Inferior", "Inferior"}:
+        return "sugerindo dificuldade na alternância do foco entre estímulos ou critérios distintos, com possível fragilidade em flexibilidade atencional, mudança de estratégia e adaptação às regras da tarefa."
+    if classification in {"Média Inferior", "Médio Inferior"}:
+        return "indicando rendimento reduzido em tarefa que exige alternância do foco e adaptação a critérios distintos de resposta, podendo sugerir vulnerabilidade em flexibilidade atencional."
+    if classification == "Média":
+        return "indicando capacidade adequada para alternar o foco entre estímulos ou critérios distintos, com adaptação funcional às regras da tarefa."
+    return "indicando boa flexibilidade atencional, eficiência na mudança de foco e capacidade preservada para adaptar-se a critérios distintos de resposta."
+
+
+def _errors_text(total_errors: int) -> str:
+    if total_errors <= 2:
+        return "A ausência ou baixa ocorrência de erros sugere boa precisão, seletividade e monitoramento da resposta ao longo da execução."
+    if total_errors <= 9:
+        return "A presença de erros em quantidade moderada deve ser analisada qualitativamente, podendo refletir oscilações pontuais de precisão, monitoramento ou controle da resposta."
+    return "A quantidade elevada de erros sugere redução da precisão durante a tarefa, podendo estar associada a falhas de seletividade, impulsividade de resposta, baixa inibição ou análise insuficiente antes da marcação."
+
+
+def _domain_error_sentence(errors: int, title: str) -> str:
+    domain = title.replace("Atenção ", "").lower()
+    if errors == 0:
+        return f"A ausência de erros nesse domínio sugere boa precisão na execução da tarefa, com adequado monitoramento da resposta e controle sobre marcações em estímulos não alvo."
+    if errors <= 3:
+        return f"Os erros observados nesse domínio devem ser compreendidos como indicadores qualitativos complementares de precisão e monitoramento da resposta durante a tarefa."
+    return f"A quantidade de erros nesse domínio deve ser analisada qualitativamente, podendo indicar maior oscilação de precisão, seletividade ou controle da resposta em tarefas de {domain}."
+
+
+def _clinical_error_closing(total_errors: int) -> str:
+    if total_errors == 0:
+        return "A ausência de erros reforça a precisão e o monitoramento adequado da resposta, sem evidências, neste instrumento, de prejuízo atencional clinicamente significativo."
+    return f"Os erros observados ({_format_number(total_errors)}) devem ser compreendidos como indicadores qualitativos complementares de precisão e monitoramento da resposta, não devendo ser interpretados de forma isolada."
+
+
+def _synthesis_error_closing(total_errors: int) -> str:
+    if total_errors == 0:
+        return "A ausência de erros indica boa precisão e adequado monitoramento da resposta, não havendo, neste instrumento, evidências de prejuízo atencional clinicamente significativo."
+    return f"Os erros observados ({_format_number(total_errors)}) devem ser compreendidos como indicadores qualitativos de precisão, seletividade e monitoramento da resposta, não devendo ser interpretados de forma isolada."
+
+
+def _has_relevant_discrepancy(classifications: list[str]) -> bool:
+    levels = [_class_level(item) for item in classifications]
+    return max(levels) - min(levels) >= 2 if levels else False
+
+
+def _class_level(classification: str) -> int:
+    levels = {
+        "Muito Inferior": 1,
+        "Inferior": 2,
+        "Média Inferior": 3,
+        "Médio Inferior": 3,
+        "Média": 4,
+        "Média Superior": 5,
+        "Superior": 6,
+        "Muito Superior": 7,
+    }
+    return levels.get(classification, 4)
+
+
+def _global_level_text(classification: str) -> str:
+    if classification in {"Muito Inferior", "Inferior", "Média Inferior", "Médio Inferior"}:
+        return "abaixo do esperado"
+    if classification == "Média":
+        return "preservado"
+    return "preservado e acima da média normativa"
+
+
+def _global_outcome(classification: str, has_fragility: bool) -> str:
+    if has_fragility:
+        return "perfil heterogêneo, com necessidade de análise por domínio"
+    if classification in {"Muito Inferior", "Inferior", "Média Inferior", "Médio Inferior"}:
+        return "desempenho global reduzido no contexto estruturado da tarefa"
+    return "funcionamento preservado no contexto estruturado da tarefa"
+
+
+def _domain_labels_by_level(items: list[tuple[str, dict]], high: bool) -> list[str]:
+    if high:
+        return [label for label, result in items if _classification(result) in {"Média Superior", "Superior", "Muito Superior"}]
+    return [label for label, result in items if _classification(result) in {"Média Inferior", "Médio Inferior", "Inferior", "Muito Inferior"}]
+
+
+def _classification(result: dict) -> str:
+    return result.get("classificacao") or result.get("classification") or "Não classificado"
+
+
+def _num(value) -> int:
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return 0
+
+
+def _format_number(value) -> str:
+    if value is None or value == "":
+        return "-"
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return str(value)
+    if number.is_integer():
+        return str(int(number))
+    return f"{number:.1f}".replace(".", ",")
+
+
+def _join(items: list[str]) -> str:
+    if not items:
+        return ""
+    if len(items) == 1:
+        return items[0]
+    if len(items) == 2:
+        return f"{items[0]} e {items[1]}"
+    return f"{', '.join(items[:-1])} e {items[-1]}"

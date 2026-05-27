@@ -138,14 +138,16 @@ def build_section_text(
         items = source_payload.get("tests", [])
         if not items:
             return "Teste nao aplicado ou ainda nao validado."
-        return (
-            "\n\n".join(
-                item.get("interpretation_text", "")
-                for item in items
-                if item.get("interpretation_text")
-            )
-            or "Sem interpretacao persistida."
-        )
+        texts = []
+        for item in items:
+            report_payload = item.get("report_payload") or {}
+            summary = (report_payload.get("summary_for_report") or "").strip()
+            interpretation = (report_payload.get("interpretation") or "").strip()
+            persisted = (item.get("interpretation_text") or "").strip()
+            text = interpretation or summary or persisted
+            if text:
+                texts.append(text)
+        return "\n\n".join(texts) or "Sem interpretacao persistida."
     if section_key == "conclusao":
         return "Secao pronta para conclusao clinica integrada pelo profissional responsavel."
     if section_key == "sugestoes_conduta":

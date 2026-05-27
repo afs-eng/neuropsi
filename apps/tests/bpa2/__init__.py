@@ -7,9 +7,7 @@ from .calculators import calculate_total, load_table, get_age_group, classify_sc
 from .classifiers import find_strengths_weaknesses
 from .interpreters import (
     NOMES_SUBTESTES,
-    build_clinical_summary,
-    build_report_intro,
-    build_subtest_paragraph,
+    build_gold_standard_interpretation,
 )
 
 SUBTEST_CODES = ["ac", "ad", "aa"]
@@ -96,23 +94,34 @@ class BPA2Module(BaseTestModule):
 
     def interpret(self, context: TestContext, merged_data: dict) -> str:
         patient_name = (context.patient_name or "Paciente").split(" ", 1)[0]
-        parts = [build_report_intro(patient_name), ""]
-        for st in merged_data.get("subtestes", []):
-            parts.append(
-                build_subtest_paragraph(
-                    st["codigo"],
-                    st["classificacao"],
-                    st.get("percentil", 0),
-                    patient_name,
-                )
-            )
-            parts.append("")
+        interpretation = build_gold_standard_interpretation(merged_data.get("subtestes", []), patient_name)
+        return "\n\n".join([
+            *interpretation["clinical_paragraphs"],
+            interpretation["clinical_box_text"],
+            interpretation["synthesis_text"],
+        ])
 
-        parts.append(
-            build_clinical_summary(merged_data.get("subtestes", []), patient_name)
-        )
-
-        return "\n".join(parts)
+    def build_report_payload(self, context: TestContext, merged_data: dict) -> dict:
+        subtestes = merged_data.get("subtestes") or []
+        results = [
+            {
+                "scale": item.get("subteste") or item.get("codigo"),
+                "raw_score": item.get("total") or item.get("brutos"),
+                "percentile": item.get("percentil"),
+                "classification": item.get("classificacao"),
+            }
+            for item in subtestes
+        ]
+        interpretation = self.interpret(context, merged_data)
+        gold_standard = build_gold_standard_interpretation(subtestes, (context.patient_name or "Paciente").split(" ", 1)[0])
+        return {
+            "results": results,
+            "summary_for_report": gold_standard["synthesis_text"],
+            "technical_notes": [],
+            "clinical_flags": merged_data.get("pontos_fragilizados") or [],
+            "chart_payload": {},
+            "interpretation": interpretation,
+        }
 
 
 register_test_module(BPA2_CODE, BPA2Module())

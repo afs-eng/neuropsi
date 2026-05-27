@@ -4,14 +4,17 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer, Share2 } from "lucide-react";
-import { api } from "@/lib/api";
+import { ArrowLeft, Printer } from "lucide-react";
+import { api, getToken, resolveApiUrl } from "@/lib/api";
+import { TestReportSummaryCard } from "@/components/tests/TestReportSummaryCard";
 
 const CLASSIFICATION_STYLES: Record<string, string> = {
   "Dentro dos limites Normais": "bg-emerald-50 text-emerald-700 border-emerald-200",
+  "Dentro dos limites normais": "bg-emerald-50 text-emerald-700 border-emerald-200",
   Leve: "bg-amber-50 text-amber-700 border-amber-200",
   Moderado: "bg-orange-50 text-orange-700 border-orange-200",
   Grave: "bg-red-50 text-red-700 border-red-200",
+  Severo: "bg-red-50 text-red-700 border-red-200",
   "Norma não localizada": "bg-slate-100 text-slate-700 border-slate-200",
 };
 
@@ -44,6 +47,7 @@ function SRS2ResultPageContent() {
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [exportingPdf, setExportingPdf] = useState<"summary" | "complete" | null>(null);
 
   const applicationId = params.id as string;
 
@@ -68,6 +72,38 @@ function SRS2ResultPageContent() {
     fetchResult();
   }, [applicationId]);
 
+  const handleExportPdf = async (reportType: "summary" | "complete") => {
+    if (!applicationId || exportingPdf) return;
+
+    setExportingPdf(reportType);
+    try {
+      const token = getToken() || "";
+      const response = await fetch(resolveApiUrl(`/api/tests/applications/${applicationId}/export-pdf?report_type=${reportType}`), {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        let message = `Falha ao gerar PDF (${response.status})`;
+        try {
+          const payload = await response.json();
+          if (payload?.message) message = `${message}: ${payload.message}`;
+        } catch {}
+        throw new Error(message);
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (exportError: any) {
+      console.error(exportError);
+      alert(exportError?.message || "Não foi possível gerar o PDF do SRS-2.");
+    } finally {
+      setExportingPdf(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -78,7 +114,7 @@ function SRS2ResultPageContent() {
 
   if (error || !result) {
     return (
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-4xl mx-auto space-y-6 report-print-shell">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => router.push("/dashboard/tests")}>
             <ArrowLeft className="h-5 w-5" />
@@ -99,8 +135,8 @@ function SRS2ResultPageContent() {
 
   const classified = result.classified_payload || result.results || {};
   const scoreResults = classified.resultados || [];
-  const totalResult = scoreResults.find((item: any) => item.variavel === "total");
-  const cisResult = scoreResults.find((item: any) => item.variavel === "cis");
+  const totalResult = scoreResults.find((item: any) => item["variável"] === "total");
+  const cisResult = scoreResults.find((item: any) => item["variável"] === "cis");
   const interpretation = String(result.interpretation || result.interpretation_text || "").trim();
   const interpretationParagraphs = interpretation
     .split(/\n\s*\n/)
@@ -108,8 +144,8 @@ function SRS2ResultPageContent() {
     .filter(Boolean);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="max-w-4xl mx-auto space-y-6 report-print-shell">
+      <div className="flex items-center justify-between print:hidden report-print-hide">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => router.push("/dashboard/tests")}>
             <ArrowLeft className="h-5 w-5" />
@@ -119,17 +155,21 @@ function SRS2ResultPageContent() {
             <p className="text-sm text-slate-500">Resultado da Avaliação</p>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="icon" className="rounded-xl">
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" className="rounded-xl gap-2" onClick={() => handleExportPdf("summary")} disabled={!!exportingPdf}>
             <Printer className="h-4 w-4" />
+            {exportingPdf === "summary" ? "Gerando..." : "Relatório Resumido"}
           </Button>
-          <Button variant="outline" size="icon" className="rounded-xl">
-            <Share2 className="h-4 w-4" />
+          <Button className="rounded-xl gap-2" onClick={() => handleExportPdf("complete")} disabled={!!exportingPdf}>
+            <Printer className="h-4 w-4" />
+            {exportingPdf === "complete" ? "Gerando..." : "Relatório Completo"}
           </Button>
         </div>
       </div>
 
-      <Card className="border-slate-100 shadow-spike overflow-hidden">
+      <TestReportSummaryCard reportPayload={result.report_payload} fallbackText={result.interpretation || result.interpretation_text} />
+
+      <Card className="border-slate-100 shadow-spike overflow-hidden report-print-content">
         <CardHeader>
           <CardTitle className="text-xl font-semibold text-slate-900">Resumo da aplicação</CardTitle>
         </CardHeader>
@@ -149,7 +189,7 @@ function SRS2ResultPageContent() {
             </div>
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <p className="text-sm text-slate-500">Faixa etária normativa</p>
-              <p className="mt-2 text-lg font-semibold text-slate-900">{classified.faixa_etaria || "-"}</p>
+              <p className="mt-2 text-lg font-semibold text-slate-900">{classified["faixa_etária"] || "-"}</p>
             </div>
           </div>
 
@@ -159,8 +199,8 @@ function SRS2ResultPageContent() {
               <p className="mt-2 text-3xl font-semibold text-slate-900">{totalResult?.tscore ?? "-"}</p>
               <p className="mt-2 text-sm text-slate-600">Bruto: {totalResult?.bruto ?? "-"} • Percentil: {totalResult?.percentil ?? "-"}</p>
               <div className="mt-3">
-                <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${getClassificationStyle(totalResult?.classificacao || "")}`}>
-                  {totalResult?.classificacao || "-"}
+                <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${getClassificationStyle(totalResult?.["classificação"] || "")}`}>
+                  {totalResult?.["classificação"] || "-"}
                 </span>
               </div>
             </div>
@@ -169,8 +209,8 @@ function SRS2ResultPageContent() {
               <p className="mt-2 text-3xl font-semibold text-slate-900">{cisResult?.tscore ?? "-"}</p>
               <p className="mt-2 text-sm text-slate-600">Bruto: {cisResult?.bruto ?? "-"} • Percentil: {cisResult?.percentil ?? "-"}</p>
               <div className="mt-3">
-                <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${getClassificationStyle(cisResult?.classificacao || "")}`}>
-                  {cisResult?.classificacao || "-"}
+                <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${getClassificationStyle(cisResult?.["classificação"] || "")}`}>
+                  {cisResult?.["classificação"] || "-"}
                 </span>
               </div>
             </div>
@@ -189,12 +229,12 @@ function SRS2ResultPageContent() {
               </thead>
               <tbody>
                 {scoreResults.map((item: any, index: number) => (
-                  <tr key={item.variavel || item.nome || index} className={`border-t border-slate-200 ${index % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`}>
+                  <tr key={item["variável"] || item.nome || index} className={`border-t border-slate-200 ${index % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`}>
                     <td className="px-4 py-3 font-medium text-slate-900">{item.nome || "-"}</td>
                     <td className="px-4 py-3 text-center text-slate-700">{item.bruto ?? "-"}</td>
                     <td className="px-4 py-3 text-center text-slate-700">{item.tscore ?? "-"}</td>
                     <td className="px-4 py-3 text-center text-slate-700">{item.percentil ?? "-"}</td>
-                    <td className="px-4 py-3 text-slate-700">{item.classificacao || "-"}</td>
+                    <td className="px-4 py-3 text-slate-700">{item["classificação"] || "-"}</td>
                   </tr>
                 ))}
               </tbody>

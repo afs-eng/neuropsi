@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NeuroAvalia | SRS-2</title>
+<style>
+:root{
+  --navy:#0b2f5b; --blue:#2f78bd; --line:#cfe0ef; --line2:#d7e4f0;
+  --text:#243a54; --muted:#637991; --normal:#2f78bd; --leve:#d9a51a;
+  --moderado:#e8752f; --severo:#c83d4a; --panel:#f2f5f9; --paper:#fff;
+  --bg:#e9f0f7; --page-w:210mm; --page-h:297mm;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:Calibri,Arial,Helvetica,sans-serif;color:var(--text);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.page{width:var(--page-w);min-height:var(--page-h);margin:18px auto;background:var(--paper);position:relative;overflow:hidden;padding:22mm 15mm 15mm;box-shadow:0 14px 34px rgba(11,47,91,.16)}
+.page::before{content:"";position:absolute;top:0;left:0;right:0;height:7mm;background:linear-gradient(90deg,var(--navy),#3b9ee5)}
+.header{position:absolute;top:9mm;left:15mm;right:15mm;display:flex;justify-content:flex-start;align-items:center}
+.brand-logo{width:139px;height:auto;display:block;object-fit:contain}
+.footer{position:absolute;left:15mm;right:15mm;bottom:6mm;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #d9e5f1;padding-top:7px;color:#6b7f98;font-size:8pt;font-weight:700}
+h1{margin:0 0 7mm;font-family:Georgia,"Times New Roman",serif;color:var(--navy);font-size:34pt;line-height:.96;letter-spacing:-1.2px;font-weight:700}
+h2{margin:0 0 3mm;color:var(--navy);font-size:18pt;line-height:1.08;font-weight:300}
+h3{margin:0 0 2mm;color:var(--navy);font-size:12pt;line-height:1.1;font-weight:700}
+p{font-size:10pt;line-height:1.38;text-align:justify;margin:0 0 3mm;color:#26364d}
+.small{font-size:8pt;color:var(--muted);line-height:1.25}
+.header, .table-title, strong{font-family:Calibri,Arial,Helvetica,sans-serif;font-weight:700}
+
+.cover{padding:0;background:linear-gradient(135deg,#f8fbff,#fff 42%,#edf7ff)}
+.cover::before{display:none}
+.cover .top{position:absolute;left:12mm;right:12mm;top:12mm;display:flex;justify-content:space-between;align-items:center}
+.cover-title{position:absolute;left:13mm;top:44mm;width:120mm}
+.kicker{display:inline-block;background:#e5f2ff;color:#174b7b;padding:6px 10px;border-radius:8px;font-size:8pt;font-weight:900;letter-spacing:.14em;text-transform:uppercase;margin-bottom:7mm}
+.cover-title h1{font-size:70pt;margin:0 0 2mm;letter-spacing:-4px}
+.cover-title .sub{font-size:22pt;color:#174b7b;font-weight:900}
+.cover-title::after{content:"";display:block;width:36mm;height:4px;border-radius:10px;background:linear-gradient(90deg,var(--navy),#3b9ee5);margin-top:7mm}
+.patient-card{position:absolute;left:13mm;right:13mm;top:118mm;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:22px;box-shadow:0 18px 46px rgba(11,47,91,.11);padding:18px 22px}
+.patient-card .title{font-size:21pt;color:var(--navy);font-weight:900;margin-bottom:13px;border-bottom:1px solid var(--line);padding-bottom:11px}
+.data-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:13px 26px}
+.data-grid span{display:block;font-size:8pt;color:#6a7e97;text-transform:uppercase;letter-spacing:.14em;font-weight:900;margin-bottom:4px}
+.data-grid strong{display:block;color:var(--navy);font-size:11pt;font-weight:900;font-family:Calibri,Arial,Helvetica,sans-serif}
+.cover-note{position:absolute;left:13mm;right:13mm;bottom:23mm;border-radius:16px;background:#f7fbff;border:1px solid var(--line);padding:12px 14px}
+
+.clinical-box,.profile-card,.table-card,.radar-card{border:1px solid var(--line);background:#f8fbff;border-radius:20px;padding:15px;box-shadow:0 12px 26px rgba(11,47,91,.07)}
+.criteria{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4mm 0 6mm}
+.criterion{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:12px;padding:8px 10px;background:#fff}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--c)}
+.criterion strong{font-size:9pt;color:var(--navy);min-width:20mm}
+.criterion span{font-size:9pt;color:#52657d}
+
+.pill-row{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:6mm 0}
+.pill{border:1px solid var(--line);background:#f7fbff;border-radius:14px;padding:11px 12px;min-height:24mm}
+.pill span{display:block;color:#71839b;font-size:7.8pt;text-transform:uppercase;letter-spacing:.11em;font-weight:900;margin-bottom:5px}
+.pill strong{display:block;color:var(--navy);font-size:12pt;font-weight:900;line-height:1.15}
+.pill b{display:block;color:#d95f2f;font-size:18pt;margin-top:4px}
+
+.card-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;border-bottom:1px solid #e1ebf5;padding-bottom:11px;margin-bottom:13px}
+.card-head p{max-width:130mm;text-align:left;font-size:9.5pt;margin:0;color:#52657d}
+.profile-chart{display:grid;grid-template-columns:45mm 1fr;gap:8px;margin-top:7px}
+.profile-labels{display:grid;grid-template-rows:repeat(7,8.4mm);padding-top:8mm;font-size:9pt;color:#52657d;text-align:right}
+.profile-labels div{padding-right:7px;display:flex;align-items:center;justify-content:flex-end}
+.plot{position:relative;height:67mm;padding-top:8mm}
+.ticks{position:absolute;left:0;right:0;top:0;height:8mm;display:grid;grid-template-columns:repeat(13,1fr);font-size:8pt;color:#475569;text-align:center}
+.grid{position:absolute;left:0;right:0;top:8mm;bottom:0;background:repeating-linear-gradient(to right,transparent 0,transparent calc(100%/12 - 1px),#d7e0ea calc(100%/12 - 1px),#d7e0ea calc(100%/12));border-left:1px solid #d7e0ea;border-bottom:1px solid #d7e0ea}
+.mean-line{position:absolute;top:8mm;bottom:0;left:50%;width:2px;background:#9aa8b8}
+.row{position:relative;height:8.4mm;z-index:2}
+.bar{position:absolute;top:50%;left:50%;height:3px;background:#e8752f;border-radius:10px;width:var(--w);transform:translateY(-50%)}
+.point{position:absolute;left:var(--x);top:50%;transform:translate(-50%,-50%);width:12px;height:12px;border-radius:50%;background:#e8752f;border:3px solid #fff;box-shadow:0 0 0 2px #e8752f}
+.tlabel{position:absolute;left:calc(var(--x) + 13px);top:50%;transform:translateY(-50%);font-size:8pt;color:#d95f2f;font-weight:900;white-space:nowrap}
+
+table{width:100%;border-collapse:collapse;font-size:10pt;margin:0}
+th{background:var(--navy);color:#fff;text-align:left;padding:7px}
+td{background:#edf8fb;border-bottom:1px solid #fff;padding:7px;color:#26364d}
+td.num,th.num{text-align:center}
+tr.total td{background:#dceefa;color:var(--navy);font-weight:900}
+
+.domain-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:8px}
+.domain{display:grid;grid-template-columns:42px 1fr;gap:10px;align-items:center;background:#f8fbff;border:1px solid var(--line);border-radius:15px;padding:10px 11px}
+.badge{width:42px;height:42px;border-radius:14px;background:var(--status);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14pt;font-weight:900}
+.domain strong{display:block;color:var(--navy);font-size:9.5pt;margin-bottom:3px}
+.domain span{font-size:8.2pt;color:#66788f;font-weight:800}
+.mini-axis{position:relative;height:7px;margin-top:6px;border-radius:999px;border:1px solid #d7e5f5;background:linear-gradient(90deg,#dff5ea 0 66.66%,#fff3c4 66.66% 76.66%,#ffd6b8 76.66% 93.33%,#ffc6c6 93.33%)}
+.mini-axis::after{content:"";position:absolute;left:var(--pos);top:-3px;width:11px;height:11px;border-radius:50%;background:var(--status);border:2px solid #fff;box-shadow:0 0 0 1px var(--status);transform:translateX(-50%)}
+.domain.total{grid-column:1/-1;background:linear-gradient(135deg,#f8fbff,#edf6ff)}
+
+.radar-title{margin:0 0 5mm;color:var(--navy);font-size:12pt;font-weight:800}
+.radar-panel{border:1px solid var(--line);background:#f2f5f9;border-radius:16px;padding:10px 12px 12px}
+.radar-layout{display:grid;grid-template-columns:1fr 68mm;gap:8px;align-items:center;min-height:110mm}
+.radar-svg{width:100%;max-width:108mm;height:auto;display:block}
+.axis-label{font-size:10px;fill:var(--navy);font-weight:700}
+.value-label{font-size:10px;fill:var(--navy);font-weight:800}
+.summary-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line2);color:var(--text);font-size:10pt}
+.summary-row strong{color:var(--navy);font-weight:800;font-size:10.5pt;white-space:nowrap}
+
+.analysis-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin:5mm 0}
+.analysis-card{border:1px solid var(--line);border-radius:14px;background:#fff;padding:10px 11px;min-height:26mm}
+.analysis-card span{display:block;color:#71839b;font-size:7.8pt;text-transform:uppercase;letter-spacing:.1em;font-weight:900;margin-bottom:4px}
+.analysis-card strong{display:block;color:var(--navy);font-size:10pt;margin-bottom:5px}
+.analysis-card p{font-size:9pt;text-align:left;margin:0;color:#3b4b61}
+.recommend{border:1px solid var(--line);border-radius:16px;background:#fff;padding:12px;margin-top:5mm}
+.recommend ul{margin:6px 0 0 18px;padding:0;font-size:9.5pt;line-height:1.45;color:#26364d}
+
+@media print{body{background:#fff}.page{margin:0;box-shadow:none;page-break-after:always}}
+</style>
+</head>
+<body>
+
+<section class="page cover">
+<div class="top"><img class="brand-logo" src="data:image/png;base64,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" alt="NeuroAvalia"/></div>
+<div class="cover-title">
+<span class="kicker">Escala de Responsividade Social</span>
+<h1>SRS-2</h1>
+<div class="sub">Segunda Edição</div>
+</div>
+<div class="patient-card">
+<div class="title">Dados do avaliado</div>
+<div class="data-grid">
+<div><span>Nome</span><strong>Herick Freitas Rodrigues</strong></div>
+<div><span>Sexo</span><strong>Não informado</strong></div>
+<div><span>Idade</span><strong>17 anos e 11 meses</strong></div>
+<div><span>Escolaridade</span><strong>escolar17 anos e 11 meses</strong></div>
+<div><span>Profissional</span><strong>Profissional responsável</strong></div>
+<div><span>Tabela normativa</span><strong>Idade Escolar · Escore T (50+10z)</strong></div>
+</div>
+</div>
+<div class="cover-note">
+<h3>Finalidade do relatório</h3>
+<p>Este relatório apresenta os resultados do SRS-2 em formato gráfico, tabular e interpretativo, com foco na compreensão dimensional da responsividade social. Os resultados devem ser integrados à anamnese, observação clínica, funcionamento adaptativo e demais instrumentos aplicados.</p>
+</div>
+<div class="footer"><span>NeuroAvalia · SRS-2</span><span>PÁGINA 1 DE 5</span></div>
+</section>
+
+<section class="page">
+<div class="header"><img class="brand-logo" src="data:image/png;base64,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" alt="NeuroAvalia"/></div>
+<h1>Visão geral</h1>
+<div class="clinical-box">
+<h2>Descrição do instrumento</h2>
+<p>A Escala de Responsividade Social – Segunda Edição (SRS-2) é um instrumento padronizado de rastreio destinado à mensuração de dificuldades relacionadas à responsividade social, comunicação social recíproca e padrões restritos e repetitivos. O resultado não deve ser utilizado de forma isolada para conclusão diagnóstica.</p>
+<div class="criteria">
+<div class="criterion"><i class="dot" style="--c:var(--normal)"></i><strong>T ≤ 59</strong><span>Dentro dos limites normais</span></div>
+<div class="criterion"><i class="dot" style="--c:var(--leve)"></i><strong>60–65</strong><span>Nível leve</span></div>
+<div class="criterion"><i class="dot" style="--c:var(--moderado)"></i><strong>66–75</strong><span>Nível moderado</span></div>
+<div class="criterion"><i class="dot" style="--c:var(--severo)"></i><strong>≥ 76</strong><span>Nível severo</span></div>
+</div>
+</div>
+<div class="pill-row" id="pillRow"></div>
+<div class="profile-card">
+<div class="card-head"><div><h2>Perfil dos Escores T</h2><p>Distribuição dos escores T por dimensão, com média normativa em T=50 e marcação visual das faixas referenciais.</p></div></div>
+<div class="profile-chart">
+<div class="profile-labels" id="profileLabels"></div>
+<div class="plot">
+<div class="ticks"><span>20</span><span>25</span><span>30</span><span>35</span><span>40</span><span>45</span><span>50</span><span>55</span><span>60</span><span>65</span><span>70</span><span>75</span><span>80</span></div>
+<div class="grid"></div><div class="mean-line"></div>
+<div id="profileRows"></div>
+</div>
+</div>
+</div>
+<div class="footer"><span>NeuroAvalia · SRS-2</span><span>PÁGINA 2 DE 5</span></div>
+</section>
+
+<section class="page">
+<div class="header"><img class="brand-logo" src="data:image/png;base64,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" alt="NeuroAvalia"/></div>
+<h1>Tabela de escores</h1>
+<div class="table-card">
+<table>
+<thead><tr><th>Escala</th><th class="num">Pontuação bruta</th><th class="num">Escore T</th><th>Classificação</th></tr></thead>
+<tbody id="scoreTableBody"></tbody>
+</table>
+<p class="small" style="margin-top:8px">A tabela apresenta pontuação bruta, Escore T e classificação clínica. Escores mais elevados indicam maior frequência ou intensidade de dificuldades associadas à responsividade social.</p>
+</div>
+<h2 style="margin-top:7mm">Mapa dos domínios</h2>
+<div class="domain-grid" id="domainGrid"></div>
+<section class="analysis-grid">
+<div class="analysis-card"><span>Leitura da tabela</span><strong>Resultados normativos</strong><p>Em Herick, Percepção Social, Cognição Social, Comunicação Social, Motivação Social, Comunicação e Interação Social e Escore Total ficaram dentro dos limites normais.</p></div>
+<div class="analysis-card"><span>Destaque clínico</span><strong>Padrões Restritos e Repetitivos</strong><p>Maior elevação do protocolo, T=61, classificada em nível leve.</p></div>
+</section>
+<div class="footer"><span>NeuroAvalia · SRS-2</span><span>PÁGINA 3 DE 5</span></div>
+</section>
+
+<section class="page">
+<div class="header"><img class="brand-logo" src="data:image/png;base64,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" alt="NeuroAvalia"/></div>
+<h1>Radar clínico</h1>
+<div class="radar-title">Radar clínico dos domínios</div>
+<div class="radar-panel">
+<div class="radar-layout">
+<div style="display:flex;justify-content:center;align-items:center;padding:0">
+<svg class="radar-svg" id="radarSvg" viewBox="0 0 360 285" aria-label="Radar clínico dos domínios"></svg>
+</div>
+<div id="radarLegend"></div>
+</div>
+</div>
+<div class="clinical-box" style="margin-top:10px">
+<h2>Leitura do radar</h2>
+<p>O radar apresenta a distribuição dos escores T entre os principais domínios do SRS-2. No protocolo de Herick, o Escore Total foi T=54 e o domínio mais elevado foi Padrões Restritos e Repetitivos, com T=61.</p>
+<p>O polígono sugere perfil global preservado, com maior expansão relativa no domínio Padrões Restritos e Repetitivos. Esse gráfico deve ser usado para verificar se o perfil é homogêneo ou se existem picos específicos entre comunicação/interação social e padrões restritos ou repetitivos.</p>
+</div>
+<div class="footer"><span>NeuroAvalia · SRS-2</span><span>PÁGINA 4 DE 5</span></div>
+</section>
+
+<section class="page">
+<div class="header"><img class="brand-logo" src="data:image/png;base64,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" alt="NeuroAvalia"/></div>
+<h1>Análise clínica</h1>
+<div class="clinical-box">
+<h2>Síntese interpretativa</h2>
+<p>Em análise clínica, os resultados obtidos por Herick no SRS-2 indicam perfil global de responsividade social situado dentro dos limites normativos esperados. O Escore Total foi T=54, não caracterizando, neste instrumento, elevação global clinicamente significativa de dificuldades em comunicação social recíproca, interação social ou padrões comportamentais associados ao espectro autista.</p>
+<p>A análise por domínios mostra desempenho dentro dos limites normais em Percepção Social (T=50), Cognição Social (T=56), Comunicação Social (T=52), Motivação Social (T=52) e Comunicação e Interação Social (T=53). Esses achados sugerem preservação relativa das habilidades de reconhecimento de pistas sociais, interpretação de informações sociais, comunicação expressiva e engajamento interpessoal, conforme mensurado pela escala.</p>
+<p>O domínio Padrões Restritos e Repetitivos apresentou Escore T=61, classificado em nível leve. Esse resultado sugere presença discreta de indicadores relacionados a rigidez comportamental, repetitividade, resistência a mudanças ou interesses restritos. Por estar em nível leve e ocorrer com Escore Total normativo, deve ser interpretado com cautela, como sinal específico de investigação clínica e não como marcador diagnóstico isolado.</p>
+</div>
+<section class="analysis-grid">
+<div class="analysis-card"><span>Conclusão do teste</span><strong>Perfil global preservado</strong><p>O resultado geral do SRS-2 não sustenta, de forma isolada, presença de prejuízo global clinicamente significativo na responsividade social.</p></div>
+<div class="analysis-card"><span>Ponto de atenção</span><strong>Elevação leve em PRR</strong><p>O domínio Padrões Restritos e Repetitivos deve ser confrontado com dados da anamnese, observação clínica e funcionamento adaptativo.</p></div>
+<div class="analysis-card"><span>Regra de segurança</span><strong>Não fechar diagnóstico isolado</strong><p>O SRS-2 é instrumento de rastreio e quantificação dimensional. A hipótese diagnóstica depende da integração com outros dados clínicos.</p></div>
+<div class="analysis-card"><span>Hipótese diagnóstica</span><strong>Investigar se houver convergência</strong><p>Considerando exclusivamente os resultados do SRS-2, não há sustentação psicométrica suficiente para estabelecer hipótese diagnóstica de Transtorno do Espectro Autista, uma vez que o Escore Total permaneceu dentro dos limites normais.</p></div>
+</section>
+<div class="recommend">
+<h2>Recomendações interpretativas</h2>
+<ul>
+<li>Integrar os achados à anamnese e à observação clínica.</li>
+<li>Verificar impacto funcional em ambiente familiar, escolar e social.</li>
+<li>Investigar funcionamento adaptativo e histórico do desenvolvimento.</li>
+<li>Utilizar instrumentos complementares quando houver suspeita clínica de TEA.</li>
+</ul>
+</div>
+<div class="footer"><span>NeuroAvalia · SRS-2</span><span>PÁGINA 5 DE 5</span></div>
+</section>
+
+<script>
+const scales = [
+  { name: "Percepção Social", raw: 7, t: 50, ci: [46, 54] },
+  { name: "Cognição Social", raw: 14, t: 56, ci: [52, 60] },
+  { name: "Comunicação Social", raw: 14, t: 52, ci: [48, 56] },
+  { name: "Motivação Social", raw: 10, t: 52, ci: [48, 56] },
+  { name: "Padrões Restritos e Repetitivos", raw: 14, t: 61, ci: [57, 65] },
+  { name: "Comunicação e Interação Social", raw: 45, t: 53, ci: [49, 57] },
+  { name: "Escore Total", raw: 59, t: 54, ci: [50, 58] }
+];
+
+function classify(t) {
+  if (t <= 59) return "Dentro dos limites normais";
+  if (t <= 65) return "Nível leve";
+  if (t <= 75) return "Nível moderado";
+  return "Nível severo";
+}
+
+function pctFromT(t) {
+  return ((Math.max(20, Math.min(80, t)) - 20) / 60) * 100;
+}
+
+function colorForT(t) {
+  if (t <= 59) return "var(--normal)";
+  if (t <= 65) return "var(--leve)";
+  if (t <= 75) return "var(--moderado)";
+  return "var(--severo)";
+}
+
+function colorHexForT(t) {
+  if (t <= 59) return "#2f78bd";
+  if (t <= 65) return "#d9a51a";
+  if (t <= 75) return "#e8752f";
+  return "#c83d4a";
+}
+
+function renderPillRow() {
+  const total = scales.find(s => s.name === "Escore Total");
+  const highest = scales.reduce((a, b) => a.t > b.t ? a : b);
+  const el = document.getElementById("pillRow");
+  if (!el) return;
+  el.innerHTML = `
+    <div class="pill"><span>Escore total</span><strong>${classify(total.t)}</strong><b>T ${total.t}</b></div>
+    <div class="pill"><span>Maior escore</span><strong>${highest.name}</strong><b>T ${highest.t}</b></div>
+    <div class="pill"><span>Média normativa</span><strong>Referência central</strong><b>T 50</b></div>
+  `;
+}
+
+function renderProfile() {
+  const labelsEl = document.getElementById("profileLabels");
+  const rowsEl = document.getElementById("profileRows");
+  if (!labelsEl || !rowsEl) return;
+
+  labelsEl.innerHTML = scales.map(s => `<div>${s.name}</div>`).join("");
+
+  rowsEl.innerHTML = scales.map(s => {
+    const t = s.t;
+    const x = pctFromT(t);
+    const w = Math.abs(x - 50);
+    const barLeft = t >= 50 ? 50 : 50 - w;
+    return `
+      <div class="row">
+        <div class="bar" style="left:${barLeft}%;width:${w}%"></div>
+        <i class="point" style="--x:${x}%"></i>
+        <span class="tlabel" style="--x:${x}%">T ${t}</span>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderScoreTable() {
+  const tbody = document.getElementById("scoreTableBody");
+  if (!tbody) return;
+  tbody.innerHTML = scales.map(s => `
+    <tr class="${s.name === "Escore Total" ? "total" : ""}">
+      <td>${s.name}</td>
+      <td class="num">${s.raw}</td>
+      <td class="num">${s.t}</td>
+      <td>${classify(s.t)}</td>
+    </tr>
+  `).join("");
+}
+
+function renderDomainGrid() {
+  const grid = document.getElementById("domainGrid");
+  if (!grid) return;
+  grid.innerHTML = scales.map(s => {
+    const isTotal = s.name === "Escore Total";
+    const pos = pctFromT(s.t);
+    const color = colorForT(s.t);
+    return `
+      <div class="domain ${isTotal ? "total" : ""}" style="--status:${color}">
+        <div class="badge">${s.t}</div>
+        <div>
+          <strong>${s.name}</strong>
+          <span>PB ${s.raw} · IC ${s.ci[0]}–${s.ci[1]} · ${classify(s.t)}</span>
+          <div class="mini-axis" style="--pos:${pos}%;--status:${color}"></div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderRadar() {
+  const svg = document.getElementById("radarSvg");
+  const legend = document.getElementById("radarLegend");
+  if (!svg || !legend) return;
+
+  const radarScales = scales.slice(0, 5);
+  const n = radarScales.length;
+  const cx = 170, cy = 138, maxR = 104;
+
+  function point(i, value) {
+    const a = -Math.PI / 2 + (2 * Math.PI * i / n);
+    const r = ((value - 20) / 60) * maxR;
+    return [cx + Math.cos(a) * r, cy + Math.sin(a) * r];
+  }
+  function gridPoint(i, r) {
+    const a = -Math.PI / 2 + (2 * Math.PI * i / n);
+    return [cx + Math.cos(a) * r, cy + Math.sin(a) * r];
+  }
+
+  let html = "";
+  [1, 0.75, 0.5, 0.25].forEach(k => {
+    const pts = Array.from({length:n}, (_,i) => gridPoint(i, maxR * k).join(",")).join(" ");
+    html += `<polygon points="${pts}" fill="none" stroke="#c8d3dd" stroke-width="${k === 1 ? 1.1 : 1}"/>`;
+  });
+  radarScales.forEach((s, i) => {
+    const [x, y] = gridPoint(i, maxR);
+    html += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#8ea1b5" stroke-width="1"/>`;
+  });
+  const dataPts = radarScales.map((s,i) => point(i, s.t).join(",")).join(" ");
+  html += `<polygon points="${dataPts}" fill="rgba(47,120,189,.16)" stroke="#173f72" stroke-width="3.2" stroke-linejoin="round"/>`;
+
+  radarScales.forEach((s, i) => {
+    const [x, y] = point(i, s.t);
+    html += `<circle cx="${x}" cy="${y}" r="5.5" fill="#2f78bd" stroke="#ffffff" stroke-width="2.5"/>`;
+    const [lx, ly] = point(i, s.t);
+    html += `<text class="value-label" x="${lx - 10}" y="${ly - 13 < 0 ? ly + 18 : ly - 13}">T ${s.t}</text>`;
+  });
+
+  const labelOffsets = [
+    [0, -18], [35, -13], [22, 32], [-22, 32], [-35, -15]
+  ];
+  radarScales.forEach((s, i) => {
+    const [x, y] = gridPoint(i, maxR);
+    const [ox, oy] = labelOffsets[i % labelOffsets.length];
+    const lines = s.name === "Padrões Restritos e Repetitivos" ? 2 : 1;
+    if (lines === 2) {
+      html += `<text class="axis-label" text-anchor="${ox < 0 ? "end" : ox > 0 ? "start" : "middle"}" x="${x + ox}" y="${y + oy - 6}">Padrões Restritos</text>`;
+      html += `<text class="axis-label" text-anchor="${ox < 0 ? "end" : ox > 0 ? "start" : "middle"}" x="${x + ox}" y="${y + oy + 6}">e Repetitivos</text>`;
+    } else {
+      html += `<text class="axis-label" text-anchor="${ox < 0 ? "end" : ox > 0 ? "start" : "middle"}" x="${x + ox}" y="${y + oy}">${s.name}</text>`;
+    }
+  });
+
+  svg.innerHTML = html;
+  legend.innerHTML = radarScales.map(s =>
+    `<div class="summary-row"><span>${s.name}</span><strong>T ${s.t}</strong></div>`
+  ).join("");
+}
+
+renderPillRow();
+renderProfile();
+renderScoreTable();
+renderDomainGrid();
+</script>
+</body>
+</html>

@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WAIS-III · Página de Análise</title>
+  <style>
+    :root {
+      --navy: #073f66;
+      --navy-2: #0a4d78;
+      --blue: #1d79a8;
+      --line: #7f9aad;
+      --line-soft: #b8c9d6;
+      --head-soft: #d9edf7;
+      --row: #ffffff;
+      --row-alt: #f4f9fc;
+      --text: #17364d;
+      --muted: #64798a;
+      --ok: #e7f8ec;
+      --warn: #fff4c2;
+      --green-text: #1b7f3a;
+      --red: #d92525;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #e9eef3;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 20px auto;
+      background: #ffffff;
+      position: relative;
+      padding: 25mm 10mm 16mm 10mm;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, .12);
+    }
+
+    .top-gradient {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 18px;
+      background: linear-gradient(90deg, #073f66 0%, #0b5f8f 62%, #3aa0d0 100%);
+    }
+
+    .logo-row {
+      position: absolute;
+      top: 28px;
+      left: 10mm;
+      right: 10mm;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--navy);
+    }
+
+    .logo-mark {
+      width: 26px;
+      height: 26px;
+      border: 1px solid #b3c6d3;
+      border-radius: 50%;
+      position: relative;
+    }
+
+    .logo-mark::before,
+    .logo-mark::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 22px;
+      height: 1px;
+      background: #7f9aad;
+      transform-origin: center;
+    }
+
+    .logo-mark::before {
+      transform: translate(-50%, -50%) rotate(25deg);
+    }
+
+    .logo-mark::after {
+      transform: translate(-50%, -50%) rotate(-55deg);
+    }
+
+    h1 {
+      margin: 0 0 15px 0;
+      color: var(--navy);
+      font-size: 31px;
+      line-height: 1;
+      font-weight: 800;
+      letter-spacing: .6px;
+    }
+
+    .section-card {
+      width: 100%;
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      background: var(--navy);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .35px;
+      padding: 7px 10px;
+      line-height: 1;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 8.6px;
+    }
+
+    th,
+    td {
+      border: 1px solid var(--line);
+      padding: 4px 5px;
+      line-height: 1.13;
+      vertical-align: middle;
+      text-align: center;
+      color: var(--text);
+    }
+
+    th {
+      background: var(--head-soft);
+      color: var(--text);
+      font-weight: 800;
+      font-size: 8.3px;
+    }
+
+    td {
+      background: var(--row);
+    }
+
+    tbody tr:nth-child(even) td {
+      background: var(--row-alt);
+    }
+
+    .left {
+      text-align: left;
+      font-weight: 700;
+    }
+
+    .abbr {
+      font-weight: 700;
+      color: var(--navy);
+      white-space: nowrap;
+    }
+
+    .small {
+      font-size: 8px;
+    }
+
+    .classification-high {
+      background: var(--ok) !important;
+      color: var(--green-text);
+      font-weight: 800;
+    }
+
+    .not-interpretable {
+      background: var(--warn) !important;
+      color: #b00000;
+      font-weight: 900;
+    }
+
+    .negative {
+      color: #fff;
+      background: var(--red) !important;
+      font-weight: 900;
+    }
+
+    .relation {
+      font-weight: 900;
+      color: var(--navy);
+      font-size: 10px;
+    }
+
+    .note-box {
+      margin-top: 4px;
+      border-left: 4px solid var(--navy);
+      background: #f2f7fb;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 10px;
+      line-height: 1.35;
+      color: #2c4659;
+    }
+
+    .footer {
+      position: absolute;
+      left: 10mm;
+      right: 10mm;
+      bottom: 8mm;
+      border-top: 1px solid #d5e0e8;
+      padding-top: 5px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 9px;
+      color: #6b7e8d;
+      font-weight: 700;
+      letter-spacing: .2px;
+    }
+
+    .footer strong {
+      color: var(--navy);
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .page {
+        margin: 0;
+        box-shadow: none;
+        width: 210mm;
+        height: 297mm;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="top-gradient"></div>
+
+    <div class="logo-row">
+      <span class="logo-mark"></span>
+      <span>Neuroavalia</span>
+    </div>
+
+    <h1>Página de Análise</h1>
+
+    <section class="section-card">
+      <div class="section-title">Análise de Clusters</div>
+      <table aria-label="Análise de Clusters">
+        <colgroup>
+          <col style="width: 31%">
+          <col style="width: 8%">
+          <col style="width: 8%">
+          <col style="width: 9%">
+          <col style="width: 10%">
+          <col style="width: 9%">
+          <col style="width: 11%">
+          <col style="width: 7%">
+          <col style="width: 12%">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Cluster</th>
+            <th>Código</th>
+            <th># Maior/Menor<br>subteste</th>
+            <th>Interpretável?<br>(≠ &lt; 5)</th>
+            <th>Soma dos<br>pontos ponderados</th>
+            <th>Pontos<br>compostos</th>
+            <th>IC 95%</th>
+            <th>Percentil</th>
+            <th>Classificação</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="left">Raciocínio Fluido (RM + AF + AR)</td>
+            <td class="abbr">Gf</td>
+            <td>3</td>
+            <td>SIM</td>
+            <td>42</td>
+            <td>124</td>
+            <td>116 - 132</td>
+            <td>95</td>
+            <td>Superior</td>
+          </tr>
+          <tr>
+            <td class="left">Processamento Visual (CB + CF)</td>
+            <td class="abbr">Gv</td>
+            <td>1</td>
+            <td>SIM</td>
+            <td>21</td>
+            <td>103</td>
+            <td>94 - 112</td>
+            <td>58</td>
+            <td>Média</td>
+          </tr>
+          <tr>
+            <td class="left">Raciocínio Fluido Não Verbal (RM + AF)</td>
+            <td class="abbr">Gf-nv</td>
+            <td>0</td>
+            <td>SIM</td>
+            <td>26</td>
+            <td>117</td>
+            <td>107 - 127</td>
+            <td>87</td>
+            <td class="classification-high">Média Superior</td>
+          </tr>
+          <tr>
+            <td class="left">Raciocínio Fluido Verbal (SM + CO)</td>
+            <td class="abbr">Gf-v</td>
+            <td>0</td>
+            <td>SIM</td>
+            <td>20</td>
+            <td>100</td>
+            <td>91 - 109</td>
+            <td>50</td>
+            <td>Média</td>
+          </tr>
+          <tr>
+            <td class="left">Conhecimento Lexical (SM + VC)</td>
+            <td class="abbr">Gc-VL</td>
+            <td>1</td>
+            <td>SIM</td>
+            <td>21</td>
+            <td>103</td>
+            <td>96 - 110</td>
+            <td>58</td>
+            <td>Média</td>
+          </tr>
+          <tr>
+            <td class="left">Informações Gerais (CO + IN)</td>
+            <td class="abbr">Gc-K0</td>
+            <td>5</td>
+            <td>SIM</td>
+            <td>25</td>
+            <td>114</td>
+            <td>106 - 122</td>
+            <td>82</td>
+            <td class="classification-high">Média Superior</td>
+          </tr>
+          <tr>
+            <td class="left">Memória de Longo Prazo (VC + IN)</td>
+            <td class="abbr">Gc-LTM</td>
+            <td>4</td>
+            <td>SIM</td>
+            <td>26</td>
+            <td>116</td>
+            <td>110 - 122</td>
+            <td>86</td>
+            <td class="classification-high">Média Superior</td>
+          </tr>
+          <tr>
+            <td class="left">Memória de Curto Prazo (SNL + DG)</td>
+            <td class="abbr">Gsm-WM</td>
+            <td>8</td>
+            <td class="not-interpretable">NÃO</td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+            <td>Não interpretável</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section-card">
+      <div class="section-title">Comparações Clínicas</div>
+      <table aria-label="Comparações Clínicas">
+        <colgroup>
+          <col style="width: 25%">
+          <col style="width: 10%">
+          <col style="width: 7%">
+          <col style="width: 10%">
+          <col style="width: 7%">
+          <col style="width: 8%">
+          <col style="width: 8%">
+          <col style="width: 12%">
+          <col style="width: 7%">
+          <col style="width: 3%">
+          <col style="width: 7%">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Comparação</th>
+            <th colspan="2">Pontos Compostos 1</th>
+            <th colspan="2">Pontos Compostos 2</th>
+            <th>Diferença</th>
+            <th>Valor<br>crítico</th>
+            <th>Raro/<br>Não raro</th>
+            <th colspan="3">Direção</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="left">Gf x Gv</td>
+            <td class="abbr">Gf</td>
+            <td>124</td>
+            <td class="abbr">Gv</td>
+            <td>103</td>
+            <td>21</td>
+            <td>21</td>
+            <td>Raro</td>
+            <td class="abbr">Gf</td>
+            <td class="relation">&gt;</td>
+            <td class="abbr">Gv</td>
+          </tr>
+          <tr>
+            <td class="left">Gf-nonverbal x Gv</td>
+            <td class="abbr">Gf-nv</td>
+            <td>117</td>
+            <td class="abbr">Gv</td>
+            <td>103</td>
+            <td>14</td>
+            <td>24</td>
+            <td>Não raro</td>
+            <td class="abbr">Gf-nv</td>
+            <td class="relation">&gt;</td>
+            <td class="abbr">Gv</td>
+          </tr>
+          <tr>
+            <td class="left">Gf-nonverbal x Gf-verbal</td>
+            <td class="abbr">Gf-nv</td>
+            <td>117</td>
+            <td class="abbr">Gf-v</td>
+            <td>100</td>
+            <td>17</td>
+            <td>24</td>
+            <td>Não raro</td>
+            <td class="abbr">Gf-nv</td>
+            <td class="relation">&gt;</td>
+            <td class="abbr">Gf-v</td>
+          </tr>
+          <tr>
+            <td class="left">Gc-VL x Gc-K0</td>
+            <td class="abbr">Gc-VL</td>
+            <td>103</td>
+            <td class="abbr">Gc-K0</td>
+            <td>114</td>
+            <td class="negative">-11</td>
+            <td>17</td>
+            <td>Não raro</td>
+            <td class="abbr">Gc-VL</td>
+            <td class="relation">&lt;</td>
+            <td class="abbr">Gc-K0</td>
+          </tr>
+          <tr>
+            <td class="left">Gc-LTM x Gsm-WM</td>
+            <td class="abbr">Gc-LTM</td>
+            <td>116</td>
+            <td class="abbr">Gsm-WM</td>
+            <td>—</td>
+            <td>—</td>
+            <td>24</td>
+            <td>—</td>
+            <td class="abbr">Gc-LTM</td>
+            <td class="relation">&gt;</td>
+            <td class="abbr">Gsm-WM</td>
+          </tr>
+          <tr>
+            <td class="left">Gc-LTM x Gf-verbal</td>
+            <td class="abbr">Gc-LTM</td>
+            <td>116</td>
+            <td class="abbr">Gf-v</td>
+            <td>100</td>
+            <td>16</td>
+            <td>17</td>
+            <td>Não raro</td>
+            <td class="abbr">Gc-LTM</td>
+            <td class="relation">&gt;</td>
+            <td class="abbr">Gf-v</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="note-box">
+      <strong>Nota interpretativa:</strong> os clusters devem ser descritos como indicadores complementares do perfil cognitivo.
+      Quando um cluster não for interpretável, não apresentar ponto composto final no laudo e priorizar a leitura dos índices
+      fatoriais, subtestes e observações clínicas.
+    </section>
+
+    <div class="footer">
+      <span><strong>NeuroAvalia</strong> · WAIS-III Técnico</span>
+      <span>PÁGINA 3 DE 4</span>
+    </div>
+  </main>
+</body>
+</html>

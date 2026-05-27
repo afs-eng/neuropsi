@@ -1,6 +1,7 @@
 from apps.tests.models import TestApplication
 from apps.tests.base import TestContext
 from apps.tests.registry import get_test_module
+from apps.tests.services.report_payload_service import TestReportPayloadService
 
 
 class TestScoringService:
@@ -46,4 +47,5 @@ class TestScoringService:
             "computed_payload": computed,
             "classified_payload": classified,
             "interpretation_text": interpretation,
+            "report_payload": TestReportPayloadService.build_for_application(application),
         }

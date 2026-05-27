@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import { getToken, resolveApiUrl } from '@/lib/api'
+import { TestReportSummaryCard } from '@/components/tests/TestReportSummaryCard'
+import { TestReportPayload } from '@/lib/test-report'
 
 interface IndexData {
   nome: string
@@ -27,12 +30,12 @@ interface ResultData {
   evaluation_id: number
   patient_name: string
   applied_on?: string
+  report_payload?: TestReportPayload
   classified_payload?: {
     indices?: Record<string, IndexData>
     subtestes_ordenados?: SubtestData[]
     subtestes?: Record<string, SubtestData>
     gai_data?: any
-    cpi_data?: any
     clusters?: Record<string, any>
   }
   computed_payload?: {
@@ -170,11 +173,22 @@ function RenderReadyTable({
   )
 }
 
+function cleanWAIS3InterpretationText(text?: string) {
+  return (text || '')
+    .replace(/^\s*Interpretação e Observações Clínicas\s*:?\s*/i, '')
+    .replace(/\n\s*\n\s*Interpretação e Observações Clínicas\s*:?\s*/gi, '\n\n')
+    .replace(/(?:^|(?<=[.!?])\s+)\S*\s*CPI\b[^.!?]*(?:[.!?]|$)/gi, ' ')
+    .replace(/(?:^|(?<=[.!?])\s+)\S*\s*Índice de Produtividade Cognitiva[^.!?]*(?:[.!?]|$)/gi, ' ')
+    .replace(/[ \t]+/g, ' ')
+    .trim()
+}
+
 export default function WAIS3ResultPage() {
   const params = useParams()
   const [result, setResult] = useState<ResultData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [exportingPdf, setExportingPdf] = useState(false)
 
   useEffect(() => {
     const fetchResult = async () => {
@@ -195,6 +209,37 @@ export default function WAIS3ResultPage() {
     if (params.id) fetchResult()
   }, [params.id])
 
+  const handleExportPdf = async () => {
+    if (!params.id || exportingPdf) return
+    setExportingPdf(true)
+    try {
+      const token = getToken() || ''
+      const response = await fetch(resolveApiUrl(`/api/tests/applications/${params.id}/export-pdf`), {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        cache: 'no-store',
+      })
+
+      if (!response.ok) {
+        let message = `Falha ao gerar PDF (${response.status})`
+        try {
+          const payload = await response.json()
+          if (payload?.message) message = `${message}: ${payload.message}`
+        } catch {}
+        throw new Error(message)
+      }
+
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      window.open(url, '_blank', 'noopener,noreferrer')
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
+    } catch (exportError: any) {
+      console.error(exportError)
+      alert(exportError?.message || 'Não foi possível gerar o PDF do WAIS-III.')
+    } finally {
+      setExportingPdf(false)
+    }
+  }
+
   if (loading) return <div className="min-h-screen bg-slate-300 p-6 md:p-10 flex items-center justify-center"><div className="text-zinc-600">Carregando...</div></div>
   if (error || !result) return <div className="min-h-screen bg-slate-300 p-6 md:p-10 flex items-center justify-center"><div className="text-red-600">{error || 'Resultado não encontrado'}</div></div>
 
@@ -205,6 +250,7 @@ export default function WAIS3ResultPage() {
     renderReadyTables.facilidades_dificuldades?.linhas || [],
     renderReadyTables.discrepancias?.linhas || [],
   )
+  const interpretationText = cleanWAIS3InterpretationText(result.interpretation_text)
   const indices = classified.indices || computed.indices || {}
   const subtestes = (classified.subtestes_ordenados && classified.subtestes_ordenados.length > 0)
     ? classified.subtestes_ordenados
@@ -217,13 +263,14 @@ export default function WAIS3ResultPage() {
           : []
 
   return (
-    <div className="min-h-screen bg-slate-300 p-6 md:p-10">
-      <div className="mx-auto max-w-7xl rounded-[36px] bg-[#f3f0e4] p-5 shadow-2xl ring-1 ring-black/5 md:p-7">
-        <div className="rounded-[28px] bg-gradient-to-r from-[#f6f4ed] via-[#f2efe4] to-[#efe7bf] p-5 md:p-6">
-          <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <div className="min-h-screen bg-slate-300 p-6 md:p-10 report-print-shell">
+      <div className="mx-auto max-w-7xl rounded-[36px] bg-[#f3f0e4] p-5 shadow-2xl ring-1 ring-black/5 md:p-7 report-print-card">
+        <div className="rounded-[28px] bg-gradient-to-r from-[#f6f4ed] via-[#f2efe4] to-[#efe7bf] p-5 md:p-6 report-print-content">
+          <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between print:hidden report-print-hide">
             <div className="rounded-full border border-black/20 bg-white/70 px-5 py-2 text-lg font-medium tracking-tight text-zinc-800 shadow-sm">NeuroAvalia</div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 print:hidden report-print-hide">
               <Link href={`/dashboard/tests/wais3?evaluation_id=${result.evaluation_id}&application_id=${params.id}&edit=true`} className="rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50">Editar</Link>
+              <button onClick={handleExportPdf} disabled={exportingPdf} className="rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60">{exportingPdf ? 'Gerando PDF...' : 'Imprimir / PDF'}</button>
               <Link href={`/dashboard/evaluations/${result.evaluation_id}?tab=overview`} className="rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white shadow-lg">Voltar</Link>
             </div>
           </header>
@@ -252,6 +299,7 @@ export default function WAIS3ResultPage() {
               <div className="mt-1 text-2xl font-semibold text-rose-900">{statusSummary.missing_score}</div>
             </div>
           </div>
+          <TestReportSummaryCard reportPayload={result.report_payload as any} fallbackText={interpretationText} className="mb-6" />
 
           {/* Índices Principais */}
           {Object.keys(indices).length > 0 && (
@@ -302,34 +350,22 @@ export default function WAIS3ResultPage() {
             </div>
           )}
 
-          {/* GAI e CPI */}
-          {(classified.gai_data || classified.cpi_data) && (
+          {/* GAI */}
+          {classified.gai_data && (
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden mb-6">
-              <div className="px-5 py-4 border-b border-slate-200"><h3 className="font-semibold text-slate-900">Índices Gerais (GAI / CPI)</h3></div>
+              <div className="px-5 py-4 border-b border-slate-200"><h3 className="font-semibold text-slate-900">Índice de Aptidão Geral (GAI)</h3></div>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead><tr className="bg-slate-50"><th className="text-left px-5 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wide">Índice</th><th className="text-center px-5 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wide">Soma Ponderada</th><th className="text-center px-5 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wide">Escore Composto</th><th className="text-center px-5 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wide">Percentil</th><th className="text-center px-5 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wide">IC 95%</th><th className="text-center px-5 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wide">Status</th></tr></thead>
                   <tbody className="divide-y divide-slate-200">
-                    {classified.gai_data && (
-                      <tr className="hover:bg-slate-50">
-                        <td className="px-5 py-3 text-sm font-medium text-slate-900">GAI (Índice de Aptidão Geral)</td>
-                        <td className="px-5 py-3 text-sm text-center text-slate-700 font-semibold">{classified.gai_data.soma_ponderados ?? '—'}</td>
-                        <td className="px-5 py-3 text-sm text-center text-slate-700 font-semibold">{classified.gai_data.escore_composto ?? '—'}</td>
-                        <td className="px-5 py-3 text-sm text-center text-slate-700">{classified.gai_data.percentil ?? '—'}</td>
-                        <td className="px-5 py-3 text-sm text-center text-slate-700">{classified.gai_data.intervalo_confianca?.join?.(' - ') ?? '—'}</td>
-                        <td className="px-5 py-3 text-sm text-center text-slate-700">{classified.gai_data.interpretavel ? classified.gai_data.classificacao : classified.gai_data.alerta || 'Atenção'}</td>
-                      </tr>
-                    )}
-                    {classified.cpi_data && (
-                      <tr className="hover:bg-slate-50">
-                        <td className="px-5 py-3 text-sm font-medium text-slate-900">CPI (Índice de Produtividade Cognitiva)</td>
-                        <td className="px-5 py-3 text-sm text-center text-slate-700 font-semibold">{classified.cpi_data.soma_ponderados ?? '—'}</td>
-                        <td className="px-5 py-3 text-sm text-center text-slate-700 font-semibold">{classified.cpi_data.escore_composto ?? '—'}</td>
-                        <td className="px-5 py-3 text-sm text-center text-slate-700">{classified.cpi_data.percentil ?? '—'}</td>
-                        <td className="px-5 py-3 text-sm text-center text-slate-700">{classified.cpi_data.intervalo_confianca?.join?.(' - ') ?? '—'}</td>
-                        <td className="px-5 py-3 text-sm text-center text-slate-700">{classified.cpi_data.classificacao ?? '—'}</td>
-                      </tr>
-                    )}
+                    <tr className="hover:bg-slate-50">
+                      <td className="px-5 py-3 text-sm font-medium text-slate-900">GAI (Índice de Aptidão Geral)</td>
+                      <td className="px-5 py-3 text-sm text-center text-slate-700 font-semibold">{classified.gai_data.soma_ponderados ?? '—'}</td>
+                      <td className="px-5 py-3 text-sm text-center text-slate-700 font-semibold">{classified.gai_data.escore_composto ?? '—'}</td>
+                      <td className="px-5 py-3 text-sm text-center text-slate-700">{classified.gai_data.percentil ?? '—'}</td>
+                      <td className="px-5 py-3 text-sm text-center text-slate-700">{classified.gai_data.intervalo_confianca?.join?.(' - ') ?? '—'}</td>
+                      <td className="px-5 py-3 text-sm text-center text-slate-700">{classified.gai_data.interpretavel ? classified.gai_data.classificacao : classified.gai_data.alerta || 'Atenção'}</td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
@@ -433,15 +469,15 @@ export default function WAIS3ResultPage() {
           )}
 
           {/* Interpretação */}
-          {result.interpretation_text && (
+          {interpretationText && (
             <div className="bg-white rounded-xl border border-slate-200 p-5">
               <h3 className="font-semibold text-slate-900 mb-3">Interpretação</h3>
-              <p className="text-sm leading-7 text-slate-700 whitespace-pre-wrap">{result.interpretation_text}</p>
+              <p className="text-sm leading-7 text-slate-700 whitespace-pre-wrap">{interpretationText}</p>
             </div>
           )}
 
           {/* Sem dados */}
-          {Object.keys(indices).length === 0 && !Array.isArray(subtestes) && !result.interpretation_text && (
+          {Object.keys(indices).length === 0 && !Array.isArray(subtestes) && !interpretationText && (
             <div className="bg-yellow-50 rounded-xl border border-yellow-200 p-5">
               <p className="text-sm text-yellow-800">Nenhum resultado disponível para exibir. Verifique se o teste foi processado corretamente.</p>
             </div>

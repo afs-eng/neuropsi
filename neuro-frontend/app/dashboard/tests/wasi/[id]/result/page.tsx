@@ -5,6 +5,9 @@ import { useParams, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
 import { api } from '@/lib/api'
+import { printCurrentPage } from '@/lib/print'
+import { TestReportSummaryCard } from '@/components/tests/TestReportSummaryCard'
+import { TestReportPayload } from '@/lib/test-report'
 
 import { WASI_COMPOSITE_LABELS, WASI_SUBTESTS, formatPtBrNumber, getCompositeBadgeColor } from '../../data'
 
@@ -13,6 +16,7 @@ type ApplicationData = {
   evaluation_id: number
   patient_name: string
   applied_on?: string
+  report_payload?: TestReportPayload
   computed_payload?: any
   classified_payload?: any
   interpretation_text?: string
@@ -90,13 +94,14 @@ export default function WASIResultPage() {
   const ipsative = (computed.ipsative || {}) as { subtests?: Record<string, IpsativeResult> }
 
   return (
-    <div className="min-h-screen bg-slate-300 p-6 md:p-10">
-      <div className="mx-auto max-w-7xl rounded-[36px] bg-[#f3f0e4] p-5 shadow-2xl ring-1 ring-black/5 md:p-7">
-        <div className="rounded-[28px] bg-gradient-to-r from-[#f6f4ed] via-[#f2efe4] to-[#efe7bf] p-5 md:p-6">
-          <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <div className="min-h-screen bg-slate-300 p-6 md:p-10 report-print-shell">
+      <div className="mx-auto max-w-7xl rounded-[36px] bg-[#f3f0e4] p-5 shadow-2xl ring-1 ring-black/5 md:p-7 report-print-card">
+        <div className="rounded-[28px] bg-gradient-to-r from-[#f6f4ed] via-[#f2efe4] to-[#efe7bf] p-5 md:p-6 report-print-content">
+          <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between print:hidden report-print-hide">
             <div className="rounded-full border border-black/20 bg-white/70 px-5 py-2 text-lg font-medium tracking-tight text-zinc-800 shadow-sm">NeuroAvalia</div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 print:hidden report-print-hide">
               <Link href={`/dashboard/tests/wasi?evaluation_id=${result.evaluation_id}&application_id=${params.id}&edit=true`} className="rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50">Editar</Link>
+              <button onClick={printCurrentPage} className="rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50">Imprimir / PDF</button>
               <Link href={`/dashboard/evaluations/${evaluationId || result.evaluation_id}?tab=overview`} className="rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white shadow-lg">Voltar</Link>
             </div>
           </header>
@@ -106,6 +111,8 @@ export default function WASIResultPage() {
             <p className="mt-1 text-sm text-zinc-600">{result.patient_name}</p>
             {result.applied_on ? <p className="mt-1 text-xs text-zinc-500">Avaliado em: {new Date(result.applied_on).toLocaleDateString('pt-BR')}</p> : null}
           </div>
+
+          <TestReportSummaryCard reportPayload={result.report_payload as any} fallbackText={result.interpretation_text} className="mb-6" />
 
           <div className="bg-white rounded-xl border border-slate-200 overflow-hidden mb-6">
             <div className="px-5 py-4 border-b border-slate-200"><h3 className="font-semibold text-slate-900">Índices Compostos</h3></div>

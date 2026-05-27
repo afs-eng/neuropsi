@@ -39,3 +39,20 @@ class OllamaProvider(BaseAIProvider):
             },
             "warnings": [],
         }
+
+    def check_available(self, timeout: int = 10) -> dict:
+        response = requests.get(f"{self.base_url}/api/tags", timeout=timeout)
+        response.raise_for_status()
+        data = response.json()
+        models = data.get("models") or []
+        model_names = {item.get("name") for item in models if item.get("name")}
+        if self.model not in model_names:
+            raise ValueError(
+                f"Modelo Ollama '{self.model}' nao esta instalado. Modelos disponiveis: {', '.join(sorted(model_names)) or 'nenhum'}."
+            )
+        return {
+            "ok": True,
+            "provider": "ollama",
+            "model": self.model,
+            "finish_reason": "ready",
+        }

@@ -8,6 +8,8 @@ import { PageContainer, PageHeader, SectionCard } from '@/components/ui/page'
 import { Button } from '@/components/ui/button'
 import { RAVLTChart } from '@/components/charts/RAVLTChart'
 import { ArrowLeft, Edit2, FileText, Activity, Brain, Target, Calendar, User, Clock } from 'lucide-react'
+import { openPrintRoute } from '@/lib/print'
+import { TestReportSummaryCard } from '@/components/tests/TestReportSummaryCard'
 
 export default function RAVLTResultPage() {
   const params = useParams()
@@ -57,6 +59,10 @@ export default function RAVLTResultPage() {
   const resultsData = result.results || {}
   const items = resultsData.resultados || []
   const chartData = resultsData.chart || result.classified_payload?.chart || null
+  const handlePrint = () => {
+    if (!params.id) return
+    openPrintRoute(`/print/ravlt/${params.id}?autoprint=1`)
+  }
   
   const formatNumber = (num: any) => {
     if (num === null || num === undefined) return '-'
@@ -87,6 +93,9 @@ export default function RAVLTResultPage() {
                 Voltar para Avaliação
               </Button>
             </Link>
+            <Button variant="outline" className="gap-2 border-slate-200 text-slate-700 font-bold" onClick={handlePrint}>
+              <FileText className="h-4 w-4" /> Imprimir / PDF
+            </Button>
             <Link href={`/dashboard/tests/ravlt/${params.id}?evaluation_id=${result.evaluation_id}&edit=true`}>
               <Button variant="outline" className="gap-2 border-slate-200 text-slate-700 font-bold">
                 <Edit2 className="h-4 w-4" /> Editar Aplicação
@@ -95,6 +104,8 @@ export default function RAVLTResultPage() {
           </div>
         }
       />
+
+      <TestReportSummaryCard reportPayload={result.report_payload as any} fallbackText={result.interpretation} className="mb-8" />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
         <div className="md:col-span-2 space-y-8">

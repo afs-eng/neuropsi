@@ -952,16 +952,16 @@ def compute_wais3_payload(raw_scores: dict, loader: WAIS3NormLoader | None = Non
 
     computed_indexes: dict[str, dict] = {}
     for index_key, index_cfg in WAIS3_INDEXES.items():
-        missing_subtests = [
+        present_subtests = [
             code
             for code in index_cfg["subtests"]
-            if not computed_subtests.get(code) or computed_subtests[code].get("escore_ponderado") is None
+            if computed_subtests.get(code) and computed_subtests[code].get("escore_ponderado") is not None
         ]
-        scaled_sum = None
+        missing_subtests = [code for code in index_cfg["subtests"] if code not in present_subtests]
+        scaled_sum = sum(computed_subtests[code]["escore_ponderado"] for code in present_subtests) if present_subtests else None
         composite_data = None
         warning = None
-        if not missing_subtests:
-            scaled_sum = sum(computed_subtests[code]["escore_ponderado"] for code in index_cfg["subtests"])
+        if scaled_sum is not None:
             try:
                 composite_data = loader.get_composite_score(index_key, scaled_sum)
             except Exception as exc:
@@ -971,6 +971,7 @@ def compute_wais3_payload(raw_scores: dict, loader: WAIS3NormLoader | None = Non
         computed_indexes[index_key] = {
             "nome": index_cfg["label"],
             "subtestes": index_cfg["subtests"],
+            "subtestes_utilizados": present_subtests,
             "soma_ponderada": scaled_sum,
             "pontuacao_composta": composite_score,
             "percentil": composite_data.get("percentil") if composite_data else None,
