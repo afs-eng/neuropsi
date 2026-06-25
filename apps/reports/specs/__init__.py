@@ -5,6 +5,20 @@ from .wasi_model_spec import (
     WASI_REPORT_SPEC,
     WASI_TABLE_SPECS,
 )
+from .wais3_model_spec import (
+    WAIS3_CHART_SPEC,
+    WAIS3_LAYOUT_SPEC,
+    WAIS3_QUALITY_RULES,
+    WAIS3_REPORT_SPEC,
+    WAIS3_TABLE_SPECS,
+)
+from .wisc4_model_spec import (
+    WISC4_CHART_SPEC,
+    WISC4_LAYOUT_SPEC,
+    WISC4_QUALITY_RULES,
+    WISC4_REPORT_SPEC,
+    WISC4_TABLE_SPECS,
+)
 from .table_specs import TABLE_LAYOUT_SPECS
 
 __all__ = [
@@ -13,5 +27,15 @@ __all__ = [
     "WASI_QUALITY_RULES",
     "WASI_REPORT_SPEC",
     "WASI_TABLE_SPECS",
+    "WAIS3_CHART_SPEC",
+    "WAIS3_LAYOUT_SPEC",
+    "WAIS3_QUALITY_RULES",
+    "WAIS3_REPORT_SPEC",
+    "WAIS3_TABLE_SPECS",
+    "WISC4_CHART_SPEC",
+    "WISC4_LAYOUT_SPEC",
+    "WISC4_QUALITY_RULES",
+    "WISC4_REPORT_SPEC",
+    "WISC4_TABLE_SPECS",
     "TABLE_LAYOUT_SPECS",
 ]

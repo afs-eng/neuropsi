@@ -35,6 +35,7 @@ from apps.tests.services.ai_interpretation_orchestrator import TestAIInterpretat
 from apps.tests.services.ai_interpretation_types import TestAIInterpretationDraft
 from apps.tests.norms.bai import get_norms_metadata, lookup_t_score
 from apps.tests.scared import SCAREDModule
+from apps.tests.scared.pdf_service import SCAREDPdfService
 from apps.tests.services.pdf_export_service import TestPdfExportService
 from apps.tests.srs2 import SRS2Module
 from apps.tests.srs2.interpreters import validate_srs2_interpretation
@@ -894,15 +895,77 @@ class WISC4PdfServiceTests(SimpleTestCase):
         self.assertEqual(context["codigo_avaliado"], "AVL-052")
         self.assertEqual(context["codigo_relatorio"], "RPT-WISC4-052")
         self.assertEqual(context["nome"], "Paciente Exemplo")
+        self.assertEqual(context["profissional"], "Jacqueline Oliveira Caires")
         self.assertEqual(context["idade"], "10 anos e 4 meses")
         self.assertEqual([row["code"] for row in context["subtest_rows"]], ["CB", "SM", "DG"])
         self.assertEqual(context["composite_rows"][4]["abbreviation"], "QIT")
         self.assertEqual(context["composite_rows"][4]["score"], "86")
         self.assertEqual(context["supplemental_rows"][0]["code"], "CF")
+        self.assertEqual(context["supplemental_rows"][3]["code"], "AR")
+        self.assertEqual(context["supplemental_rows"][3]["raw_score"], "—")
+        self.assertEqual(context["supplemental_rows"][3]["scaled_score"], "—")
+        ar_conversion_row = next(row for row in context["conversion_rows"] if row["label"] == "(Aritmética) (AR)")
+        self.assertEqual(ar_conversion_row["raw_score"], "—")
+        self.assertEqual(ar_conversion_row["scaled_score"], "—")
+        self.assertEqual(ar_conversion_row["imo"]["value"], "(—)")
+        self.assertEqual(ar_conversion_row["qit"]["value"], "(—)")
+        self.assertEqual(context["analysis_discrepancy_rows"][0]["first"], "88")
+        self.assertEqual(context["analysis_discrepancy_rows"][0]["second"], "100")
+        self.assertEqual(context["analysis_discrepancy_rows"][0]["difference"], "-12")
+        self.assertEqual(context["analysis_discrepancy_rows"][0]["frequency"], "20,2")
+        self.assertEqual(context["facility_rows"][2]["name"], "Dígitos")
+        self.assertEqual(context["facility_rows"][2]["score"], "—")
+        self.assertEqual(context["facility_rows"][2]["difference"], "—")
+        self.assertEqual(context["facility_rows"][2]["label"], "—")
+        self.assertEqual(context["facility_rows"][2]["frequency"], "—")
+        self.assertEqual(context["facility_rows"][0]["difference"], "0")
         self.assertEqual(context["process_scaled_rows"][0]["scaled_score"], "8")
         self.assertEqual(context["process_discrepancy_rows"][0]["significant"], "Não")
+        self.assertEqual(context["process_discrepancy_rows"][0]["difference"], "+1")
         self.assertEqual(len(context["clinical_paragraphs"]), 2)
         self.assertIn("inferências diagnósticas isoladas", context["clinical_box_text"])
+
+    def test_lookup_index_frequency_uses_wisc_workbook_general_sample(self):
+        self.assertEqual(WISC4PdfService._lookup_index_frequency("icv", "imt", -15, 118), 16.8)
+        self.assertEqual(WISC4PdfService._lookup_index_frequency("icv", "iop", -13, 108), 17.8)
+
+    def test_signed_number_formatting_preserves_explicit_plus(self):
+        self.assertEqual(WISC4PdfService._format_signed_number(3), "+3")
+        self.assertEqual(WISC4PdfService._format_signed_number(-2.5, decimals=1), "-2,5")
+        self.assertEqual(WISC4PdfService._format_signed_number(0), "0")
+
+    def test_build_context_falls_back_to_computed_process_scores(self):
+        application = self._application_fixture()
+        computed_process_scores = application.classified_payload["process_scores"]
+        application.classified_payload = {
+            **application.classified_payload,
+            "process_scores": {},
+        }
+        application.computed_payload = {
+            **application.computed_payload,
+            "process_scores": computed_process_scores,
+        }
+
+        context = WISC4PdfService._build_context(application)
+
+        self.assertEqual(context["process_scaled_rows"][0]["name"], "Cubos sem Tempo de Bônus")
+        self.assertEqual(context["process_scaled_rows"][0]["scaled_score"], "8")
+
+    def test_build_context_uses_placeholder_when_process_scores_are_missing(self):
+        application = self._application_fixture()
+        application.classified_payload = {
+            key: value
+            for key, value in application.classified_payload.items()
+            if key != "process_scores"
+        }
+        application.computed_payload = {}
+
+        context = WISC4PdfService._build_context(application)
+
+        self.assertEqual(context["process_scaled_rows"][0]["name"], "Dados de processo não informados")
+        self.assertEqual(context["sequence_frequency_rows"][0]["name"], "Dados de processo não informados")
+        self.assertEqual(context["raw_process_discrepancy_rows"][0]["label"], "Dados de processo não informados")
+        self.assertEqual(context["process_discrepancy_rows"][0]["label"], "Dados de processo não informados")
 
     def test_pdf_export_service_registers_wisc4_exporter(self):
         self.assertIn("wisc4", TestPdfExportService.EXPORTERS)
@@ -1001,26 +1064,26 @@ class WAIS3PdfServiceTests(SimpleTestCase):
         self.assertIn("Ensino superior incompleto", rendered)
         self.assertIn("WAIS-III / Brasil / 30 a 39 anos", rendered)
         self.assertIn("<tr><td>Soma dos escores ponderados</td><td>62</td><td>52</td><td>114</td>", rendered)
-        self.assertIn('style="--score:48.18%"', rendered)
+        self.assertIn('<circle cx="', rendered)
         self.assertIn("Análise de Clusters", rendered)
         self.assertIn("Comparações Clínicas", rendered)
         self.assertIn("Comparações entre as Discrepâncias", rendered)
-        self.assertIn('<section class="page results-page">', rendered)
-        self.assertIn(".results-page .wais-ruler { height: 102mm; }", rendered)
-        self.assertIn(".cover .footer", rendered)
+        self.assertIn('<main class="results-v2">', rendered)
+        self.assertIn('class="page-footer"', rendered)
+        self.assertIn('<div class="page">', rendered)
         self.assertIn("background: transparent;", rendered)
         self.assertIn("<tr><td>Compreensão Verbal - Organização Perceptual</td><td>ICV</td><td>IOP</td><td>6</td><td>Não</td><td>52,5</td></tr>", rendered)
         self.assertIn("Nível Subteste", rendered)
         self.assertIn('<section class="page clinical-page">', rendered)
-        self.assertIn('<div class="footer-logo">Neuro<span>avalia</span></div>', rendered)
-        self.assertIn('<div class="footer-right">Página 1 de ', rendered)
+        self.assertIn('<div class="footer-logo"><svg', rendered)
+        self.assertIn('<span class="footer-page-number">Página 1 de ', rendered)
         self.assertIn("break-inside: avoid;", rendered)
         self.assertLess(rendered.index("Comparações entre as Discrepâncias"), rendered.index("Nível Subteste"))
         self.assertLess(rendered.index("Nível Subteste"), rendered.index("Análise de Clusters"))
         self.assertLess(rendered.index("Análise de Clusters"), rendered.index("Comparações Clínicas"))
         self.assertIn('<td>Raciocínio Fluido (RM + AF + AR)</td><td class="abbr">Gf</td><td>5</td><td class="not-interpretable">NÃO</td><td>—</td><td>—</td>', rendered)
         self.assertIn("Gc-VL x Gc-K0", rendered)
-        self.assertIn('class="negative">-11</td><td>17</td><td>Não raro</td><td class="abbr">Gc-VL</td><td class="relation">&lt;</td><td class="abbr">Gc-K0</td>', rendered)
+        self.assertIn('class="difference negative-highlight">-11</td><td>17</td><td>Não raro</td><td class="compound-label">Gc-VL</td><td class="direction-symbol">&lt;</td><td class="compound-label">Gc-K0</td>', rendered)
         self.assertIn("O WAIS-III indicou funcionamento intelectual global na faixa média.", rendered)
         self.assertNotIn("Interpretação e Observações Clínicas", rendered)
         self.assertNotIn("CPI", rendered)
@@ -1042,7 +1105,7 @@ class WAIS3PdfServiceTests(SimpleTestCase):
         clinical_pages = re.findall(r'<section class="page clinical-page">.*?</section>', rendered, flags=re.S)
 
         self.assertGreater(len(clinical_pages), 1)
-        self.assertTrue(all('<div class="report-header">' in page for page in clinical_pages))
+        self.assertTrue(all('<header class="page-header">' in page for page in clinical_pages))
         self.assertIn(f"Página {3 + len(clinical_pages)} de {3 + len(clinical_pages)}", clinical_pages[-1])
 
     def test_pdf_export_service_registers_wais3_exporter(self):
@@ -1595,7 +1658,6 @@ class SRS2ModuleTests(SimpleTestCase):
 
         self.assertIn('<section class="page">', template)
         self.assertIn('.page{width:var(--page-w);height:var(--page-h);', template)
-        self.assertIn('<section class="page analysis-page">', rendered)
         self.assertIn('.analysis-page .clinical-box p{font-size:8.9pt;', rendered)
         self.assertIn('text-align:justify;text-justify:inter-word', rendered)
         self.assertIn("O Escore Total foi T=68, classificado em nível moderado", rendered)
@@ -1657,7 +1719,7 @@ class SRS2ModuleTests(SimpleTestCase):
         application = SimpleNamespace(
             raw_payload={"form": "idade_escolar", "gender": "F", "respondent_name": "Mãe", "responses": {str(item): 2 for item in range(1, 66)}},
             computed_payload={"form": "idade_escolar"},
-            interpretation_text="Interpretação clínica real do protocolo.",
+            interpretation_text="TEXTO LONGO LEGADO QUE NAO DEVE SER COPIADO INTEGRALMENTE NO PDF COMPLETO.",
             applied_on=date(2026, 5, 24),
             evaluation=SimpleNamespace(
                 patient=SimpleNamespace(full_name="Sophia Correa", age=11, sex="F", schooling="elementary")
@@ -1670,15 +1732,26 @@ class SRS2ModuleTests(SimpleTestCase):
         self.assertIn("Relatório Técnico Completo", rendered)
         self.assertIn("Sophia Correa", rendered)
         self.assertIn('<svg class="brand-logo" viewBox="0 0 760 210"', rendered)
+        self.assertIn('--page-pad-top:30mm; --page-pad-x:20mm; --page-pad-bottom:20mm;', template)
+        self.assertIn('padding:var(--page-pad-top) var(--page-pad-x) var(--page-pad-bottom);', template)
+        self.assertIn('@page{size:A4;margin:0}', template)
+        self.assertRegex(rendered, r'(?s)<section class="page analysis-page">.*?<h1>Síntese técnica</h1>')
+        self.assertIn('<div class="analysis-columns">', rendered)
         self.assertIn("<strong>Idade Escolar · Feminino</strong>", rendered)
         self.assertIn("<td>Comunicação Social</td>\n<td class=\"num\">33</td>\n<td class=\"num\">70</td>", rendered)
-        self.assertIn("Interpretação clínica real do protocolo.", rendered)
+        self.assertIn("O SRS-2 indicou elevação global em nível moderado, com Escore Total T=68.", rendered)
+        self.assertIn("A elevação concomitante em Comunicação e Interação Social e Padrões Restritos e Repetitivos", rendered)
+        self.assertNotIn("TEXTO LONGO LEGADO QUE NAO DEVE SER COPIADO INTEGRALMENTE NO PDF COMPLETO.", rendered)
         self.assertNotIn("Teste_01", rendered)
         self.assertIn("Estatísticas das respostas", rendered)
         self.assertIn("Distribuição das respostas", rendered)
         self.assertIn('<td class="bar-cell"><span style="--w:100%"></span></td>', rendered)
         self.assertIn("Não estão disponíveis informações extras para esta administração.", rendered)
         self.assertNotIn('<div class="stat">', rendered)
+        self.assertIn("PÁGINA 6 DE 9", rendered)
+        self.assertIn("PÁGINA 7 DE 9", rendered)
+        self.assertNotIn("Perfil normativo</div>", rendered)
+        self.assertNotIn("Análise dos itens e respostas</div>", rendered)
 
     @patch("apps.tests.services.pdf_export_service.SRS2PdfService.generate_pdf_bytes")
     def test_srs2_pdf_export_service_accepts_complete_report_type(self, mock_generate):
@@ -1830,6 +1903,91 @@ class SCAREDModuleTests(SimpleTestCase):
 
         errors = module.validate(context)
         self.assertIn("Formulário SCARED inválido.", errors)
+
+
+class SCAREDPdfServiceTests(SimpleTestCase):
+    def _application_fixture(self, form: str = "child"):
+        responses = {str(i): 2 for i in range(1, 42)}
+        classified_rows = [
+            {"fator": "panico_sintomas_somaticos", "escore_bruto": 6, "percentil": 60, "classificacao": "Na Média"},
+            {"fator": "ansiedade_generalizada", "escore_bruto": 10, "percentil": 80, "classificacao": "Elevado"},
+            {"fator": "ansiedade_separacao", "escore_bruto": 8, "percentil": 95, "classificacao": "Muito Elevado"},
+            {"fator": "fobia_social", "escore_bruto": 8, "percentil": 75, "classificacao": "Elevado"},
+            {"fator": "evitacao_escolar", "escore_bruto": 5, "percentil": 90, "classificacao": "Elevado"},
+            {"fator": "total", "escore_bruto": 40, "percentil": 92, "classificacao": "Elevado"},
+        ]
+        if form == "parent":
+            classified_rows = [
+                {"fator": "panico_sintomas_somaticos", "escore_bruto": 6, "nota_corte": 7, "classificacao": "Não clínico"},
+                {"fator": "ansiedade_generalizada", "escore_bruto": 10, "nota_corte": 9, "classificacao": "Clínico"},
+                {"fator": "ansiedade_separacao", "escore_bruto": 8, "nota_corte": 5, "classificacao": "Clínico"},
+                {"fator": "fobia_social", "escore_bruto": 8, "nota_corte": 8, "classificacao": "Clínico"},
+                {"fator": "evitacao_escolar", "escore_bruto": 5, "nota_corte": 3, "classificacao": "Clínico"},
+                {"fator": "total", "escore_bruto": 37, "nota_corte": 25, "classificacao": "Clínico"},
+            ]
+        return SimpleNamespace(
+            id=88,
+            evaluation_id=11,
+            instrument=SimpleNamespace(code="scared"),
+            raw_payload={"form": form, "gender": "F", "age": 10, "responses": responses},
+            computed_payload={
+                "form": form,
+                "gender": "F",
+                "age": 10,
+                "brutos": {
+                    "panico_sintomas_somaticos": 6,
+                    "ansiedade_generalizada": 10,
+                    "ansiedade_separacao": 8,
+                    "fobia_social": 8,
+                    "evitacao_escolar": 5,
+                    "total": 40 if form == "child" else 37,
+                },
+            },
+            classified_payload={"form_type": form, "analise_geral": classified_rows},
+            applied_on=date(2026, 6, 11),
+            evaluation=SimpleNamespace(
+                patient=SimpleNamespace(full_name="Letícia Bolonha Lucati", age=10, sex="F")
+            ),
+        )
+
+    def test_build_context_populates_summary_and_domains(self):
+        context = SCAREDPdfService._build_context(self._application_fixture())
+
+        self.assertEqual(context["nome_paciente"], "Letícia Bolonha Lucati")
+        self.assertEqual(context["escore_total"], 40)
+        self.assertEqual(context["dominios_elevados"], "4/5")
+        self.assertEqual(context["versao_label"], "autorrelato")
+        self.assertEqual(context["leitura_clinica"], "Rastreio positivo para sintomas ansiosos")
+        self.assertEqual(context["result_rows"][0]["classification"], "Média")
+        self.assertEqual(context["result_rows"][0]["relative_index_label"], "86%")
+        self.assertEqual(context["result_rows"][1]["classification"], "Média Superior")
+        self.assertEqual(context["result_rows"][2]["classification"], "Superior")
+        self.assertEqual(context["result_rows"][3]["classification"], "Média Superior")
+        self.assertEqual(len(context["interpretation_paragraphs"]), 4)
+
+    @patch("apps.tests.scared.pdf_service.generate_pdf_from_html")
+    def test_generate_pdf_bytes_renders_html_with_expected_context(self, mock_generate):
+        mock_generate.return_value = b"%PDF-scared"
+
+        payload = SCAREDPdfService.generate_pdf_bytes(self._application_fixture(form="parent"))
+
+        self.assertEqual(payload, b"%PDF-scared")
+        rendered_html = mock_generate.call_args.args[0]
+        self.assertIn("Letícia Bolonha Lucati", rendered_html)
+        self.assertIn("Versão: pais/responsáveis", rendered_html)
+        self.assertIn("Rastreio positivo", rendered_html)
+        self.assertIn("Clínico", rendered_html)
+        self.assertIn("Índice relativo", rendered_html)
+
+    @patch("apps.tests.services.pdf_export_service.SCAREDPdfService.generate_pdf_bytes")
+    def test_pdf_export_service_routes_scared(self, mock_generate):
+        mock_generate.return_value = b"%PDF-scared"
+        application = SimpleNamespace(instrument=SimpleNamespace(code="scared"))
+
+        payload = TestPdfExportService.build_pdf_bytes(application)
+
+        self.assertEqual(payload, b"%PDF-scared")
+        mock_generate.assert_called_once_with(application)
 
 
 class EPQJModuleTests(SimpleTestCase):

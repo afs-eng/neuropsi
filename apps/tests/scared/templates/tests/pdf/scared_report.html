@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modelo de Relatório SCARED</title>
+  <style>
+    :root {
+      --azul: #082D5F;
+      --azul-2: #123A5A;
+      --turquesa: #1B7F8C;
+      --ciano: #27BBD0;
+      --cinza: #CBD6DE;
+      --cinza-2: #EEF3F6;
+      --texto: #18202A;
+      --muted: #5C6875;
+      --alerta: #B84A4A;
+      --ok: #496F5D;
+      --papel: #FFFFFF;
+    }
+
+    @page {
+      size: A4;
+      margin: 3cm 2cm 2cm 2cm;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: #e9eef3;
+      color: var(--texto);
+      font-family: "Times New Roman", Times, serif;
+      font-size: 11pt;
+      line-height: 1.34;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 18px auto;
+      background: var(--papel);
+      padding: 30mm 20mm 20mm 20mm;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 12px 36px rgba(8, 45, 95, 0.18);
+    }
+
+    .page::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 7mm;
+      background: linear-gradient(180deg, var(--azul), var(--turquesa), var(--ciano));
+    }
+
+    .header {
+      display: grid;
+      grid-template-columns: 64mm 1fr;
+      align-items: center;
+      gap: 12px;
+      padding-left: 4mm;
+      padding-bottom: 8px;
+      border-bottom: 1.5px solid var(--azul);
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .neuro-logo-svg {
+      width: 58mm;
+      height: auto;
+      display: block;
+    }
+
+    .report-heading {
+      text-align: right;
+      min-width: 0;
+    }
+
+    .brand {
+      font-size: 9pt;
+      color: var(--turquesa);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--azul);
+      font-size: 20pt;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 9pt;
+      line-height: 1.2;
+      margin-top: 3px;
+    }
+
+    .section-title {
+      margin: 14px 0 8px 4mm;
+      color: var(--azul);
+      font-size: 12pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .info-grid {
+      margin-left: 4mm;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .info-card {
+      background: var(--cinza-2);
+      border: 1px solid #dce5eb;
+      border-radius: 10px;
+      padding: 8px 10px;
+      min-height: 44px;
+    }
+
+    .info-card.span-2 { grid-column: span 2; }
+    .info-card.span-4 { grid-column: span 4; }
+
+    .label {
+      display: block;
+      color: var(--muted);
+      font-size: 7.5pt;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 2px;
+    }
+
+    .value {
+      font-size: 10.5pt;
+      font-weight: 700;
+      color: var(--azul-2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .summary-row {
+      margin: 12px 0 0 4mm;
+      display: grid;
+      grid-template-columns: 1.05fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    .score-card {
+      border-radius: 14px;
+      border: 1.5px solid var(--azul);
+      padding: 10px 12px;
+      background: #fff;
+    }
+
+    .score-card.primary {
+      background: linear-gradient(135deg, var(--azul), var(--turquesa));
+      color: #fff;
+      border-color: transparent;
+    }
+
+    .score-number {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 27pt;
+      font-weight: 800;
+      line-height: 1;
+      margin: 2px 0;
+    }
+
+    .score-number.reading {
+      font-size: 13pt;
+      line-height: 1.1;
+    }
+
+    .score-caption {
+      font-size: 8.5pt;
+      color: inherit;
+      opacity: .92;
+    }
+
+    .badge {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 7.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      margin-top: 6px;
+    }
+
+    .badge.alert { background: #F8E6E6; color: var(--alerta); }
+    .badge.ok { background: #E6F0EB; color: var(--ok); }
+    .primary .badge.alert { background: rgba(255,255,255,.92); color: var(--alerta); }
+    .primary .badge.ok { background: rgba(255,255,255,.92); color: var(--ok); }
+
+    table {
+      width: calc(100% - 4mm);
+      margin: 10px 0 0 4mm;
+      border-collapse: collapse;
+      font-size: 9.5pt;
+      table-layout: fixed;
+    }
+
+    thead th {
+      background: var(--azul);
+      color: #fff;
+      border: 1px solid var(--azul);
+      padding: 7px 8px;
+      text-align: left;
+      font-weight: 700;
+    }
+
+    tbody td {
+      border: 1px solid var(--cinza);
+      padding: 7px 8px;
+      vertical-align: middle;
+    }
+
+    tbody tr:nth-child(even) td { background: #F8FAFB; }
+
+    .center { text-align: center; }
+    .status-alert { color: var(--alerta); font-weight: 700; }
+    .status-ok { color: var(--ok); font-weight: 700; }
+
+    .chart-card {
+      margin: 12px 0 0 4mm;
+      border: 1px solid #dce5eb;
+      border-radius: 16px;
+      padding: 12px 14px 10px 14px;
+      background: #fff;
+      page-break-inside: avoid;
+    }
+
+    .chart-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .chart-title strong {
+      color: var(--azul);
+      font-size: 11.5pt;
+    }
+
+    .chart-title span {
+      color: var(--muted);
+      font-size: 8.5pt;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 34mm 1fr 16mm;
+      align-items: center;
+      gap: 9px;
+      margin: 7px 0;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 8.2pt;
+    }
+
+    .bar-label { color: var(--azul-2); font-weight: 700; }
+
+    .bar-track {
+      height: 11px;
+      background: #EEF3F6;
+      border-radius: 999px;
+      position: relative;
+      overflow: visible;
+      border: 1px solid #DFE8EE;
+    }
+
+    .bar-track::after {
+      content: "";
+      position: absolute;
+      left: 66.66%;
+      top: -4px;
+      width: 1.5px;
+      height: 19px;
+      background: var(--alerta);
+      opacity: .78;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--turquesa), var(--ciano));
+    }
+
+    .bar-fill.alert {
+      background: linear-gradient(90deg, var(--turquesa), var(--alerta));
+    }
+
+    .bar-value { text-align: right; color: var(--muted); }
+
+    .legend {
+      margin-top: 8px;
+      display: flex;
+      gap: 14px;
+      color: var(--muted);
+      font-size: 8pt;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .legend i {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      vertical-align: -1px;
+      margin-right: 4px;
+      background: var(--ciano);
+    }
+
+    .legend i.cut { background: var(--alerta); border-radius: 2px; width: 3px; }
+
+    .interpretation {
+      margin: 12px 0 0 4mm;
+      background: #FBFCFD;
+      border: 1px solid #dce5eb;
+      border-left: 5px solid var(--turquesa);
+      border-radius: 12px;
+      padding: 11px 13px;
+      text-align: justify;
+    }
+
+    .interpretation p {
+      margin: 0 0 8px 0;
+    }
+
+    .interpretation p:last-child { margin-bottom: 0; }
+
+    .responses-section {
+      margin: 12px 0 0 4mm;
+      page-break-inside: avoid;
+    }
+
+    .responses-title {
+      margin: 0 0 8px 0;
+      color: var(--texto);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10.5pt;
+      font-weight: 700;
+    }
+
+    .responses-box {
+      border: 1px solid #d7e1ea;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .responses-table {
+      width: 100%;
+      margin: 0;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 9pt;
+    }
+
+    .responses-table thead th {
+      background: #e8eef5;
+      color: #334155;
+      border: 0;
+      border-bottom: 1px solid #d7e1ea;
+      padding: 8px 6px;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .responses-table tbody td {
+      border: 0;
+      border-bottom: 1px solid #e6edf4;
+      padding: 6px 6px;
+      text-align: center;
+      vertical-align: middle;
+      background: #fff;
+    }
+
+    .responses-table tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .responses-table td.item-cell {
+      color: #1e3a5f;
+      font-weight: 400;
+    }
+
+    .responses-table td.empty-cell {
+      background: #fff;
+    }
+
+    .resp-badge {
+      display: inline-flex;
+      min-width: 32px;
+      height: 24px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      font-size: 9pt;
+      font-weight: 700;
+      line-height: 1;
+      color: #1e3a5f;
+      background: #e7edf4;
+    }
+
+    .resp-badge.is-zero {
+      background: #e7edf4;
+      color: #27496b;
+    }
+
+    .resp-badge.is-one {
+      background: #ffefbf;
+      color: #b7791f;
+    }
+
+    .resp-badge.is-two {
+      background: #f8d7da;
+      color: #b84a4a;
+    }
+
+    .resp-badge.empty {
+      background: transparent;
+      color: transparent;
+    }
+
+    .note {
+      margin: 10px 0 0 4mm;
+      color: var(--muted);
+      font-size: 8pt;
+      text-align: justify;
+    }
+
+    .footer {
+      position: absolute;
+      left: 20mm;
+      right: 20mm;
+      bottom: 20mm;
+      border-top: 1px solid var(--cinza);
+      padding-top: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 8pt;
+    }
+
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+      color: var(--azul-2);
+    }
+
+    .footer-symbol {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 50%, var(--azul-2) 0 22%, transparent 23%),
+                  conic-gradient(from 25deg, var(--ciano), var(--cinza), var(--turquesa), var(--cinza), var(--ciano));
+      box-shadow: inset 0 0 0 2px #fff;
+    }
+
+    @media print {
+      body { background: #fff; }
+      .page {
+        width: auto;
+        min-height: 247mm;
+        margin: 0;
+        box-shadow: none;
+        padding: 0;
+        break-after: page;
+        page-break-after: always;
+      }
+      .page:last-of-type {
+        break-after: auto;
+        page-break-after: auto;
+      }
+      .page::before { display: none; }
+      .footer {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <section class="page">
+    <header class="header">
+      <div class="logo-area">
+        <svg class="neuro-logo-svg" viewBox="0 0 760 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="NeuroAvalia">
+          <g transform="translate(100 105)">
+            <line x1="0" y1="0" x2="-46" y2="-48" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="18" y2="-62" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="58" y2="-42" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="68" y2="4" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="34" y2="56" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="-32" y2="54" stroke="#9EB4C2" stroke-width="1.8" />
+            <line x1="0" y1="0" x2="-66" y2="12" stroke="#9EB4C2" stroke-width="1.8" />
+
+            <path d="M-46 -48 L18 -62 L58 -42 L68 4 L34 56 L-32 54 L-66 12 Z" fill="none" stroke="#D6E2E8" stroke-width="1.6" stroke-linejoin="round" />
+            <path d="M-46 -48 C-20 -72, 25 -84, 58 -42" fill="none" stroke="#D6E2E8" stroke-width="1.4" stroke-linecap="round" />
+            <path d="M-66 12 C-42 38, -5 70, 34 56" fill="none" stroke="#D6E2E8" stroke-width="1.4" stroke-linecap="round" />
+
+            <circle cx="0" cy="0" r="8.5" fill="#123A5A" />
+            <circle cx="-46" cy="-48" r="7" fill="#CBD6DE" />
+            <circle cx="18" cy="-62" r="7" fill="#27BBD0" />
+            <circle cx="58" cy="-42" r="7" fill="#CBD6DE" />
+            <circle cx="68" cy="4" r="7" fill="#123A5A" />
+            <circle cx="34" cy="56" r="7" fill="#CBD6DE" />
+            <circle cx="-32" cy="54" r="7" fill="#27BBD0" />
+            <circle cx="-66" cy="12" r="7" fill="#CBD6DE" />
+
+            <circle cx="1" cy="-35" r="4" fill="#D6E2E8" />
+            <circle cx="38" cy="-7" r="4" fill="#D6E2E8" />
+            <circle cx="8" cy="36" r="4" fill="#D6E2E8" />
+            <circle cx="-36" cy="-8" r="4" fill="#D6E2E8" />
+          </g>
+
+          <text x="220" y="112" font-family="Arial, Helvetica, sans-serif" font-size="62" font-weight="700" letter-spacing="-1.8">
+            <tspan fill="#123A5A">Neuro</tspan><tspan fill="#1B7F8C">avalia</tspan>
+          </text>
+
+          <text x="224" y="144" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="600" letter-spacing="3" fill="#7E929F">
+            AVALIAÇÃO NEUROPSICOLÓGICA
+          </text>
+        </svg>
+      </div>
+      <div class="report-heading">
+        <div class="brand">Relatório de Teste</div>
+        <h1>SCARED</h1>
+        <div class="subtitle">
+          Screen for Child Anxiety Related Emotional Disorders<br />Versão: {{ versao_label }}
+        </div>
+      </div>
+    </header>
+
+    <h2 class="section-title">Identificação e dados técnicos</h2>
+    <section class="info-grid">
+      <div class="info-card span-2">
+        <span class="label">Paciente</span>
+        <div class="value">{{ nome_paciente }}</div>
+      </div>
+      <div class="info-card">
+        <span class="label">Idade</span>
+        <div class="value">{{ idade }}</div>
+      </div>
+      <div class="info-card">
+        <span class="label">Data</span>
+        <div class="value">{{ data_aplicacao }}</div>
+      </div>
+      <div class="info-card span-2">
+        <span class="label">Respondente</span>
+        <div class="value">{{ respondente }}</div>
+      </div>
+      <div class="info-card span-2">
+        <span class="label">Objetivo</span>
+        <div class="value">Rastreamento de sintomas ansiosos</div>
+      </div>
+    </section>
+
+    <section class="summary-row">
+      <div class="score-card primary">
+        <span class="label" style="color:#fff; opacity:.85;">Escore total</span>
+        <div class="score-number">{{ escore_total }}</div>
+        <div class="score-caption">Ponto de corte clínico: ≥{{ corte_total }}</div>
+        <span class="badge {{ indicador_badge_class }}">{{ indicador_badge_text }}</span>
+      </div>
+      <div class="score-card">
+        <span class="label">Domínios elevados</span>
+        <div class="score-number" style="color:var(--azul);">{{ dominios_elevados }}</div>
+        <div class="score-caption">{{ dominios_elevados_descricao }}</div>
+      </div>
+      <div class="score-card">
+        <span class="label">Leitura clínica</span>
+        <div class="score-number reading" style="color:var(--alerta);">{{ leitura_clinica }}</div>
+        <div class="score-caption">{{ leitura_clinica_caption }}</div>
+      </div>
+    </section>
+
+    <h2 class="section-title">Resultados por domínio</h2>
+    <table aria-label="Tabela de resultados SCARED">
+      <thead>
+        <tr>
+          <th style="width: 31%;">Domínio</th>
+          <th class="center" style="width: 12%;">Escore</th>
+          <th class="center" style="width: 15%;">Ponto de corte</th>
+          <th class="center" style="width: 14%;">Índice relativo</th>
+          <th style="width: 28%;">Classificação</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in result_rows %}
+        <tr>
+          <td>{{ row.label }}</td>
+          <td class="center">{{ row.score }}</td>
+          <td class="center">{{ row.cutoff }}</td>
+          <td class="center">{{ row.relative_index_label }}</td>
+          <td class="{{ row.status_class }}">{{ row.classification }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <section class="chart-card">
+      <div class="chart-title">
+        <strong>Perfil de elevação por domínio</strong>
+        <span>Índice relativo ao ponto de corte: 100% = limiar clínico</span>
+      </div>
+
+      {% for row in result_rows %}
+      <div class="bar-row">
+        <div class="bar-label">{{ row.short_label }}</div>
+        <div class="bar-track"><div class="bar-fill {{ row.bar_fill_class }}" style="width:{{ row.bar_width }}%;"></div></div>
+        <div class="bar-value">{{ row.ratio_label }}</div>
+      </div>
+      {% endfor %}
+
+      <div class="legend">
+        <span><i></i>Escore relativo do paciente</span>
+        <span><i class="cut"></i>Ponto de corte clínico</span>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <span class="footer-brand"><i class="footer-symbol"></i>NeuroAvalia · SCARED</span>
+      <span>Página 1</span>
+    </footer>
+  </section>
+
+  <section class="page">
+    <h2 class="section-title">Interpretação clínica</h2>
+    <section class="interpretation">
+      {% for paragraph in interpretation_paragraphs %}
+      <p>{{ paragraph }}</p>
+      {% endfor %}
+    </section>
+
+    <section class="responses-section">
+      <h3 class="responses-title">Registro de Respostas</h3>
+      <div class="responses-box">
+        <table class="responses-table" aria-label="Registro de respostas do SCARED">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Resp.</th>
+              <th>Item</th>
+              <th>Resp.</th>
+              <th>Item</th>
+              <th>Resp.</th>
+              <th>Item</th>
+              <th>Resp.</th>
+              <th>Item</th>
+              <th>Resp.</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in response_rows %}
+            <tr>
+              {% for cell in row %}
+              <td class="item-cell{% if not cell.item %} empty-cell{% endif %}">{{ cell.item }}</td>
+              <td{% if not cell.item %} class="empty-cell"{% endif %}><span class="resp-badge {{ cell.badge_class }}">{{ cell.value }}</span></td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <p class="note"><strong>Nota técnica:</strong> {{ technical_note }}</p>
+
+    <footer class="footer">
+      <span class="footer-brand"><i class="footer-symbol"></i>NeuroAvalia · SCARED</span>
+      <span>Página 2</span>
+    </footer>
+  </section>
+</body>
+</html>

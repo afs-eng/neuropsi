@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { printCurrentPage } from "@/lib/print";
+import { getToken, resolveApiUrl } from "@/lib/api";
 import { TestReportSummaryCard } from "@/components/tests/TestReportSummaryCard";
 import { TestReportPayload } from "@/lib/test-report";
 
@@ -338,7 +338,39 @@ export default function SCAREDResultPage() {
   const searchParams = useSearchParams();
   const [results, setResults] = useState<SCAREDResult[]>([]);
   const [loading, setLoading] = useState(true);
+  const [exportingPdf, setExportingPdf] = useState(false);
   const evaluationId = searchParams.get("evaluation_id");
+
+  const handleExportPdf = async () => {
+    if (!params.id || exportingPdf) return;
+    setExportingPdf(true);
+    try {
+      const token = getToken() || "";
+      const response = await fetch(resolveApiUrl(`/api/tests/applications/${params.id}/export-pdf`), {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        let message = `Falha ao gerar PDF (${response.status})`;
+        try {
+          const payload = await response.json();
+          if (payload?.message) message = `${message}: ${payload.message}`;
+        } catch {}
+        throw new Error(message);
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (error: any) {
+      console.error(error);
+      alert(error?.message || "Não foi possível gerar o PDF do SCARED.");
+    } finally {
+      setExportingPdf(false);
+    }
+  };
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -440,9 +472,9 @@ export default function SCAREDResultPage() {
                <Link href={`/dashboard/tests/scared/${mainResult.application_id}?evaluation_id=${mainResult.evaluation_id}&edit=true`} className="rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50">
                  Editar
                </Link>
-               <button onClick={printCurrentPage} className="rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm">
-                 Imprimir / PDF
-               </button>
+               <button onClick={handleExportPdf} disabled={exportingPdf} className="rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60">
+                  {exportingPdf ? "Gerando PDF..." : "Imprimir / PDF"}
+                </button>
               <Link href={`/dashboard/evaluations/${mainResult.evaluation_id}?tab=overview`} className="rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white shadow-lg">
                 Voltar
               </Link>

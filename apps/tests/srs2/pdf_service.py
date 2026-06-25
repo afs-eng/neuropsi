@@ -30,6 +30,7 @@ class SRS2PdfService:
         "cis",
         "total",
     ]
+    COMPLETE_PAGE_COUNT = 9
 
     @staticmethod
     def _format_sex(value: str | None) -> str:
@@ -171,6 +172,17 @@ class SRS2PdfService:
                 "Os resultados do SRS-2 devem ser interpretados de forma integrada à anamnese, observação clínica e demais instrumentos aplicados."
             ]
         return "\n".join(f"<p>{html.escape(paragraph)}</p>" for paragraph in paragraphs)
+
+    @staticmethod
+    def _join_labels(labels: list[str]) -> str:
+        cleaned = [label for label in labels if label]
+        if not cleaned:
+            return ""
+        if len(cleaned) == 1:
+            return cleaned[0]
+        if len(cleaned) == 2:
+            return f"{cleaned[0]} e {cleaned[1]}"
+        return f"{', '.join(cleaned[:-1])} e {cleaned[-1]}"
 
     @staticmethod
     def _highest_row(rows: list[dict]) -> dict:
@@ -798,6 +810,62 @@ class SRS2PdfService:
         )
 
     @classmethod
+    def _technical_interpretation_html(cls, rows: list[dict], total: dict, highest: dict) -> str:
+        total_t = cls._format_score(total.get("tscore"))
+        total_level = cls._classification_for_tscore(total.get("tscore"))
+        highest_t = cls._format_score(highest.get("tscore"))
+        highest_level = cls._classification_for_tscore(highest.get("tscore"))
+        highest_name = cls._display_name(highest)
+
+        domain_rows = [row for row in rows if row.get("variável") not in {"total", "cis"}]
+        elevated = [cls._display_name(row) for row in domain_rows if not cls._is_normal_tscore(row.get("tscore"))]
+        preserved = [cls._display_name(row) for row in domain_rows if cls._is_normal_tscore(row.get("tscore"))]
+
+        cis_row = next((row for row in rows if row.get("variável") == "cis"), {})
+        prr_row = next(
+            (row for row in rows if row.get("variável") in {"padroes_restritos", "padrões_restritos"}),
+            {},
+        )
+        cis_elevated = bool(cis_row) and not cls._is_normal_tscore(cis_row.get("tscore"))
+        prr_elevated = bool(prr_row) and not cls._is_normal_tscore(prr_row.get("tscore"))
+
+        if cls._is_normal_tscore(total.get("tscore")):
+            first = (
+                f"O SRS-2 indicou perfil global dentro dos limites normativos, com Escore Total T={total_t}. "
+                f"O domínio com maior elevação relativa foi {highest_name}, com T={highest_t}, classificado em {highest_level}."
+            )
+            second = (
+                "Esse resultado não sugere comprometimento global clinicamente significativo da responsividade social, "
+                "embora diferenças entre domínios específicos devam ser analisadas no contexto clínico e funcional."
+            )
+        else:
+            first = (
+                f"O SRS-2 indicou elevação global em {total_level}, com Escore Total T={total_t}. "
+                f"A maior elevação ocorreu em {highest_name}, com T={highest_t}, classificado em {highest_level}."
+            )
+            second = (
+                "Esse perfil é compatível com dificuldades clinicamente relevantes em aspectos da responsividade social, "
+                "com possível impacto sobre reciprocidade socioemocional, comunicação interpessoal, interpretação de situações sociais e flexibilidade comportamental."
+            )
+
+        third_parts = []
+        if elevated:
+            third_parts.append(f"Entre os domínios específicos, observaram-se elevações em {cls._join_labels(elevated)}.")
+        if preserved:
+            verb = "permaneceu" if len(preserved) == 1 else "permaneceram"
+            third_parts.append(f"{cls._join_labels(preserved)} {verb} dentro dos limites normativos.")
+        if cis_elevated and prr_elevated:
+            third_parts.append(
+                "A elevação concomitante em Comunicação e Interação Social e Padrões Restritos e Repetitivos reforça a necessidade de investigação clínica de características associadas ao TEA, sem valor diagnóstico isolado."
+            )
+        else:
+            third_parts.append(
+                "Os achados devem ser integrados à anamnese, observação clínica, funcionamento adaptativo e prejuízos funcionais, sem valor diagnóstico isolado."
+            )
+
+        return cls._paragraphs_html("\n\n".join([first, second, " ".join(third_parts)]))
+
+    @classmethod
     def _system_note_html(cls, total: dict) -> str:
         if cls._is_normal_tscore(total.get("tscore")):
             text = "quando o Escore Total estiver dentro dos limites normais, mas houver domínio específico elevado, gerar conclusão cautelosa com integração clínica."
@@ -1027,20 +1095,8 @@ class SRS2PdfService:
         detail_cards = [f'<div class="detail-card">{part}' for part in detail_cards if part.strip()]
         first_details = "\n".join(detail_cards[:3])
         second_details = "\n".join(detail_cards[3:])
-        rendered = re.sub(
-            r'(<h1>Detalhes da escala</h1>).*?(?=\s*<div class="footer"><span>NeuroAvalia · SRS-2 Técnico</span><span>PÁGINA 6 DE 9</span></div>)',
-            rf'\1\n  {first_details}\n  ',
-            rendered,
-            count=1,
-            flags=re.S,
-        )
-        rendered = re.sub(
-            r'(<h1>Detalhes da escala</h1>).*?(?=\s*<div class="footer"><span>NeuroAvalia · SRS-2 Técnico</span><span>PÁGINA 7 DE 9</span></div>)',
-            rf'\1\n  {second_details}\n  ',
-            rendered,
-            count=1,
-            flags=re.S,
-        )
+        rendered = cls._replace_complete_page_body(rendered, 6, "Detalhes da escala", first_details)
+        rendered = cls._replace_complete_page_body(rendered, 7, "Detalhes da escala", second_details)
         rendered = re.sub(
             r'<tbody id="responseStatsRows">.*?</tbody>',
             f'<tbody id="responseStatsRows">\n{cls._technical_response_stats_rows_html(raw_payload)}\n</tbody>',
@@ -1050,7 +1106,7 @@ class SRS2PdfService:
         )
         rendered = re.sub(
             r'(<h1>Síntese técnica</h1>\s*<div class="clinical-box">\s*<h2>Interpretação integrada</h2>).*?</div>\s*<div class="grid-2 mt">',
-            rf'\1\n{cls._paragraphs_html(getattr(application, "interpretation_text", ""))}</div>\n  {cls._conclusion_grid_html(total, highest).replace("analysis-grid", "grid-2 mt", 1)}\n  <div class="grid-2 mt">',
+            rf'\1\n<div class="analysis-columns">\n{cls._technical_interpretation_html(rows, total, highest)}\n</div></div>\n  {cls._conclusion_grid_html(total, highest).replace("analysis-grid", "grid-2 mt", 1)}\n  <div class="grid-2 mt">',
             rendered,
             count=1,
             flags=re.S,
@@ -1062,7 +1118,73 @@ class SRS2PdfService:
             count=1,
             flags=re.S,
         )
+        rendered = cls._standardize_complete_headers(rendered)
         return rendered
+
+    @classmethod
+    def _standardize_complete_headers(cls, source: str) -> str:
+        header_titles = {
+            2: "Visão geral",
+            3: "Perfil",
+            4: "Tabela de escores",
+            5: "Radar clínico",
+            6: "Detalhes da escala",
+            7: "Detalhes da escala",
+            8: "Estatísticas das respostas",
+            9: "Síntese técnica",
+        }
+        rendered = source
+        for page_number, title in header_titles.items():
+            rendered = cls._replace_complete_page_header(rendered, page_number, title)
+        return rendered
+
+    @classmethod
+    def _replace_complete_page_header(cls, source: str, page_number: int, title: str) -> str:
+        footer = (
+            r'<div class="footer"><span>NeuroAvalia · SRS-2 Técnico</span>'
+            rf'<span>PÁGINA {page_number} DE {cls.COMPLETE_PAGE_COUNT}</span></div>'
+        )
+        page_pattern = rf'(<section class="page">(?:(?!</section>).)*?{footer}\s*</section>)'
+        match = re.search(page_pattern, source, flags=re.S)
+        if not match:
+            return source
+
+        page_html = match.group(1)
+        header_start = page_html.find('<div class="header">')
+        title_start = page_html.find(f'<h1>{title}</h1>')
+        if header_start == -1 or title_start == -1:
+            return source
+
+        header_html = page_html[header_start:title_start]
+        brand_match = re.search(r'<div class="brand-wrap">.*?</div>', header_html, flags=re.S)
+        if not brand_match:
+            return source
+
+        new_header = f'<div class="header">{brand_match.group(0)}{title}</div>\n  '
+        updated_page_html = page_html[:header_start] + new_header + page_html[title_start:]
+        return source.replace(page_html, updated_page_html, 1)
+
+    @classmethod
+    def _replace_complete_page_body(cls, source: str, page_number: int, title: str, body_html: str) -> str:
+        footer_marker = (
+            f'<div class="footer"><span>NeuroAvalia · SRS-2 Técnico</span>'
+            f'<span>PÁGINA {page_number} DE {cls.COMPLETE_PAGE_COUNT}</span></div>'
+        )
+        page_pattern = rf'(<section class="page[^"]*">(?:(?!</section>).)*?{re.escape(footer_marker)}\s*</section>)'
+        match = re.search(page_pattern, source, flags=re.S)
+        if not match:
+            return source
+
+        page_html = match.group(1)
+        title_marker = f'<h1>{title}</h1>'
+        title_start = page_html.find(title_marker)
+        footer_start = page_html.find(footer_marker)
+        if title_start == -1 or footer_start == -1:
+            return source
+
+        body_start = title_start + len(title_marker)
+        updated_page_html = page_html[:body_start] + f'\n  {body_html}\n  ' + page_html[footer_start:]
+        return source.replace(page_html, updated_page_html, 1)
 
     @classmethod
     def generate_pdf_bytes(cls, application, report_type: str = "summary") -> bytes:

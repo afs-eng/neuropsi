@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import csv
 import re
+import zipfile
 from datetime import date
+from functools import lru_cache
 from pathlib import Path
+import xml.etree.ElementTree as ET
 
 from django.template import Context
 from django.template import engines
@@ -14,6 +17,8 @@ from .paths import TABELAS_CD
 
 class WISC4PdfService:
     TEMPLATE_PATH = Path(__file__).resolve().parent / "templates" / "tests" / "pdf" / "wisc_4_relatorio_preview.html"
+    WORKBOOK_PATH = Path(__file__).resolve().parents[3] / "CORRECAO.xlsm"
+    PROFESSIONAL_NAME = "Jacqueline Oliveira Caires"
 
     SUBTEST_ORDER = ["CB", "SM", "DG", "CN", "CD", "VC", "SNL", "RM", "CO", "PS"]
     SUPPLEMENTAL_ORDER = ["CF", "CA", "IN", "AR", "RP"]
@@ -27,6 +32,21 @@ class WISC4PdfService:
     }
     PROFILE_COLUMNS = ["SM", "VC", "CO", "IN", "RP", "CB", "CN", "RM", "CF", "DG", "SNL", "AR", "CD", "PS", "CA"]
     END_PROFILE_COLUMNS = {"RP", "CF", "AR", "CA"}
+    FACILITY_OMITTED_WHEN_ICV_IOP_SIGNIFICANT = {"DG", "SNL", "CD", "PS"}
+    GENERAL_INDEX_FREQUENCY_COLUMNS = {
+        ("icv", "iop", "<"): "B",
+        ("icv", "iop", ">"): "C",
+        ("icv", "imt", "<"): "D",
+        ("icv", "imt", ">"): "E",
+        ("icv", "ivp", "<"): "F",
+        ("icv", "ivp", ">"): "G",
+        ("iop", "imt", "<"): "H",
+        ("iop", "imt", ">"): "I",
+        ("iop", "ivp", "<"): "J",
+        ("iop", "ivp", ">"): "K",
+        ("imt", "ivp", "<"): "L",
+        ("imt", "ivp", ">"): "M",
+    }
     CONVERSION_ROWS = [
         ("CB", "Cubos", "iop", False),
         ("SM", "Semelhanças", "icv", False),
@@ -62,7 +82,7 @@ class WISC4PdfService:
         qit = classified.get("qit_data") or {}
         gai = classified.get("gai_data") or {}
         cpi = classified.get("cpi_data") or {}
-        process_scores = classified.get("process_scores") or {}
+        process_scores = classified.get("process_scores") or computed.get("process_scores") or {}
         interpretation_text = application.interpretation_text or ""
         interpretation_paragraphs = cls._interpretation_paragraphs(interpretation_text)
         subtest_rows = cls._subtest_rows(classified.get("subtestes") or [])
@@ -82,7 +102,7 @@ class WISC4PdfService:
             "sexo": cls._sex_label(getattr(patient, "sex", None)),
             "idade": cls._age_label(patient, getattr(application, "applied_on", None)),
             "escolaridade": cls._schooling_label(patient),
-            "profissional": cls._professional_label(getattr(evaluation, "examiner", None)),
+            "profissional": cls.PROFESSIONAL_NAME,
             "tabela_normativa": "WISC-IV / Brasil / Faixa etária correspondente",
             "aplicacao": "Válida",
             "referencia_normativa": "WISC-IV, tabelas normativas por idade cronológica",
@@ -156,10 +176,10 @@ class WISC4PdfService:
         rows = []
         for code, name, index_code, optional in cls.CONVERSION_ROWS:
             item = lookup.get(code, {})
-            scaled = item.get("scaled_score") or ""
+            scaled = item.get("scaled_score") or ("—" if optional else "")
             row = {
                 "label": f"({name}) ({code})" if optional else f"{name} ({code})",
-                "raw_score": item.get("raw_score") or "",
+                "raw_score": item.get("raw_score") or ("—" if optional else ""),
                 "scaled_score": scaled,
                 "icv": cls._conversion_cell("icv", index_code, scaled, optional),
                 "iop": cls._conversion_cell("iop", index_code, scaled, optional),
@@ -285,9 +305,9 @@ class WISC4PdfService:
             rows.append(
                 {
                     "label": f"{cls.INDEX_ABBREVIATIONS[first]} - {cls.INDEX_ABBREVIATIONS[second]}",
-                    "first": cls.INDEX_ABBREVIATIONS[first],
-                    "second": cls.INDEX_ABBREVIATIONS[second],
-                    "difference": cls._format_number(difference),
+                    "first": cls._format_number(first_score),
+                    "second": cls._format_number(second_score),
+                    "difference": cls._format_signed_number(signed_difference),
                     "critical": cls._format_number(critical, decimals=2),
                     "significant": "Sim" if significant else "Não" if difference is not None else "",
                     "frequency": cls._format_number(
@@ -326,6 +346,19 @@ class WISC4PdfService:
         icv_iop_significant = cls._is_icv_iop_significant(index_rows, age_years, significance)
 
         for row in subtest_rows:
+            if icv_iop_significant and row.get("code") in cls.FACILITY_OMITTED_WHEN_ICV_IOP_SIGNIFICANT:
+                rows.append(
+                    {
+                        "name": row["name"],
+                        "score": "—",
+                        "average": "—",
+                        "difference": "—",
+                        "critical": "—",
+                        "label": "—",
+                        "frequency": "—",
+                    }
+                )
+                continue
             value = row.get("scaled_score_raw")
             average = cls._facility_average_for_code(
                 row.get("code"),
@@ -347,7 +380,7 @@ class WISC4PdfService:
                     "name": row["name"],
                     "score": row["scaled_score"],
                     "average": cls._format_number(average, decimals=1),
-                    "difference": cls._format_number(diff, decimals=1),
+                    "difference": cls._format_signed_number(diff, decimals=1),
                     "critical": cls._format_number(critical, decimals=2),
                     "label": label,
                     "frequency": cls._lookup_facility_frequency_label(row.get("code"), diff, icv_iop_significant) if label != "—" else "—",
@@ -368,9 +401,9 @@ class WISC4PdfService:
         return [
             {
                 "label": label,
-                "first": first_code,
-                "second": second_code,
-                "difference": cls._format_number(difference),
+                "first": cls._format_number(first_score),
+                "second": cls._format_number(second_score),
+                "difference": cls._format_signed_number(signed_difference),
                 "critical": cls._format_number(critical, decimals=2),
                 "significant": "Sim" if significant else "Não" if difference is not None else "",
                 "frequency": cls._format_number(
@@ -405,7 +438,7 @@ class WISC4PdfService:
 
     @classmethod
     def _process_scaled_rows(cls, process_scores: dict) -> list[dict]:
-        return [
+        rows = [
             {
                 "name": row.get("name") or "—",
                 "raw_score": cls._format_number(row.get("raw_score")),
@@ -413,10 +446,13 @@ class WISC4PdfService:
             }
             for row in process_scores.get("scaled_rows", [])
         ]
+        if rows:
+            return rows
+        return [{"name": "Dados de processo não informados", "raw_score": "—", "scaled_score": "—"}]
 
     @classmethod
     def _sequence_frequency_rows(cls, process_scores: dict) -> list[dict]:
-        return [
+        rows = [
             {
                 "name": row.get("name") or "—",
                 "raw_score": cls._format_number(row.get("raw_score")),
@@ -424,19 +460,25 @@ class WISC4PdfService:
             }
             for row in process_scores.get("sequence_frequency_rows", [])
         ]
+        if rows:
+            return rows
+        return [{"name": "Dados de processo não informados", "raw_score": "—", "frequency": "—"}]
 
     @classmethod
     def _raw_process_discrepancy_rows(cls, process_scores: dict) -> list[dict]:
-        return [
+        rows = [
             {
                 "label": row.get("label") or "—",
                 "first": cls._format_number(row.get("first")),
                 "second": cls._format_number(row.get("second")),
-                "difference": cls._format_number(row.get("difference")),
+                "difference": cls._format_signed_number(row.get("difference")),
                 "frequency": cls._format_number(row.get("frequency"), decimals=1),
             }
             for row in process_scores.get("raw_discrepancy_rows", [])
         ]
+        if rows:
+            return rows
+        return [{"label": "Dados de processo não informados", "first": "—", "second": "—", "difference": "—", "frequency": "—"}]
 
     @classmethod
     def _process_discrepancy_rows(cls, process_scores: dict) -> list[dict]:
@@ -454,13 +496,15 @@ class WISC4PdfService:
                     "label": row.get("label") or "—",
                     "first": cls._format_number(row.get("first")),
                     "second": cls._format_number(row.get("second")),
-                    "difference": cls._format_number(row.get("difference")),
+                    "difference": cls._format_signed_number(row.get("difference")),
                     "critical": cls._format_number(row.get("critical"), decimals=2),
                     "significant": significant_label,
                     "frequency": cls._format_number(row.get("frequency"), decimals=1),
                 }
             )
-        return rows
+        if rows:
+            return rows
+        return [{"label": "Dados de processo não informados", "first": "—", "second": "—", "difference": "—", "critical": "—", "significant": "", "frequency": "—"}]
 
     @classmethod
     def _subtest_rows(cls, subtests: list[dict]) -> list[dict]:
@@ -493,15 +537,13 @@ class WISC4PdfService:
         rows = []
         for code in cls.SUPPLEMENTAL_ORDER:
             item = by_code.get(code)
-            if not item or item.get("escore_bruto") is None:
-                continue
             rows.append(
                 {
-                    "name": item.get("subteste") or code,
+                    "name": (item or {}).get("subteste") or code,
                     "code": code,
-                    "raw_score": cls._format_number(item.get("escore_bruto")),
-                    "scaled_score": cls._format_number(item.get("escore_padrao")),
-                    "classification": item.get("classificacao") or "Não classificado",
+                    "raw_score": cls._format_number((item or {}).get("escore_bruto")),
+                    "scaled_score": cls._format_number((item or {}).get("escore_padrao")),
+                    "classification": (item or {}).get("classificacao") or "—",
                 }
             )
         return rows
@@ -730,17 +772,115 @@ class WISC4PdfService:
     def _lookup_index_frequency(cls, first: str, second: str, signed_difference: float | None, qit_score: float | None) -> float | None:
         if signed_difference is None:
             return None
+        frequency = cls._lookup_general_index_frequency(first, second, signed_difference)
+        if frequency is not None:
+            return frequency
         direction = ">" if signed_difference >= 0 else "<"
-        column = f"{cls.INDEX_ABBREVIATIONS[first]}{direction}{cls.INDEX_ABBREVIATIONS[second]} {'(+)' if direction == '>' else '(-)'}"
+        pair = f"{cls.INDEX_ABBREVIATIONS[first]}{direction}{cls.INDEX_ABBREVIATIONS[second]}"
         target = abs(signed_difference)
-        for row in cls._csv_rows(cls._b2_filename(qit_score)):
-            key = cls._parse_csv_float(row.get("Tamanho da") or row.get("Discrepancia") or row.get("Tamanho da Discrepância"))
-            value = cls._parse_csv_float(row.get(column))
+        matrix = cls._csv_matrix(cls._b2_filename(qit_score))
+        column_index = cls._lookup_b2_column_index(matrix, pair)
+        if column_index is None:
+            return None
+        for row in matrix:
+            key = cls._parse_csv_float(row[0] if row else None)
+            value = cls._parse_csv_float(row[column_index] if column_index < len(row) else None)
             if key is None or value is None:
                 continue
-            if abs(key - target) < 0.001:
+            if abs(key - target) < 0.001 or abs((key * 10) - target) < 0.001:
                 return value
         return None
+
+    @classmethod
+    def _lookup_general_index_frequency(cls, first: str, second: str, signed_difference: float | None) -> float | None:
+        if signed_difference is None:
+            return None
+        direction = ">" if signed_difference >= 0 else "<"
+        column = cls.GENERAL_INDEX_FREQUENCY_COLUMNS.get((first, second, direction))
+        if not column:
+            return None
+        cells = cls._wisc_normas_cells()
+        target = abs(signed_difference)
+        last_value = None
+        for row in range(420, 461):
+            key = cls._parse_csv_float(cells.get(f"A{row}"))
+            value = cls._parse_csv_float(cells.get(f"{column}{row}"))
+            if key is None or value is None:
+                continue
+            if key <= target:
+                last_value = value
+        return last_value
+
+    @staticmethod
+    @lru_cache(maxsize=1)
+    def _wisc_normas_cells() -> dict[str, str]:
+        if not WISC4PdfService.WORKBOOK_PATH.exists():
+            return {}
+        namespace = {
+            "m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
+            "r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
+            "pr": "http://schemas.openxmlformats.org/package/2006/relationships",
+        }
+        with zipfile.ZipFile(WISC4PdfService.WORKBOOK_PATH) as workbook:
+            shared_strings = []
+            if "xl/sharedStrings.xml" in workbook.namelist():
+                root = ET.fromstring(workbook.read("xl/sharedStrings.xml"))
+                for item in root.findall("m:si", namespace):
+                    shared_strings.append("".join(node.text or "" for node in item.iterfind(".//m:t", namespace)))
+
+            workbook_root = ET.fromstring(workbook.read("xl/workbook.xml"))
+            rels_root = ET.fromstring(workbook.read("xl/_rels/workbook.xml.rels"))
+            rel_map = {
+                rel.attrib["Id"]: rel.attrib["Target"]
+                for rel in rels_root.findall("pr:Relationship", namespace)
+            }
+            sheet_target = None
+            for sheet in workbook_root.find("m:sheets", namespace):
+                if sheet.attrib.get("name") != "WISC-NORMAS":
+                    continue
+                rel_id = sheet.attrib.get("{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id")
+                sheet_target = rel_map.get(rel_id)
+                break
+            if not sheet_target:
+                return {}
+
+            sheet_root = ET.fromstring(workbook.read(f"xl/{sheet_target}"))
+            cells = {}
+            for cell in sheet_root.findall(".//m:c", namespace):
+                value_node = cell.find("m:v", namespace)
+                if value_node is None:
+                    continue
+                value = value_node.text or ""
+                if cell.attrib.get("t") == "s":
+                    value = shared_strings[int(value)]
+                cells[cell.attrib["r"]] = value
+            return cells
+
+    @classmethod
+    def _lookup_b2_column_index(cls, matrix: list[list[str]], pair: str) -> int | None:
+        normalized_pair = cls._normalize_b2_header(pair)
+        header_rows = matrix[:5]
+        width = max((len(row) for row in header_rows), default=0)
+        for column_index in range(width):
+            combined = "".join(
+                cls._normalize_b2_header(row[column_index] if column_index < len(row) else "")
+                for row in header_rows
+            )
+            if normalized_pair in combined:
+                return column_index
+        return None
+
+    @staticmethod
+    def _normalize_b2_header(value: str | None) -> str:
+        return (
+            str(value or "")
+            .upper()
+            .replace("10P", "IOP")
+            .replace(" ", "")
+            .replace("(+)", "")
+            .replace("(-)", "")
+            .replace("_", "")
+        )
 
     @classmethod
     def _lookup_subtest_pair_critical(cls, first_code: str, second_code: str) -> float | None:
@@ -823,7 +963,7 @@ class WISC4PdfService:
         thresholds = cls._lookup_b5_thresholds(code, icv_iop_significant)
         if not thresholds:
             return "—"
-        diff = abs(difference)
+        diff = round(abs(difference), 2)
         one = thresholds.get("1%")
         two = thresholds.get("2%")
         five = thresholds.get("5%")
@@ -975,6 +1115,15 @@ class WISC4PdfService:
         if decimals > 0:
             text = text.rstrip("0").rstrip(",")
         return text
+
+    @classmethod
+    def _format_signed_number(cls, value, decimals: int = 0) -> str:
+        text = cls._format_number(value, decimals=decimals)
+        if text in {"—", "0", "0,0", "0,00"}:
+            return "0" if text != "—" else text
+        if text.startswith("-"):
+            return text
+        return f"+{text}"
 
     @staticmethod
     def _float(value) -> float | None:

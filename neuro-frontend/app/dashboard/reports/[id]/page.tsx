@@ -523,8 +523,10 @@ export default function ReportDetailPage() {
       link.download = `Laudo-${patientName || report.id}.docx`;
       document.body.appendChild(link);
       link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+      window.setTimeout(() => {
+        link.remove();
+        window.URL.revokeObjectURL(url);
+      }, 1000);
     } catch (err: any) {
       setError(err?.message || "Nao foi possivel exportar o laudo em DOCX.");
     }

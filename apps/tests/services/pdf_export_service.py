@@ -12,6 +12,7 @@ from apps.tests.bfp.config import FACTOR_DEFINITIONS, FACET_DEFINITIONS, SAMPLE_
 from apps.tests.ebadep_a.pdf_service import EBADEPAPdfService
 from apps.tests.fdt.pdf_service import FDTPdfService
 from apps.tests.ravlt.pdf_service import RAVLTPdfService
+from apps.tests.scared.pdf_service import SCAREDPdfService
 from apps.tests.srs2.pdf_service import SRS2PdfService
 from apps.tests.wais3.pdf_service import WAIS3PdfService
 from apps.tests.wisc4.pdf_service import WISC4PdfService
@@ -431,6 +432,14 @@ class SRS2PdfExporter(BaseTestPdfExporter):
         return SRS2PdfService.generate_pdf_bytes(application, report_type=report_type)
 
 
+class SCAREDPdfExporter(BaseTestPdfExporter):
+    instrument_code = "scared"
+
+    @classmethod
+    def build_pdf_bytes(cls, application) -> bytes:
+        return SCAREDPdfService.generate_pdf_bytes(application)
+
+
 class TestPdfExportService:
     EXPORTERS: dict[str, type[BaseTestPdfExporter]] = {
         BPA2PdfExporter.instrument_code: BPA2PdfExporter,
@@ -438,6 +447,7 @@ class TestPdfExportService:
         FDTPdfExporter.instrument_code: FDTPdfExporter,
         BFPPdfExporter.instrument_code: BFPPdfExporter,
         RAVLTPdfExporter.instrument_code: RAVLTPdfExporter,
+        SCAREDPdfExporter.instrument_code: SCAREDPdfExporter,
         SRS2PdfExporter.instrument_code: SRS2PdfExporter,
         WAIS3PdfExporter.instrument_code: WAIS3PdfExporter,
         WISC4PdfExporter.instrument_code: WISC4PdfExporter,

@@ -1,1966 +1,1129 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
-
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Relatório WAIS-III - NeuroAvalia</title>
-  <style>
-    :root {
-      --navy: #073763;
-      --navy-2: #0b3f6f;
-      --blue-soft: #dff1f8;
-      --blue-soft-2: #eef8fc;
-      --grid: #c7d6df;
-      --line: #8fa6b4;
-      --text: #17324d;
-      --page: #ffffff;
-      --azul-profundo: #123A5A;
-      --azul-petroleo: #1B7F8C;
-      --azul-claro: #27BBD0;
-      --cinza-texto: #6F8491;
-      --cinza-linha: #D6E2E8;
-      --margem-superior: 3cm;
-      --margem-esquerda: 2cm;
-      --margem-inferior: 2cm;
-      --margem-direita: 2cm;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    @page {
-      size: A4;
-      margin: 0;
-    }
-
-    html,
-    body {
-      margin: 0;
-      padding: 0;
-      background: #E9EEF2;
-      color: var(--text);
-      font-family: "Times New Roman", Times, serif;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
-
-    .page {
-      width: 210mm;
-      min-height: 297mm;
-      margin: 0 auto;
-      padding-top: var(--margem-superior);
-      padding-left: var(--margem-esquerda);
-      padding-right: var(--margem-direita);
-      padding-bottom: var(--margem-inferior);
-      background: var(--page);
-      position: relative;
-      page-break-after: always;
-      overflow: hidden;
-    }
-
-    .header-line {
-      border-top: 1.5px solid #1e2f3c;
-      padding-top: 6mm;
-    }
-
-    .report-header {
-      position: absolute;
-      top: 0.65cm;
-      left: var(--margem-esquerda);
-      right: var(--margem-direita);
-      height: 2.05cm;
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      border-bottom: 1px solid var(--cinza-linha);
-      background: #FFFFFF;
-    }
-
-    .report-header-gradient {
-      position: absolute;
-      top: 2.17cm;
-      left: 0;
-      right: 0;
-      height: 2.2px;
-      background: linear-gradient(90deg, var(--azul-profundo), var(--azul-petroleo), var(--azul-claro));
-    }
-
-    .report-header-logo {
-      height: 2.05cm;
-      display: flex;
-      align-items: center;
-      font-family: Arial, Helvetica, sans-serif;
-    }
-
-    .report-header-logo svg {
-      width: 5.8cm;
-      height: auto;
-      display: block;
-      overflow: visible;
-    }
-
-    .report-header-logo .logo-circle,
-    .report-header-logo .logo-circle::before,
-    .report-header-logo .logo-circle::after {
-      display: none;
-    }
-
-    .topbar {
-      display: grid;
-      grid-template-columns: 1fr 70mm;
-      gap: 10mm;
-      align-items: start;
-    }
-
-    .brand-main {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 34pt;
-      line-height: .9;
-      color: var(--navy);
-      font-weight: 800;
-      letter-spacing: -2px;
-    }
-
-    .brand-sub {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 6.5pt;
-      color: var(--navy);
-      font-weight: 700;
-      text-transform: uppercase;
-      max-width: 82mm;
-    }
-
-    .meta {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 6.8pt;
-      color: var(--navy);
-      display: grid;
-      grid-template-columns: 1fr 24mm;
-      row-gap: 3.2mm;
-      column-gap: 5mm;
-      font-weight: 700;
-      text-transform: uppercase;
-    }
-
-    .meta .value {
-      font-weight: 800;
-    }
-
-    .divider {
-      border-bottom: 1.5px solid #1e2f3c;
-      margin-top: 6mm;
-    }
-
-    .footer {
-      position: absolute;
-      left: var(--margem-esquerda);
-      right: var(--margem-direita);
-      bottom: 0.75cm;
-      height: 1cm;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-top: 1px solid var(--cinza-linha);
-      padding-top: 0.16cm;
-      background: #FFFFFF;
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 8pt;
-      color: var(--cinza-texto);
-      letter-spacing: 0.02em;
-      text-transform: none;
-    }
-
-    .footer-logo {
-      width: 50%;
-      min-width: 0;
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      color: var(--azul-profundo);
-      font-weight: 800;
-    }
-
-    .footer-logo span {
-      color: var(--azul-petroleo);
-    }
-
-    .footer-right {
-      width: 50%;
-      color: var(--cinza-texto);
-      text-align: right;
-      white-space: nowrap;
-      font-size: 8pt;
-    }
-
-    h1,
-    h2,
-    h3 {
-      font-family: Arial, Helvetica, sans-serif;
-      color: var(--navy);
-      margin: 0;
-    }
-
-    h1 {
-      font-size: 24pt;
-      margin: 8mm 0 5mm;
-    }
-
-    h2 {
-      font-size: 17pt;
-      margin: 7mm 0 4mm;
-    }
-
-    .neuro {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 18pt;
-      letter-spacing: 10px;
-      color: var(--navy);
-      font-weight: 800;
-      text-align: center;
-      margin-bottom: 13mm;
-    }
-
-    .wais-title {
-      font-family: Arial, Helvetica, sans-serif;
-      color: var(--navy);
-      font-size: 29pt;
-      font-weight: 800;
-      letter-spacing: 1px;
-      margin-bottom: 2mm;
-    }
-
-    $1 .cover {
-      padding: 0;
-      background: linear-gradient(135deg, #f8fbff, #ffffff 42%, #edf7ff);
-    }
-
-    .cover .cover-top {
-      position: absolute;
-      left: 13mm;
-      right: 13mm;
-      top: 13mm;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .cover-brand svg {
-      width: 42mm;
-      height: auto;
-      display: block;
-      overflow: visible;
-    }
-
-    .cover-small {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 8pt;
-      color: #66788f;
-      line-height: 1.25;
-      font-weight: 700;
-    }
-
-    .cover-title-block {
-      position: absolute;
-      left: 13mm;
-      top: 43mm;
-      width: 150mm;
-    }
-
-    .cover-kicker {
-      display: inline-block;
-      background: #e5f2ff;
-      color: #174b7b;
-      padding: 6px 10px;
-      border-radius: 8px;
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 8pt;
-      font-weight: 900;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-      margin-bottom: 7mm;
-    }
-
-    .cover-title-block h1 {
-      font-family: Georgia, "Times New Roman", serif;
-      color: var(--navy);
-      font-size: 64pt;
-      line-height: .96;
-      letter-spacing: -4px;
-      margin: 0 0 2mm;
-    }
-
-    .cover-title-block .cover-sub {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 22pt;
-      color: #174b7b;
-      font-weight: 900;
-    }
-
-    .cover-title-block::after {
-      content: "";
-      display: block;
-      width: 36mm;
-      height: 4px;
-      border-radius: 10px;
-      background: linear-gradient(90deg, var(--navy), #3b9ee5);
-      margin-top: 7mm;
-    }
-
-    .patient-card {
-      position: absolute;
-      left: 13mm;
-      right: 13mm;
-      top: 118mm;
-      background: rgba(255, 255, 255, .94);
-      border: 1px solid #d7e6f4;
-      border-radius: 22px;
-      box-shadow: 0 18px 46px rgba(11, 47, 91, .11);
-      padding: 18px 22px;
-      font-family: Arial, Helvetica, sans-serif;
-    }
-
-    .patient-card .title {
-      font-size: 21pt;
-      color: var(--navy);
-      font-weight: 900;
-      margin-bottom: 13px;
-      border-bottom: 1px solid #d7e6f4;
-      padding-bottom: 11px;
-    }
-
-    .data-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 13px 26px;
-    }
-
-    .data-grid span {
-      display: block;
-      font-size: 8pt;
-      color: #6a7e97;
-      text-transform: uppercase;
-      letter-spacing: .14em;
-      font-weight: 900;
-      margin-bottom: 4px;
-    }
-
-    .data-grid strong {
-      display: block;
-      color: var(--navy);
-      font-size: 11pt;
-      font-weight: 900;
-    }
-
-    .cover-note {
-      position: absolute;
-      left: 13mm;
-      right: 13mm;
-      bottom: 23mm;
-      border-radius: 16px;
-      background: #f7fbff;
-      border: 1px solid #d7e6f4;
-      padding: 12px 14px;
-      font-family: Arial, Helvetica, sans-serif;
-    }
-
-    .cover-note h3 {
-      margin: 0 0 2mm;
-      color: var(--navy);
-      font-size: 15pt;
-      line-height: 1.1;
-      font-weight: 300;
-    }
-
-    .cover-note p {
-      font-size: 10pt;
-      line-height: 1.38;
-      text-align: justify;
-      margin: 0;
-      color: #26364d;
-    }
-
-    .cover .footer {
-      left: var(--margem-esquerda);
-      right: var(--margem-direita);
-      bottom: 0.75cm;
-      border-top: 1px solid var(--cinza-linha);
-      padding-top: 0.16cm;
-      background: transparent;
-      color: var(--cinza-texto);
-      font-size: 8pt;
-      letter-spacing: 0.02em;
-      text-transform: none;
-    }
-
-    .cover-grid {
-      display: grid;
-      grid-template-columns: 52mm 1fr;
-      column-gap: 10mm;
-      margin-top: 12mm;
-    }
-
-    .cover-codes {
-      display: grid;
-      gap: 6mm;
-      font-family: Arial, Helvetica, sans-serif;
-      color: var(--navy);
-      font-size: 8pt;
-      font-weight: 800;
-      text-transform: uppercase;
-    }
-
-    .cover-codes .big {
-      font-size: 11pt;
-      margin-top: 1mm;
-      color: var(--text);
-    }
-
-    .info-list {
-      display: grid;
-      grid-template-columns: 38mm 1fr;
-      row-gap: 3.8mm;
-      font-size: 11pt;
-    }
-
-    .label-spaced {
-      font-family: Arial, Helvetica, sans-serif;
-      color: var(--navy);
-      font-size: 8pt;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 5px;
-    }
-
-    .section-text {
-      display: grid;
-      grid-template-columns: 34mm 1fr;
-      gap: 6mm;
-      margin-top: 7mm;
-      font-size: 10.3pt;
-      line-height: 1.35;
-      text-align: justify;
-    }
-
-    .section-text .side-title {
-      font-family: Arial, Helvetica, sans-serif;
-      color: var(--navy);
-      font-weight: 800;
-      font-size: 10pt;
-    }
-
-    .results-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 5mm;
-      align-items: stretch;
-      grid-template-areas:
-        "top top"
-        "middle middle"
-        "left right";
-    }
-
-    .results-page h1 {
-      margin: 0 0 3mm;
-    }
-
-    .results-page .results-grid {
-      gap: 3mm;
-      break-inside: avoid;
-      page-break-inside: avoid;
-    }
-
-    .results-page .area-top {
-      width: 125mm;
-      margin-bottom: 0;
-    }
-
-    .results-page .card>table,
-    .results-page .card>.wais-profile-two,
-    .results-page .card>.wais-ruler {
-      margin: 2.2mm;
-      width: calc(100% - 4.4mm);
-    }
-
-    .results-page .card-title {
-      font-size: 7.8pt;
-      padding: 1.35mm 2mm;
-    }
-
-    .results-page table {
-      font-size: 5.9pt;
-    }
-
-    .results-page th {
-      font-size: 5.8pt;
-    }
-
-    .results-page th,
-    .results-page td {
-      padding: .75mm .85mm;
-    }
-
-    .results-page .wais-ruler {
-      height: 102mm;
-    }
-
-    .results-page .mini-grid-chart {
-      height: 92mm;
-    }
-
-    .results-page .mini-heads {
-      height: 6mm;
-      font-size: 5.7pt;
-    }
-
-    .results-page .mini-y,
-    .results-page .ruler-scale,
-    .results-page .ruler-labels {
-      font-size: 5.55pt;
-    }
-
-    .area-left,
-    .area-right {
-      width: 100%;
-      min-width: 0;
-    }
-
-    .area-top {
-      grid-area: top;
-      width: 110mm;
-      margin: 0 auto 2mm;
-    }
-
-    .area-middle {
-      grid-area: middle;
-      width: 100%;
-    }
-
-    .area-left {
-      grid-area: left;
-      align-self: stretch;
-    }
-
-    .area-right {
-      grid-area: right;
-      align-self: stretch;
-    }
-
-    .card {
-      border: 1px solid #c8d7e0;
-      border-radius: 10px;
-      padding: 0;
-      background: #fff;
-      overflow: hidden;
-      break-inside: avoid;
-      page-break-inside: avoid;
-    }
-
-    .card>table,
-    .card>.wais-profile-two,
-    .card>.wais-ruler {
-      margin: 3mm;
-      width: calc(100% - 6mm);
-    }
-
-    .card-title {
-      background: var(--navy);
-      color: #fff;
-      font-family: Arial, Helvetica, sans-serif;
-      font-weight: 800;
-      font-size: 8.2pt;
-      line-height: 1.15;
-      text-align: left;
-      padding: 1.7mm 2.3mm;
-      margin: 0;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-family: Arial, Helvetica, sans-serif;
-      color: var(--text);
-      font-size: 6.2pt;
-    }
-
-    th,
-    td {
-      border: .7px solid var(--line);
-      padding: 1mm 1.1mm;
-      text-align: center;
-      vertical-align: middle;
-      line-height: 1.1;
-    }
-
-    th {
-      background: var(--blue-soft);
-      color: var(--navy);
-      font-weight: 800;
-      font-size: 6.1pt;
-    }
-
-    td:first-child,
-    th:first-child {
-      text-align: left;
-      font-weight: 700;
-    }
-
-    .blue-cell {
-      background: var(--blue-soft);
-    }
-
-    .sum-row td {
-      background: #f6fbfd;
-      font-weight: 800;
-    }
-
-    .sep-left {
-      border-left: 2px solid #8298a6 !important;
-    }
-
-    .chart-box {
-      border: 1px solid var(--line);
-      background: #fff;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .subtest-chart {
-      height: 102mm;
-      display: grid;
-      grid-template-columns: 7mm 1fr;
-      grid-template-rows: 13mm 1fr;
-      border: 1px solid var(--line);
-    }
-
-    .subtest-groups {
-      grid-column: 2;
-      display: grid;
-      grid-template-columns: 5fr 4fr 3fr 3fr;
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 5.6pt;
-      font-weight: 800;
-      color: var(--navy);
-      text-align: center;
-      background: #fff;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .subtest-groups span {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-left: 1px solid var(--line);
-    }
-
-    .subtest-groups span:first-child {
-      border-left: 0;
-    }
-
-    .subtest-heads {
-      position: absolute;
-      left: 10mm;
-      right: 3mm;
-      top: 8mm;
-      height: 5mm;
-      display: grid;
-      grid-template-columns: repeat(15, 1fr);
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 5.7pt;
-      font-weight: 800;
-      color: var(--navy);
-      text-align: center;
-      align-items: center;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .y-axis {
-      grid-column: 1;
-      grid-row: 2;
-      display: grid;
-      grid-template-rows: repeat(19, 1fr);
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 6pt;
-      color: var(--navy);
-      text-align: center;
-      border-right: 1px solid var(--line);
-    }
-
-    .y-axis span {
-      border-bottom: 1px solid var(--grid);
-      padding-top: .7mm;
-    }
-
-    .subtest-body {
-      grid-column: 2;
-      grid-row: 2;
-      position: relative;
-      background-image:
-        linear-gradient(to bottom, transparent 42.1%, rgba(151, 206, 230, .28) 42.1%, rgba(151, 206, 230, .28) 57.9%, transparent 57.9%),
-        repeating-linear-gradient(to bottom, transparent 0, transparent calc(100% / 19 - 1px), var(--grid) calc(100% / 19)),
-        repeating-linear-gradient(to right, transparent 0, transparent calc(100% / 15 - 1px), var(--grid) calc(100% / 15));
-    }
-
-    .domain-line {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      width: 1.5px;
-      background: #7f9aaa;
-    }
-
-    .dl1 {
-      left: 33.33%;
-    }
-
-    .dl2 {
-      left: 60%;
-    }
-
-    .dl3 {
-      left: 80%;
-    }
-
-    .dot {
-      width: 4.5px;
-      height: 4.5px;
-      border-radius: 50%;
-      background: #1976a2;
-      position: absolute;
-      transform: translate(-50%, -50%);
-    }
-
-    .s1 {
-      left: 3.33%;
-      top: 31%;
-    }
-
-    .s2 {
-      left: 10%;
-      top: 31%;
-    }
-
-    .s3 {
-      left: 16.66%;
-      top: 26%;
-    }
-
-    .s4 {
-      left: 23.33%;
-      top: 29%;
-    }
-
-    .s5 {
-      left: 30%;
-      top: 33%;
-    }
-
-    .s6 {
-      left: 36.66%;
-      top: 28%;
-    }
-
-    .s7 {
-      left: 43.33%;
-      top: 30%;
-    }
-
-    .s8 {
-      left: 50%;
-      top: 35%;
-    }
-
-    .s9 {
-      left: 56.66%;
-      top: 39%;
-    }
-
-    .s10 {
-      left: 63.33%;
-      top: 43%;
-    }
-
-    .s11 {
-      left: 70%;
-      top: 45%;
-    }
-
-    .s12 {
-      left: 76.66%;
-      top: 46%;
-    }
-
-    .s13 {
-      left: 83.33%;
-      top: 52%;
-    }
-
-    .s14 {
-      left: 90%;
-      top: 50%;
-    }
-
-    .s15 {
-      left: 96.66%;
-      top: 48%;
-    }
-
-    .compound-chart {
-      height: 86mm;
-      display: grid;
-      grid-template-columns: 10mm 1fr;
-      grid-template-rows: 12mm 1fr;
-      border: 1px solid var(--line);
-      position: relative;
-    }
-
-    .compound-heads {
-      grid-column: 2;
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      background: #fff;
-      border-bottom: 1px solid var(--line);
-      font-family: Arial, Helvetica, sans-serif;
-      color: var(--navy);
-      font-weight: 800;
-      font-size: 6.3pt;
-      text-align: center;
-      align-items: center;
-    }
-
-    .compound-values {
-      position: absolute;
-      left: 10mm;
-      right: 0;
-      top: 6mm;
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      font-family: Arial, Helvetica, sans-serif;
-      color: var(--navy);
-      font-weight: 800;
-      font-size: 6.2pt;
-      text-align: center;
-      background: var(--blue-soft);
-      height: 6mm;
-      align-items: center;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .compound-y {
-      grid-column: 1;
-      grid-row: 2;
-      display: grid;
-      grid-template-rows: repeat(13, 1fr);
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 6pt;
-      color: var(--navy);
-      text-align: center;
-      border-right: 1px solid var(--line);
-    }
-
-    .compound-y span {
-      border-bottom: 1px solid var(--grid);
-      padding-top: .7mm;
-    }
-
-    .compound-body {
-      grid-column: 2;
-      grid-row: 2;
-      position: relative;
-      background-image:
-        linear-gradient(to bottom, transparent 38.5%, rgba(151, 206, 230, .28) 38.5%, rgba(151, 206, 230, .28) 53.9%, transparent 53.9%),
-        repeating-linear-gradient(to bottom, transparent 0, transparent calc(100% / 13 - 1px), var(--grid) calc(100% / 13)),
-        repeating-linear-gradient(to right, transparent 0, transparent calc(100% / 7 - 1px), var(--grid) calc(100% / 7));
-    }
-
-    .c1 {
-      left: 7.14%;
-      top: 38%;
-    }
-
-    .c2 {
-      left: 21.42%;
-      top: 50%;
-    }
-
-    .c3 {
-      left: 35.71%;
-      top: 45%;
-    }
-
-    .c4 {
-      left: 50%;
-      top: 36%;
-    }
-
-    .c5 {
-      left: 64.28%;
-      top: 48%;
-    }
-
-    .c6 {
-      left: 78.57%;
-      top: 49%;
-    }
-
-    .c7 {
-      left: 92.85%;
-      top: 61%;
-    }
-
-    .analysis-block {
-      border: 1px solid #c8d7e0;
-      border-radius: 10px;
-      overflow: hidden;
-      margin-bottom: 4mm;
-      break-inside: avoid;
-      page-break-inside: avoid;
-    }
-
-    .analysis-title {
-      background: var(--navy);
-      color: #fff;
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 8.2pt;
-      font-weight: 800;
-      line-height: 1.15;
-      padding: 1.7mm 2.3mm;
-    }
-
-    .analysis-block table {
-      font-size: 6.2pt;
-    }
-
-    .analysis-block.cluster-table table {
-      table-layout: fixed;
-      font-size: 6pt;
-    }
-
-    .analysis-block.cluster-table th,
-    .analysis-block.cluster-table td {
-      padding: .9mm 1mm;
-    }
-
-    .analysis-block.cluster-table .abbr {
-      color: var(--navy);
-      font-weight: 800;
-      white-space: nowrap;
-      text-align: center;
-    }
-
-    .analysis-block.cluster-table .classification-high {
-      background: #e7f8ec;
-      color: #1b7f3a;
-      font-weight: 800;
-    }
-
-    .analysis-block.cluster-table .not-interpretable {
-      background: #fff4c2;
-      color: #b00000;
-      font-weight: 900;
-    }
-
-    .analysis-block.cluster-table .negative {
-      background: #d92525;
-      color: #fff;
-      font-weight: 900;
-    }
-
-    .analysis-block.cluster-table .relation {
-      color: var(--navy);
-      font-size: 7.4pt;
-      font-weight: 900;
-      text-align: center;
-    }
-
-    .mini-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 5mm;
-    }
-
-    .wais-profile-two {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 5mm;
-    }
-
-    .mini-profile {
-      border: 1px solid var(--line);
-      overflow: hidden;
-      background: #fff;
-    }
-
-    .mini-profile-title {
-      background: var(--blue-soft);
-      color: var(--navy);
-      font-family: Arial, Helvetica, sans-serif;
-      font-weight: 800;
-      font-size: 7pt;
-      text-align: center;
-      padding: 1.6mm;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .mini-heads {
-      display: grid;
-      grid-template-columns: 7mm repeat(7, 1fr);
-      height: 6mm;
-      align-items: center;
-      border-bottom: 1px solid var(--line);
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 6pt;
-      color: var(--navy);
-      text-align: center;
-    }
-
-    .mini-heads>* {
-      border-left: 1px solid var(--grid);
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .mini-heads>*:first-child {
-      border-left: 0;
-    }
-
-    .mini-grid-chart {
-      display: grid;
-      grid-template-columns: 7mm 1fr;
-      height: 92mm;
-    }
-
-    .mini-y {
-      display: grid;
-      grid-template-rows: repeat(19, 1fr);
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 6pt;
-      color: var(--navy);
-      text-align: center;
-      border-right: 1px solid var(--line);
-    }
-
-    .mini-y span {
-      border-bottom: 1px solid var(--grid);
-      padding-top: .6mm;
-    }
-
-    .mini-body {
-      position: relative;
-      background-image:
-        linear-gradient(to bottom, transparent 42.1%, rgba(151, 206, 230, .28) 42.1%, rgba(151, 206, 230, .28) 52.6%, transparent 52.6%),
-        repeating-linear-gradient(to bottom, transparent 0, transparent calc(100% / 19 - 1px), var(--grid) calc(100% / 19)),
-        repeating-linear-gradient(to right, transparent 0, transparent calc(100% / 7 - 1px), var(--grid) calc(100% / 7));
-    }
-
-    .dot-standard {
-      width: 3.1mm;
-      height: 3.1mm;
-      border-radius: 50%;
-      background: #1c95c3;
-      border: .45mm solid #ffffff;
-      box-shadow: 0 0 0 .35px #1976a2;
-      position: absolute;
-      transform: translate(-50%, -50%);
-    }
-
-    .v1 {
-      left: 7.14%;
-      top: 28.95%
-    }
-
-    .v2 {
-      left: 21.42%;
-      top: 23.68%
-    }
-
-    .v3 {
-      left: 35.71%;
-      top: 28.95%
-    }
-
-    .v4 {
-      left: 50%;
-      top: 34.21%
-    }
-
-    .v5 {
-      left: 64.28%;
-      top: 44.74%
-    }
-
-    .v6 {
-      left: 78.57%;
-      top: 39.47%
-    }
-
-    .v7 {
-      left: 92.85%;
-      top: 50%
-    }
-
-    .e1 {
-      left: 7.14%;
-      top: 50%
-    }
-
-    .e2 {
-      left: 21.42%;
-      top: 44.74%
-    }
-
-    .e3 {
-      left: 35.71%;
-      top: 39.47%
-    }
-
-    .e4 {
-      left: 50%;
-      top: 34.21%
-    }
-
-    .e5 {
-      left: 64.28%;
-      top: 55.26%
-    }
-
-    .e6 {
-      left: 78.57%;
-      top: 50%
-    }
-
-    .e7 {
-      left: 92.85%;
-      top: 44.74%
-    }
-
-    .wais-ruler {
-      display: grid;
-      grid-template-columns: 7mm repeat(7, minmax(0, 1fr));
-      grid-template-rows: 7mm 1fr;
-      height: 105mm;
-      border: 1px solid var(--line);
-      padding: 2mm;
-      column-gap: 2mm;
-    }
-
-    .ruler-labels {
-      grid-column: 1 / -1;
-      display: grid;
-      grid-template-columns: 7mm repeat(7, minmax(0, 1fr));
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 6.2pt;
-      color: var(--navy);
-      text-align: center;
-      align-items: center;
-    }
-
-    .ruler-scale {
-      display: grid;
-      grid-template-rows: repeat(23, 1fr);
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 6pt;
-      color: var(--navy);
-      text-align: right;
-      padding-right: 1mm;
-    }
-
-    .ruler-col {
-      position: relative;
-      background: linear-gradient(to right, transparent calc(50% - .5px), #86b8ce calc(50% - .5px), #86b8ce calc(50% + .5px), transparent calc(50% + .5px));
-    }
-
-    .ruler-col::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: calc(50% - 3mm);
-      width: 6mm;
-      background:
-        linear-gradient(#86b8ce, #86b8ce) bottom / 100% .35mm no-repeat,
-        repeating-linear-gradient(to bottom, #86b8ce 0, #86b8ce .35mm, transparent .35mm, transparent calc(100% / 22));
-    }
-
-    .ruler-col::after {
-      content: "";
-      position: absolute;
-      left: 50%;
-      top: var(--score, 45%);
-      width: 5.6mm;
-      height: 1.1mm;
-      background: #1976a2;
-      border-radius: 999px;
-      transform: translate(-50%, -50%);
-    }
-
-    .rc1 {
-      --score: 38%
-    }
-
-    .rc2 {
-      --score: 50%
-    }
-
-    .rc3 {
-      --score: 45%
-    }
-
-    .rc4 {
-      --score: 36%
-    }
-
-    .rc5 {
-      --score: 48%
-    }
-
-    .rc6 {
-      --score: 49%
-    }
-
-    .rc7 {
-      --score: 61%
-    }
-
-    .clinical-title,
-    .summary-title {
-      font-family: Arial, Helvetica, sans-serif;
-      color: var(--navy);
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 3px;
-    }
-
-    .clinical-title {
-      font-size: 17pt;
-      margin: 9mm 0 5mm;
-    }
-
-    .summary-title {
-      font-size: 15pt;
-      margin: 8mm 0 5mm;
-    }
-
-    .clinical {
-      margin-top: 8mm;
-      font-size: 11pt;
-      line-height: 1.42;
-      text-align: justify;
-    }
-
-    .clinical p {
-      margin: 0 0 4mm;
-    }
-
-    .note-box {
-      background: #f3f8fc;
-      border-left: 4px solid var(--navy);
-      padding: 4mm;
-      border-radius: 8px;
-      font-size: 10.8pt;
-      text-align: justify;
-    }
-
-    .clinical-page {
-      padding-bottom: 18mm;
-    }
-
-    .clinical-title,
-    .summary-title {
-      break-after: avoid;
-      page-break-after: avoid;
-    }
-
-    .clinical p,
-    .note-box {
-      break-inside: avoid;
-      page-break-inside: avoid;
-    }
-
-    @media print {
-      body {
-        background: #fff;
-      }
-
-      .page {
-        margin: 0;
-        box-shadow: none;
-      }
-    }
-
-    @media screen {
-      .page {
-        margin: 18px auto;
-        box-shadow: 0 18px 48px rgba(18, 58, 90, 0.16);
-      }
-    }
-  </style>
-</head>
-
-<body>
-  <section class="page cover">
-    <div class="cover-top">
-      <div class="cover-brand">
-        <svg viewBox="0 0 760 210" xmlns="http://www.w3.org/2000/svg" aria-label="Neuroavalia Logo">
-          <g transform="translate(100 105)">
-            <line x1="0" y1="0" x2="-46" y2="-48" stroke="#9EB4C2" stroke-width="1.8" />
-            <line x1="0" y1="0" x2="18" y2="-62" stroke="#9EB4C2" stroke-width="1.8" />
-            <line x1="0" y1="0" x2="58" y2="-42" stroke="#9EB4C2" stroke-width="1.8" />
-            <line x1="0" y1="0" x2="68" y2="4" stroke="#9EB4C2" stroke-width="1.8" />
-            <line x1="0" y1="0" x2="34" y2="56" stroke="#9EB4C2" stroke-width="1.8" />
-            <line x1="0" y1="0" x2="-32" y2="54" stroke="#9EB4C2" stroke-width="1.8" />
-            <line x1="0" y1="0" x2="-66" y2="12" stroke="#9EB4C2" stroke-width="1.8" />
-            <path d="M-46 -48 L18 -62 L58 -42 L68 4 L34 56 L-32 54 L-66 12 Z" fill="none" stroke="#D6E2E8"
-              stroke-width="1.6" stroke-linejoin="round" />
-            <path d="M-46 -48 C-20 -72, 25 -84, 58 -42" fill="none" stroke="#D6E2E8" stroke-width="1.4"
-              stroke-linecap="round" />
-            <path d="M-66 12 C-42 38, -5 70, 34 56" fill="none" stroke="#D6E2E8" stroke-width="1.4"
-              stroke-linecap="round" />
-            <circle cx="0" cy="0" r="8.5" fill="#123A5A" />
-            <circle cx="-46" cy="-48" r="7" fill="#CBD6DE" />
-            <circle cx="18" cy="-62" r="7" fill="#27BBD0" />
-            <circle cx="58" cy="-42" r="7" fill="#CBD6DE" />
-            <circle cx="68" cy="4" r="7" fill="#123A5A" />
-            <circle cx="34" cy="56" r="7" fill="#CBD6DE" />
-            <circle cx="-32" cy="54" r="7" fill="#27BBD0" />
-            <circle cx="-66" cy="12" r="7" fill="#CBD6DE" />
-            <circle cx="1" cy="-35" r="4" fill="#D6E2E8" />
-            <circle cx="38" cy="-7" r="4" fill="#D6E2E8" />
-            <circle cx="8" cy="36" r="4" fill="#D6E2E8" />
-            <circle cx="-36" cy="-8" r="4" fill="#D6E2E8" />
-          </g>
-          <text x="220" y="112" font-family="Arial, Helvetica, sans-serif" font-size="62" font-weight="700"
-            letter-spacing="-1.8">
-            <tspan fill="#123A5A">Neuro</tspan>
-            <tspan fill="#1B7F8C">avalia</tspan>
-          </text>
-          <text x="224" y="144" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="600"
-            letter-spacing="3" fill="#7E929F">AVALIAÇÃO NEUROPSICOLÓGICA</text>
-        </svg>
-      </div>
-      <div class="cover-small">Relatório técnico completo</div>
-    </div>
-
-    <div class="cover-title-block">
-      <span class="cover-kicker">Escala Wechsler de Inteligência</span>
-      <h1>WAIS-III</h1>
-      <div class="cover-sub">Relatório Técnico Completo</div>
-    </div>
-
-    <div class="patient-card">
-      <div class="title">Dados do avaliado</div>
-      <div class="data-grid">
-        <div><span>Nome</span><strong>Nome do Avaliado</strong></div>
-        <div><span>Sexo</span><strong>Masculino</strong></div>
-        <div><span>Idade</span><strong>32 anos e 4 meses</strong></div>
-        <div><span>Escolaridade</span><strong>Ensino superior completo</strong></div>
-        <div><span>Profissional</span><strong>Andre Alekhine</strong></div>
-        <div><span>Tabela normativa</span><strong>WAIS-III / Brasil / Faixa etária correspondente</strong></div>
-        <div><span>Código do avaliado</span><strong>AVL-102</strong></div>
-        <div><span>Data da aplicação</span><strong>13/05/2026</strong></div>
-      </div>
-    </div>
-
-    <div class="cover-note">
-      <h3>Finalidade do relatório técnico</h3>
-      <p>Este documento apresenta os resultados psicométricos do WAIS-III, incluindo quocientes intelectuais, índices
-        fatoriais, perfil dos subtestes, comparações entre discrepâncias e interpretação clínica. Os achados devem ser
-        interpretados por profissional habilitado e integrados à entrevista clínica, observações comportamentais,
-        histórico funcional e demais instrumentos utilizados na avaliação neuropsicológica.</p>
-    </div>
-
-    <div class="footer"><span>NeuroAvalia · WAIS-III Técnico</span><span>PÁGINA 1 DE 4</span></div>
-  </section>
-
-  <section class="page results-page">
-    <div class="report-header">
-      <div class="report-header-gradient"></div>
-      <div class="report-header-logo">
-        <svg viewBox="0 0 760 210" xmlns="http://www.w3.org/2000/svg" aria-label="Neuroavalia Logo">
-          <g transform="translate(100 105)">
-            <line x1="0" y1="0" x2="-46" y2="-48" stroke="#9EB4C2" stroke-width="1.8" />
-            <line x1="0" y1="0" x2="18" y2="-62" stroke="#9EB4C2" stroke-width="1.8" />
-            <line x1="0" y1="0" x2="58" y2="-42" stroke="#9EB4C2" stroke-width="1.8" />
-            <line x1="0" y1="0" x2="68" y2="4" stroke="#9EB4C2" stroke-width="1.8" />
-            <line x1="0" y1="0" x2="34" y2="56" stroke="#9EB4C2" stroke-width="1.8" />
-            <line x1="0" y1="0" x2="-32" y2="54" stroke="#9EB4C2" stroke-width="1.8" />
-            <line x1="0" y1="0" x2="-66" y2="12" stroke="#9EB4C2" stroke-width="1.8" />
-
-            <path d="M-46 -48 L18 -62 L58 -42 L68 4 L34 56 L-32 54 L-66 12 Z" fill="none" stroke="#D6E2E8"
-              stroke-width="1.6" stroke-linejoin="round" />
-
-            <path d="M-46 -48 C-20 -72, 25 -84, 58 -42" fill="none" stroke="#D6E2E8" stroke-width="1.4"
-              stroke-linecap="round" />
-
-            <path d="M-66 12 C-42 38, -5 70, 34 56" fill="none" stroke="#D6E2E8" stroke-width="1.4"
-              stroke-linecap="round" />
-
-            <circle cx="0" cy="0" r="8.5" fill="#123A5A" />
-            <circle cx="-46" cy="-48" r="7" fill="#CBD6DE" />
-            <circle cx="18" cy="-62" r="7" fill="#27BBD0" />
-            <circle cx="58" cy="-42" r="7" fill="#CBD6DE" />
-            <circle cx="68" cy="4" r="7" fill="#123A5A" />
-            <circle cx="34" cy="56" r="7" fill="#CBD6DE" />
-            <circle cx="-32" cy="54" r="7" fill="#27BBD0" />
-            <circle cx="-66" cy="12" r="7" fill="#CBD6DE" />
-
-            <circle cx="1" cy="-35" r="4" fill="#D6E2E8" />
-            <circle cx="38" cy="-7" r="4" fill="#D6E2E8" />
-            <circle cx="8" cy="36" r="4" fill="#D6E2E8" />
-            <circle cx="-36" cy="-8" r="4" fill="#D6E2E8" />
-          </g>
-
-          <text x="220" y="112" font-family="Arial, Helvetica, sans-serif" font-size="62" font-weight="700"
-            letter-spacing="-1.8">
-            <tspan fill="#123A5A">Neuro</tspan>
-            <tspan fill="#1B7F8C">avalia</tspan>
-          </text>
-        </svg>
-      </div>
-    </div>
-
-    <h1>Resultados</h1>
-
-    <div class="results-grid">
-      <div class="card area-top">
-        <div class="card-title">QI / Índices Fatoriais</div>
-        <table>
-          <thead>
-            <tr>
-              <th>QI / Índices Fatoriais</th>
-              <th>QIV</th>
-              <th>QIE</th>
-              <th>QIT</th>
-              <th class="sep-left">ICV</th>
-              <th>IOP</th>
-              <th>IMO</th>
-              <th>IVP</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Soma dos escores ponderados</td>
-              <td>81</td>
-              <td>69</td>
-              <td>150</td>
-              <td class="sep-left">50</td>
-              <td>43</td>
-              <td>30</td>
-              <td>17</td>
-            </tr>
-            <tr>
-              <td>QI / Índices Fatoriais</td>
-              <td>110</td>
-              <td>98</td>
-              <td>105</td>
-              <td class="sep-left">112</td>
-              <td>101</td>
-              <td>100</td>
-              <td>89</td>
-            </tr>
-            <tr>
-              <td>Percentil</td>
-              <td>75</td>
-              <td>45</td>
-              <td>63</td>
-              <td class="sep-left">79</td>
-              <td>53</td>
-              <td>50</td>
-              <td>23</td>
-            </tr>
-            <tr>
-              <td>Intervalo de Confiança 95%</td>
-              <td>104-115</td>
-              <td>92-104</td>
-              <td>100-110</td>
-              <td class="sep-left">105-118</td>
-              <td>94-108</td>
-              <td>93-107</td>
-              <td>82-98</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="card area-right">
-        <div class="card-title">Perfil dos Quocientes Intelectuais e Índices Fatoriais</div>
-        <div class="wais-ruler">
-          <div class="ruler-labels"><span></span><b>QIV</b><b>QIE</b><b>QIT</b><b>ICV</b><b>IOP</b><b>IMO</b><b>IVP</b>
-          </div>
-          <div class="ruler-scale">
-            <span>155</span><span>150</span><span>145</span><span>140</span><span>135</span><span>130</span><span>125</span><span>120</span><span>115</span><span>110</span><span>105</span><span>100</span><span>95</span><span>90</span><span>85</span><span>80</span><span>75</span><span>70</span><span>65</span><span>60</span><span>55</span><span>50</span><span>45</span>
-          </div>
-          <div class="ruler-col rc1"></div>
-          <div class="ruler-col rc2"></div>
-          <div class="ruler-col rc3"></div>
-          <div class="ruler-col rc4"></div>
-          <div class="ruler-col rc5"></div>
-          <div class="ruler-col rc6"></div>
-          <div class="ruler-col rc7"></div>
+
+<html lang="pt-BR"><head><meta charset="utf-8"/><title>Relatório WAIS-III - NeuroAvalia</title><style>
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; }
+html, body { margin:0; padding:0; background:#eef4f7; font-family: Arial, Helvetica, sans-serif; color:#0f2538; }
+.page { width:210mm; height:297mm; position:relative; margin:0 auto; background:#FFFFFF; padding:30mm 20mm 34mm 20mm; overflow:hidden; break-after:page; }
+.page:last-child { break-after:auto; }
+
+@media screen {
+  body { padding: 12mm 0; }
+  .page { margin: 0 auto 14mm auto; box-shadow: 0 14px 42px rgba(18,58,90,.12); }
+  .page:last-child { margin-bottom: 0; }
+}
+@media print {
+  html, body { background:#FFFFFF; }
+  .page { margin:0 auto; box-shadow:none; break-after:page; }
+  .page:last-child { break-after:auto; }
+}
+.page-header { position:absolute; top:9mm; left:20mm; right:20mm; height:21mm; display:flex; align-items:center; justify-content:flex-start; border-bottom:1.2px solid #CBD6DE; padding-bottom:4mm; }
+.logo-small { display:none !important; }
+.logo-small svg { width:44mm; height:auto; display:block; }
+.logo-small .preview, .logo-cover .preview { box-shadow:none !important; padding:0 !important; border-radius:0 !important; background:transparent !important; }
+.logo-small svg text:nth-of-type(2) { display:none; }
+.logo-cover svg { width:68mm; height:auto; display:block; }
+.header-meta { display:none; }
+.header-meta strong { display:block; color:#123A5A; font-size:8pt; margin-bottom:1mm; }
+.page-footer { position:absolute; bottom:20mm; left:20mm; right:20mm; display:flex; align-items:center; justify-content:space-between; color:#6f8190; font-size:8pt; border-top:1px solid #E3EBEF; padding-top:3mm; }
+.page-footer strong { color:#123A5A; }
+main { position:relative; z-index:1; }
+h1.page-title { margin:0 0 3mm 0; font-size:23pt; color:#123A5A; line-height:1; letter-spacing:-.03em; }
+h1, h2, h3, p { margin-top:0; }
+p { font-size:10.2pt; line-height:1.52; color:#273f51; text-align:justify; }
+.cover-hero { margin-top:2mm; }
+.eyebrow { margin-top:4mm; font-size:9pt; text-transform:uppercase; letter-spacing:.22em; color:#1B7F8C; font-weight:700; }
+.cover-hero h1 { width:100%; margin:4mm 0 2mm; font-size:16pt; line-height:1.05; color:#123A5A; letter-spacing:-.04em; white-space:nowrap; }
+.test-badge { display:inline-flex; align-items:center; justify-content:center; min-width:38mm; height:13mm; padding:0 7mm; background:#123A5A; color:white; font-weight:800; font-size:18pt; border-radius:8mm; letter-spacing:.03em; }
+.lead { max-width:145mm; margin-top:5mm; font-size:10.5pt; color:#435667; }
+.panel { background:#fff; border:1px solid #D8E3E9; border-radius:10px; padding:3.2mm; margin:0 0 2.6mm; box-shadow:0 5px 18px rgba(18,58,90,.06); }
+.panel h2 { margin:-3.2mm -3.2mm 2.1mm; padding:2.0mm 3.0mm; background:#123A5A; color:#fff; border-radius:9px 9px 0 0; font-size:10pt; line-height:1.1; letter-spacing:.02em; }
+.patient-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:3mm; }
+.info { min-height:18mm; padding:3mm; background:#F4F8FA; border:1px solid #DCE8ED; border-radius:8px; }
+.info span { display:block; font-size:6.8pt; line-height:1.1; text-transform:uppercase; letter-spacing:.13em; color:#1B7F8C; font-weight:800; margin-bottom:1.8mm; }
+.info strong { display:block; font-size:9.3pt; line-height:1.25; color:#123A5A; }
+.purpose { margin-top:4mm; }
+.score-strip { display:grid; grid-template-columns:repeat(7,1fr); gap:2.0mm; margin-bottom:2.5mm; }
+.score-card { background:#123A5A; color:white; border-radius:10px; padding:2.2mm 1.8mm; text-align:center; }
+.score-card span { display:block; font-size:7.4pt; color:#C7F2F8; font-weight:800; }
+.score-card strong { display:block; font-size:16pt; line-height:1; margin:1.2mm 0; }
+.score-card em { display:block; font-style:normal; font-size:7pt; color:#DCECEF; }
+.two-col { display:grid; grid-template-columns:1fr 1fr; gap:3mm; align-items:start; }
+.top-align { grid-template-columns:1.05fr .95fr; }
+.subtest-row { grid-template-columns:1fr 1fr; }
+.data-table { width:100%; border-collapse:separate; border-spacing:0; font-size:6.8pt; overflow:hidden; border-radius:7px; border:1px solid #BED0DA; }
+.data-table th { background:#E6F3F7; color:#123A5A; font-weight:800; text-align:center; padding:1.4mm 1mm; border-right:1px solid #CADAE2; border-bottom:1px solid #B8CBD5; }
+.data-table td { padding:1.15mm 1mm; border-right:1px solid #D5E1E7; border-bottom:1px solid #D5E1E7; text-align:center; vertical-align:middle; }
+.data-table td:first-child, .data-table th:first-child { text-align:left; font-weight:700; }
+.data-table tr:last-child td { border-bottom:0; }
+.data-table td:last-child, .data-table th:last-child { border-right:0; }
+.compact td, .compact th { padding:.95mm .8mm; }
+.matrix td:first-child, .matrix th:first-child { width:37mm; }
+.tiny { font-size:6.15pt; }
+.ultra { font-size:5.55pt; }
+.ultra td, .ultra th { padding:.78mm .5mm; }
+
+.comparison-table-wrapper { width:100%; overflow:hidden; border:1px solid #BED0DA; border-radius:0 0 7px 7px; background:#FFFFFF; break-inside:avoid; page-break-inside:avoid; }
+.comparison-table { width:100%; border-collapse:collapse; table-layout:fixed; font-family:Arial,Helvetica,sans-serif; font-size:5.55pt; color:#123A5A; }
+.comparison-table col.col-comparison { width:24%; }
+.comparison-table col.col-pc1-name { width:9.7%; }
+.comparison-table col.col-pc1-value { width:6.7%; }
+.comparison-table col.col-pc2-name { width:9.5%; }
+.comparison-table col.col-pc2-value { width:6.7%; }
+.comparison-table col.col-difference { width:7.8%; }
+.comparison-table col.col-critical { width:7.7%; }
+.comparison-table col.col-rarity { width:11.6%; }
+.comparison-table col.col-direction-left { width:6.7%; }
+.comparison-table col.col-direction-symbol { width:2.8%; }
+.comparison-table col.col-direction-right { width:6.8%; }
+.comparison-table th, .comparison-table td { border:1px solid #CADAE2; padding:.7mm .5mm; text-align:center; vertical-align:middle; line-height:1.05; white-space:nowrap; }
+.comparison-table thead th { background:#E6F3F7; color:#123A5A; font-weight:800; font-size:6pt; line-height:1.1; }
+.comparison-table .text-left, .comparison-table .comparison-name { text-align:left; font-weight:700; }
+.comparison-table .comparison-name, .comparison-table .compound-label, .comparison-table .direction-symbol { font-weight:800; color:#123A5A; }
+.comparison-table .difference.negative-highlight { background:#E11D2E; color:#FFFFFF; font-weight:800; }
+
+.chart-panel { padding-bottom:3mm; }
+.chart-svg { width:100%; height:auto; display:block; }
+.axis-label { font-size:7px; fill:#557282; font-weight:600; }
+.chart-label { font-size:8px; fill:#123A5A; font-weight:800; }
+.chart-label.small { font-size:8px; }
+.point-label { font-size:7px; fill:#123A5A; font-weight:800; }
+.sub-title { font-size:12px; fill:#123A5A; font-weight:800; }
+.legend, .muted-mini { font-size:7px; fill:#6d8190; font-weight:600; }
+.interpretation-layout { display:block; }
+.text-panel p { font-size:10.2pt; }
+.side-insights { display:grid; gap:3mm; }
+.insight { background:#F2F8FA; border:1px solid #C9DAE2; border-radius:10px; padding:4mm; }
+.insight span { display:block; font-size:7pt; color:#1B7F8C; font-weight:800; text-transform:uppercase; letter-spacing:.12em; }
+.insight strong { display:block; font-size:11pt; line-height:1.15; color:#123A5A; margin:1.5mm 0; }
+.insight em { display:block; font-style:normal; font-size:8pt; color:#49606e; }
+.note-panel { background:#F5FAFC; }
+.bullet-list { margin:0; padding-left:5mm; }
+.bullet-list li { margin:0 0 2.4mm; font-size:10pt; line-height:1.35; }
+.signature-block { margin-top:8mm; display:grid; grid-template-columns:1fr 1fr; gap:5mm; }
+.signature-block div { border-top:1.5px solid #123A5A; padding-top:3mm; }
+.signature-block strong, .signature-block span { display:block; }
+.signature-block strong { color:#123A5A; font-size:9pt; }
+.signature-block span { color:#4c6171; font-size:9pt; margin-top:1mm; }
+
+/* Model 1: Clínico Premium */
+body.m1 .page { background:linear-gradient(180deg,#FFFFFF 0%,#FFFFFF 80%,#F5FAFC 100%); }
+body.m1 .page::before { content:""; position:absolute; top:0; left:0; right:0; height:6mm; background:linear-gradient(90deg,#123A5A,#1B7F8C,#27BBD0); }
+
+/* Model 2: Dashboard Executivo */
+body.m2 .page { padding-left:34mm; background:#FFFFFF; }
+body.m2 .page::before { content:""; position:absolute; top:0; bottom:0; left:0; width:22mm; background:linear-gradient(180deg,#123A5A 0%,#1B7F8C 74%,#27BBD0 100%); }
+body.m2 .page-header { left:34mm; }
+body.m2 .page-footer { left:34mm; }
+body.m2 .panel h2 { background:#1B7F8C; }
+body.m2 h1.page-title, body.m2 .cover-hero h1 { color:#1B7F8C; }
+body.m2 .score-card { background:linear-gradient(160deg,#1B7F8C,#123A5A); }
+body.m2 .test-badge { background:#1B7F8C; }
+body.m2 .info { background:#FFFFFF; border-left:3px solid #27BBD0; }
+
+/* Model 3: Minimalista Técnico */
+body.m3 .page { background:#FFFFFF; }
+body.m3 .panel { box-shadow:none; border-radius:3px; border-color:#BFCED6; }
+body.m3 .panel h2 { background:#FFFFFF; color:#123A5A; border-bottom:1px solid #CBD6DE; border-radius:0; }
+body.m3 .score-card { background:#FFFFFF; color:#123A5A; border:1px solid #CBD6DE; box-shadow:none; }
+body.m3 .score-card span { color:#1B7F8C; }
+body.m3 .score-card em { color:#657987; }
+body.m3 .test-badge { border-radius:2px; background:#FFFFFF; color:#123A5A; border:1.5px solid #123A5A; }
+body.m3 .data-table th { background:#F7FAFB; }
+body.m3 .info { border-radius:3px; background:#FFFFFF; }
+body.m3 .page-header, body.m3 .page-footer { border-color:#BFCED6; }
+
+/* Model 4: NeuroTech */
+body.m4 .page { background:radial-gradient(circle at 100% 0%, rgba(39,187,208,.18), transparent 38%), linear-gradient(180deg,#FFFFFF,#F8FBFC); }
+body.m4 .panel { border:0; box-shadow:0 9px 24px rgba(18,58,90,.11); }
+body.m4 .panel h2 { background:linear-gradient(90deg,#123A5A,#1B7F8C); }
+body.m4 .page-title { border-left:5px solid #27BBD0; padding-left:4mm; }
+body.m4 .score-card { background:#FFFFFF; color:#123A5A; border:1px solid #D5E5EA; box-shadow:0 6px 16px rgba(27,127,140,.13); }
+body.m4 .score-card span { color:#1B7F8C; }
+body.m4 .score-card em { color:#5d7382; }
+body.m4 .test-badge { background:linear-gradient(90deg,#123A5A,#27BBD0); }
+body.m4 .info { background:rgba(255,255,255,.82); border-color:#D6E6EB; }
+
+/* Model 5: Editorial Moderno */
+body.m5 .page { background:#FFFFFF; }
+body.m5 .panel { border-left:4px solid #27BBD0; border-radius:14px; }
+body.m5 .panel h2 { background:#FFFFFF; color:#123A5A; border-bottom:1px solid #DFEAEE; border-radius:0; }
+body.m5 .score-card { background:#CBD6DE; color:#123A5A; }
+body.m5 .score-card span { color:#123A5A; }
+body.m5 .score-card em { color:#365061; }
+body.m5 .page-title { color:#123A5A; }
+
+
+
+
+
+/* Página 2 - redesign moderno das tabelas e gráficos */
+body.m5 .results-v2 { padding-top: 0; }
+body.m5 .results-v2 .page-title {
+  margin-bottom: 3.2mm;
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:6mm;
+}
+body.m5 .results-v2 .page-title::after {
+  content:"Perfil psicométrico WAIS-III";
+  font-size:7.2pt;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:#1B7F8C;
+  font-weight:800;
+  line-height:1.2;
+  padding-bottom:1mm;
+}
+.results-dashboard {
+  display:grid;
+  grid-template-columns:repeat(7, 1fr);
+  gap:2.2mm;
+  margin:0 0 3.2mm;
+}
+.metric-v2 {
+  position:relative;
+  min-height:18.5mm;
+  background:linear-gradient(180deg,#FFFFFF 0%,#F4F8FA 100%);
+  border:1px solid #D4E2E8;
+  border-radius:12px;
+  padding:2.5mm 2mm 2.2mm;
+  box-shadow:0 5px 14px rgba(18,58,90,.055);
+  overflow:hidden;
+}
+.metric-v2::before {
+  content:"";
+  position:absolute;
+  top:0; left:0; right:0;
+  height:1.15mm;
+  background:linear-gradient(90deg,#123A5A,#27BBD0);
+}
+.metric-v2 .k { display:block; color:#1B7F8C; font-size:7.2pt; font-weight:900; letter-spacing:.08em; text-align:center; }
+.metric-v2 .v { display:block; color:#123A5A; font-size:17.2pt; line-height:1; font-weight:900; text-align:center; margin:1.4mm 0 .8mm; letter-spacing:-.04em; }
+.metric-v2 .p { display:block; color:#566b79; font-size:6.8pt; text-align:center; font-weight:700; }
+.result-card-v2 {
+  background:#FFFFFF;
+  border:1px solid #D5E3E9;
+  border-radius:15px;
+  box-shadow:0 8px 21px rgba(18,58,90,.065);
+  overflow:hidden;
+  margin-bottom:3mm;
+}
+.result-card-v2 .card-head {
+  min-height:10mm;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:2.7mm 3.4mm;
+  background:linear-gradient(90deg,#F7FBFC 0%,#FFFFFF 100%);
+  border-bottom:1px solid #DFEAF0;
+}
+.result-card-v2 .card-head strong {
+  position:relative;
+  display:block;
+  color:#123A5A;
+  font-size:10.2pt;
+  line-height:1.12;
+  font-weight:900;
+  padding-left:3.4mm;
+}
+.result-card-v2 .card-head strong::before {
+  content:"";
+  position:absolute;
+  left:0; top:.1mm; bottom:.1mm;
+  width:1.3mm;
+  border-radius:99px;
+  background:#27BBD0;
+}
+.result-card-v2 .card-head span {
+  color:#1B7F8C;
+  background:#EAF7FA;
+  border:1px solid #CBE9EF;
+  border-radius:999px;
+  font-size:6.6pt;
+  line-height:1;
+  font-weight:900;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  padding:1.7mm 2.4mm;
+}
+.result-card-v2 .card-body { padding:3mm 3.4mm 3.4mm; }
+.modern-table {
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  overflow:hidden;
+  border:1px solid #D4E2E8;
+  border-radius:11px;
+  font-size:7.05pt;
+  color:#123A5A;
+}
+.modern-table thead th {
+  background:#123A5A;
+  color:#FFFFFF;
+  font-weight:900;
+  text-align:center;
+  padding:1.75mm 1mm;
+  border-right:1px solid rgba(255,255,255,.18);
+}
+.modern-table thead th:first-child { text-align:left; }
+.modern-table tbody td {
+  padding:1.45mm 1mm;
+  text-align:center;
+  border-right:1px solid #E1EBF0;
+  border-bottom:1px solid #E1EBF0;
+  background:#FFFFFF;
+}
+.modern-table tbody tr:nth-child(even) td { background:#F7FBFC; }
+.modern-table tbody td:first-child {
+  text-align:left;
+  font-weight:900;
+  color:#123A5A;
+  background:#F2F7F9;
+}
+.modern-table tbody tr:nth-child(even) td:first-child { background:#ECF4F7; }
+.modern-table th:last-child, .modern-table td:last-child { border-right:0; }
+.modern-table tbody tr:last-child td { border-bottom:0; }
+.results-grid-v2 {
+  display:grid;
+  grid-template-columns:1.02fr .98fr;
+  gap:3mm;
+  align-items:start;
+  margin-bottom:3mm;
+}
+.index-profile { display:grid; gap:1.55mm; }
+.profile-row {
+  display:grid;
+  grid-template-columns:18mm 1fr 11mm;
+  align-items:center;
+  gap:2mm;
+  min-height:6.3mm;
+}
+.profile-row .label { color:#123A5A; font-weight:900; font-size:7.3pt; text-align:right; }
+.profile-row .track {
+  position:relative;
+  height:3.4mm;
+  border-radius:99px;
+  background:#E7EEF2;
+  overflow:visible;
+}
+.profile-row .track::before {
+  content:"";
+  position:absolute;
+  top:0; bottom:0;
+  left:40.9%;
+  width:18.2%;
+  background:rgba(39,187,208,.20);
+}
+.profile-row .track::after {
+  content:"";
+  position:absolute;
+  left:0; top:0; bottom:0;
+  width:var(--pos);
+  border-radius:99px;
+  background:linear-gradient(90deg,#123A5A,#1B7F8C,#27BBD0);
+}
+.profile-row .marker {
+  position:absolute;
+  left:var(--pos);
+  top:50%;
+  width:4.4mm;
+  height:4.4mm;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  background:#FFFFFF;
+  border:1.3mm solid #27BBD0;
+  box-shadow:0 2px 6px rgba(18,58,90,.22);
+  z-index:2;
+}
+.profile-row .score {
+  font-size:7.8pt;
+  color:#123A5A;
+  font-weight:900;
+  text-align:center;
+  background:#F2F8FA;
+  border:1px solid #D7E6EC;
+  border-radius:999px;
+  padding:1mm 0;
+}
+.axis-v2 {
+  display:grid;
+  grid-template-columns:18mm 1fr 11mm;
+  gap:2mm;
+  margin-top:2mm;
+  color:#718895;
+  font-size:6.3pt;
+  font-weight:800;
+}
+.axis-v2 .ticks {
+  display:flex;
+  justify-content:space-between;
+}
+.axis-v2 .avg { text-align:center; color:#1B7F8C; }
+.summary-table-v2 { font-size:6.85pt; }
+.summary-table-v2 thead th { padding:1.45mm .7mm; }
+.summary-table-v2 tbody td { padding:1.17mm .65mm; }
+.subtest-section-v2 {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:3mm;
+  align-items:start;
+}
+.subtest-profile { display:grid; gap:1.45mm; }
+.subtest-row-v2 {
+  display:grid;
+  grid-template-columns:13mm 1fr 9.5mm;
+  gap:1.8mm;
+  align-items:center;
+  min-height:6.15mm;
+}
+.subtest-row-v2 .st-label { color:#123A5A; font-weight:900; font-size:7pt; text-align:right; }
+.subtest-row-v2 .st-track {
+  position:relative;
+  height:3.2mm;
+  border-radius:99px;
+  background:#E7EEF2;
+  overflow:hidden;
+}
+.subtest-row-v2 .st-track::before {
+  content:"";
+  position:absolute;
+  top:0; bottom:0;
+  left:38.9%;
+  width:22.2%;
+  background:rgba(39,187,208,.22);
+}
+.subtest-row-v2 .st-fill {
+  position:absolute;
+  top:0; bottom:0; left:0;
+  width:var(--pos);
+  border-radius:99px;
+  background:linear-gradient(90deg,#123A5A,#27BBD0);
+}
+.subtest-row-v2 .st-value {
+  font-size:7pt;
+  color:#123A5A;
+  font-weight:900;
+  text-align:center;
+  padding:1mm 0;
+  background:#F4F8FA;
+  border:1px solid #DCE8ED;
+  border-radius:8px;
+}
+.subtest-row-v2.missing .st-track { background:repeating-linear-gradient(45deg,#EDF3F6 0,#EDF3F6 2px,#F8FBFC 2px,#F8FBFC 4px); }
+.subtest-row-v2.missing .st-track::before, .subtest-row-v2.missing .st-fill { display:none; }
+.subtest-card-v2 .card-body { padding-top:3.2mm; }
+.subtest-note {
+  margin-top:2mm;
+  display:flex;
+  justify-content:space-between;
+  color:#6e8390;
+  font-size:6.2pt;
+  font-weight:800;
+}
+.subtest-note .band { color:#1B7F8C; }
+
+/* Ajuste de altura da página 2 para não encostar no rodapé */
+body.m5 .results-v2 {
+  transform: scale(.94);
+  transform-origin: top left;
+  width: 106.4%;
+}
+
+
+/* Página 2 - grade clínica modernizada baseada no modelo técnico original */
+.results-v3 { position: relative; }
+.results-v3 .page-title {
+  margin: 0 0 2.6mm 0;
+  color: #123A5A;
+  font-size: 22pt;
+  line-height: 1;
+  letter-spacing: -.035em;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+.results-v3 .page-title::after {
+  content: "Perfil WAIS-III";
+  font-size: 7pt;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: #1B7F8C;
+  font-weight: 900;
+  padding-bottom: .7mm;
+}
+.score-strip-v3 {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2mm;
+  margin-bottom: 2.6mm;
+}
+.metric-v3 {
+  min-height: 15.8mm;
+  border: 1px solid #D4E2E8;
+  border-radius: 12px;
+  background: linear-gradient(180deg,#FFFFFF 0%,#F3F8FA 100%);
+  box-shadow: 0 5px 14px rgba(18,58,90,.055);
+  padding: 2.1mm 1.5mm 1.9mm;
+  text-align: center;
+  overflow: hidden;
+  position: relative;
+}
+.metric-v3::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1.05mm;
+  background: linear-gradient(90deg,#123A5A,#1B7F8C,#27BBD0);
+}
+.metric-v3 span {
+  display: block;
+  color: #1B7F8C;
+  font-size: 6.8pt;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+.metric-v3 strong {
+  display: block;
+  margin: .8mm 0 .35mm;
+  color: #123A5A;
+  font-size: 15.4pt;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -.04em;
+}
+.metric-v3 em {
+  display: block;
+  color: #5A6F7B;
+  font-style: normal;
+  font-size: 6.3pt;
+  font-weight: 700;
+}
+.card-v3 {
+  background: #FFFFFF;
+  border: 1px solid #D2E0E7;
+  border-radius: 13px;
+  overflow: hidden;
+  box-shadow: 0 8px 22px rgba(18,58,90,.06);
+}
+.card-title-v3 {
+  min-height: 9.3mm;
+  padding: 2.2mm 3.2mm;
+  background: linear-gradient(90deg,#123A5A 0%,#164D6E 58%,#1B7F8C 100%);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2mm;
+}
+.card-title-v3 strong {
+  display: block;
+  font-size: 9.15pt;
+  line-height: 1.1;
+  font-weight: 900;
+  letter-spacing: -.01em;
+}
+.card-title-v3 span {
+  display: block;
+  flex: 0 0 auto;
+  font-size: 5.95pt;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  font-weight: 900;
+  color: #DDF6FA;
+  border: 1px solid rgba(255,255,255,.28);
+  border-radius: 999px;
+  padding: 1.25mm 1.9mm;
+}
+.card-content-v3 { padding: 2.7mm 3mm 3mm; }
+.matrix-card { margin-bottom: 2.8mm; }
+.table-v3 {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid #C9DAE2;
+  border-radius: 9px;
+  overflow: hidden;
+  color: #123A5A;
+  font-size: 6.9pt;
+}
+.table-v3 th {
+  background: #E5F3F7;
+  color: #123A5A;
+  font-weight: 900;
+  text-align: center;
+  padding: 1.25mm .7mm;
+  border-right: 1px solid #C6D8E0;
+  border-bottom: 1px solid #B7CBD5;
+}
+.table-v3 th:first-child { text-align: left; }
+.table-v3 td {
+  padding: 1.1mm .7mm;
+  text-align: center;
+  border-right: 1px solid #DFE9EE;
+  border-bottom: 1px solid #DFE9EE;
+  background: #FFFFFF;
+}
+.table-v3 tbody tr:nth-child(even) td { background: #F7FBFC; }
+.table-v3 td:first-child {
+  text-align: left;
+  font-weight: 900;
+  color: #123A5A;
+  background: #F1F7F9;
+}
+.table-v3 tbody tr:nth-child(even) td:first-child { background: #EDF5F8; }
+.table-v3 th:last-child, .table-v3 td:last-child { border-right: 0; }
+.table-v3 tr:last-child td { border-bottom: 0; }
+.charts-layout-v3 {
+  display: grid;
+  grid-template-columns: 1.02fr .98fr;
+  gap: 3mm;
+  align-items: stretch;
+  margin-bottom: 2.8mm;
+}
+.subtests-card-v3, .qi-card-v3 { min-height: 93mm; }
+.subcharts-v3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.4mm;
+  padding: 2.7mm 2.7mm 3mm;
+}
+.chart-box-v3 {
+  border: 1px solid #D5E3E9;
+  border-radius: 10px;
+  background: linear-gradient(180deg,#FFFFFF 0%,#FAFDFE 100%);
+  padding: 2mm 1.8mm 1.8mm;
+}
+.qi-card-v3 .chart-box-v3 {
+  margin: 2.7mm 2.7mm 3mm;
+  padding: 2.2mm 2mm 2mm;
+}
+.subtest-svg, .qi-svg { display: block; width: 100%; height: auto; }
+.svg-title { font-size: 11px; font-weight: 900; fill: #123A5A; letter-spacing: -.01em; }
+.axis-small { font-size: 7.5px; font-weight: 700; fill: #486171; }
+.cat-label { font-size: 8.2px; font-weight: 900; fill: #123A5A; }
+.point-num { font-size: 9px; font-weight: 900; fill: #123A5A; }
+.band-label { font-size: 7.4px; font-weight: 800; fill: #1B7F8C; }
+.missing-label { font-size: 9px; font-weight: 900; fill: #6E8490; }
+.summary-card-v3 .card-title-v3 { background: linear-gradient(90deg,#123A5A,#1B7F8C); }
+.summary-card-v3 .card-content-v3 { padding: 2.7mm 3mm 3mm; }
+.summary-v3 { font-size: 6.75pt; }
+.summary-v3 th, .summary-v3 td { padding: .9mm .65mm; }
+@media print {
+  .results-v3 { break-inside: avoid; }
+}
+
+
+/* Página 2 - modelo WAIS original modernizado */
+.results-v6 { position: relative; }
+.page-title-v6 {
+  margin: 0 0 2.4mm 0;
+  color: #123A5A;
+  font-size: 22pt;
+  line-height: 1;
+  letter-spacing: -.035em;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+.page-title-v6::after {
+  content: "Perfil técnico WAIS-III";
+  color: #1B7F8C;
+  font-size: 7pt;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  font-weight: 900;
+  padding-bottom: .7mm;
+}
+.score-strip-v6 {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2mm;
+  margin-bottom: 2.5mm;
+}
+.metric-v6 {
+  min-height: 15.2mm;
+  border: 1px solid #D4E2E8;
+  border-radius: 12px;
+  background: linear-gradient(180deg,#FFFFFF 0%,#F2F8FA 100%);
+  box-shadow: 0 5px 14px rgba(18,58,90,.055);
+  padding: 2.2mm 1.4mm 1.7mm;
+  text-align: center;
+  overflow: hidden;
+  position: relative;
+}
+.metric-v6::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1mm;
+  background: linear-gradient(90deg,#123A5A,#1B7F8C,#27BBD0);
+}
+.metric-v6 span { display: block; color: #1B7F8C; font-size: 6.7pt; font-weight: 900; letter-spacing: .08em; }
+.metric-v6 strong { display: block; margin: .7mm 0 .35mm; color: #123A5A; font-size: 15.2pt; line-height: 1; font-weight: 900; letter-spacing: -.04em; }
+.metric-v6 em { display:block; color:#5A6F7B; font-style:normal; font-size:6.2pt; font-weight:700; }
+.card-v6 {
+  background: #FFFFFF;
+  border: 1px solid #D2E0E7;
+  border-radius: 13px;
+  overflow: hidden;
+  box-shadow: 0 8px 22px rgba(18,58,90,.06);
+}
+.card-title-v6 {
+  min-height: 9.1mm;
+  padding: 2.1mm 3.1mm;
+  background: linear-gradient(90deg,#123A5A 0%,#164D6E 58%,#1B7F8C 100%);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2mm;
+}
+.card-title-v6 strong { display:block; font-size:8.85pt; line-height:1.1; font-weight:900; letter-spacing:-.01em; }
+.card-title-v6 span { display:block; flex:0 0 auto; font-size:5.8pt; line-height:1; text-transform:uppercase; letter-spacing:.12em; font-weight:900; color:#DDF6FA; border:1px solid rgba(255,255,255,.28); border-radius:999px; padding:1.15mm 1.75mm; }
+.card-content-v6 { padding: 2.4mm 2.7mm 2.7mm; }
+.matrix-card-v6 { margin-bottom: 2.6mm; }
+.table-v6 { width:100%; border-collapse:separate; border-spacing:0; border:1px solid #C9DAE2; border-radius:9px; overflow:hidden; color:#123A5A; font-size:6.75pt; }
+.table-v6 th { background:#E5F3F7; color:#123A5A; font-weight:900; text-align:center; padding:1.12mm .62mm; border-right:1px solid #C6D8E0; border-bottom:1px solid #B7CBD5; }
+.table-v6 th:first-child { text-align:left; }
+.table-v6 td { padding:1mm .62mm; text-align:center; border-right:1px solid #DFE9EE; border-bottom:1px solid #DFE9EE; background:#FFFFFF; }
+.table-v6 tbody tr:nth-child(even) td { background:#F7FBFC; }
+.table-v6 td:first-child { text-align:left; font-weight:900; color:#123A5A; background:#F1F7F9; }
+.table-v6 tbody tr:nth-child(even) td:first-child { background:#EDF5F8; }
+.table-v6 th:last-child, .table-v6 td:last-child { border-right:0; }
+.table-v6 tr:last-child td { border-bottom:0; }
+.charts-layout-v6 { display:grid; grid-template-columns: 1.04fr .96fr; gap:3mm; align-items:stretch; margin-bottom:2.6mm; }
+.subtests-card-v6, .qi-card-v6 { min-height: 101mm; }
+.sheet-wrap-v6 { padding: 2.2mm 2.15mm 2.25mm; }
+.qi-wrap-v6 { padding: 2.2mm 2.2mm 2.2mm; }
+.wais-subtests-sheet, .qi-sheet-v6 { display:block; width:100%; height:auto; }
+.wais-scale-title { font-size: 14px; fill:#FFFFFF; font-weight:900; letter-spacing:.01em; }
+.wais-group-label { font-size: 13px; fill:#4F5E68; font-weight:900; }
+.wais-sub-label { font-size: 10.2px; fill:#123A5A; font-weight:900; }
+.wais-y-label { font-size: 11.4px; fill:#536773; font-weight:800; }
+.wais-score-num { font-size: 9px; fill:#123A5A; font-weight:900; }
+.wais-missing { font-size: 11px; fill:#637987; font-weight:900; }
+.wais-band-note { font-size: 10px; fill:#1B7F8C; font-weight:900; }
+.qi-y-label { font-size: 8.1px; fill:#425A68; font-weight:800; }
+.qi-cat-label { font-size: 9px; fill:#123A5A; font-weight:900; }
+.qi-score-num { font-size: 8.5px; fill:#123A5A; font-weight:900; }
+.qi-band-label { font-size: 7.6px; fill:#1B7F8C; font-weight:900; }
+.summary-card-v6 .card-title-v6 { background:linear-gradient(90deg,#123A5A,#1B7F8C); }
+.summary-card-v6 .card-content-v6 { padding:2.45mm 2.7mm 2.6mm; }
+.summary-v6 { font-size: 6.65pt; }
+.summary-v6 th, .summary-v6 td { padding:.82mm .62mm; }
+@media print { .results-v6 { break-inside: avoid; } }
+
+/* Ajuste solicitado: marcadores circulares centralizados no perfil dos subtestes */
+.wais-subtests-sheet circle { shape-rendering: geometricPrecision; }
+.wais-subtests-sheet line { shape-rendering: crispEdges; }
+
+/* Ajuste solicitado: remover cards superiores de QIV/QIE/QIT/ICV/IOP/IMO/IVP da página 2 */
+.results-v6 .page-title { margin-bottom: 3.5mm; }
+.results-v6 .layout-v6 { margin-top: 0; }
+
+/* Ajuste solicitado: remover etiquetas/badges das tabelas */
+.card-title-v6 span{display:none!important;}
+.card-title-v6{justify-content:flex-start!important;}
+
+/* Ajuste solicitado: sem rótulo da faixa média e sem números nos marcadores do gráfico de QI/índices. */
+.qi-score-num, .qi-band-label { display: none !important; }
+
+/* Ajuste solicitado: remover linha/seta de média do perfil dos subtestes. */
+.wais-band-note { display: none !important; }
+
+/* Ajuste solicitado: marcadores finais sem borda, menores e com cor única. */
+
+/* Ajuste do rodape: logo no lugar do texto e sem nome do modelo */
+.page-footer {
+  bottom: 20mm;
+  min-height: 9mm;
+  gap: 6mm;
+}
+.page-footer .footer-logo {
+  display: flex;
+  align-items: center;
+  height: 8mm;
+  min-width: 32mm;
+}
+.page-footer .footer-logo svg {
+  width: 32mm;
+  height: auto;
+  display: block;
+}
+.page-footer .footer-logo svg text:nth-of-type(2) {
+  display: none;
+}
+.page-footer .footer-page-number {
+  margin-left: auto;
+  color: #6f8190;
+  font-size: 8pt;
+  font-weight: 600;
+}
+
+
+/* Ajuste solicitado: logo no cabeçalho a partir da página 2. */
+.page:not(:first-child) .page-header .logo-small {
+  display: block !important;
+}
+.page:first-child .page-header .logo-small {
+  display: none !important;
+}
+.page:not(:first-child) .page-header {
+  justify-content: flex-start;
+}
+.page:not(:first-child) .page-header .logo-small svg {
+  width: 64mm;
+  height: auto;
+}
+
+/* Ajuste solicitado: cabeçalho maior e grades mais legíveis nos perfis da página 2 */
+.page:not(:first-child) .page-header .logo-small svg { width: 64mm !important; }
+.wais-subtests-sheet line[stroke="#E3EEF3"], .wais-subtests-sheet line[stroke="#B8CCD6"] { stroke:#B8CCD6 !important; stroke-width:.95px !important; }
+.wais-subtests-sheet line[stroke="#B9CCD6"], .wais-subtests-sheet line[stroke="#8EA8B7"] { stroke:#8EA8B7 !important; stroke-width:1px !important; }
+.wais-subtests-sheet line[stroke="#5D7481"], .wais-subtests-sheet line[stroke="#385768"] { stroke:#385768 !important; stroke-width:1.28px !important; }
+.wais-subtests-sheet rect[stroke="#5D7481"], .wais-subtests-sheet rect[stroke="#385768"] { stroke:#385768 !important; stroke-width:1.25px !important; }
+.qi-sheet-v6 line[stroke="#8FB6C8"], .qi-sheet-v6 line[stroke="#4F9AB5"] { stroke:#4F9AB5 !important; stroke-width:1.08px !important; }
+.qi-sheet-v6 line[stroke="#E3ECF1"], .qi-sheet-v6 line[stroke="#AFC3CE"] { stroke:#AFC3CE !important; stroke-width:1px !important; }
+
+</style></head><body class="m5">
+
+<!-- ===== PÁGINA 1 — NOVO LAYOUT ===== -->
+<div class="page" style="padding:0;">
+  <main style="display:flex;flex-direction:column;height:297mm;padding:22mm 16mm 24mm 16mm;">
+
+    <!-- HERO -->
+    <section style="border-radius:18px;padding:12mm 9mm 10mm;background:linear-gradient(135deg,#074467 0%,#168c93 100%);color:white;flex:0 0 auto;">
+      <div style="display:flex;align-items:center;gap:4mm;margin-bottom:8mm;">
+        <div style="width:52px;height:52px;border:2px solid rgba(255,255,255,0.65);border-radius:50%;display:grid;place-items:center;font-size:22px;font-weight:900;">N</div>
+        <div>
+          <div style="font-size:18pt;line-height:1;font-weight:900;letter-spacing:0.2px;">Neuroavalia</div>
+          <div style="margin-top:1.5mm;font-size:6.2pt;letter-spacing:1.8px;font-weight:700;opacity:0.85;">AVALIAÇÃO NEUROPSICOLÓGICA</div>
         </div>
       </div>
+      <div style="font-size:9pt;font-weight:800;letter-spacing:5px;text-transform:uppercase;margin-bottom:4mm;">Avaliação Neuropsicológica</div>
+      <div style="font-size:18pt;font-weight:800;margin-bottom:4mm;line-height:1.2;">Escala Wechsler de Inteligência para Adultos</div>
+      <div style="display:inline-flex;align-items:center;justify-content:center;height:44px;min-width:100px;padding:0 20px;background:white;color:#074467;border-radius:999px;font-size:21pt;font-weight:900;letter-spacing:1.8px;margin-bottom:6mm;">WAIS-III</div>
+      <p style="max-width:610px;font-size:10.5pt;line-height:1.45;color:rgba(255,255,255,0.88);margin:0;">Relatório técnico completo com dados do avaliado, índices psicométricos, perfil de subtestes, discrepâncias, análise de clusters e síntese interpretativa.</p>
+    </section>
 
-      <div class="card area-left">
-        <div class="card-title">Perfil dos Pontos Ponderados dos Subtestes</div>
-        <div class="wais-profile-two">
-          <div class="mini-profile">
-            <div class="mini-profile-title">Escala Verbal</div>
-            <div class="mini-heads"><span></span><b>V</b><b>S</b><b>I</b><b>C</b><b>A</b><b>D</b><b>SNL</b></div>
-            <div class="mini-grid-chart verbal">
-              <div class="mini-y">
-                <span>19</span><span>18</span><span>17</span><span>16</span><span>15</span><span>14</span><span>13</span><span>12</span><span>11</span><span>10</span><span>9</span><span>8</span><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span>
-              </div>
-              <div class="mini-body"><i class="dot-standard v1"></i><i class="dot-standard v2"></i><i
-                  class="dot-standard v3"></i><i class="dot-standard v4"></i><i class="dot-standard v5"></i><i
-                  class="dot-standard v6"></i><i class="dot-standard v7"></i></div>
-            </div>
-          </div>
-          <div class="mini-profile">
-            <div class="mini-profile-title">Escala de Execução</div>
-            <div class="mini-heads"><span></span><b>AF</b><b>CF</b><b>CB</b><b>RM</b><b>CD</b><b>PS</b><b>AO</b></div>
-            <div class="mini-grid-chart exec">
-              <div class="mini-y">
-                <span>19</span><span>18</span><span>17</span><span>16</span><span>15</span><span>14</span><span>13</span><span>12</span><span>11</span><span>10</span><span>9</span><span>8</span><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span>
-              </div>
-              <div class="mini-body"><i class="dot-standard e1"></i><i class="dot-standard e2"></i><i
-                  class="dot-standard e3"></i><i class="dot-standard e4"></i><i class="dot-standard e5"></i><i
-                  class="dot-standard e6"></i><i class="dot-standard e7"></i></div>
-            </div>
-          </div>
+    <!-- PATIENT CARD -->
+    <section style="flex:0 0 auto;margin-top:6mm;border:1px solid #d6e4ea;border-radius:18px;padding:5mm;background:white;box-shadow:0 7px 18px rgba(20,72,96,0.08);">
+      <div style="background:linear-gradient(135deg,#0b4368 0%,#168c93 100%);color:white;border-radius:14px;padding:4.5mm 5.5mm;margin-bottom:4mm;overflow:hidden;">
+        <span style="display:block;font-size:6.5pt;font-weight:900;letter-spacing:2.4px;text-transform:uppercase;margin-bottom:2mm;">Dados do avaliado</span>
+        <strong style="display:block;font-size:18pt;line-height:1.05;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">Nome do Avaliado</strong>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3mm;">
+        <div style="border:1px solid #d6e4ea;border-radius:12px;background:#f6fafc;padding:3mm 3.2mm;overflow:hidden;">
+          <span style="display:block;font-size:6.2pt;line-height:1;font-weight:900;color:#168c93;letter-spacing:2px;text-transform:uppercase;margin-bottom:2mm;">Sexo</span>
+          <strong style="display:block;font-size:10pt;font-weight:800;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Masculino</strong>
+        </div>
+        <div style="border:1px solid #d6e4ea;border-radius:12px;background:#f6fafc;padding:3mm 3.2mm;overflow:hidden;">
+          <span style="display:block;font-size:6.2pt;line-height:1;font-weight:900;color:#168c93;letter-spacing:2px;text-transform:uppercase;margin-bottom:2mm;">Idade</span>
+          <strong style="display:block;font-size:10pt;font-weight:800;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">32 anos e 4 meses</strong>
+        </div>
+        <div style="grid-column:span 2;border:1px solid #d6e4ea;border-radius:12px;background:#f6fafc;padding:3mm 3.2mm;overflow:hidden;">
+          <span style="display:block;font-size:6.2pt;line-height:1;font-weight:900;color:#168c93;letter-spacing:2px;text-transform:uppercase;margin-bottom:2mm;">Escolaridade</span>
+          <strong style="display:block;font-size:10pt;font-weight:800;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Ensino superior completo</strong>
+        </div>
+        <div style="grid-column:span 4;border:1px solid #d6e4ea;border-radius:12px;background:#f6fafc;padding:3mm 3.2mm;overflow:hidden;">
+          <span style="display:block;font-size:6.2pt;line-height:1;font-weight:900;color:#168c93;letter-spacing:2px;text-transform:uppercase;margin-bottom:2mm;">Profissional</span>
+          <strong style="display:block;font-size:9.5pt;font-weight:800;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Jacqueline O. Caires - CRP09/6017</strong>
+        </div>
+        <div style="grid-column:span 2;border:1px solid #d6e4ea;border-radius:12px;background:#f6fafc;padding:3mm 3.2mm;overflow:hidden;">
+          <span style="display:block;font-size:6.2pt;line-height:1;font-weight:900;color:#168c93;letter-spacing:2px;text-transform:uppercase;margin-bottom:2mm;">Tabela normativa</span>
+          <strong style="display:block;font-size:9.5pt;font-weight:800;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">WAIS-III / Brasil / Faixa etária correspondente</strong>
+        </div>
+        <div style="border:1px solid #d6e4ea;border-radius:12px;background:#f6fafc;padding:3mm 3.2mm;overflow:hidden;">
+          <span style="display:block;font-size:6.2pt;line-height:1;font-weight:900;color:#168c93;letter-spacing:2px;text-transform:uppercase;margin-bottom:2mm;">Código</span>
+          <strong style="display:block;font-size:10pt;font-weight:800;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">AVL-102</strong>
+        </div>
+        <div style="border:1px solid #d6e4ea;border-radius:12px;background:#f6fafc;padding:3mm 3.2mm;overflow:hidden;">
+          <span style="display:block;font-size:6.2pt;line-height:1;font-weight:900;color:#168c93;letter-spacing:2px;text-transform:uppercase;margin-bottom:2mm;">Aplicação</span>
+          <strong style="display:block;font-size:10pt;font-weight:800;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">13/05/2026</strong>
         </div>
       </div>
+    </section>
 
-      <div class="card area-middle">
-        <div class="card-title">Resumo Técnico dos Índices</div>
-        <table>
-          <thead>
-            <tr>
-              <th>Escala</th>
-              <th>Soma dos PP</th>
-              <th>Ponto Composto</th>
-              <th>Percentil</th>
-              <th>IC 95%</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>QI Verbal</td>
-              <td>81</td>
-              <td>QIV 110</td>
-              <td>75</td>
-              <td>104-115</td>
-            </tr>
-            <tr>
-              <td>QI de Execução</td>
-              <td>69</td>
-              <td>QIE 98</td>
-              <td>45</td>
-              <td>92-104</td>
-            </tr>
-            <tr>
-              <td>QI Total</td>
-              <td>150</td>
-              <td>QIT 105</td>
-              <td>63</td>
-              <td>100-110</td>
-            </tr>
-            <tr>
-              <td>Compreensão Verbal</td>
-              <td>50</td>
-              <td>ICV 112</td>
-              <td>79</td>
-              <td>105-118</td>
-            </tr>
-            <tr>
-              <td>Organização Perceptual</td>
-              <td>43</td>
-              <td>IOP 101</td>
-              <td>53</td>
-              <td>94-108</td>
-            </tr>
-            <tr>
-              <td>Memória Operacional</td>
-              <td>30</td>
-              <td>IMO 100</td>
-              <td>50</td>
-              <td>93-107</td>
-            </tr>
-            <tr>
-              <td>Velocidade de Processamento</td>
-              <td>17</td>
-              <td>IVP 89</td>
-              <td>23</td>
-              <td>82-98</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <!-- PURPOSE -->
+    <section style="flex:0 0 auto;margin-top:6mm;border:1px solid #d6e4ea;border-left:4px solid #2fb8c7;border-radius:0 14px 14px 0;padding:4.5mm 5mm 5.5mm;background:white;box-shadow:0 7px 18px rgba(20,72,96,0.05);">
+      <h2 style="font-size:12pt;color:#0b4368;font-weight:900;margin:0 0 3mm 0;">Finalidade do relatório técnico</h2>
+      <p style="font-size:10.5pt;line-height:1.5;margin:0;text-align:justify;color:#2d4655;">Este documento apresenta os resultados psicométricos do WAIS-III, incluindo quocientes intelectuais, índices fatoriais, perfil dos subtestes, comparações entre discrepâncias e interpretação clínica. Os achados devem ser interpretados por profissional habilitado e integrados à entrevista clínica, observações comportamentais, histórico funcional e demais instrumentos utilizados na avaliação neuropsicológica.</p>
+    </section>
+
+  </main>
+  <footer class="page-footer" style="left:16mm;right:16mm;bottom:12mm;">
+    <div style="display:flex;align-items:center;gap:3mm;">
+      <div style="width:24px;height:24px;border-radius:50%;border:1.5px solid #91a9b5;display:grid;place-items:center;font-size:11px;color:#497081;font-weight:900;">N</div>
+      <span style="font-weight:800;">Neuroavalia</span>
     </div>
-
-    <div class="footer"><span>NeuroAvalia · WAIS-III Técnico</span><span>PÁGINA 2 DE 4</span></div>
-  </section>
-
-  <section class="page">
-    <div class="report-header">
-      <div class="report-header-gradient"></div>
-      <div class="report-header-logo">
-        <svg viewBox="0 0 760 210" xmlns="http://www.w3.org/2000/svg" aria-label="Neuroavalia Logo">
-          <g transform="translate(100 105)">
-            <line x1="0" y1="0" x2="-46" y2="-48" stroke="#9EB4C2" stroke-width="1.8" />
-            <line x1="0" y1="0" x2="18" y2="-62" stroke="#9EB4C2" stroke-width="1.8" />
-            <line x1="0" y1="0" x2="58" y2="-42" stroke="#9EB4C2" stroke-width="1.8" />
-            <line x1="0" y1="0" x2="68" y2="4" stroke="#9EB4C2" stroke-width="1.8" />
-            <line x1="0" y1="0" x2="34" y2="56" stroke="#9EB4C2" stroke-width="1.8" />
-            <line x1="0" y1="0" x2="-32" y2="54" stroke="#9EB4C2" stroke-width="1.8" />
-            <line x1="0" y1="0" x2="-66" y2="12" stroke="#9EB4C2" stroke-width="1.8" />
-
-            <path d="M-46 -48 L18 -62 L58 -42 L68 4 L34 56 L-32 54 L-66 12 Z" fill="none" stroke="#D6E2E8"
-              stroke-width="1.6" stroke-linejoin="round" />
-
-            <path d="M-46 -48 C-20 -72, 25 -84, 58 -42" fill="none" stroke="#D6E2E8" stroke-width="1.4"
-              stroke-linecap="round" />
-
-            <path d="M-66 12 C-42 38, -5 70, 34 56" fill="none" stroke="#D6E2E8" stroke-width="1.4"
-              stroke-linecap="round" />
-
-            <circle cx="0" cy="0" r="8.5" fill="#123A5A" />
-            <circle cx="-46" cy="-48" r="7" fill="#CBD6DE" />
-            <circle cx="18" cy="-62" r="7" fill="#27BBD0" />
-            <circle cx="58" cy="-42" r="7" fill="#CBD6DE" />
-            <circle cx="68" cy="4" r="7" fill="#123A5A" />
-            <circle cx="34" cy="56" r="7" fill="#CBD6DE" />
-            <circle cx="-32" cy="54" r="7" fill="#27BBD0" />
-            <circle cx="-66" cy="12" r="7" fill="#CBD6DE" />
-
-            <circle cx="1" cy="-35" r="4" fill="#D6E2E8" />
-            <circle cx="38" cy="-7" r="4" fill="#D6E2E8" />
-            <circle cx="8" cy="36" r="4" fill="#D6E2E8" />
-            <circle cx="-36" cy="-8" r="4" fill="#D6E2E8" />
-          </g>
-
-          <text x="220" y="112" font-family="Arial, Helvetica, sans-serif" font-size="62" font-weight="700"
-            letter-spacing="-1.8">
-            <tspan fill="#123A5A">Neuro</tspan>
-            <tspan fill="#1B7F8C">avalia</tspan>
-          </text>
-        </svg>
-      </div>
-    </div>
-
-    <h1>Página de Análise</h1>
-
-    <div class="analysis-block">
-      <div class="analysis-title">Comparações entre as Discrepâncias</div>
-      <table>
-        <thead>
-          <tr>
-            <th>Comparação</th>
-            <th>Escore 1</th>
-            <th>Escore 2</th>
-            <th>Diferença</th>
-            <th>Significância Estatística</th>
-            <th>Frequência da Diferença na Amostra de Padronização</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>QI Verbal - QI de Execução</td>
-            <td>QIV</td>
-            <td>QIE</td>
-            <td>12</td>
-            <td>Sim</td>
-            <td>—</td>
-          </tr>
-          <tr>
-            <td>Compreensão Verbal - Organização Perceptual</td>
-            <td>ICV</td>
-            <td>IOP</td>
-            <td>11</td>
-            <td>Sim</td>
-            <td>—</td>
-          </tr>
-          <tr>
-            <td>Compreensão Verbal - Memória Operacional</td>
-            <td>ICV</td>
-            <td>IMO</td>
-            <td>12</td>
-            <td>Sim</td>
-            <td>—</td>
-          </tr>
-          <tr>
-            <td>Organização Perceptual - Velocidade de Processamento</td>
-            <td>IOP</td>
-            <td>IVP</td>
-            <td>12</td>
-            <td>Não</td>
-            <td>—</td>
-          </tr>
-          <tr>
-            <td>Compreensão Verbal - Velocidade de Processamento</td>
-            <td>ICV</td>
-            <td>IVP</td>
-            <td>23</td>
-            <td>Sim</td>
-            <td>—</td>
-          </tr>
-          <tr>
-            <td>Organização Perceptual - Memória Operacional</td>
-            <td>IOP</td>
-            <td>IMO</td>
-            <td>1</td>
-            <td>Não</td>
-            <td>—</td>
-          </tr>
-          <tr>
-            <td>Memória Operacional - Velocidade de Processamento</td>
-            <td>IMO</td>
-            <td>IVP</td>
-            <td>11</td>
-            <td>Não</td>
-            <td>—</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="analysis-block">
-      <div class="analysis-title">Nível Subteste</div>
-      <table>
-        <thead>
-          <tr>
-            <th>Escores de Processo</th>
-            <th>Escore 1</th>
-            <th>Escore 2</th>
-            <th>Diferença</th>
-            <th>Frequência Acumulada</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Maior Sequência Dígitos Ordem Direta</td>
-            <td>Direta</td>
-            <td>—</td>
-            <td>—</td>
-            <td>—</td>
-          </tr>
-          <tr>
-            <td>Maior Sequência Dígitos Ordem Inversa</td>
-            <td>Inversa</td>
-            <td>—</td>
-            <td>—</td>
-            <td>—</td>
-          </tr>
-          <tr>
-            <td>Dígitos Ordem Direta - Ordem Inversa</td>
-            <td>Direta</td>
-            <td>Inversa</td>
-            <td>—</td>
-            <td>—</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="analysis-block cluster-table">
-      <div class="analysis-title">Análise de Clusters</div>
-      <table aria-label="Análise de Clusters">
-        <colgroup>
-          <col style="width: 31%">
-          <col style="width: 8%">
-          <col style="width: 8%">
-          <col style="width: 9%">
-          <col style="width: 10%">
-          <col style="width: 9%">
-          <col style="width: 11%">
-          <col style="width: 7%">
-          <col style="width: 12%">
-        </colgroup>
-        <thead>
-          <tr>
-            <th>Cluster</th>
-            <th>Código</th>
-            <th># Maior/Menor<br>subteste</th>
-            <th>Interpretável?<br>(≠ &lt; 5)</th>
-            <th>Soma dos<br>pontos ponderados</th>
-            <th>Pontos<br>compostos</th>
-            <th>IC 95%</th>
-            <th>Percentil</th>
-            <th>Classificação</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Raciocínio Fluido (RM + AF + AR)</td>
-            <td class="abbr">Gf</td>
-            <td>—</td>
-            <td>—</td>
-            <td>—</td>
-            <td>—</td>
-            <td>—</td>
-            <td>—</td>
-            <td>—</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="analysis-block cluster-table">
-      <div class="analysis-title">Comparações Clínicas</div>
-      <table aria-label="Comparações Clínicas">
-        <colgroup>
-          <col style="width: 25%">
-          <col style="width: 10%">
-          <col style="width: 7%">
-          <col style="width: 10%">
-          <col style="width: 7%">
-          <col style="width: 8%">
-          <col style="width: 8%">
-          <col style="width: 12%">
-          <col style="width: 7%">
-          <col style="width: 3%">
-          <col style="width: 7%">
-        </colgroup>
-        <thead>
-          <tr>
-            <th>Comparação</th>
-            <th colspan="2">Pontos Compostos 1</th>
-            <th colspan="2">Pontos Compostos 2</th>
-            <th>Diferença</th>
-            <th>Valor<br>crítico</th>
-            <th>Raro/<br>Não raro</th>
-            <th colspan="3">Direção</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Gf x Gv</td>
-            <td class="abbr">Gf</td>
-            <td>—</td>
-            <td class="abbr">Gv</td>
-            <td>—</td>
-            <td>—</td>
-            <td>21</td>
-            <td>—</td>
-            <td class="abbr">Gf</td>
-            <td class="relation">—</td>
-            <td class="abbr">Gv</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="footer"><span>NeuroAvalia · WAIS-III Técnico</span><span>PÁGINA 3 DE 4</span></div>
-  </section>
-
-  <section class="page clinical-page">
-    <div class="report-header">
-      <div class="report-header-gradient"></div>
-      <div class="report-header-logo">
-        <svg viewBox="0 0 760 210" xmlns="http://www.w3.org/2000/svg" aria-label="Neuroavalia Logo">
-          <g transform="translate(100 105)">
-            <line x1="0" y1="0" x2="-46" y2="-48" stroke="#9EB4C2" stroke-width="1.8" />
-            <line x1="0" y1="0" x2="18" y2="-62" stroke="#9EB4C2" stroke-width="1.8" />
-            <line x1="0" y1="0" x2="58" y2="-42" stroke="#9EB4C2" stroke-width="1.8" />
-            <line x1="0" y1="0" x2="68" y2="4" stroke="#9EB4C2" stroke-width="1.8" />
-            <line x1="0" y1="0" x2="34" y2="56" stroke="#9EB4C2" stroke-width="1.8" />
-            <line x1="0" y1="0" x2="-32" y2="54" stroke="#9EB4C2" stroke-width="1.8" />
-            <line x1="0" y1="0" x2="-66" y2="12" stroke="#9EB4C2" stroke-width="1.8" />
-
-            <path d="M-46 -48 L18 -62 L58 -42 L68 4 L34 56 L-32 54 L-66 12 Z" fill="none" stroke="#D6E2E8"
-              stroke-width="1.6" stroke-linejoin="round" />
-
-            <path d="M-46 -48 C-20 -72, 25 -84, 58 -42" fill="none" stroke="#D6E2E8" stroke-width="1.4"
-              stroke-linecap="round" />
-
-            <path d="M-66 12 C-42 38, -5 70, 34 56" fill="none" stroke="#D6E2E8" stroke-width="1.4"
-              stroke-linecap="round" />
-
-            <circle cx="0" cy="0" r="8.5" fill="#123A5A" />
-            <circle cx="-46" cy="-48" r="7" fill="#CBD6DE" />
-            <circle cx="18" cy="-62" r="7" fill="#27BBD0" />
-            <circle cx="58" cy="-42" r="7" fill="#CBD6DE" />
-            <circle cx="68" cy="4" r="7" fill="#123A5A" />
-            <circle cx="34" cy="56" r="7" fill="#CBD6DE" />
-            <circle cx="-32" cy="54" r="7" fill="#27BBD0" />
-            <circle cx="-66" cy="12" r="7" fill="#CBD6DE" />
-
-            <circle cx="1" cy="-35" r="4" fill="#D6E2E8" />
-            <circle cx="38" cy="-7" r="4" fill="#D6E2E8" />
-            <circle cx="8" cy="36" r="4" fill="#D6E2E8" />
-            <circle cx="-36" cy="-8" r="4" fill="#D6E2E8" />
-          </g>
-
-          <text x="220" y="112" font-family="Arial, Helvetica, sans-serif" font-size="62" font-weight="700"
-            letter-spacing="-1.8">
-            <tspan fill="#123A5A">Neuro</tspan>
-            <tspan fill="#1B7F8C">avalia</tspan>
-          </text>
-        </svg>
-      </div>
-    </div>
-
+    <span class="footer-page-number">Página 1 de 5</span>
+  </footer>
+</div>
+<div class="page"><header class="page-header"><div><div class="logo-small"><svg viewbox="0 0 760 210" xmlns="http://www.w3.org/2000/svg">
+<!-- Símbolo radial -->
+<g transform="translate(100 105)">
+<!-- Conexões principais -->
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="-46" y1="0" y2="-48"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="18" y1="0" y2="-62"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="58" y1="0" y2="-42"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="68" y1="0" y2="4"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="34" y1="0" y2="56"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="-32" y1="0" y2="54"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="-66" y1="0" y2="12"></line>
+<!-- Conexões externas discretas -->
+<path d="M-46 -48 L18 -62 L58 -42 L68 4 L34 56 L-32 54 L-66 12 Z" fill="none" stroke="#D6E2E8" stroke-linejoin="round" stroke-width="1.6"></path>
+<path d="M-46 -48 C-20 -72, 25 -84, 58 -42" fill="none" stroke="#D6E2E8" stroke-linecap="round" stroke-width="1.4"></path>
+<path d="M-66 12 C-42 38, -5 70, 34 56" fill="none" stroke="#D6E2E8" stroke-linecap="round" stroke-width="1.4"></path>
+<!-- Ponto central -->
+<circle cx="0" cy="0" fill="#123A5A" r="8.5"></circle>
+<!-- Pontos externos -->
+<circle cx="-46" cy="-48" fill="#CBD6DE" r="7"></circle>
+<circle cx="18" cy="-62" fill="#27BBD0" r="7"></circle>
+<circle cx="58" cy="-42" fill="#CBD6DE" r="7"></circle>
+<circle cx="68" cy="4" fill="#123A5A" r="7"></circle>
+<circle cx="34" cy="56" fill="#CBD6DE" r="7"></circle>
+<circle cx="-32" cy="54" fill="#27BBD0" r="7"></circle>
+<circle cx="-66" cy="12" fill="#CBD6DE" r="7"></circle>
+<!-- Pontos menores de apoio -->
+<circle cx="1" cy="-35" fill="#D6E2E8" r="4"></circle>
+<circle cx="38" cy="-7" fill="#D6E2E8" r="4"></circle>
+<circle cx="8" cy="36" fill="#D6E2E8" r="4"></circle>
+<circle cx="-36" cy="-8" fill="#D6E2E8" r="4"></circle>
+</g>
+<!-- Texto -->
+<text font-family="Arial, Helvetica, sans-serif" font-size="62" font-weight="700" letter-spacing="-1.8" x="220" y="112">
+<tspan fill="#123A5A">Neuro</tspan><tspan fill="#1B7F8C">avalia</tspan>
+</text>
+<!-- Linha institucional discreta -->
+<text fill="#7E929F" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="600" letter-spacing="3" x="224" y="144">
+        AVALIAÇÃO NEUROPSICOLÓGICA
+      </text>
+</svg></div></div><div class="header-meta"><strong>Resultados</strong></div></header><main class="results-v2">
+<div class="results-v6">
+<h1 class="page-title-v6">Resultados</h1>
+<section class="card-v6 matrix-card-v6">
+<div class="card-title-v6"><strong>QI / Índices Fatoriais</strong></div>
+<div class="card-content-v6"><table class="table-v6 matrix-v6"><thead><tr><th>QI / Índices Fatoriais</th><th>QIV</th><th>QIE</th><th>QIT</th><th>ICV</th><th>IOP</th><th>IMO</th><th>IVP</th></tr></thead><tbody><tr><td>Soma dos escores ponderados</td><td>81</td><td>69</td><td>150</td><td>50</td><td>43</td><td>30</td><td>17</td></tr><tr><td>QI / Índices Fatoriais</td><td>110</td><td>98</td><td>105</td><td>112</td><td>101</td><td>100</td><td>89</td></tr><tr><td>Percentil</td><td>75</td><td>45</td><td>63</td><td>79</td><td>53</td><td>50</td><td>23</td></tr><tr><td>Intervalo de Confiança 95%</td><td>104-115</td><td>92-104</td><td>100-110</td><td>105-118</td><td>94-108</td><td>93-107</td><td>82-98</td></tr></tbody></table></div>
+</section>
+<div class="charts-layout-v6">
+<section class="card-v6 subtests-card-v6">
+<div class="card-title-v6"><strong>Perfil dos Pontos Ponderados dos Subtestes</strong></div>
+<div class="sheet-wrap-v6"><svg aria-label="Perfil dos Pontos Ponderados dos Subtestes" class="wais-subtests-sheet" viewbox="0 0 450 420" xmlns="http://www.w3.org/2000/svg"><defs><filter height="260%" id="waisMarkerShadow" width="160%" x="-30%" y="-80%"><fedropshadow dx="0" dy="1.2" flood-color="#123A5A" flood-opacity="0.22" stddeviation="1"></fedropshadow></filter></defs><rect fill="#27BBD0" height="24" rx="3" stroke="#123A5A" stroke-width="1" width="178" x="27" y="8"></rect><text class="wais-scale-title" text-anchor="middle" x="116.0" y="24">Escala Verbal</text><rect fill="#FFFFFF" height="25" stroke="#385768" stroke-width="1.28" width="178" x="27" y="32"></rect><rect fill="#FFFFFF" height="26" stroke="#385768" stroke-width="1.28" width="178" x="27" y="57"></rect><text class="wais-group-label" text-anchor="middle" x="77.85714285714286" y="49">CV</text><text class="wais-group-label" text-anchor="middle" x="166.85714285714286" y="49">MO</text><line stroke="#385768" stroke-width="1.55" x1="128.71428571428572" x2="128.71428571428572" y1="32" y2="399"></line><line stroke="#8EA8B7" stroke-width="1.0" x1="27.0" x2="27.0" y1="57" y2="399"></line><text class="wais-sub-label" text-anchor="middle" x="39.714285714285715" y="74">V</text><line stroke="#8EA8B7" stroke-width="1.0" x1="52.42857142857143" x2="52.42857142857143" y1="57" y2="399"></line><text class="wais-sub-label" text-anchor="middle" x="65.14285714285714" y="74">S</text><line stroke="#8EA8B7" stroke-width="1.0" x1="77.85714285714286" x2="77.85714285714286" y1="57" y2="399"></line><text class="wais-sub-label" text-anchor="middle" x="90.57142857142857" y="74">I</text><line stroke="#8EA8B7" stroke-width="1.0" x1="103.28571428571428" x2="103.28571428571428" y1="57" y2="399"></line><text class="wais-sub-label" text-anchor="middle" x="115.99999999999999" y="74">C</text><line stroke="#8EA8B7" stroke-width="1.0" x1="128.71428571428572" x2="128.71428571428572" y1="57" y2="399"></line><text class="wais-sub-label" text-anchor="middle" x="141.42857142857144" y="74">A</text><line stroke="#8EA8B7" stroke-width="1.0" x1="154.14285714285714" x2="154.14285714285714" y1="57" y2="399"></line><text class="wais-sub-label" text-anchor="middle" x="166.85714285714286" y="74">D</text><line stroke="#8EA8B7" stroke-width="1.0" x1="179.57142857142856" x2="179.57142857142856" y1="57" y2="399"></line><text class="wais-sub-label" text-anchor="middle" x="192.28571428571428" y="74">SNL</text><line stroke="#385768" stroke-width="1.32" x1="205" x2="205" y1="57" y2="399"></line><rect fill="#FFFFFF" height="316" stroke="#385768" stroke-width="1.32" width="178" x="27" y="83"></rect><rect fill="#D1F1F6" height="83.15789473684211" opacity="0.82" width="178" x="27" y="199.42105263157896"></rect><line stroke="#385768" stroke-width="1.22" x1="27" x2="205" y1="83.00" y2="83.00"></line><line stroke="#B8CCD6" stroke-width="0.95" x1="27" x2="205" y1="99.63" y2="99.63"></line><line stroke="#B8CCD6" stroke-width="0.95" x1="27" x2="205" y1="116.26" y2="116.26"></line><line stroke="#385768" stroke-width="1.22" x1="27" x2="205" y1="132.89" y2="132.89"></line><line stroke="#B8CCD6" stroke-width="0.95" x1="27" x2="205" y1="149.53" y2="149.53"></line><line stroke="#B8CCD6" stroke-width="0.95" x1="27" x2="205" y1="166.16" y2="166.16"></line><line stroke="#385768" stroke-width="1.22" x1="27" x2="205" y1="182.79" y2="182.79"></line><line stroke="#B8CCD6" stroke-width="0.95" x1="27" x2="205" y1="199.42" y2="199.42"></line><line stroke="#B8CCD6" stroke-width="0.95" x1="27" x2="205" y1="216.05" y2="216.05"></line><line stroke="#385768" stroke-width="1.22" x1="27" x2="205" y1="232.68" y2="232.68"></line><line stroke="#B8CCD6" stroke-width="0.95" x1="27" x2="205" y1="249.32" y2="249.32"></line><line stroke="#B8CCD6" stroke-width="0.95" x1="27" x2="205" y1="265.95" y2="265.95"></line><line stroke="#385768" stroke-width="1.22" x1="27" x2="205" y1="282.58" y2="282.58"></line><line stroke="#B8CCD6" stroke-width="0.95" x1="27" x2="205" y1="299.21" y2="299.21"></line><line stroke="#B8CCD6" stroke-width="0.95" x1="27" x2="205" y1="315.84" y2="315.84"></line><line stroke="#385768" stroke-width="1.22" x1="27" x2="205" y1="332.47" y2="332.47"></line><line stroke="#B8CCD6" stroke-width="0.95" x1="27" x2="205" y1="349.11" y2="349.11"></line><line stroke="#B8CCD6" stroke-width="0.95" x1="27" x2="205" y1="365.74" y2="365.74"></line><line stroke="#385768" stroke-width="1.22" x1="27" x2="205" y1="382.37" y2="382.37"></line><line stroke="#385768" stroke-width="1.22" x1="27" x2="205" y1="399.00" y2="399.00"></line><line stroke="#385768" stroke-width="1.32" x1="27.00" x2="27.00" y1="83" y2="399"></line><line stroke="#8EA8B7" stroke-width="1.0" x1="52.43" x2="52.43" y1="83" y2="399"></line><line stroke="#8EA8B7" stroke-width="1.0" x1="77.86" x2="77.86" y1="83" y2="399"></line><line stroke="#8EA8B7" stroke-width="1.0" x1="103.29" x2="103.29" y1="83" y2="399"></line><line stroke="#8EA8B7" stroke-width="1.0" x1="128.71" x2="128.71" y1="83" y2="399"></line><line stroke="#8EA8B7" stroke-width="1.0" x1="154.14" x2="154.14" y1="83" y2="399"></line><line stroke="#8EA8B7" stroke-width="1.0" x1="179.57" x2="179.57" y1="83" y2="399"></line><line stroke="#385768" stroke-width="1.32" x1="205.00" x2="205.00" y1="83" y2="399"></line><text class="wais-y-label" text-anchor="end" x="19" y="94.32">19</text><text class="wais-y-label" text-anchor="end" x="19" y="110.95">18</text><text class="wais-y-label" text-anchor="end" x="19" y="127.58">17</text><text class="wais-y-label" text-anchor="end" x="19" y="144.21">16</text><text class="wais-y-label" text-anchor="end" x="19" y="160.84">15</text><text class="wais-y-label" text-anchor="end" x="19" y="177.47">14</text><text class="wais-y-label" text-anchor="end" x="19" y="194.11">13</text><text class="wais-y-label" text-anchor="end" x="19" y="210.74">12</text><text class="wais-y-label" text-anchor="end" x="19" y="227.37">11</text><text class="wais-y-label" text-anchor="end" x="19" y="244.00">10</text><text class="wais-y-label" text-anchor="end" x="19" y="260.63">9</text><text class="wais-y-label" text-anchor="end" x="19" y="277.26">8</text><text class="wais-y-label" text-anchor="end" x="19" y="293.89">7</text><text class="wais-y-label" text-anchor="end" x="19" y="310.53">6</text><text class="wais-y-label" text-anchor="end" x="19" y="327.16">5</text><text class="wais-y-label" text-anchor="end" x="19" y="343.79">4</text><text class="wais-y-label" text-anchor="end" x="19" y="360.42">3</text><text class="wais-y-label" text-anchor="end" x="19" y="377.05">2</text><text class="wais-y-label" text-anchor="end" x="19" y="393.68">1</text><rect fill="#27BBD0" height="24" rx="3" stroke="#123A5A" stroke-width="1" width="178" x="223" y="8"></rect><text class="wais-scale-title" text-anchor="middle" x="312.0" y="24">Escala de Execução</text><rect fill="#FFFFFF" height="25" stroke="#385768" stroke-width="1.28" width="178" x="223" y="32"></rect><rect fill="#FFFFFF" height="26" stroke="#385768" stroke-width="1.28" width="178" x="223" y="57"></rect><text class="wais-group-label" text-anchor="middle" x="273.85714285714283" y="49">OP</text><text class="wais-group-label" text-anchor="middle" x="350.14285714285717" y="49">VP</text><line stroke="#385768" stroke-width="1.55" x1="324.7142857142857" x2="324.7142857142857" y1="32" y2="399"></line><text class="wais-group-label" text-anchor="middle" x="388.2857142857143" y="49"></text><line stroke="#385768" stroke-width="1.55" x1="375.57142857142856" x2="375.57142857142856" y1="32" y2="399"></line><line stroke="#8EA8B7" stroke-width="1.0" x1="223.0" x2="223.0" y1="57" y2="399"></line><text class="wais-sub-label" text-anchor="middle" x="235.71428571428572" y="74">AF</text><line stroke="#8EA8B7" stroke-width="1.0" x1="248.42857142857142" x2="248.42857142857142" y1="57" y2="399"></line><text class="wais-sub-label" text-anchor="middle" x="261.1428571428571" y="74">CF</text><line stroke="#8EA8B7" stroke-width="1.0" x1="273.85714285714283" x2="273.85714285714283" y1="57" y2="399"></line><text class="wais-sub-label" text-anchor="middle" x="286.57142857142856" y="74">CB</text><line stroke="#8EA8B7" stroke-width="1.0" x1="299.2857142857143" x2="299.2857142857143" y1="57" y2="399"></line><text class="wais-sub-label" text-anchor="middle" x="312.0" y="74">RM</text><line stroke="#8EA8B7" stroke-width="1.0" x1="324.7142857142857" x2="324.7142857142857" y1="57" y2="399"></line><text class="wais-sub-label" text-anchor="middle" x="337.42857142857144" y="74">CD</text><line stroke="#8EA8B7" stroke-width="1.0" x1="350.1428571428571" x2="350.1428571428571" y1="57" y2="399"></line><text class="wais-sub-label" text-anchor="middle" x="362.85714285714283" y="74">PS</text><line stroke="#8EA8B7" stroke-width="1.0" x1="375.57142857142856" x2="375.57142857142856" y1="57" y2="399"></line><text class="wais-sub-label" text-anchor="middle" x="388.2857142857143" y="74">AO</text><line stroke="#385768" stroke-width="1.32" x1="401" x2="401" y1="57" y2="399"></line><rect fill="#FFFFFF" height="316" stroke="#385768" stroke-width="1.32" width="178" x="223" y="83"></rect><rect fill="#D1F1F6" height="83.15789473684211" opacity="0.82" width="178" x="223" y="199.42105263157896"></rect><line stroke="#385768" stroke-width="1.22" x1="223" x2="401" y1="83.00" y2="83.00"></line><line stroke="#B8CCD6" stroke-width="0.95" x1="223" x2="401" y1="99.63" y2="99.63"></line><line stroke="#B8CCD6" stroke-width="0.95" x1="223" x2="401" y1="116.26" y2="116.26"></line><line stroke="#385768" stroke-width="1.22" x1="223" x2="401" y1="132.89" y2="132.89"></line><line stroke="#B8CCD6" stroke-width="0.95" x1="223" x2="401" y1="149.53" y2="149.53"></line><line stroke="#B8CCD6" stroke-width="0.95" x1="223" x2="401" y1="166.16" y2="166.16"></line><line stroke="#385768" stroke-width="1.22" x1="223" x2="401" y1="182.79" y2="182.79"></line><line stroke="#B8CCD6" stroke-width="0.95" x1="223" x2="401" y1="199.42" y2="199.42"></line><line stroke="#B8CCD6" stroke-width="0.95" x1="223" x2="401" y1="216.05" y2="216.05"></line><line stroke="#385768" stroke-width="1.22" x1="223" x2="401" y1="232.68" y2="232.68"></line><line stroke="#B8CCD6" stroke-width="0.95" x1="223" x2="401" y1="249.32" y2="249.32"></line><line stroke="#B8CCD6" stroke-width="0.95" x1="223" x2="401" y1="265.95" y2="265.95"></line><line stroke="#385768" stroke-width="1.22" x1="223" x2="401" y1="282.58" y2="282.58"></line><line stroke="#B8CCD6" stroke-width="0.95" x1="223" x2="401" y1="299.21" y2="299.21"></line><line stroke="#B8CCD6" stroke-width="0.95" x1="223" x2="401" y1="315.84" y2="315.84"></line><line stroke="#385768" stroke-width="1.22" x1="223" x2="401" y1="332.47" y2="332.47"></line><line stroke="#B8CCD6" stroke-width="0.95" x1="223" x2="401" y1="349.11" y2="349.11"></line><line stroke="#B8CCD6" stroke-width="0.95" x1="223" x2="401" y1="365.74" y2="365.74"></line><line stroke="#385768" stroke-width="1.22" x1="223" x2="401" y1="382.37" y2="382.37"></line><line stroke="#385768" stroke-width="1.22" x1="223" x2="401" y1="399.00" y2="399.00"></line><line stroke="#385768" stroke-width="1.32" x1="223.00" x2="223.00" y1="83" y2="399"></line><line stroke="#8EA8B7" stroke-width="1.0" x1="248.43" x2="248.43" y1="83" y2="399"></line><line stroke="#8EA8B7" stroke-width="1.0" x1="273.86" x2="273.86" y1="83" y2="399"></line><line stroke="#8EA8B7" stroke-width="1.0" x1="299.29" x2="299.29" y1="83" y2="399"></line><line stroke="#8EA8B7" stroke-width="1.0" x1="324.71" x2="324.71" y1="83" y2="399"></line><line stroke="#8EA8B7" stroke-width="1.0" x1="350.14" x2="350.14" y1="83" y2="399"></line><line stroke="#8EA8B7" stroke-width="1.0" x1="375.57" x2="375.57" y1="83" y2="399"></line><line stroke="#385768" stroke-width="1.32" x1="401.00" x2="401.00" y1="83" y2="399"></line><!-- SUBTEST_CIRCLES_START --><circle cx="39.71" cy="141.21" fill="#1B7F8C" r="4.8"></circle><circle cx="65.14" cy="191.11" fill="#1B7F8C" r="4.8"></circle><circle cx="90.57" cy="157.84" fill="#1B7F8C" r="4.8"></circle><circle cx="116.00" cy="141.21" fill="#1B7F8C" r="4.8"></circle><circle cx="141.43" cy="274.26" fill="#1B7F8C" r="4.8"></circle><circle cx="166.86" cy="241.00" fill="#1B7F8C" r="4.8"></circle><circle cx="192.29" cy="224.37" fill="#1B7F8C" r="4.8"></circle><circle cx="235.71" cy="274.26" fill="#1B7F8C" r="4.8"></circle><circle cx="261.14" cy="357.42" fill="#1B7F8C" r="4.8"></circle><circle cx="286.57" cy="274.26" fill="#1B7F8C" r="4.8"></circle><circle cx="312.00" cy="290.89" fill="#1B7F8C" r="4.8"></circle><circle cx="337.43" cy="274.26" fill="#1B7F8C" r="4.8"></circle><!-- SUBTEST_CIRCLES_END --></svg></div>
+</section>
+<section class="card-v6 qi-card-v6">
+<div class="card-title-v6"><strong>Perfil dos Quocientes Intelectuais e Índices Fatoriais</strong></div>
+<div class="sheet-wrap-v6 qi-wrap-v6"><svg aria-label="Perfil dos Quocientes Intelectuais e Índices Fatoriais" class="qi-sheet-v6" viewbox="0 0 430 420" xmlns="http://www.w3.org/2000/svg"><defs><filter height="180%" id="barShadowV6" width="140%" x="-20%" y="-40%"><fedropshadow dx="0" dy="1.5" flood-color="#123A5A" flood-opacity="0.25" stddeviation="1.2"></fedropshadow></filter></defs><rect fill="#FFFFFF" height="360" rx="3" stroke="#5D7481" stroke-width="1.2" width="372" x="44" y="36"></rect><text class="qi-y-label" text-anchor="end" x="35" y="399.00">45</text><line stroke="#4F9AB5" stroke-width="1.08" x1="56.57" x2="84.57" y1="396.00" y2="396.00"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="109.71" x2="137.71" y1="396.00" y2="396.00"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="162.86" x2="190.86" y1="396.00" y2="396.00"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="216.00" x2="244.00" y1="396.00" y2="396.00"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="269.14" x2="297.14" y1="396.00" y2="396.00"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="322.29" x2="350.29" y1="396.00" y2="396.00"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="375.43" x2="403.43" y1="396.00" y2="396.00"></line><text class="qi-y-label" text-anchor="end" x="35" y="382.64">50</text><line stroke="#4F9AB5" stroke-width="1.08" x1="56.57" x2="84.57" y1="379.64" y2="379.64"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="109.71" x2="137.71" y1="379.64" y2="379.64"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="162.86" x2="190.86" y1="379.64" y2="379.64"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="216.00" x2="244.00" y1="379.64" y2="379.64"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="269.14" x2="297.14" y1="379.64" y2="379.64"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="322.29" x2="350.29" y1="379.64" y2="379.64"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="375.43" x2="403.43" y1="379.64" y2="379.64"></line><text class="qi-y-label" text-anchor="end" x="35" y="366.27">55</text><line stroke="#4F9AB5" stroke-width="1.08" x1="56.57" x2="84.57" y1="363.27" y2="363.27"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="109.71" x2="137.71" y1="363.27" y2="363.27"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="162.86" x2="190.86" y1="363.27" y2="363.27"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="216.00" x2="244.00" y1="363.27" y2="363.27"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="269.14" x2="297.14" y1="363.27" y2="363.27"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="322.29" x2="350.29" y1="363.27" y2="363.27"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="375.43" x2="403.43" y1="363.27" y2="363.27"></line><text class="qi-y-label" text-anchor="end" x="35" y="349.91">60</text><line stroke="#4F9AB5" stroke-width="1.08" x1="56.57" x2="84.57" y1="346.91" y2="346.91"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="109.71" x2="137.71" y1="346.91" y2="346.91"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="162.86" x2="190.86" y1="346.91" y2="346.91"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="216.00" x2="244.00" y1="346.91" y2="346.91"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="269.14" x2="297.14" y1="346.91" y2="346.91"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="322.29" x2="350.29" y1="346.91" y2="346.91"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="375.43" x2="403.43" y1="346.91" y2="346.91"></line><text class="qi-y-label" text-anchor="end" x="35" y="333.55">65</text><line stroke="#4F9AB5" stroke-width="1.08" x1="56.57" x2="84.57" y1="330.55" y2="330.55"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="109.71" x2="137.71" y1="330.55" y2="330.55"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="162.86" x2="190.86" y1="330.55" y2="330.55"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="216.00" x2="244.00" y1="330.55" y2="330.55"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="269.14" x2="297.14" y1="330.55" y2="330.55"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="322.29" x2="350.29" y1="330.55" y2="330.55"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="375.43" x2="403.43" y1="330.55" y2="330.55"></line><text class="qi-y-label" text-anchor="end" x="35" y="317.18">70</text><line stroke="#4F9AB5" stroke-width="1.08" x1="56.57" x2="84.57" y1="314.18" y2="314.18"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="109.71" x2="137.71" y1="314.18" y2="314.18"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="162.86" x2="190.86" y1="314.18" y2="314.18"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="216.00" x2="244.00" y1="314.18" y2="314.18"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="269.14" x2="297.14" y1="314.18" y2="314.18"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="322.29" x2="350.29" y1="314.18" y2="314.18"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="375.43" x2="403.43" y1="314.18" y2="314.18"></line><text class="qi-y-label" text-anchor="end" x="35" y="300.82">75</text><line stroke="#4F9AB5" stroke-width="1.08" x1="56.57" x2="84.57" y1="297.82" y2="297.82"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="109.71" x2="137.71" y1="297.82" y2="297.82"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="162.86" x2="190.86" y1="297.82" y2="297.82"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="216.00" x2="244.00" y1="297.82" y2="297.82"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="269.14" x2="297.14" y1="297.82" y2="297.82"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="322.29" x2="350.29" y1="297.82" y2="297.82"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="375.43" x2="403.43" y1="297.82" y2="297.82"></line><text class="qi-y-label" text-anchor="end" x="35" y="284.45">80</text><line stroke="#4F9AB5" stroke-width="1.08" x1="56.57" x2="84.57" y1="281.45" y2="281.45"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="109.71" x2="137.71" y1="281.45" y2="281.45"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="162.86" x2="190.86" y1="281.45" y2="281.45"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="216.00" x2="244.00" y1="281.45" y2="281.45"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="269.14" x2="297.14" y1="281.45" y2="281.45"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="322.29" x2="350.29" y1="281.45" y2="281.45"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="375.43" x2="403.43" y1="281.45" y2="281.45"></line><text class="qi-y-label" text-anchor="end" x="35" y="268.09">85</text><line stroke="#4F9AB5" stroke-width="1.08" x1="56.57" x2="84.57" y1="265.09" y2="265.09"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="109.71" x2="137.71" y1="265.09" y2="265.09"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="162.86" x2="190.86" y1="265.09" y2="265.09"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="216.00" x2="244.00" y1="265.09" y2="265.09"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="269.14" x2="297.14" y1="265.09" y2="265.09"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="322.29" x2="350.29" y1="265.09" y2="265.09"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="375.43" x2="403.43" y1="265.09" y2="265.09"></line><text class="qi-y-label" text-anchor="end" x="35" y="251.73">90</text><line stroke="#4F9AB5" stroke-width="1.08" x1="56.57" x2="84.57" y1="248.73" y2="248.73"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="109.71" x2="137.71" y1="248.73" y2="248.73"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="162.86" x2="190.86" y1="248.73" y2="248.73"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="216.00" x2="244.00" y1="248.73" y2="248.73"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="269.14" x2="297.14" y1="248.73" y2="248.73"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="322.29" x2="350.29" y1="248.73" y2="248.73"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="375.43" x2="403.43" y1="248.73" y2="248.73"></line><text class="qi-y-label" text-anchor="end" x="35" y="235.36">95</text><line stroke="#4F9AB5" stroke-width="1.08" x1="56.57" x2="84.57" y1="232.36" y2="232.36"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="109.71" x2="137.71" y1="232.36" y2="232.36"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="162.86" x2="190.86" y1="232.36" y2="232.36"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="216.00" x2="244.00" y1="232.36" y2="232.36"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="269.14" x2="297.14" y1="232.36" y2="232.36"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="322.29" x2="350.29" y1="232.36" y2="232.36"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="375.43" x2="403.43" y1="232.36" y2="232.36"></line><text class="qi-y-label" text-anchor="end" x="35" y="219.00">100</text><line stroke="#4F9AB5" stroke-width="1.08" x1="56.57" x2="84.57" y1="216.00" y2="216.00"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="109.71" x2="137.71" y1="216.00" y2="216.00"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="162.86" x2="190.86" y1="216.00" y2="216.00"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="216.00" x2="244.00" y1="216.00" y2="216.00"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="269.14" x2="297.14" y1="216.00" y2="216.00"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="322.29" x2="350.29" y1="216.00" y2="216.00"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="375.43" x2="403.43" y1="216.00" y2="216.00"></line><text class="qi-y-label" text-anchor="end" x="35" y="202.64">105</text><line stroke="#4F9AB5" stroke-width="1.08" x1="56.57" x2="84.57" y1="199.64" y2="199.64"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="109.71" x2="137.71" y1="199.64" y2="199.64"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="162.86" x2="190.86" y1="199.64" y2="199.64"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="216.00" x2="244.00" y1="199.64" y2="199.64"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="269.14" x2="297.14" y1="199.64" y2="199.64"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="322.29" x2="350.29" y1="199.64" y2="199.64"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="375.43" x2="403.43" y1="199.64" y2="199.64"></line><text class="qi-y-label" text-anchor="end" x="35" y="186.27">110</text><line stroke="#4F9AB5" stroke-width="1.08" x1="56.57" x2="84.57" y1="183.27" y2="183.27"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="109.71" x2="137.71" y1="183.27" y2="183.27"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="162.86" x2="190.86" y1="183.27" y2="183.27"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="216.00" x2="244.00" y1="183.27" y2="183.27"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="269.14" x2="297.14" y1="183.27" y2="183.27"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="322.29" x2="350.29" y1="183.27" y2="183.27"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="375.43" x2="403.43" y1="183.27" y2="183.27"></line><text class="qi-y-label" text-anchor="end" x="35" y="169.91">115</text><line stroke="#4F9AB5" stroke-width="1.08" x1="56.57" x2="84.57" y1="166.91" y2="166.91"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="109.71" x2="137.71" y1="166.91" y2="166.91"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="162.86" x2="190.86" y1="166.91" y2="166.91"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="216.00" x2="244.00" y1="166.91" y2="166.91"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="269.14" x2="297.14" y1="166.91" y2="166.91"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="322.29" x2="350.29" y1="166.91" y2="166.91"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="375.43" x2="403.43" y1="166.91" y2="166.91"></line><text class="qi-y-label" text-anchor="end" x="35" y="153.55">120</text><line stroke="#4F9AB5" stroke-width="1.08" x1="56.57" x2="84.57" y1="150.55" y2="150.55"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="109.71" x2="137.71" y1="150.55" y2="150.55"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="162.86" x2="190.86" y1="150.55" y2="150.55"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="216.00" x2="244.00" y1="150.55" y2="150.55"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="269.14" x2="297.14" y1="150.55" y2="150.55"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="322.29" x2="350.29" y1="150.55" y2="150.55"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="375.43" x2="403.43" y1="150.55" y2="150.55"></line><text class="qi-y-label" text-anchor="end" x="35" y="137.18">125</text><line stroke="#4F9AB5" stroke-width="1.08" x1="56.57" x2="84.57" y1="134.18" y2="134.18"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="109.71" x2="137.71" y1="134.18" y2="134.18"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="162.86" x2="190.86" y1="134.18" y2="134.18"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="216.00" x2="244.00" y1="134.18" y2="134.18"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="269.14" x2="297.14" y1="134.18" y2="134.18"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="322.29" x2="350.29" y1="134.18" y2="134.18"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="375.43" x2="403.43" y1="134.18" y2="134.18"></line><text class="qi-y-label" text-anchor="end" x="35" y="120.82">130</text><line stroke="#4F9AB5" stroke-width="1.08" x1="56.57" x2="84.57" y1="117.82" y2="117.82"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="109.71" x2="137.71" y1="117.82" y2="117.82"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="162.86" x2="190.86" y1="117.82" y2="117.82"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="216.00" x2="244.00" y1="117.82" y2="117.82"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="269.14" x2="297.14" y1="117.82" y2="117.82"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="322.29" x2="350.29" y1="117.82" y2="117.82"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="375.43" x2="403.43" y1="117.82" y2="117.82"></line><text class="qi-y-label" text-anchor="end" x="35" y="104.45">135</text><line stroke="#4F9AB5" stroke-width="1.08" x1="56.57" x2="84.57" y1="101.45" y2="101.45"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="109.71" x2="137.71" y1="101.45" y2="101.45"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="162.86" x2="190.86" y1="101.45" y2="101.45"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="216.00" x2="244.00" y1="101.45" y2="101.45"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="269.14" x2="297.14" y1="101.45" y2="101.45"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="322.29" x2="350.29" y1="101.45" y2="101.45"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="375.43" x2="403.43" y1="101.45" y2="101.45"></line><text class="qi-y-label" text-anchor="end" x="35" y="88.09">140</text><line stroke="#4F9AB5" stroke-width="1.08" x1="56.57" x2="84.57" y1="85.09" y2="85.09"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="109.71" x2="137.71" y1="85.09" y2="85.09"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="162.86" x2="190.86" y1="85.09" y2="85.09"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="216.00" x2="244.00" y1="85.09" y2="85.09"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="269.14" x2="297.14" y1="85.09" y2="85.09"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="322.29" x2="350.29" y1="85.09" y2="85.09"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="375.43" x2="403.43" y1="85.09" y2="85.09"></line><text class="qi-y-label" text-anchor="end" x="35" y="71.73">145</text><line stroke="#4F9AB5" stroke-width="1.08" x1="56.57" x2="84.57" y1="68.73" y2="68.73"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="109.71" x2="137.71" y1="68.73" y2="68.73"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="162.86" x2="190.86" y1="68.73" y2="68.73"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="216.00" x2="244.00" y1="68.73" y2="68.73"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="269.14" x2="297.14" y1="68.73" y2="68.73"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="322.29" x2="350.29" y1="68.73" y2="68.73"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="375.43" x2="403.43" y1="68.73" y2="68.73"></line><text class="qi-y-label" text-anchor="end" x="35" y="55.36">150</text><line stroke="#4F9AB5" stroke-width="1.08" x1="56.57" x2="84.57" y1="52.36" y2="52.36"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="109.71" x2="137.71" y1="52.36" y2="52.36"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="162.86" x2="190.86" y1="52.36" y2="52.36"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="216.00" x2="244.00" y1="52.36" y2="52.36"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="269.14" x2="297.14" y1="52.36" y2="52.36"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="322.29" x2="350.29" y1="52.36" y2="52.36"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="375.43" x2="403.43" y1="52.36" y2="52.36"></line><text class="qi-y-label" text-anchor="end" x="35" y="39.00">155</text><line stroke="#4F9AB5" stroke-width="1.08" x1="56.57" x2="84.57" y1="36.00" y2="36.00"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="109.71" x2="137.71" y1="36.00" y2="36.00"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="162.86" x2="190.86" y1="36.00" y2="36.00"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="216.00" x2="244.00" y1="36.00" y2="36.00"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="269.14" x2="297.14" y1="36.00" y2="36.00"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="322.29" x2="350.29" y1="36.00" y2="36.00"></line><line stroke="#4F9AB5" stroke-width="1.08" x1="375.43" x2="403.43" y1="36.00" y2="36.00"></line><line stroke="#AFC3CE" stroke-width="1.0" x1="70.57" x2="70.57" y1="36" y2="396"></line><line stroke="#AFC3CE" stroke-width="1.0" x1="123.71" x2="123.71" y1="36" y2="396"></line><line stroke="#AFC3CE" stroke-width="1.0" x1="176.86" x2="176.86" y1="36" y2="396"></line><line stroke="#AFC3CE" stroke-width="1.0" x1="230.00" x2="230.00" y1="36" y2="396"></line><line stroke="#AFC3CE" stroke-width="1.0" x1="283.14" x2="283.14" y1="36" y2="396"></line><line stroke="#AFC3CE" stroke-width="1.0" x1="336.29" x2="336.29" y1="36" y2="396"></line><line stroke="#AFC3CE" stroke-width="1.0" x1="389.43" x2="389.43" y1="36" y2="396"></line><text class="qi-cat-label" text-anchor="middle" x="70.57" y="22">QIV</text><text class="qi-cat-label" text-anchor="middle" x="123.71" y="22">QIE</text><text class="qi-cat-label" text-anchor="middle" x="176.86" y="22">QIT</text><text class="qi-cat-label" text-anchor="middle" x="230.00" y="22">ICV</text><text class="qi-cat-label" text-anchor="middle" x="283.14" y="22">IOP</text><text class="qi-cat-label" text-anchor="middle" x="336.29" y="22">IMO</text><text class="qi-cat-label" text-anchor="middle" x="389.43" y="22">IVP</text><!-- QI_MARKERS_START --><line filter="url(#barShadowV6)" stroke="#123A5A" stroke-linecap="round" stroke-width="4.4" x1="55.57" x2="85.57" y1="183.27" y2="183.27"></line><line stroke="#27BBD0" stroke-linecap="round" stroke-width="2.1" x1="56.57" x2="84.57" y1="183.27" y2="183.27"></line><line filter="url(#barShadowV6)" stroke="#123A5A" stroke-linecap="round" stroke-width="4.4" x1="108.71" x2="138.71" y1="222.55" y2="222.55"></line><line stroke="#27BBD0" stroke-linecap="round" stroke-width="2.1" x1="109.71" x2="137.71" y1="222.55" y2="222.55"></line><line filter="url(#barShadowV6)" stroke="#123A5A" stroke-linecap="round" stroke-width="4.4" x1="161.86" x2="191.86" y1="199.64" y2="199.64"></line><line stroke="#27BBD0" stroke-linecap="round" stroke-width="2.1" x1="162.86" x2="190.86" y1="199.64" y2="199.64"></line><line filter="url(#barShadowV6)" stroke="#123A5A" stroke-linecap="round" stroke-width="4.4" x1="215.00" x2="245.00" y1="176.73" y2="176.73"></line><line stroke="#27BBD0" stroke-linecap="round" stroke-width="2.1" x1="216.00" x2="244.00" y1="176.73" y2="176.73"></line><line filter="url(#barShadowV6)" stroke="#123A5A" stroke-linecap="round" stroke-width="4.4" x1="268.14" x2="298.14" y1="212.73" y2="212.73"></line><line stroke="#27BBD0" stroke-linecap="round" stroke-width="2.1" x1="269.14" x2="297.14" y1="212.73" y2="212.73"></line><line filter="url(#barShadowV6)" stroke="#123A5A" stroke-linecap="round" stroke-width="4.4" x1="321.29" x2="351.29" y1="216.00" y2="216.00"></line><line stroke="#27BBD0" stroke-linecap="round" stroke-width="2.1" x1="322.29" x2="350.29" y1="216.00" y2="216.00"></line><line filter="url(#barShadowV6)" stroke="#123A5A" stroke-linecap="round" stroke-width="4.4" x1="374.43" x2="404.43" y1="252.00" y2="252.00"></line><line stroke="#27BBD0" stroke-linecap="round" stroke-width="2.1" x1="375.43" x2="403.43" y1="252.00" y2="252.00"></line><!-- QI_MARKERS_END --></svg></div>
+</section>
+</div>
+<section class="card-v6 summary-card-v6">
+<div class="card-title-v6"><strong>Resumo Técnico dos Índices</strong></div>
+<div class="card-content-v6"><table class="table-v6 summary-v6"><thead><tr><th>Escala</th><th>Soma dos PP</th><th>Ponto Composto</th><th>Percentil</th><th>IC 95%</th></tr></thead><tbody><tr><td>QI Verbal</td><td>81</td><td>QIV 110</td><td>75</td><td>104-115</td></tr><tr><td>QI de Execução</td><td>69</td><td>QIE 98</td><td>45</td><td>92-104</td></tr><tr><td>QI Total</td><td>150</td><td>QIT 105</td><td>63</td><td>100-110</td></tr><tr><td>Compreensão Verbal</td><td>50</td><td>ICV 112</td><td>79</td><td>105-118</td></tr><tr><td>Organização Perceptual</td><td>43</td><td>IOP 101</td><td>53</td><td>94-108</td></tr><tr><td>Memória Operacional</td><td>30</td><td>IMO 100</td><td>50</td><td>93-107</td></tr><tr><td>Velocidade de Processamento</td><td>17</td><td>IVP 89</td><td>23</td><td>82-98</td></tr></tbody></table></div>
+</section>
+</div>
+</main><footer class="page-footer"><div class="footer-logo"><svg viewbox="0 0 760 210" xmlns="http://www.w3.org/2000/svg">
+<!-- Símbolo radial -->
+<g transform="translate(100 105)">
+<!-- Conexões principais -->
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="-46" y1="0" y2="-48"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="18" y1="0" y2="-62"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="58" y1="0" y2="-42"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="68" y1="0" y2="4"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="34" y1="0" y2="56"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="-32" y1="0" y2="54"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="-66" y1="0" y2="12"></line>
+<!-- Conexões externas discretas -->
+<path d="M-46 -48 L18 -62 L58 -42 L68 4 L34 56 L-32 54 L-66 12 Z" fill="none" stroke="#D6E2E8" stroke-linejoin="round" stroke-width="1.6"></path>
+<path d="M-46 -48 C-20 -72, 25 -84, 58 -42" fill="none" stroke="#D6E2E8" stroke-linecap="round" stroke-width="1.4"></path>
+<path d="M-66 12 C-42 38, -5 70, 34 56" fill="none" stroke="#D6E2E8" stroke-linecap="round" stroke-width="1.4"></path>
+<!-- Ponto central -->
+<circle cx="0" cy="0" fill="#123A5A" r="8.5"></circle>
+<!-- Pontos externos -->
+<circle cx="-46" cy="-48" fill="#CBD6DE" r="7"></circle>
+<circle cx="18" cy="-62" fill="#27BBD0" r="7"></circle>
+<circle cx="58" cy="-42" fill="#CBD6DE" r="7"></circle>
+<circle cx="68" cy="4" fill="#123A5A" r="7"></circle>
+<circle cx="34" cy="56" fill="#CBD6DE" r="7"></circle>
+<circle cx="-32" cy="54" fill="#27BBD0" r="7"></circle>
+<circle cx="-66" cy="12" fill="#CBD6DE" r="7"></circle>
+<!-- Pontos menores de apoio -->
+<circle cx="1" cy="-35" fill="#D6E2E8" r="4"></circle>
+<circle cx="38" cy="-7" fill="#D6E2E8" r="4"></circle>
+<circle cx="8" cy="36" fill="#D6E2E8" r="4"></circle>
+<circle cx="-36" cy="-8" fill="#D6E2E8" r="4"></circle>
+</g>
+<!-- Texto -->
+<text font-family="Arial, Helvetica, sans-serif" font-size="62" font-weight="700" letter-spacing="-1.8" x="220" y="112">
+<tspan fill="#123A5A">Neuro</tspan><tspan fill="#1B7F8C">avalia</tspan>
+</text>
+<!-- Linha institucional discreta -->
+<text fill="#7E929F" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="600" letter-spacing="3" x="224" y="144">
+        AVALIAÇÃO NEUROPSICOLÓGICA
+      </text>
+</svg></div><span class="footer-page-number">Página 2 de 5</span></footer></div>
+<div class="page"><header class="page-header"><div><div class="logo-small"><svg viewbox="0 0 760 210" xmlns="http://www.w3.org/2000/svg">
+<!-- Símbolo radial -->
+<g transform="translate(100 105)">
+<!-- Conexões principais -->
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="-46" y1="0" y2="-48"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="18" y1="0" y2="-62"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="58" y1="0" y2="-42"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="68" y1="0" y2="4"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="34" y1="0" y2="56"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="-32" y1="0" y2="54"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="-66" y1="0" y2="12"></line>
+<!-- Conexões externas discretas -->
+<path d="M-46 -48 L18 -62 L58 -42 L68 4 L34 56 L-32 54 L-66 12 Z" fill="none" stroke="#D6E2E8" stroke-linejoin="round" stroke-width="1.6"></path>
+<path d="M-46 -48 C-20 -72, 25 -84, 58 -42" fill="none" stroke="#D6E2E8" stroke-linecap="round" stroke-width="1.4"></path>
+<path d="M-66 12 C-42 38, -5 70, 34 56" fill="none" stroke="#D6E2E8" stroke-linecap="round" stroke-width="1.4"></path>
+<!-- Ponto central -->
+<circle cx="0" cy="0" fill="#123A5A" r="8.5"></circle>
+<!-- Pontos externos -->
+<circle cx="-46" cy="-48" fill="#CBD6DE" r="7"></circle>
+<circle cx="18" cy="-62" fill="#27BBD0" r="7"></circle>
+<circle cx="58" cy="-42" fill="#CBD6DE" r="7"></circle>
+<circle cx="68" cy="4" fill="#123A5A" r="7"></circle>
+<circle cx="34" cy="56" fill="#CBD6DE" r="7"></circle>
+<circle cx="-32" cy="54" fill="#27BBD0" r="7"></circle>
+<circle cx="-66" cy="12" fill="#CBD6DE" r="7"></circle>
+<!-- Pontos menores de apoio -->
+<circle cx="1" cy="-35" fill="#D6E2E8" r="4"></circle>
+<circle cx="38" cy="-7" fill="#D6E2E8" r="4"></circle>
+<circle cx="8" cy="36" fill="#D6E2E8" r="4"></circle>
+<circle cx="-36" cy="-8" fill="#D6E2E8" r="4"></circle>
+</g>
+<!-- Texto -->
+<text font-family="Arial, Helvetica, sans-serif" font-size="62" font-weight="700" letter-spacing="-1.8" x="220" y="112">
+<tspan fill="#123A5A">Neuro</tspan><tspan fill="#1B7F8C">avalia</tspan>
+</text>
+<!-- Linha institucional discreta -->
+<text fill="#7E929F" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="600" letter-spacing="3" x="224" y="144">
+        AVALIAÇÃO NEUROPSICOLÓGICA
+      </text>
+</svg></div></div><div class="header-meta"><strong>Análise Técnica</strong></div></header><main>
+<h1 class="page-title">Página de Análise</h1>
+<section class="panel"><h2>Comparações entre as Discrepâncias</h2><table class="data-table compact tiny"><thead><tr><th>Comparação</th><th>Escore 1</th><th>Escore 2</th><th>Diferença</th><th>Significância Estatística</th><th>Frequência na Amostra</th></tr></thead><tbody><tr><td>QI Verbal - QI de Execução</td><td>QIV</td><td>QIE</td><td>12</td><td>Sim</td><td>-</td></tr><tr><td>Compreensão Verbal - Organização Perceptual</td><td>ICV</td><td>IOP</td><td>11</td><td>Sim</td><td>-</td></tr><tr><td>Compreensão Verbal - Memória Operacional</td><td>ICV</td><td>IMO</td><td>12</td><td>Sim</td><td>-</td></tr><tr><td>Organização Perceptual - Velocidade de Processamento</td><td>IOP</td><td>IVP</td><td>12</td><td>Não</td><td>-</td></tr><tr><td>Compreensão Verbal - Velocidade de Processamento</td><td>ICV</td><td>IVP</td><td>23</td><td>Sim</td><td>-</td></tr><tr><td>Organização Perceptual - Memória Operacional</td><td>IOP</td><td>IMO</td><td>1</td><td>Não</td><td>-</td></tr><tr><td>Memória Operacional - Velocidade de Processamento</td><td>IMO</td><td>IVP</td><td>11</td><td>Não</td><td>-</td></tr></tbody></table></section>
+<section class="panel"><h2>Nível Subteste</h2><table class="data-table compact tiny"><thead><tr><th>Escores de Processo</th><th>Escore 1</th><th>Escore 2</th><th>Diferença</th><th>Frequência Acumulada</th></tr></thead><tbody><tr><td>Maior Sequência Dígitos Ordem Direta</td><td>Direta</td><td>-</td><td>-</td><td>-</td></tr><tr><td>Maior Sequência Dígitos Ordem Inversa</td><td>Inversa</td><td>-</td><td>-</td><td>-</td></tr><tr><td>Dígitos Ordem Direta - Ordem Inversa</td><td>Direta</td><td>Inversa</td><td>-</td><td>-</td></tr></tbody></table></section>
+<section class="panel"><h2>Análise de Clusters</h2><table class="data-table compact ultra"><thead><tr><th>Cluster</th><th>Código</th><th># Maior/Menor subteste</th><th>Interpretável?</th><th>Soma PP</th><th>Pontos compostos</th><th>IC 95%</th><th>Percentil</th><th>Classificação</th></tr></thead><tbody><tr><td>Raciocínio Fluido (RM + AF + AR)</td><td>Gf</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr><tr><td>Processamento Visual (CB + CF)</td><td>Gv</td><td>5</td><td>NÃO</td><td>-</td><td>-</td><td>-</td><td>-</td><td>Não interpretável</td></tr><tr><td>Raciocínio Fluido Não Verbal (RM + AF)</td><td>Gf-nv</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr><tr><td>Raciocínio Fluido Verbal (SM + CO)</td><td>Gf-v</td><td>3</td><td>SIM</td><td>29</td><td>124</td><td>115-133</td><td>95</td><td>Superior</td></tr><tr><td>Conhecimento Lexical (SM + VC)</td><td>Gc-VL</td><td>3</td><td>SIM</td><td>29</td><td>124</td><td>117-131</td><td>95</td><td>Superior</td></tr><tr><td>Informações Gerais (CO + IN)</td><td>Gc-K0</td><td>1</td><td>SIM</td><td>31</td><td>130</td><td>121-139</td><td>98</td><td>Muito Superior</td></tr><tr><td>Memória de Longo Prazo (VC + IN)</td><td>Gc-LTM</td><td>1</td><td>SIM</td><td>31</td><td>129</td><td>123-135</td><td>97</td><td>Superior</td></tr><tr><td>Memória de Curto Prazo (SNL + DG)</td><td>Gsm-WM</td><td>1</td><td>SIM</td><td>21</td><td>103</td><td>94-112</td><td>58</td><td>Média</td></tr></tbody></table></section>
+<section class="panel"><h2>Comparações Clínicas</h2><div class="comparison-table-wrapper"><table class="comparison-table"><colgroup><col class="col-comparison" /><col class="col-pc1-name" /><col class="col-pc1-value" /><col class="col-pc2-name" /><col class="col-pc2-value" /><col class="col-difference" /><col class="col-critical" /><col class="col-rarity" /><col class="col-direction-left" /><col class="col-direction-symbol" /><col class="col-direction-right" /></colgroup><thead><tr><th class="text-left">Comparação</th><th colspan="2">Pontos Compostos 1</th><th colspan="2">Pontos Compostos 2</th><th>Diferença</th><th>Valor<br />crítico</th><th>Raro/<br />Não raro</th><th colspan="3">Direção</th></tr></thead><tbody><tr><td>Gf x Gv</td><td>Gf</td><td>—</td><td>Gv</td><td>—</td><td>—</td><td>21</td><td>—</td><td>Gf</td><td>—</td><td>Gv</td></tr><tr><td>Gf-nonverbal x Gv</td><td>Gf-nv</td><td>—</td><td>Gv</td><td>—</td><td>—</td><td>24</td><td>—</td><td>Gf-nv</td><td>—</td><td>Gv</td></tr><tr><td>Gf-nonverbal x Gf-verbal</td><td>Gf-nv</td><td>—</td><td>Gf-v</td><td>124</td><td>—</td><td>24</td><td>—</td><td>Gf-nv</td><td>—</td><td>Gf-v</td></tr><tr><td>Gc-VL x Gc-K0</td><td>Gc-VL</td><td>124</td><td>Gc-K0</td><td>130</td><td class="difference negative-highlight">-6</td><td>17</td><td>Não raro</td><td>Gc-VL</td><td>&lt;</td><td>Gc-K0</td></tr><tr><td>Gc-LTM x Gsm-WM</td><td>Gc-LTM</td><td>129</td><td>Gsm-WM</td><td>103</td><td>26</td><td>24</td><td>Raro</td><td>Gc-LTM</td><td>&gt;</td><td>Gsm-WM</td></tr><tr><td>Gc-LTM x Gf-verbal</td><td>Gc-LTM</td><td>129</td><td>Gf-v</td><td>124</td><td>5</td><td>17</td><td>Não raro</td><td>Gc-LTM</td><td>&gt;</td><td>Gf-v</td></tr></tbody></table></div></section>
+</main><footer class="page-footer"><div class="footer-logo"><svg viewbox="0 0 760 210" xmlns="http://www.w3.org/2000/svg">
+<!-- Símbolo radial -->
+<g transform="translate(100 105)">
+<!-- Conexões principais -->
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="-46" y1="0" y2="-48"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="18" y1="0" y2="-62"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="58" y1="0" y2="-42"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="68" y1="0" y2="4"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="34" y1="0" y2="56"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="-32" y1="0" y2="54"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="-66" y1="0" y2="12"></line>
+<!-- Conexões externas discretas -->
+<path d="M-46 -48 L18 -62 L58 -42 L68 4 L34 56 L-32 54 L-66 12 Z" fill="none" stroke="#D6E2E8" stroke-linejoin="round" stroke-width="1.6"></path>
+<path d="M-46 -48 C-20 -72, 25 -84, 58 -42" fill="none" stroke="#D6E2E8" stroke-linecap="round" stroke-width="1.4"></path>
+<path d="M-66 12 C-42 38, -5 70, 34 56" fill="none" stroke="#D6E2E8" stroke-linecap="round" stroke-width="1.4"></path>
+<!-- Ponto central -->
+<circle cx="0" cy="0" fill="#123A5A" r="8.5"></circle>
+<!-- Pontos externos -->
+<circle cx="-46" cy="-48" fill="#CBD6DE" r="7"></circle>
+<circle cx="18" cy="-62" fill="#27BBD0" r="7"></circle>
+<circle cx="58" cy="-42" fill="#CBD6DE" r="7"></circle>
+<circle cx="68" cy="4" fill="#123A5A" r="7"></circle>
+<circle cx="34" cy="56" fill="#CBD6DE" r="7"></circle>
+<circle cx="-32" cy="54" fill="#27BBD0" r="7"></circle>
+<circle cx="-66" cy="12" fill="#CBD6DE" r="7"></circle>
+<!-- Pontos menores de apoio -->
+<circle cx="1" cy="-35" fill="#D6E2E8" r="4"></circle>
+<circle cx="38" cy="-7" fill="#D6E2E8" r="4"></circle>
+<circle cx="8" cy="36" fill="#D6E2E8" r="4"></circle>
+<circle cx="-36" cy="-8" fill="#D6E2E8" r="4"></circle>
+</g>
+<!-- Texto -->
+<text font-family="Arial, Helvetica, sans-serif" font-size="62" font-weight="700" letter-spacing="-1.8" x="220" y="112">
+<tspan fill="#123A5A">Neuro</tspan><tspan fill="#1B7F8C">avalia</tspan>
+</text>
+<!-- Linha institucional discreta -->
+<text fill="#7E929F" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="600" letter-spacing="3" x="224" y="144">
+        AVALIAÇÃO NEUROPSICOLÓGICA
+      </text>
+</svg></div><span class="footer-page-number">Página 3 de 5</span></footer></div><section class="page clinical-page">
+  <header class="page-header"><div><div class="logo-small"><svg viewbox="0 0 760 210" xmlns="http://www.w3.org/2000/svg">
+    <g transform="translate(100 105)">
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="-46" y1="0" y2="-48"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="18" y1="0" y2="-62"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="58" y1="0" y2="-42"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="68" y1="0" y2="4"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="34" y1="0" y2="56"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="-32" y1="0" y2="54"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="-66" y1="0" y2="12"></line>
+<path d="M-46 -48 L18 -62 L58 -42 L68 4 L34 56 L-32 54 L-66 12 Z" fill="none" stroke="#D6E2E8" stroke-linejoin="round" stroke-width="1.6"></path>
+<path d="M-46 -48 C-20 -72, 25 -84, 58 -42" fill="none" stroke="#D6E2E8" stroke-linecap="round" stroke-width="1.4"></path>
+<path d="M-66 12 C-42 38, -5 70, 34 56" fill="none" stroke="#D6E2E8" stroke-linecap="round" stroke-width="1.4"></path>
+<circle cx="0" cy="0" fill="#123A5A" r="8.5"></circle>
+<circle cx="-46" cy="-48" fill="#CBD6DE" r="7"></circle>
+<circle cx="18" cy="-62" fill="#27BBD0" r="7"></circle>
+<circle cx="58" cy="-42" fill="#CBD6DE" r="7"></circle>
+<circle cx="68" cy="4" fill="#123A5A" r="7"></circle>
+<circle cx="34" cy="56" fill="#CBD6DE" r="7"></circle>
+<circle cx="-32" cy="54" fill="#27BBD0" r="7"></circle>
+<circle cx="-66" cy="12" fill="#CBD6DE" r="7"></circle>
+<circle cx="1" cy="-35" fill="#D6E2E8" r="4"></circle>
+<circle cx="38" cy="-7" fill="#D6E2E8" r="4"></circle>
+<circle cx="8" cy="36" fill="#D6E2E8" r="4"></circle>
+<circle cx="-36" cy="-8" fill="#D6E2E8" r="4"></circle>
+</g>
+<text font-family="Arial, Helvetica, sans-serif" font-size="62" font-weight="700" letter-spacing="-1.8" x="220" y="112">
+<tspan fill="#123A5A">Neuro</tspan><tspan fill="#1B7F8C">avalia</tspan>
+</text>
+<text fill="#7E929F" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="600" letter-spacing="3" x="224" y="144">
+        AVALIAÇÃO NEUROPSICOLÓGICA
+      </text>
+</svg></div></div><div class="header-meta"><strong>Interpretação Clínica</strong></div></header>
+  <main>
     <div class="clinical-title">Interpretação Clínica</div>
     <div class="clinical">
-      <p>Os resultados obtidos na Escala Wechsler de Inteligência para Adultos – Terceira Edição (WAIS-III) indicam
-        funcionamento intelectual global situado na faixa Média (QIT = 105; percentil 63; IC 95% = 100-110). Embora o
-        QIT represente um indicador global adequado do desempenho intelectual geral, sua interpretação deve ser
-        realizada com cautela clínica, considerando a presença de variações entre os índices fatoriais, especialmente
-        pela diferença entre recursos verbais mais elevados e menor eficiência relativa em velocidade de processamento.
-      </p>
-
-      <p>O perfil evidencia melhor desempenho em habilidades mediadas pela linguagem, com Quociente de Inteligência
-        Verbal situado na faixa Média Superior (QIV = 110; percentil 75) e Índice de Compreensão Verbal também na faixa
-        Média Superior (ICV = 112; percentil 79). Esses achados sugerem boa capacidade de formação conceitual,
-        raciocínio verbal, compreensão de informações complexas, uso de conhecimentos previamente adquiridos e
-        elaboração abstrata por meio da linguagem.</p>
-
-      <p>O Quociente de Inteligência de Execução (QIE = 98; percentil 45) e o Índice de Organização Perceptual (IOP =
-        101; percentil 53) situaram-se na faixa Média, indicando recursos preservados para raciocínio não verbal,
-        análise visuoespacial, integração perceptiva e resolução de problemas com apoio visual. Esse padrão sugere que o
-        avaliado apresenta desempenho funcional em tarefas de organização perceptual, embora sem o mesmo destaque
-        observado no domínio verbal.</p>
-
-      <p>O Índice de Memória Operacional (IMO = 100; percentil 50) também se situou na faixa Média, apontando capacidade
-        compatível com o esperado para retenção temporária, manipulação mental de informações, atenção auditiva imediata
-        e controle executivo em tarefas estruturadas. Esse resultado indica preservação dos mecanismos básicos de
-        sustentação mental da informação, especialmente quando as demandas são claras e organizadas.</p>
-
-      <p>O Índice de Velocidade de Processamento (IVP = 89; percentil 23) situou-se na faixa Média Inferior,
-        constituindo a principal vulnerabilidade relativa do perfil. Esse desempenho sugere menor eficiência em tarefas
-        que exigem rapidez visuomotora, rastreio visual contínuo, automatização, precisão grafomotora e resposta sob
-        pressão temporal. Em termos funcionais, esse padrão pode se manifestar como maior tempo para concluir tarefas
-        repetitivas, lentificação operacional, maior desgaste em demandas prolongadas e redução da eficiência quando há
-        limite de tempo.</p>
-
-      <p>Em análise clínica, a discrepância entre Compreensão Verbal e Velocidade de Processamento sugere um perfil
-        cognitivo caracterizado por boa capacidade de raciocínio, compreensão e elaboração conceitual, porém com maior
-        custo executivo em tarefas rápidas, seriadas ou dependentes de automatização. Assim, o desempenho tende a ser
-        mais favorável em situações que permitam tempo adequado para análise, organização da resposta e uso de recursos
-        verbais, podendo apresentar queda relativa em contextos que exigem rapidez, precisão e execução simultânea sob
-        pressão.</p>
+      <p>Os resultados do WAIS-III devem ser interpretados de forma integrada à entrevista clínica, observações comportamentais, histórico funcional e demais instrumentos utilizados na avaliação neuropsicológica.</p>
     </div>
 
     <div class="summary-title">Síntese Interpretativa para o Laudo</div>
-    <div class="note-box">Em análise clínica, o avaliado apresenta funcionamento intelectual global na faixa Média, com
-      perfil heterogêneo e melhor eficiência relativa em habilidades verbais, raciocínio conceitual e compreensão de
-      informações complexas. Observa-se preservação dos recursos de organização perceptual e memória operacional,
-      contrastando com menor rendimento em velocidade de processamento. O conjunto dos achados sugere recursos
-      cognitivos gerais preservados, com vulnerabilidade específica em tarefas que demandam rapidez operacional,
-      rastreio visual, automatização e resposta sob pressão temporal. Tais resultados devem ser integrados aos dados da
-      anamnese, observações clínicas, funcionamento adaptativo e demais instrumentos utilizados na avaliação
-      neuropsicológica.</div>
+    <div class="note-box">Em análise clínica, o avaliado apresenta funcionamento intelectual global na faixa Média, com perfil heterogêneo e melhor eficiência relativa em habilidades verbais, raciocínio conceitual e compreensão de informações complexas. Os achados devem ser integrados aos demais dados clínicos e funcionais antes de qualquer conclusão diagnóstica.</div>
 
     <div class="summary-title">Pontos de Atenção Clínica</div>
-    <div class="note-box">O WAIS-III não deve ser utilizado isoladamente para estabelecimento de hipótese diagnóstica.
-      Quando houver queixas de lentificação, desatenção, baixa produtividade, fadiga cognitiva ou dificuldade em tarefas
-      cronometradas, recomenda-se integrar estes achados com medidas específicas de atenção, funções executivas,
-      memória, humor, comportamento adaptativo e histórico funcional.</div>
+    <div class="note-box">O WAIS-III não deve ser utilizado isoladamente para estabelecimento de hipótese diagnóstica. Quando houver queixas de lentificação, desatenção, baixa produtividade, fadiga cognitiva ou dificuldade em tarefas cronometradas, recomenda-se integrar estes achados com medidas específicas de atenção, funções executivas, memória, humor, comportamento adaptativo e histórico funcional.</div>
+  </main>
+  <footer class="page-footer"><div class="footer-logo"><svg viewbox="0 0 760 210" xmlns="http://www.w3.org/2000/svg">
+    <g transform="translate(100 105)">
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="-46" y1="0" y2="-48"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="18" y1="0" y2="-62"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="58" y1="0" y2="-42"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="68" y1="0" y2="4"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="34" y1="0" y2="56"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="-32" y1="0" y2="54"></line>
+<line stroke="#9EB4C2" stroke-width="1.8" x1="0" x2="-66" y1="0" y2="12"></line>
+<path d="M-46 -48 L18 -62 L58 -42 L68 4 L34 56 L-32 54 L-66 12 Z" fill="none" stroke="#D6E2E8" stroke-linejoin="round" stroke-width="1.6"></path>
+<path d="M-46 -48 C-20 -72, 25 -84, 58 -42" fill="none" stroke="#D6E2E8" stroke-linecap="round" stroke-width="1.4"></path>
+<path d="M-66 12 C-42 38, -5 70, 34 56" fill="none" stroke="#D6E2E8" stroke-linecap="round" stroke-width="1.4"></path>
+<circle cx="0" cy="0" fill="#123A5A" r="8.5"></circle>
+<circle cx="-46" cy="-48" fill="#CBD6DE" r="7"></circle>
+<circle cx="18" cy="-62" fill="#27BBD0" r="7"></circle>
+<circle cx="58" cy="-42" fill="#CBD6DE" r="7"></circle>
+<circle cx="68" cy="4" fill="#123A5A" r="7"></circle>
+<circle cx="34" cy="56" fill="#CBD6DE" r="7"></circle>
+<circle cx="-32" cy="54" fill="#27BBD0" r="7"></circle>
+<circle cx="-66" cy="12" fill="#CBD6DE" r="7"></circle>
+<circle cx="1" cy="-35" fill="#D6E2E8" r="4"></circle>
+<circle cx="38" cy="-7" fill="#D6E2E8" r="4"></circle>
+<circle cx="8" cy="36" fill="#D6E2E8" r="4"></circle>
+<circle cx="-36" cy="-8" fill="#D6E2E8" r="4"></circle>
+</g>
+<text font-family="Arial, Helvetica, sans-serif" font-size="62" font-weight="700" letter-spacing="-1.8" x="220" y="112">
+<tspan fill="#123A5A">Neuro</tspan><tspan fill="#1B7F8C">avalia</tspan>
+</text>
+<text fill="#7E929F" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="600" letter-spacing="3" x="224" y="144">
+        AVALIAÇÃO NEUROPSICOLÓGICA
+      </text>
+</svg></div><span class="footer-page-number">Página 4 de 4</span></footer></section>
 
-    <div class="footer"><span>NeuroAvalia · WAIS-III Técnico</span><span>PÁGINA 4 DE 4</span></div>
-  </section>
 </body>
-
 </html>

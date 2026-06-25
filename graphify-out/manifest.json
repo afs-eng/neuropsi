@@ -1,6 +1,10 @@
 {
+  "/home/andre/software/neuro-system/debug_preserve.py": {
+    "mtime": 1779880695.9012396,
+    "hash": "355f77e8b4d0f90232e68f354aaa6436"
+  },
   "/home/andre/software/neuro-system/manage.py": {
-    "mtime": 1778702426.8075714,
+    "mtime": 1779883860.1395953,
     "hash": "587f7ef19a3509196f42c700c7ced014"
   },
   "/home/andre/software/neuro-system/teste-pandas.py": {
@@ -232,20 +236,20 @@
     "hash": "3878c3d5d7934b6ff8cf7cd23d043b27"
   },
   "/home/andre/software/neuro-system/apps/ai/services/text_generation_service.py": {
-    "mtime": 1778700204.627792,
-    "hash": "44f9f24d75ab731211759d694e7ac903"
+    "mtime": 1779880695.8882396,
+    "hash": "c233b4499fe8a5ec0ae1e39f915c194f"
   },
   "/home/andre/software/neuro-system/apps/ai/services/__init__.py": {
     "mtime": 1778700111.7089524,
     "hash": "d5581263ba68c95ded3fb1401c4f3acd"
   },
   "/home/andre/software/neuro-system/apps/ai/services/ai_healthcheck_service.py": {
-    "mtime": 1778702846.455298,
-    "hash": "4b5af2093b7785884106ad55ee5fd5d4"
+    "mtime": 1779883959.1594555,
+    "hash": "9e011496fd795a3a2dc785b5ab140f2f"
   },
   "/home/andre/software/neuro-system/apps/ai/services/provider_factory.py": {
-    "mtime": 1778700204.627792,
-    "hash": "2e7968509396a3204120b3b888aa7e32"
+    "mtime": 1779880695.8882396,
+    "hash": "7607c136b01d0008588c728351e4165a"
   },
   "/home/andre/software/neuro-system/apps/ai/services/prompt_registry_service.py": {
     "mtime": 1778700111.7089524,
@@ -264,8 +268,8 @@
     "hash": "1f1eebfda317805e4a2637bd4f64c898"
   },
   "/home/andre/software/neuro-system/apps/ai/providers/ollama_provider.py": {
-    "mtime": 1778702846.455298,
-    "hash": "3cd9be21fe308bc942c4bc884f5c5a9a"
+    "mtime": 1779883859.8315954,
+    "hash": "73ac75224d954a5b94d2be2cf10b93f7"
   },
   "/home/andre/software/neuro-system/apps/ai/providers/openai_provider.py": {
     "mtime": 1778700111.7089524,
@@ -308,8 +312,8 @@
     "hash": "6d81c48872f2cc833cce70f59d9fb8ae"
   },
   "/home/andre/software/neuro-system/apps/tests/tests.py": {
-    "mtime": 1779850170.5109499,
-    "hash": "3d09c1cb610768ff661f3180192cb194"
+    "mtime": 1782267584.763816,
+    "hash": "ed5aa045b810fbed608005c178f36880"
   },
   "/home/andre/software/neuro-system/apps/tests/urls.py": {
     "mtime": 1778700111.7309525,
@@ -335,6 +339,10 @@
     "mtime": 1778700111.7265525,
     "hash": "429144db18efb46db0230903401712a5"
   },
+  "/home/andre/software/neuro-system/apps/tests/management/commands/recompute_wais3.py": {
+    "mtime": 1779880695.892573,
+    "hash": "5b5ac5238c417882733324faf0583e01"
+  },
   "/home/andre/software/neuro-system/apps/tests/migrations/__init__.py": {
     "mtime": 1778700111.7265525,
     "hash": "d41d8cd98f00b204e9800998ecf8427e"
@@ -348,7 +356,7 @@
     "hash": "5b09a149d13dec2e5a54c200d93442bd"
   },
   "/home/andre/software/neuro-system/apps/tests/migrations/0004_testapplication_status.py": {
-    "mtime": 1778764554.1690433,
+    "mtime": 1779883859.8799953,
     "hash": "4319bb3baed59a25713eecb37c2d2e40"
   },
   "/home/andre/software/neuro-system/apps/tests/migrations/0001_initial.py": {
@@ -364,7 +372,7 @@
     "hash": "71f0efd86ecb6002431da5cbe5f3efa4"
   },
   "/home/andre/software/neuro-system/apps/tests/epq_j/__init__.py": {
-    "mtime": 1778766040.5970466,
+    "mtime": 1779883859.8755953,
     "hash": "c4d357922abb2ed1994e3eed5c2639cd"
   },
   "/home/andre/software/neuro-system/apps/tests/epq_j/calculators.py": {
@@ -380,7 +388,7 @@
     "hash": "68d2bfa5c2a47e0e44b8a068203838a3"
   },
   "/home/andre/software/neuro-system/apps/tests/base/types.py": {
-    "mtime": 1778764588.6730702,
+    "mtime": 1779883859.8447952,
     "hash": "2bde6e1fc30b0a398e56d4725a098d47"
   },
   "/home/andre/software/neuro-system/apps/tests/base/__init__.py": {
@@ -396,15 +404,15 @@
     "hash": "afb121f427634f1cadc033bac4d2f1ac"
   },
   "/home/andre/software/neuro-system/apps/tests/scared/interpreters.py": {
-    "mtime": 1778700111.7309525,
-    "hash": "8ac520a229adfd20a1270f8d9285860d"
+    "mtime": 1781212669.5835667,
+    "hash": "46e43bb593af172810c960f0bf7fe72d"
   },
   "/home/andre/software/neuro-system/apps/tests/scared/norms.py": {
     "mtime": 1778700111.7309525,
     "hash": "20d60e7b604aebfb108a77b9dce756fe"
   },
   "/home/andre/software/neuro-system/apps/tests/scared/__init__.py": {
-    "mtime": 1778766040.5930293,
+    "mtime": 1779883859.8843954,
     "hash": "002b986075eab6f45bbfa245176aad1b"
   },
   "/home/andre/software/neuro-system/apps/tests/scared/calculators.py": {
@@ -419,24 +427,28 @@
     "mtime": 1778700111.7309525,
     "hash": "5cedbe02baaaaf9b4f7da53cfeae1df0"
   },
+  "/home/andre/software/neuro-system/apps/tests/scared/pdf_service.py": {
+    "mtime": 1781222377.3050485,
+    "hash": "e01fda0f0a829c49931e8443ccd8be6f"
+  },
   "/home/andre/software/neuro-system/apps/tests/scared/validators.py": {
     "mtime": 1778700111.7309525,
     "hash": "66b705c26e0245b84b7ea5e6b431d782"
   },
   "/home/andre/software/neuro-system/apps/tests/srs2/interpreters.py": {
-    "mtime": 1779711625.3733654,
+    "mtime": 1779883859.8843954,
     "hash": "91cfe5f8c2151f8ca6b966eff6988c00"
   },
   "/home/andre/software/neuro-system/apps/tests/srs2/norms.py": {
-    "mtime": 1779654460.3932343,
+    "mtime": 1779883859.8843954,
     "hash": "129cc0c8d00df80979a969ec0992fa37"
   },
   "/home/andre/software/neuro-system/apps/tests/srs2/__init__.py": {
-    "mtime": 1779654690.5545104,
+    "mtime": 1779883859.8843954,
     "hash": "8f0fec0d4685ef6aec7d83f76725e35e"
   },
   "/home/andre/software/neuro-system/apps/tests/srs2/calculators.py": {
-    "mtime": 1779654455.9801135,
+    "mtime": 1779883859.8843954,
     "hash": "e67c8f4def5c97057a497529b2cd23b7"
   },
   "/home/andre/software/neuro-system/apps/tests/srs2/paths.py": {
@@ -444,7 +456,7 @@
     "hash": "2f38eb0a8d5c8bdaa629707874021b5b"
   },
   "/home/andre/software/neuro-system/apps/tests/srs2/classifiers.py": {
-    "mtime": 1779654453.4940836,
+    "mtime": 1779883859.8843954,
     "hash": "649998ab18aff8544dc13e0c116c30ba"
   },
   "/home/andre/software/neuro-system/apps/tests/srs2/config.py": {
@@ -452,8 +464,8 @@
     "hash": "b78e9847e753c68f295727b1160b68f0"
   },
   "/home/andre/software/neuro-system/apps/tests/srs2/pdf_service.py": {
-    "mtime": 1779736263.0130057,
-    "hash": "3b23f2f463c0f794e0234e4b1dbfdfdd"
+    "mtime": 1782268307.2162046,
+    "hash": "80ce175ede945962aacf4697214c4d8d"
   },
   "/home/andre/software/neuro-system/apps/tests/srs2/validators.py": {
     "mtime": 1778700111.7309525,
@@ -468,7 +480,7 @@
     "hash": "f74f079760cde3c2dbf118957cb467df"
   },
   "/home/andre/software/neuro-system/apps/tests/fdt/__init__.py": {
-    "mtime": 1778765581.5411797,
+    "mtime": 1779883859.8755953,
     "hash": "8550c7df98deb69f4bcea4bc1e6e6c5d"
   },
   "/home/andre/software/neuro-system/apps/tests/fdt/calculators.py": {
@@ -476,11 +488,11 @@
     "hash": "0e02a067fca03fb49f6b438540f67ed5"
   },
   "/home/andre/software/neuro-system/apps/tests/fdt/config.py": {
-    "mtime": 1778700204.6321187,
-    "hash": "9a49ad7f80bdafc8b560b01e7002318c"
+    "mtime": 1779880695.892573,
+    "hash": "c0017c1808db218d2067ed5d53db2983"
   },
   "/home/andre/software/neuro-system/apps/tests/fdt/pdf_service.py": {
-    "mtime": 1779381319.60296,
+    "mtime": 1779883859.8755953,
     "hash": "006460af51c2bf5893556d9cf2340adf"
   },
   "/home/andre/software/neuro-system/apps/tests/fdt/validators.py": {
@@ -488,7 +500,7 @@
     "hash": "d002514df50aa517a40f530aa0063394"
   },
   "/home/andre/software/neuro-system/apps/tests/bpa2/interpreters.py": {
-    "mtime": 1779453763.977675,
+    "mtime": 1779883859.8447952,
     "hash": "b5cd7d3661cebdea7a7371630100f069"
   },
   "/home/andre/software/neuro-system/apps/tests/bpa2/schemas.py": {
@@ -496,7 +508,7 @@
     "hash": "cfefc41a2140a394fb990b4458c3a598"
   },
   "/home/andre/software/neuro-system/apps/tests/bpa2/__init__.py": {
-    "mtime": 1779452195.367967,
+    "mtime": 1779883859.8447952,
     "hash": "a2a05e15302ee3a10acdd6e4d3d32001"
   },
   "/home/andre/software/neuro-system/apps/tests/bpa2/script_avaliacao.py": {
@@ -516,7 +528,7 @@
     "hash": "4084d4f0586c43fd04a824613c93ca0b"
   },
   "/home/andre/software/neuro-system/apps/tests/bpa2/pdf_service.py": {
-    "mtime": 1779453224.6538491,
+    "mtime": 1779883859.8447952,
     "hash": "dbb848c3df5e6ce7a1f5f9cdc116ff4b"
   },
   "/home/andre/software/neuro-system/apps/tests/bpa2/validators.py": {
@@ -536,7 +548,7 @@
     "hash": "7f66de66e04b2d1543996557938f0ab0"
   },
   "/home/andre/software/neuro-system/apps/tests/ravlt/__init__.py": {
-    "mtime": 1779443024.645323,
+    "mtime": 1779883936.6446555,
     "hash": "7b0fe51ee3017b97672f8ec902879340"
   },
   "/home/andre/software/neuro-system/apps/tests/ravlt/config.py": {
@@ -544,11 +556,11 @@
     "hash": "e3a57d5cc561157c95e792afbbe7a8f7"
   },
   "/home/andre/software/neuro-system/apps/tests/ravlt/ai_interpretation.py": {
-    "mtime": 1779442753.4024923,
+    "mtime": 1779883859.8843954,
     "hash": "27e8542b9569a3561aec1210106c5ca1"
   },
   "/home/andre/software/neuro-system/apps/tests/ravlt/pdf_service.py": {
-    "mtime": 1779442939.8615396,
+    "mtime": 1779883859.8843954,
     "hash": "6db7b75cf2b680e9d27e27af5b05402c"
   },
   "/home/andre/software/neuro-system/apps/tests/ebadep_a/interpreters.py": {
@@ -560,7 +572,7 @@
     "hash": "c6528a652ba61a878a1144f979faf4ba"
   },
   "/home/andre/software/neuro-system/apps/tests/ebadep_a/__init__.py": {
-    "mtime": 1778766040.5930293,
+    "mtime": 1779883859.8447952,
     "hash": "b34f90e09c214f89217f2b92edcb8770"
   },
   "/home/andre/software/neuro-system/apps/tests/ebadep_a/calculators.py": {
@@ -572,7 +584,7 @@
     "hash": "bdca56c10beae6b202f4c671ea56d4ac"
   },
   "/home/andre/software/neuro-system/apps/tests/ebadep_a/pdf_service.py": {
-    "mtime": 1779847431.9140134,
+    "mtime": 1779883859.8447952,
     "hash": "57f3eedd7daa21eed948457b4886d8e3"
   },
   "/home/andre/software/neuro-system/apps/tests/ebadep_a/validators.py": {
@@ -580,7 +592,7 @@
     "hash": "c0a62c3bdba1cef04c6ea7beb157f830"
   },
   "/home/andre/software/neuro-system/apps/tests/wais3/interpreters.py": {
-    "mtime": 1779830773.1748993,
+    "mtime": 1779883936.6710553,
     "hash": "1605e8785e78c87566b85922827cc56b"
   },
   "/home/andre/software/neuro-system/apps/tests/wais3/utils.py": {
@@ -592,35 +604,35 @@
     "hash": "8cab7e4319fdf16df8ecb4aad7d8006b"
   },
   "/home/andre/software/neuro-system/apps/tests/wais3/test_wais3_sample_result.py": {
-    "mtime": 1779232222.6562774,
-    "hash": "626a88d8814f2dc9399f79d6bc606a49"
+    "mtime": 1779884025.0990856,
+    "hash": "0229fded26f5b0f5ac6161ef1bd277fe"
   },
   "/home/andre/software/neuro-system/apps/tests/wais3/test_wais3_validation.py": {
-    "mtime": 1779227989.3107579,
+    "mtime": 1779883859.8931954,
     "hash": "820274c969215e67368407950dd68aa3"
   },
   "/home/andre/software/neuro-system/apps/tests/wais3/__init__.py": {
-    "mtime": 1778765581.545159,
+    "mtime": 1779883859.8887954,
     "hash": "8c0c6aab35b2fe705c03d0f752bd7f54"
   },
   "/home/andre/software/neuro-system/apps/tests/wais3/calculators.py": {
-    "mtime": 1779232222.6562774,
-    "hash": "42fa2e2b7347e56defa71f219fe71496"
+    "mtime": 1779883859.8887954,
+    "hash": "bf3140ce362bfc7db06f11dfa1fc818e"
   },
   "/home/andre/software/neuro-system/apps/tests/wais3/norm_utils.py": {
     "mtime": 1778700111.7309525,
     "hash": "73cddc0dfe790a2c34357e25d0f47928"
   },
   "/home/andre/software/neuro-system/apps/tests/wais3/test_wais3_utils.py": {
-    "mtime": 1778700204.6321187,
-    "hash": "a9b523076d5ef18cb57530f2aa27353b"
+    "mtime": 1779880695.8969064,
+    "hash": "d0edf6b1fde1f2daadcface805eaa9ee"
   },
   "/home/andre/software/neuro-system/apps/tests/wais3/loaders.py": {
     "mtime": 1778700111.7309525,
     "hash": "8b7c2f8652874ace1846d18a4702cfa1"
   },
   "/home/andre/software/neuro-system/apps/tests/wais3/classifiers.py": {
-    "mtime": 1779756827.6527534,
+    "mtime": 1779883936.6578553,
     "hash": "78020ccfba95239c1164430eededa5dc"
   },
   "/home/andre/software/neuro-system/apps/tests/wais3/config.py": {
@@ -628,16 +640,16 @@
     "hash": "2912736af35ab093abdcf33b3554bb34"
   },
   "/home/andre/software/neuro-system/apps/tests/wais3/pdf_service.py": {
-    "mtime": 1779823543.4291673,
-    "hash": "10b891cda7c3be8cec7939a266a93018"
+    "mtime": 1779988420.615754,
+    "hash": "6e9c24219a1581310c4ab1156dc82a62"
   },
   "/home/andre/software/neuro-system/apps/tests/wais3/validators.py": {
-    "mtime": 1779227989.3066022,
+    "mtime": 1779883859.8931954,
     "hash": "1b101140e3b0b8dd9512aad490548dc3"
   },
   "/home/andre/software/neuro-system/apps/tests/wais3/constants.py": {
-    "mtime": 1778700204.6321187,
-    "hash": "56491e270670a85d55ecb59ffe425938"
+    "mtime": 1779880695.8969064,
+    "hash": "c3f28a2bd6bffbde013de4e3ee6cfd23"
   },
   "/home/andre/software/neuro-system/apps/tests/wais3/tabelas/conversor.py": {
     "mtime": 1778700111.7309525,
@@ -652,7 +664,7 @@
     "hash": "99dc9b2beb3e00d5c0c90446050ba864"
   },
   "/home/andre/software/neuro-system/apps/tests/etdah_ad/__init__.py": {
-    "mtime": 1778766040.5930293,
+    "mtime": 1779883859.8755953,
     "hash": "513f2f295945c7b504216509a934fb63"
   },
   "/home/andre/software/neuro-system/apps/tests/etdah_ad/calculators.py": {
@@ -692,7 +704,7 @@
     "hash": "2646b6c2f15a0a1b0e46129cb0bc7a31"
   },
   "/home/andre/software/neuro-system/apps/tests/mchat/config.py": {
-    "mtime": 1778766040.5970466,
+    "mtime": 1779883859.8799953,
     "hash": "c7d9959c37854a200e4b8f047e92c959"
   },
   "/home/andre/software/neuro-system/apps/tests/mchat/validators.py": {
@@ -712,7 +724,7 @@
     "hash": "7397dbed7ee70b808d8bd95c07881935"
   },
   "/home/andre/software/neuro-system/apps/tests/etdah_pais/__init__.py": {
-    "mtime": 1778766040.5930293,
+    "mtime": 1779883859.8755953,
     "hash": "cd36c99d52d66a4ccf48cd9bd507d05e"
   },
   "/home/andre/software/neuro-system/apps/tests/etdah_pais/calculators.py": {
@@ -728,35 +740,35 @@
     "hash": "9708f0ee774e305d3fd1bc2bcd85b06b"
   },
   "/home/andre/software/neuro-system/apps/tests/services/ai_interpretation_orchestrator.py": {
-    "mtime": 1779410589.3799322,
+    "mtime": 1779883859.8843954,
     "hash": "d6246a2cb5803fdb72adafcba81b74d7"
   },
   "/home/andre/software/neuro-system/apps/tests/services/pdf_export_service.py": {
-    "mtime": 1779847552.3586667,
-    "hash": "5865bcf846852b006d10e189d994be78"
+    "mtime": 1781212613.8824382,
+    "hash": "935f41ec9e86d7b827524bc402cdabe0"
   },
   "/home/andre/software/neuro-system/apps/tests/services/__init__.py": {
-    "mtime": 1779403886.7863507,
+    "mtime": 1779883859.8843954,
     "hash": "e7db38a7fecb0bf16cbee6dcb0249ce7"
   },
   "/home/andre/software/neuro-system/apps/tests/services/ai_interpretation_registry.py": {
-    "mtime": 1779403863.6701646,
+    "mtime": 1779883859.8843954,
     "hash": "6fba141c58c7f738ccb8c8997bad6b80"
   },
   "/home/andre/software/neuro-system/apps/tests/services/playwright_pdf_service.py": {
-    "mtime": 1779665623.088722,
+    "mtime": 1779883859.8843954,
     "hash": "9424aa4921cf3e5336834d5b6c11d565"
   },
   "/home/andre/software/neuro-system/apps/tests/services/ai_interpretation_types.py": {
-    "mtime": 1779403863.6661406,
+    "mtime": 1779883859.8843954,
     "hash": "6897ed949e25edb7582363f03a9e5b03"
   },
   "/home/andre/software/neuro-system/apps/tests/services/report_payload_service.py": {
-    "mtime": 1778765526.5542727,
+    "mtime": 1779883859.8843954,
     "hash": "ab920954605d0d40668ce785aaf342a6"
   },
   "/home/andre/software/neuro-system/apps/tests/services/scoring_service.py": {
-    "mtime": 1778764647.4211233,
+    "mtime": 1779883859.8843954,
     "hash": "4c824964fc0f2d5e731f8e316ba6ac1c"
   },
   "/home/andre/software/neuro-system/apps/tests/services/interpretation_service.py": {
@@ -764,7 +776,7 @@
     "hash": "094c0f2f4a2d794cc630b633c130a083"
   },
   "/home/andre/software/neuro-system/apps/tests/services/application_service.py": {
-    "mtime": 1778764647.417099,
+    "mtime": 1779883859.8843954,
     "hash": "78c8c51904021a8fbe1760a43a360f54"
   },
   "/home/andre/software/neuro-system/apps/tests/cars2_hf/interpreters.py": {
@@ -792,7 +804,7 @@
     "hash": "2edd6b908c27ffb8ef54465baebf7abc"
   },
   "/home/andre/software/neuro-system/apps/tests/cars2_hf/config.py": {
-    "mtime": 1778766040.5970466,
+    "mtime": 1779883859.8447952,
     "hash": "cb9b33eef6ef660589cadc5b43960089"
   },
   "/home/andre/software/neuro-system/apps/tests/cars2_hf/validators.py": {
@@ -804,15 +816,15 @@
     "hash": "35e8a1adc24145fca33e7db59c7404fb"
   },
   "/home/andre/software/neuro-system/apps/tests/wisc4/interpreters.py": {
-    "mtime": 1779484328.0649679,
+    "mtime": 1779883859.8931954,
     "hash": "d95ff6fc97fce194b9c008c61dc334ed"
   },
   "/home/andre/software/neuro-system/apps/tests/wisc4/__init__.py": {
-    "mtime": 1779467977.7997324,
+    "mtime": 1779883859.8931954,
     "hash": "656a757ad088550a3d9c054d6d36d5aa"
   },
   "/home/andre/software/neuro-system/apps/tests/wisc4/calculators.py": {
-    "mtime": 1779468248.5952466,
+    "mtime": 1779883859.8931954,
     "hash": "c3909ba196d885347a8ebc47b4807c49"
   },
   "/home/andre/software/neuro-system/apps/tests/wisc4/paths.py": {
@@ -824,8 +836,8 @@
     "hash": "d87793425c3bcdf66367859093afb65c"
   },
   "/home/andre/software/neuro-system/apps/tests/wisc4/pdf_service.py": {
-    "mtime": 1779488307.9093473,
-    "hash": "e03205e9b489976844660c510e9aafb4"
+    "mtime": 1780950636.9971614,
+    "hash": "fb87ac06787ed83fc87d881b4bcf1679"
   },
   "/home/andre/software/neuro-system/apps/tests/wisc4/test_wisc4_model_compatibility.py": {
     "mtime": 1778700111.7353525,
@@ -848,7 +860,7 @@
     "hash": "844fe19666f9f019b3838b00b8adc2f3"
   },
   "/home/andre/software/neuro-system/apps/tests/ebaped_ij/__init__.py": {
-    "mtime": 1778766040.5970466,
+    "mtime": 1779883859.8755953,
     "hash": "2de72d5b1ddd080dd9346d7545af6498"
   },
   "/home/andre/software/neuro-system/apps/tests/ebaped_ij/calculators.py": {
@@ -868,7 +880,7 @@
     "hash": "4c646a09416bc2d997c3225ad13968db"
   },
   "/home/andre/software/neuro-system/apps/tests/api/schemas.py": {
-    "mtime": 1779467986.5550294,
+    "mtime": 1779883859.8447952,
     "hash": "93df375426fd8358384b4837fb3a54d9"
   },
   "/home/andre/software/neuro-system/apps/tests/api/__init__.py": {
@@ -880,19 +892,19 @@
     "hash": "a22e0b64e1e08c3a6297d192e1bc8a3e"
   },
   "/home/andre/software/neuro-system/apps/tests/api/endpoints.py": {
-    "mtime": 1779847570.4467854,
-    "hash": "fcd351090c95f79c1e6b9beeb7499d89"
+    "mtime": 1779883859.8447952,
+    "hash": "01b5c54eb8321682fd981a99545f5310"
   },
   "/home/andre/software/neuro-system/apps/tests/wasi/interpreters.py": {
-    "mtime": 1778700204.6321187,
-    "hash": "54acc0a0d616ae7a6caac7ec7e923f66"
+    "mtime": 1779880695.8969064,
+    "hash": "8d5159c3ff0ab8e94276ece82cfb9a91"
   },
   "/home/andre/software/neuro-system/apps/tests/wasi/schemas.py": {
     "mtime": 1778700111.7353525,
     "hash": "9d15b328c6037fd483f689d12fcb8af9"
   },
   "/home/andre/software/neuro-system/apps/tests/wasi/__init__.py": {
-    "mtime": 1778765581.545159,
+    "mtime": 1779883859.8931954,
     "hash": "4d77634ba27a1d42913b3cff2f266edc"
   },
   "/home/andre/software/neuro-system/apps/tests/wasi/calculators.py": {
@@ -912,24 +924,28 @@
     "hash": "e19d8226a00fe086bb410b627a2781d9"
   },
   "/home/andre/software/neuro-system/apps/tests/bfp/interpreters.py": {
-    "mtime": 1779362859.382193,
-    "hash": "005f0dd0c8b869775447b1ae308f1ba8"
+    "mtime": 1779883936.5874553,
+    "hash": "975a3909a0e299c2d7168700a6bf8965"
   },
   "/home/andre/software/neuro-system/apps/tests/bfp/schemas.py": {
     "mtime": 1778700111.7177525,
     "hash": "192f3db3e449854a804402eae99163dc"
   },
   "/home/andre/software/neuro-system/apps/tests/bfp/__init__.py": {
-    "mtime": 1779140091.6522245,
+    "mtime": 1779883936.6842554,
     "hash": "d29088f4b4cfe71ece41581f5bb688ee"
   },
   "/home/andre/software/neuro-system/apps/tests/bfp/calculators.py": {
-    "mtime": 1778700204.6321187,
-    "hash": "914cdc54a8408fc893b7a525e0ecce53"
+    "mtime": 1779880695.892573,
+    "hash": "fefeea4234036216c81961df0f18d051"
+  },
+  "/home/andre/software/neuro-system/apps/tests/bfp/test_interpreters.py": {
+    "mtime": 1779880695.892573,
+    "hash": "d096e385981f108628797a3b8db73f7f"
   },
   "/home/andre/software/neuro-system/apps/tests/bfp/config.py": {
-    "mtime": 1778700204.6321187,
-    "hash": "cfd989ca26a96a9cc3e682a4ae55af13"
+    "mtime": 1779880695.892573,
+    "hash": "0d43ad040489100ff83076cd94d93f7a"
   },
   "/home/andre/software/neuro-system/apps/tests/bfp/validators.py": {
     "mtime": 1778700111.7177525,
@@ -944,7 +960,7 @@
     "hash": "bf4d417d54980709ce982ffad92abc88"
   },
   "/home/andre/software/neuro-system/apps/tests/bai/__init__.py": {
-    "mtime": 1778766040.5930293,
+    "mtime": 1779883859.8447952,
     "hash": "b90d203f161a6693e165ab254af45891"
   },
   "/home/andre/software/neuro-system/apps/tests/bai/calculators.py": {
@@ -1016,7 +1032,7 @@
     "hash": "be7a807dd0657f90454d22eae0a7f5e9"
   },
   "/home/andre/software/neuro-system/apps/tests/models/applications.py": {
-    "mtime": 1778764554.1650195,
+    "mtime": 1779883859.8799953,
     "hash": "819f2f626d5de60603284f060896995f"
   },
   "/home/andre/software/neuro-system/apps/tests/models/templates.py": {
@@ -1072,7 +1088,7 @@
     "hash": "5a542dee8c1f58ab0c4841f9b23d4b86"
   },
   "/home/andre/software/neuro-system/apps/evaluations/api/schemas.py": {
-    "mtime": 1778767303.3983264,
+    "mtime": 1779883859.8315954,
     "hash": "432a8d8f914888bdb18821917c339d27"
   },
   "/home/andre/software/neuro-system/apps/evaluations/api/__init__.py": {
@@ -1084,7 +1100,7 @@
     "hash": "a22e0b64e1e08c3a6297d192e1bc8a3e"
   },
   "/home/andre/software/neuro-system/apps/evaluations/api/endpoints.py": {
-    "mtime": 1778767303.402362,
+    "mtime": 1779883859.8315954,
     "hash": "013f73bcaee5944d9645c8a44a83534e"
   },
   "/home/andre/software/neuro-system/apps/audit/apps.py": {
@@ -1352,8 +1368,8 @@
     "hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
   "/home/andre/software/neuro-system/apps/reports/tests.py": {
-    "mtime": 1779122219.328668,
-    "hash": "7257a482b9cd734fb55ec4464c4e4081"
+    "mtime": 1782144544.9553585,
+    "hash": "8a44d6a2804940453529ff91640c4c94"
   },
   "/home/andre/software/neuro-system/apps/reports/urls.py": {
     "mtime": 1778700111.7133524,
@@ -1403,6 +1419,10 @@
     "mtime": 1778700111.7133524,
     "hash": "cbbd040d5c7546ab3537834b31c30c12"
   },
+  "/home/andre/software/neuro-system/apps/reports/builders/wais3_report_builder.py": {
+    "mtime": 1781712594.3953261,
+    "hash": "b19c2039d8f54448fd91a7570ba65d7f"
+  },
   "/home/andre/software/neuro-system/apps/reports/builders/snapshot_builder.py": {
     "mtime": 1778700111.7133524,
     "hash": "d44b83a6163a56652f526c61da412a10"
@@ -1412,16 +1432,40 @@
     "hash": "5d54fd2a0ebf86d3f84e83986c976746"
   },
   "/home/andre/software/neuro-system/apps/reports/builders/section_builder.py": {
-    "mtime": 1778764920.5625212,
+    "mtime": 1779883859.8359954,
     "hash": "44e7a41d08ef1a2e470d4f6cfd629043"
   },
   "/home/andre/software/neuro-system/apps/reports/builders/tests_builder.py": {
-    "mtime": 1778764647.4211233,
-    "hash": "11277a14d5c475a03bb9076a42a90aea"
+    "mtime": 1779883963.2037015,
+    "hash": "6537b4a3f2dbd82f6482769ecadc8f79"
+  },
+  "/home/andre/software/neuro-system/apps/reports/specs/__init__.py": {
+    "mtime": 1780339176.817189,
+    "hash": "f7ccfbce11e1adb51d9e4e5e5bfb0892"
+  },
+  "/home/andre/software/neuro-system/apps/reports/specs/table_specs.py": {
+    "mtime": 1781712544.3080757,
+    "hash": "ee7d87706b69b9b2b8ade5967ed8e58d"
+  },
+  "/home/andre/software/neuro-system/apps/reports/specs/wasi_model_spec.py": {
+    "mtime": 1780351492.560784,
+    "hash": "45b8bc7d92ec788844fc01348acafe9b"
+  },
+  "/home/andre/software/neuro-system/apps/reports/specs/wisc4_model_spec.py": {
+    "mtime": 1780351492.560784,
+    "hash": "9fb5716270bf774292613cc9ba095eb6"
+  },
+  "/home/andre/software/neuro-system/apps/reports/specs/wais3_model_spec.py": {
+    "mtime": 1780339156.6778924,
+    "hash": "8c8789ae6387d0170f9e81e2586a4039"
   },
   "/home/andre/software/neuro-system/apps/reports/charts/__init__.py": {
-    "mtime": 1778700204.627792,
-    "hash": "404562b3255d44f0e895932e28574fa5"
+    "mtime": 1779880695.8882396,
+    "hash": "792b39ee3150c919cf00bc304e04adcd"
+  },
+  "/home/andre/software/neuro-system/apps/reports/charts/wasi_chart.py": {
+    "mtime": 1779880695.8882396,
+    "hash": "c57c5965ae92bc579fe6d1415b770954"
   },
   "/home/andre/software/neuro-system/apps/reports/charts/bpa2_chart.py": {
     "mtime": 1778700111.7133524,
@@ -1436,15 +1480,15 @@
     "hash": "956fc2a26e8f2f1db310f9ee849be0f8"
   },
   "/home/andre/software/neuro-system/apps/reports/services/report_generation_service.py": {
-    "mtime": 1778764920.5664878,
-    "hash": "21fb8d629567c6da8b276163a3c4db2c"
+    "mtime": 1779883859.8359954,
+    "hash": "f658cb963c42b8cd94d4ba2ecb3c4fb5"
   },
   "/home/andre/software/neuro-system/apps/reports/services/__init__.py": {
     "mtime": 1778700111.7133524,
     "hash": "5bb70fcd61a7dfd8f27b1f68c52332e4"
   },
   "/home/andre/software/neuro-system/apps/reports/services/report_section_service.py": {
-    "mtime": 1778716575.8806682,
+    "mtime": 1779883859.8359954,
     "hash": "1551d0440615e19346b5e5a82e0202bf"
   },
   "/home/andre/software/neuro-system/apps/reports/services/report_validation_service.py": {
@@ -1480,16 +1524,16 @@
     "hash": "93d6a2ff42f1e503e174854890146b53"
   },
   "/home/andre/software/neuro-system/apps/reports/services/report_pipeline_service.py": {
-    "mtime": 1779122136.5261793,
+    "mtime": 1779883859.8359954,
     "hash": "a648d2542f39924a8acffe9f0b45d3ae"
   },
   "/home/andre/software/neuro-system/apps/reports/services/section_regeneration_service.py": {
-    "mtime": 1779122136.5218444,
+    "mtime": 1779883859.8359954,
     "hash": "08bd9383419c165326e317dbe265e105"
   },
   "/home/andre/software/neuro-system/apps/reports/services/report_export_service.py": {
-    "mtime": 1778764949.2012167,
-    "hash": "013d7f9baeddd16943e9baf033fc3a65"
+    "mtime": 1782144498.0437908,
+    "hash": "6494303280655a89668fb448b05beb13"
   },
   "/home/andre/software/neuro-system/apps/reports/services/clinical_consistency_audit_service.py": {
     "mtime": 1778700111.7133524,
@@ -1512,7 +1556,7 @@
     "hash": "229cde3e1a1e99b6ee313e25c08c92e4"
   },
   "/home/andre/software/neuro-system/apps/reports/api/endpoints.py": {
-    "mtime": 1779122136.5261793,
+    "mtime": 1779883859.8359954,
     "hash": "8947194b7cf45c904ba5d467e1a0e73b"
   },
   "/home/andre/software/neuro-system/apps/reports/prompts/rules.py": {
@@ -1536,7 +1580,7 @@
     "hash": "889ea5919ddd45728f2f34c0da919e69"
   },
   "/home/andre/software/neuro-system/neuro-frontend/next.config.js": {
-    "mtime": 1778851093.0619357,
+    "mtime": 1779883862.9819953,
     "hash": "8032df35be6627b34431170e280124c3"
   },
   "/home/andre/software/neuro-system/neuro-frontend/postcss.config.js": {
@@ -1572,7 +1616,7 @@
     "hash": "20c7d814efed7c1cb30937a9bcca5089"
   },
   "/home/andre/software/neuro-system/neuro-frontend/components/ui/page.tsx": {
-    "mtime": 1778759130.551974,
+    "mtime": 1779883862.9819953,
     "hash": "f75c1c1426b28524f207a050c2e288b3"
   },
   "/home/andre/software/neuro-system/neuro-frontend/components/ui/dropdown-menu.tsx": {
@@ -1604,27 +1648,27 @@
     "hash": "d23146ad1047c2ae116c92bc3fc28d5a"
   },
   "/home/andre/software/neuro-system/neuro-frontend/components/tests/TestReportSummaryCard.tsx": {
-    "mtime": 1778767366.9331803,
+    "mtime": 1779883862.9819953,
     "hash": "ecbcdf580811e6b01408f8306fea0d2a"
   },
   "/home/andre/software/neuro-system/neuro-frontend/components/tests/BFPReportContent.tsx": {
-    "mtime": 1779359562.6432295,
+    "mtime": 1779883862.9819953,
     "hash": "d495f5401e69f9be357df05e52cad084"
   },
   "/home/andre/software/neuro-system/neuro-frontend/components/tests/TestWorkflowBadge.tsx": {
-    "mtime": 1778767366.9331803,
+    "mtime": 1779883862.9819953,
     "hash": "df37cbe8b65b81ed9d0d15b6e41aca28"
   },
   "/home/andre/software/neuro-system/neuro-frontend/components/layout/AppSidebar.tsx": {
-    "mtime": 1779846006.034469,
+    "mtime": 1779883862.9819953,
     "hash": "d17245fc33b3a342a450d8389b04eb51"
   },
   "/home/andre/software/neuro-system/neuro-frontend/components/layout/AppHeader.tsx": {
-    "mtime": 1779845440.8606436,
+    "mtime": 1779883862.9819953,
     "hash": "d82d29ba417ab43defd63a7038ae7e27"
   },
   "/home/andre/software/neuro-system/neuro-frontend/components/layout/AppLayout.tsx": {
-    "mtime": 1779845456.9130573,
+    "mtime": 1779883862.9819953,
     "hash": "74798db6dde49805d6f8beaf2a4518f6"
   },
   "/home/andre/software/neuro-system/neuro-frontend/components/evaluations/EvaluationHeader.tsx": {
@@ -1636,7 +1680,7 @@
     "hash": "33ddf3b5e56023608417a4694abea4a4"
   },
   "/home/andre/software/neuro-system/neuro-frontend/components/charts/FDTChart.tsx": {
-    "mtime": 1778792633.8156333,
+    "mtime": 1779883862.9819953,
     "hash": "5f7191a9c5a1833cbe4b80edf9b49142"
   },
   "/home/andre/software/neuro-system/neuro-frontend/components/charts/RAVLTChart.tsx": {
@@ -1648,7 +1692,7 @@
     "hash": "a17ce5dab6be7bb6c8c53ab004174ed7"
   },
   "/home/andre/software/neuro-system/neuro-frontend/components/brand/NeuroavaliaLogo.tsx": {
-    "mtime": 1779846439.728917,
+    "mtime": 1779883862.9819953,
     "hash": "38e092d3fcc60adbfd6f3a7e27849b9d"
   },
   "/home/andre/software/neuro-system/neuro-frontend/components/anamnesis/ReviewSummary.tsx": {
@@ -1696,7 +1740,7 @@
     "hash": "cb18bd2e475e6bc6ee54d93e8fc8736c"
   },
   "/home/andre/software/neuro-system/neuro-frontend/types/patient.ts": {
-    "mtime": 1779128301.4443884,
+    "mtime": 1779883862.9863954,
     "hash": "6fef7fa757b57a4ec1fa97e6b1c0d806"
   },
   "/home/andre/software/neuro-system/neuro-frontend/types/tests/wisc4.ts": {
@@ -1724,7 +1768,7 @@
     "hash": "9f2b1dce4bbdff18d722cbbf44685d62"
   },
   "/home/andre/software/neuro-system/neuro-frontend/services/reportService.ts": {
-    "mtime": 1779122159.1302485,
+    "mtime": 1779883862.9863954,
     "hash": "88c486129c5f3a5867aceb678467226f"
   },
   "/home/andre/software/neuro-system/neuro-frontend/services/testService.ts": {
@@ -1748,27 +1792,27 @@
     "hash": "77241dd6552ef3b6508cdb5c639b1c3c"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/print/bfp-pdf/[id]/page.tsx": {
-    "mtime": 1779315640.5762608,
+    "mtime": 1779883862.9819953,
     "hash": "75567fe99b40833e3710a2ba352f86dd"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/print/fdt/[id]/page.tsx": {
-    "mtime": 1778807062.1735783,
+    "mtime": 1779883862.9819953,
     "hash": "3af5ae614be036ab7bad7d8e3b151600"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/print/ravlt/[id]/page.tsx": {
-    "mtime": 1779383668.3295915,
+    "mtime": 1779883862.9819953,
     "hash": "37f4d23746124b4b69b6822af81c8e1d"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/print/bfp-render/[id]/page.tsx": {
-    "mtime": 1779307688.6850893,
+    "mtime": 1779883862.9819953,
     "hash": "0cf8a1c28a7b48cc0d8e4edb7b28051c"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/print/bfp/[id]/BFPPrintPageClient.tsx": {
-    "mtime": 1779307544.12372,
+    "mtime": 1779883862.9819953,
     "hash": "505a691e0d9a36ff45254f61b4603838"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/print/bfp/[id]/page.tsx": {
-    "mtime": 1779307558.6575322,
+    "mtime": 1779883862.9819953,
     "hash": "7d8472f1d246cc3e55f2b4ef93087ed8"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/public/anamnesis/[token]/page.tsx": {
@@ -1780,15 +1824,15 @@
     "hash": "4d6a4fd15d74e5df4941221da10f7b66"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/print-api/tests/bfp/[id]/export-pdf/route.ts": {
-    "mtime": 1779307031.9957936,
+    "mtime": 1779883862.9819953,
     "hash": "04f967e74dec06079a59808728b97416"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/pdf-render/bfp/[id]/route.ts": {
-    "mtime": 1779307688.6850893,
+    "mtime": 1779883862.9775953,
     "hash": "2e4d0470a042205a5bc536699bd281e8"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/api/tests/bfp/[id]/export-pdf/route.ts": {
-    "mtime": 1779306981.302545,
+    "mtime": 1779883862.9731953,
     "hash": "bfb595dde9d383e7ff3f46d1e7318e61"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/register/page.tsx": {
@@ -1804,20 +1848,20 @@
     "hash": "c8d4e039bdeec47150f812a9e60a312f"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/patients/page.tsx": {
-    "mtime": 1778700204.6450987,
-    "hash": "289f30a9937369c45b8af161cbfd9f24"
+    "mtime": 1779880696.3649063,
+    "hash": "0292f1a7abb4d562da2bf324a7c7a314"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/patients/[id]/page.tsx": {
-    "mtime": 1778700204.6450987,
-    "hash": "508bbd6fffed5ffb6379d5e632a96389"
+    "mtime": 1779880696.3649063,
+    "hash": "56336d88f56092f0adf4b63e51d33fa1"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/patients/[id]/edit/page.tsx": {
-    "mtime": 1778700204.6450987,
-    "hash": "1e602cbfa89edca0da797f49811baeca"
+    "mtime": 1779880696.3649063,
+    "hash": "6cb67ae279f2d86ab535831ec8fe9171"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/patients/new/page.tsx": {
-    "mtime": 1778700204.6450987,
-    "hash": "f592422f6c3e5eda3cf80bf1fc88bb46"
+    "mtime": 1779880696.3649063,
+    "hash": "013c3d1baa9d68a5d177257df7b96ce6"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/accounts/page.tsx": {
     "mtime": 1778700112.2105525,
@@ -1828,7 +1872,7 @@
     "hash": "bd30879ceddc0457b5132c53a9b70e33"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/page.tsx": {
-    "mtime": 1779128271.600678,
+    "mtime": 1779883862.9775953,
     "hash": "19078bae2f8d7665745931aef560a32a"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/cars2-hf/page.tsx": {
@@ -1840,7 +1884,7 @@
     "hash": "22f22b4b52521abc2e4fd110ba0422fe"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/cars2-hf/[id]/result/page.tsx": {
-    "mtime": 1778769456.3111894,
+    "mtime": 1779883862.9775953,
     "hash": "060a8e6652633f3cc999ae331ff92d3d"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/scared/page.tsx": {
@@ -1852,11 +1896,11 @@
     "hash": "8c9d42e56669cf902a08d167e0556c2f"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/scared/[id]/result/page.tsx": {
-    "mtime": 1778767716.562647,
-    "hash": "c6b27b0b2d5a35044568428bdc4cc552"
+    "mtime": 1781213518.7916937,
+    "hash": "768eb42bd5b3a6b12167d0a7c3bf28ee"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/srs2/page.tsx": {
-    "mtime": 1779704266.2279088,
+    "mtime": 1779883862.9775953,
     "hash": "9e91cddafe0bc149aa1a1d7809ffd66c"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/srs2/[id]/page.tsx": {
@@ -1864,7 +1908,7 @@
     "hash": "aa8a5e19e7e5b8fd813c72bf7a99e88a"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/srs2/[id]/result/page.tsx": {
-    "mtime": 1779715922.3719406,
+    "mtime": 1779883862.9775953,
     "hash": "187be558b6e227abc635843bb37bee5e"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/etdah-pais/page.tsx": {
@@ -1876,7 +1920,7 @@
     "hash": "c91ca582f772b436de4f17f498801040"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/etdah-pais/[id]/result/page.tsx": {
-    "mtime": 1778769450.919921,
+    "mtime": 1779883862.9775953,
     "hash": "ae08689ad2190d55633a6295b1c24e26"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/fdt/page.tsx": {
@@ -1888,7 +1932,7 @@
     "hash": "ecd1f7db9a1d2a76134440d9e5c1722e"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/fdt/[id]/result/page.tsx": {
-    "mtime": 1778793656.4212754,
+    "mtime": 1779883862.9775953,
     "hash": "8e58576ff6f66ecf7fa547b81e27ec11"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/bpa2/page.tsx": {
@@ -1900,7 +1944,7 @@
     "hash": "ee354bddc2ec5460b708ee647345d524"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/bpa2/[id]/result/page.tsx": {
-    "mtime": 1779449757.7769284,
+    "mtime": 1779883862.9775953,
     "hash": "f9c723af46933e7324745f3ce83c196c"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/ravlt/page.tsx": {
@@ -1912,16 +1956,16 @@
     "hash": "4a29d58e64c22b865657c814091cf585"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/ravlt/[id]/result/page.tsx": {
-    "mtime": 1779383668.3295915,
+    "mtime": 1779883862.9775953,
     "hash": "e1fdd95423aa1e995c7e930b2d2816df"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/wais3/page.tsx": {
-    "mtime": 1778700204.6450987,
-    "hash": "100757fae6d4f2dbd40e74cbd090cb13"
+    "mtime": 1779880696.3692396,
+    "hash": "ceb6bf0ce412d98a8b77f9de50b35291"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/wais3/[id]/result/page.tsx": {
-    "mtime": 1779757364.9345715,
-    "hash": "473935cb4e28f7a167b7ee8f5eaa0f0a"
+    "mtime": 1779883906.197678,
+    "hash": "16e30f2f594abd91f7ef712b51222bf8"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/mchat/page.tsx": {
     "mtime": 1778700112.2193525,
@@ -1932,7 +1976,7 @@
     "hash": "0cb20d6a5dd9c28da64193a3939ff88a"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/mchat/[id]/result/page.tsx": {
-    "mtime": 1778767530.668013,
+    "mtime": 1779883862.9775953,
     "hash": "931a727f05579fdf2f4c9490302e6acd"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/ebadep-ij/page.tsx": {
@@ -1944,11 +1988,11 @@
     "hash": "0c745d7f0ea806c63cdd22423548a2a1"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/ebadep-ij/[id]/result/page.tsx": {
-    "mtime": 1778769450.6464024,
+    "mtime": 1779883862.9775953,
     "hash": "2424ece2bf5e50f35db250cc7d6dd227"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/wisc4/page.tsx": {
-    "mtime": 1779468034.0682368,
+    "mtime": 1779883862.9775953,
     "hash": "18975c71d21c2342d54cb08410bc44b9"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/wisc4/[id]/page.tsx": {
@@ -1956,7 +2000,7 @@
     "hash": "75f2e70049d0bcb3eefd0a99f1d75679"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/wisc4/[id]/result/page.tsx": {
-    "mtime": 1779463204.902753,
+    "mtime": 1779883862.9775953,
     "hash": "c2c6e3af323747c4ef401f355db3d774"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/epq-j/page.tsx": {
@@ -1968,7 +2012,7 @@
     "hash": "d5be7feb655c94ba7a4ec4035069e97e"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/epq-j/[id]/result/page.tsx": {
-    "mtime": 1778769441.6480536,
+    "mtime": 1779883862.9775953,
     "hash": "81c4acb78c91971e2a4ebeec3e9b9a91"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/wasi/page.tsx": {
@@ -1984,7 +2028,7 @@
     "hash": "45f18f9689f77672f1b999795825bf84"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/wasi/[id]/result/page.tsx": {
-    "mtime": 1778767626.5320222,
+    "mtime": 1779883862.9775953,
     "hash": "500409300aed5c0af2bb821df8ee55a4"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/etdah-ad/page.tsx": {
@@ -1996,7 +2040,7 @@
     "hash": "5c3a97e0d8fe138c0ee5eab5393dcb1a"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/etdah-ad/[id]/result/page.tsx": {
-    "mtime": 1778769453.2834399,
+    "mtime": 1779883862.9775953,
     "hash": "b291179faae46759468d530d4441d8dc"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/bfp/page.tsx": {
@@ -2004,24 +2048,24 @@
     "hash": "4db03b540c1eb933a14c5bfdab59ddd3"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/bfp/data.ts": {
-    "mtime": 1778700204.6450987,
-    "hash": "b3f20a66a2a940fba92b6f2a87639d97"
+    "mtime": 1779880696.3649063,
+    "hash": "1196165db09bd6604aee79a154b98d79"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/bfp/[id]/page.tsx": {
     "mtime": 1778700112.2149525,
     "hash": "9401a213a763a5879b2d23305c7d2f60"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/bfp/[id]/result/page.tsx": {
-    "mtime": 1779242740.9886534,
+    "mtime": 1779883862.9775953,
     "hash": "91b0ae431a66607bb164112779e01116"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/quick/page.tsx": {
-    "mtime": 1779131648.5789764,
+    "mtime": 1779883862.9775953,
     "hash": "f6e0931e501f9446b1ffb0454583003f"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/quick/QuickTestPageClient.tsx": {
-    "mtime": 1779133358.7680974,
-    "hash": "5c9e0124dd0e50a4204291b473681d2a"
+    "mtime": 1782269015.2651296,
+    "hash": "13cdc50c38ac0b0fedf27edf24149c4c"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/bai/page.tsx": {
     "mtime": 1778700112.2149525,
@@ -2032,7 +2076,7 @@
     "hash": "92ddc2986f5d6d97a55440b9c07cc568"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/bai/[id]/result/page.tsx": {
-    "mtime": 1778767512.9458487,
+    "mtime": 1779883862.9775953,
     "hash": "97cd964cbb53b54d563fa6a14205abaf"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/ebadep-a/page.tsx": {
@@ -2044,7 +2088,7 @@
     "hash": "802c4e68eed1cff4c22b86868279eb8e"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/tests/ebadep-a/[id]/result/page.tsx": {
-    "mtime": 1779849722.034543,
+    "mtime": 1779883862.9775953,
     "hash": "e663d8d188b14ceb9fa5034c8c3d210b"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/evaluations/page.tsx": {
@@ -2076,7 +2120,7 @@
     "hash": "dac6c13efb4b71cb8b9c4b42e9f8bb08"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/evaluations/[id]/overview/page.tsx": {
-    "mtime": 1778778483.3636878,
+    "mtime": 1779883862.9731953,
     "hash": "c50e4b889bef29a0e20998e21831b1e3"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/evaluations/[id]/documents/page.tsx": {
@@ -2112,19 +2156,19 @@
     "hash": "4385ad1da4386e6d4ae988d129905e6a"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/reports/[id]/page.tsx": {
-    "mtime": 1779124187.6767344,
-    "hash": "cd21c466d329af77934b5fa09a811d6e"
+    "mtime": 1781563794.4447782,
+    "hash": "bce0dc82c60f034092d346311c4454f1"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/dashboard/reports/generate/[evaluationId]/page.tsx": {
-    "mtime": 1779122159.1302485,
+    "mtime": 1779883862.9775953,
     "hash": "f2d7a8006ffc65548c8299ec22c77ac8"
   },
   "/home/andre/software/neuro-system/neuro-frontend/app/login/page.tsx": {
-    "mtime": 1778700112.2193525,
-    "hash": "ef35e7556098a6cc06c5ed97081cbcd8"
+    "mtime": 1780317767.5113544,
+    "hash": "3d435e574af78c178a719fba780cdb53"
   },
   "/home/andre/software/neuro-system/neuro-frontend/lib/print.ts": {
-    "mtime": 1778807040.5967317,
+    "mtime": 1779883862.9819953,
     "hash": "d39ed54cbcc7f5da1b68e400096c0d5c"
   },
   "/home/andre/software/neuro-system/neuro-frontend/lib/evaluation-deadline.ts": {
@@ -2132,11 +2176,11 @@
     "hash": "04f10b37feb2ca1d51e4a2dc927be008"
   },
   "/home/andre/software/neuro-system/neuro-frontend/lib/api.ts": {
-    "mtime": 1778851584.0921443,
+    "mtime": 1779883862.9819953,
     "hash": "69afd5b0c474b4ef8349b8a3ff5b36c8"
   },
   "/home/andre/software/neuro-system/neuro-frontend/lib/test-report.ts": {
-    "mtime": 1778767366.925118,
+    "mtime": 1779883862.9819953,
     "hash": "a2a4dbff2e8065e1114f63ecbe6cfc01"
   },
   "/home/andre/software/neuro-system/neuro-frontend/lib/utils.ts": {
@@ -2152,11 +2196,11 @@
     "hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
   "/home/andre/software/neuro-system/config/asgi.py": {
-    "mtime": 1778702426.8075714,
+    "mtime": 1779883859.9107952,
     "hash": "ffb27a6e258563a72cba318ac902d75d"
   },
   "/home/andre/software/neuro-system/config/wsgi.py": {
-    "mtime": 1778702426.8075714,
+    "mtime": 1779883859.9107952,
     "hash": "02a84fc1eca7ed15e774296780cfd9cf"
   },
   "/home/andre/software/neuro-system/config/urls.py": {
@@ -2508,20 +2552,28 @@
     "hash": "a427a80976240275db3a8108d319ce4f"
   },
   "/home/andre/software/neuro-system/config/settings/base.py": {
-    "mtime": 1779403886.7863507,
-    "hash": "d0a6c6bab91662227e6f123f61f1e39e"
+    "mtime": 1779883859.9107952,
+    "hash": "98d8a2cc1d6a6f15bb02b8f9ee6c6653"
   },
   "/home/andre/software/neuro-system/config/settings/production.py": {
     "mtime": 1778700111.7353525,
     "hash": "fc4a1322a827631a1a68e0c1bb4f5731"
   },
   "/home/andre/software/neuro-system/docker-compose.prod.yml": {
-    "mtime": 1779356289.2707965,
+    "mtime": 1779883859.9107952,
     "hash": "00a577f9c5942c9c7c82688efc739828"
   },
   "/home/andre/software/neuro-system/analise_mensageria_revisada.md": {
     "mtime": 1778700111.7045524,
     "hash": "72768d6b5b2892f6246383126ca91a5d"
+  },
+  "/home/andre/software/neuro-system/graphify-out/converted/tmp_test_02_8b1b491f.md": {
+    "mtime": 1782269070.0124676,
+    "hash": "7ce1e6a749a7a571fcec6253a619c10e"
+  },
+  "/home/andre/software/neuro-system/graphify-out/converted/tmp_test_03_b2acb0d2.md": {
+    "mtime": 1782269070.0754278,
+    "hash": "a5cc089727ee1c43acd4f9e8db6fe4c2"
   },
   "/home/andre/software/neuro-system/README.md": {
     "mtime": 1778700111.7045524,
@@ -2544,23 +2596,35 @@
     "hash": "8f441594a3a2de8b6d32f5971406b0f7"
   },
   "/home/andre/software/neuro-system/requirements.txt": {
-    "mtime": 1779327297.4226553,
-    "hash": "1c88eff5bec69b25574f1c3798751866"
+    "mtime": 1779883911.924734,
+    "hash": "cae940547c71fc483930dfed6b5fd5a0"
   },
   "/home/andre/software/neuro-system/AGENTS.md": {
-    "mtime": 1778700204.627792,
-    "hash": "8ee39dcfe68a23b3797b02648930d699"
+    "mtime": 1780015729.283039,
+    "hash": "576438944ecf81f03b9f99bd32fb9158"
+  },
+  "/home/andre/software/neuro-system/project_architecture.md": {
+    "mtime": 1779880696.3692396,
+    "hash": "ef6d44dc842ec0df3e5b8d6c79093a46"
+  },
+  "/home/andre/software/neuro-system/graphify-out/converted/tmp_test_01_343e612c.md": {
+    "mtime": 1782269070.15098,
+    "hash": "2947cf8d20a7be0066fff0d386893376"
+  },
+  "/home/andre/software/neuro-system/ANALISE_WAIS3_SKILL.md": {
+    "mtime": 1779880695.8839064,
+    "hash": "63def61e7d904c5ecff496af437eba0b"
   },
   "/home/andre/software/neuro-system/mapeamento_modelo_adolescente.md": {
     "mtime": 1778700111.8629525,
     "hash": "4d2e6ea7152a3a3614b573be93eff042"
   },
   "/home/andre/software/neuro-system/DOCKER_INSTRUCTIONS.md": {
-    "mtime": 1778700204.627792,
-    "hash": "fc7aecf0e8449c9422268b28e282e75e"
+    "mtime": 1779880695.8839064,
+    "hash": "4161046f9e0ccbd794e236ece2a3e308"
   },
   "/home/andre/software/neuro-system/srs2_laudo_preview.html": {
-    "mtime": 1779665340.3378022,
+    "mtime": 1779883862.9863954,
     "hash": "1fc5dd0c7687fa6661a4271301077ca3"
   },
   "/home/andre/software/neuro-system/QWEN.md": {
@@ -2572,7 +2636,7 @@
     "hash": "1305ee70d85b4ddc30a765dc729366f9"
   },
   "/home/andre/software/neuro-system/bfp_report_debug.html": {
-    "mtime": 1779308854.4720705,
+    "mtime": 1779883859.9107952,
     "hash": "d03cdf175e2dd33fcb8c69efaea2bf04"
   },
   "/home/andre/software/neuro-system/DEPLOY_PRODUCAO.md": {
@@ -2588,15 +2652,15 @@
     "hash": "5c7b15fbae32aeb09230e79f41189ce8"
   },
   "/home/andre/software/neuro-system/docker-compose.yml": {
-    "mtime": 1779356289.2707965,
-    "hash": "8d227546db0d8e9edd5bd1c74c6127df"
+    "mtime": 1780243548.8488297,
+    "hash": "2b15aeb842e917cf34cb1723871bf08f"
   },
   "/home/andre/software/neuro-system/COMANDOS_OLLAMA.md": {
     "mtime": 1778700111.6517525,
     "hash": "943791413cbb599bbc02096a88b4bc36"
   },
   "/home/andre/software/neuro-system/graphify-out/converted/Catarina__PEI_54c883c5.md": {
-    "mtime": 1779850650.1628563,
+    "mtime": 1782269070.272703,
     "hash": "3e57290800df1e2d7d656c15a36c5fa6"
   },
   "/home/andre/software/neuro-system/apps/ai/prompts/base_system_prompt.txt": {
@@ -2604,11 +2668,11 @@
     "hash": "e31cfe8c56e561e975fea02ea42f30b8"
   },
   "/home/andre/software/neuro-system/apps/ai/prompts/tests/clinical_interpretation_agent_prompt.txt": {
-    "mtime": 1779403863.6701646,
+    "mtime": 1779883859.8315954,
     "hash": "8e9ffb411e0d615c86ea3b4bbfd25615"
   },
   "/home/andre/software/neuro-system/apps/ai/prompts/tests/skills/ravlt_interpretation_skill.txt": {
-    "mtime": 1779442740.8930519,
+    "mtime": 1779883859.8315954,
     "hash": "f22ab07adc96f346215204b8de234562"
   },
   "/home/andre/software/neuro-system/apps/ai/prompts/reports/etdah_pais_prompt.txt": {
@@ -2687,28 +2751,32 @@
     "mtime": 1778700111.7089524,
     "hash": "ddcec30a62b6ef080b82aa26ad8b78c1"
   },
+  "/home/andre/software/neuro-system/apps/tests/scared/templates/tests/pdf/scared_report.html": {
+    "mtime": 1781215851.778262,
+    "hash": "0f5d323be3beb312eb951db2c773ddab"
+  },
   "/home/andre/software/neuro-system/apps/tests/srs2/templates/tests/pdf/neuroavalia_srs2_relatorio_resumido.html": {
-    "mtime": 1779736610.2351618,
+    "mtime": 1779883859.8887954,
     "hash": "380e457fa05c35b0114f07bbebed0bab"
   },
   "/home/andre/software/neuro-system/apps/tests/srs2/templates/tests/pdf/neuroavalia_srs2_relatorio_completo.html": {
-    "mtime": 1779736610.2351618,
-    "hash": "c6a42575991f56be062ec54b0a177b71"
+    "mtime": 1782267123.6226923,
+    "hash": "d9254a4e3890a504e4a68a8e02fbd5e9"
   },
   "/home/andre/software/neuro-system/apps/tests/srs2/templates/tests/pdf/srs2_report.html": {
-    "mtime": 1779665244.7298782,
+    "mtime": 1779883859.8887954,
     "hash": "b4fb3d3a6c8e3437477573e07eb929e1"
   },
   "/home/andre/software/neuro-system/graphify-out/converted/FDT_Relatorio_f61880ba.md": {
-    "mtime": 1779850650.1977293,
+    "mtime": 1782269070.2978868,
     "hash": "28b70d0805e1aac602b20ff531688b1b"
   },
   "/home/andre/software/neuro-system/apps/tests/fdt/templates/tests/pdf/fdt_report.html": {
-    "mtime": 1779381777.6498368,
+    "mtime": 1779883859.8799953,
     "hash": "a4cb0f10f5d1f8caa4f2011b754ab1b0"
   },
   "/home/andre/software/neuro-system/apps/tests/bpa2/templates/tests/pdf/bpa2_report.html": {
-    "mtime": 1779454556.4000478,
+    "mtime": 1779883859.8447952,
     "hash": "2cba5ec31f5ce6443f2d30203a401056"
   },
   "/home/andre/software/neuro-system/apps/tests/norms/bai/README.md": {
@@ -2716,31 +2784,39 @@
     "hash": "022f431a8ffc08bfb8f4400ea0f23356"
   },
   "/home/andre/software/neuro-system/apps/tests/ravlt/templates/tests/pdf/ravlt_report.html": {
-    "mtime": 1779409567.8025963,
+    "mtime": 1779883859.8843954,
     "hash": "d2519d00c0ddea8ad5f40c763261089c"
   },
   "/home/andre/software/neuro-system/apps/tests/ebadep_a/templates/tests/pdf/ebadep_a_report.html": {
-    "mtime": 1779850634.437741,
+    "mtime": 1779883859.8755953,
     "hash": "b90be7447f60fbed993d0d28683cf071"
   },
+  "/home/andre/software/neuro-system/apps/tests/wais3/templates/wais3_m5_sem_identificacao_dados_tecnicos.html": {
+    "mtime": 1779922486.2042053,
+    "hash": "3a3f1044652233196caa810e248f9f1d"
+  },
+  "/home/andre/software/neuro-system/apps/tests/wais3/templates/skill_wais3_modelo5_editorial_moderno_html_css.md": {
+    "mtime": 1779900632.9485362,
+    "hash": "0909d425c107a65ea2bb74d804e1020d"
+  },
   "/home/andre/software/neuro-system/apps/tests/wais3/templates/layout_relatorio_wais_3.html": {
-    "mtime": 1779836417.307763,
-    "hash": "1f1de00cb784a26bf7fdebb31aefcf7f"
+    "mtime": 1779988403.9056926,
+    "hash": "ddd696a23aeed614e441d65690cd1e19"
   },
   "/home/andre/software/neuro-system/apps/tests/wais3/templates/wais3_pagina3_clusters.html": {
-    "mtime": 1779754367.841299,
+    "mtime": 1779883859.8931954,
     "hash": "1644c11120ba1647d559fb2c06a7ab4f"
   },
   "/home/andre/software/neuro-system/apps/tests/wisc4/templates/tests/pdf/wisc_4_relatorio_preview.html": {
-    "mtime": 1779491459.4552128,
-    "hash": "7ae21a277ae9ac7fadf1a5b96372494a"
+    "mtime": 1780932482.9756033,
+    "hash": "8091cf9ca559ddaa36ce26279c77c4a3"
   },
   "/home/andre/software/neuro-system/apps/tests/wisc4/templates/tests/pdf/wisc4_report.html": {
-    "mtime": 1779463174.556332,
+    "mtime": 1779883859.9107952,
     "hash": "616b472facc05acb8ca3b819da25514a"
   },
   "/home/andre/software/neuro-system/apps/tests/bfp/templates/tests/pdf/bfp_report.html": {
-    "mtime": 1779363014.2996435,
+    "mtime": 1779883859.8447952,
     "hash": "3a7575e241256aad4e07d931e483b6f1"
   },
   "/home/andre/software/neuro-system/apps/tests/bai/ANALISE.md": {
@@ -2764,20 +2840,24 @@
     "hash": "b488d770fe674e70a8b31f90a950f451"
   },
   "/home/andre/software/neuro-system/graphify-out/converted/Modelo-WAIS3_ffff5d88.md": {
-    "mtime": 1779850650.2761936,
+    "mtime": 1782269070.3776364,
     "hash": "7df63475fadff514c98fe8d95d1ab643"
   },
   "/home/andre/software/neuro-system/graphify-out/converted/Modelo-WISC4_a215e11a.md": {
-    "mtime": 1779850650.3459396,
+    "mtime": 1782269070.4489913,
     "hash": "6036a17780fa53fa5834f7d25114ac9d"
   },
   "/home/andre/software/neuro-system/apps/reports/templates_assets/skill_laudo_wisc4_completo_padrao_ouro.md": {
     "mtime": 1778700111.7133524,
     "hash": "1ef09fc6bb5fb181a2d2e15877db8203"
   },
+  "/home/andre/software/neuro-system/apps/reports/templates_assets/skill_completa_modelo_wasi.md": {
+    "mtime": 1779880695.8882396,
+    "hash": "c35aff78a062d0ed524e090e585a62e6"
+  },
   "/home/andre/software/neuro-system/graphify-out/converted/MODELO-WASI_cada7bd2.md": {
-    "mtime": 1779850650.424404,
-    "hash": "faff43ca3b750c8e06f572d5e571c381"
+    "mtime": 1782269070.532938,
+    "hash": "4d4cfd9b692ad00b4b3beac3c54a9222"
   },
   "/home/andre/software/neuro-system/apps/reports/templates_assets/skill_modelo_wisc4.md": {
     "mtime": 1778700111.7133524,
@@ -2796,7 +2876,7 @@
     "hash": "6ba220ef14e1597102a173f87b5d507a"
   },
   "/home/andre/software/neuro-system/graphify-out/converted/FDT_Relatorio_871c691b.md": {
-    "mtime": 1779850650.454918,
+    "mtime": 1782269070.5539248,
     "hash": "28b70d0805e1aac602b20ff531688b1b"
   },
   "/home/andre/software/neuro-system/tmp/skill_bpa2_padrao_ouro.md": {
@@ -2819,13 +2899,33 @@
     "mtime": 1778808173.1548932,
     "hash": "687926916f4000ba35bac4e2ee69877d"
   },
+  "/home/andre/software/neuro-system/graphify-out/converted/Laudo-Roberto-Moura-Alves_6c8a12e3.md": {
+    "mtime": 1782269070.6042929,
+    "hash": "0bf823caed584c287bbceebc805c6cf0"
+  },
   "/home/andre/software/neuro-system/tmp/skill_wisc_iv_relatorio_padrao_ouro_neuroavalia.md": {
     "mtime": 1779480603.0347714,
     "hash": "1e80d366c4a142a9210e1fd76c7f8b42"
   },
+  "/home/andre/software/neuro-system/tmp/skill-atualizar-reports.html": {
+    "mtime": 1780313579.939268,
+    "hash": "11afdc369b88963a23e6401074aa664f"
+  },
   "/home/andre/software/neuro-system/tmp/skill_relatorio_fdt.md": {
     "mtime": 1778805418.740105,
     "hash": "468d26e4770a73236d1f814a6320fdf4"
+  },
+  "/home/andre/software/neuro-system/tmp/skill_modelo_wasi_tabelas.html": {
+    "mtime": 1780338898.0512524,
+    "hash": "a39e535fec4fa8d5f645dcf5c6064141"
+  },
+  "/home/andre/software/neuro-system/tmp/skill_modelo_wisc4_tabelas.html": {
+    "mtime": 1780338898.2052507,
+    "hash": "1d0a9d86c693c0347a87002daa2ef8f7"
+  },
+  "/home/andre/software/neuro-system/graphify-out/converted/Laudo-Arthur_221380c1.md": {
+    "mtime": 1782269070.6588583,
+    "hash": "39fb98e8485f7243855a9809270264a8"
   },
   "/home/andre/software/neuro-system/tmp/skill_bfp_interpretacao_laudo.md": {
     "mtime": 1779134983.7976463,
@@ -2834,6 +2934,14 @@
   "/home/andre/software/neuro-system/tmp/skill_wisc_iv_interpretacao_compacta_padrao_ouro.md": {
     "mtime": 1779484069.8782606,
     "hash": "82d4533752e03bb81109a2aba3c5bcbb"
+  },
+  "/home/andre/software/neuro-system/tmp/skill_correcao_tabelas_wisc4.md": {
+    "mtime": 1780934304.602921,
+    "hash": "776d815e7a0e8b2e389200a9b3f43385"
+  },
+  "/home/andre/software/neuro-system/graphify-out/converted/Laudo-Sophia-Correa_d3c447de.md": {
+    "mtime": 1782269070.717621,
+    "hash": "691b67e2ee6b32a4ea7666a973c84a8f"
   },
   "/home/andre/software/neuro-system/tmp/skill_geracao_pdf.md": {
     "mtime": 1779325757.1193724,
@@ -2847,6 +2955,18 @@
     "mtime": 1779410456.7154522,
     "hash": "92701587c31e5c1c6b2ecb0c9b0329c9"
   },
+  "/home/andre/software/neuro-system/tmp/skill_correcao_marcadores_wais3.md": {
+    "mtime": 1779908074.4390364,
+    "hash": "4cdf82e4763c8f12feaa04bcdf9599b4"
+  },
+  "/home/andre/software/neuro-system/graphify-out/converted/Laudo-Isis-Carvalho-de-Sa-Bezerra_1f87fc4b.md": {
+    "mtime": 1782269070.738608,
+    "hash": "e2a71a4d10de30986981d675c9a31f60"
+  },
+  "/home/andre/software/neuro-system/tmp/skill_analise_scared.md": {
+    "mtime": 1781215697.6247506,
+    "hash": "e13d0e4dbb17732f2aa481f90dde4f08"
+  },
   "/home/andre/software/neuro-system/tmp/skill_bfp_relatorio_padrao_ouro_conciso.md": {
     "mtime": 1779192999.7265425,
     "hash": "6accab6661cc011a23476bb2cdc6ccd1"
@@ -2859,6 +2979,14 @@
     "mtime": 1779672510.9513156,
     "hash": "8a35c2e1e7cc32d1c703976bb92fc316"
   },
+  "/home/andre/software/neuro-system/tmp/skill_completa_wisc4_tabelas.md": {
+    "mtime": 1780935980.0252342,
+    "hash": "9d44c1d5af80846ea9d291531ed815a1"
+  },
+  "/home/andre/software/neuro-system/tmp/skill_modelo_wais3_tabelas.html": {
+    "mtime": 1780338898.1261704,
+    "hash": "557ea877555f63516eebcfb3722e3d35"
+  },
   "/home/andre/software/neuro-system/tmp/neuroavalia-logo.html": {
     "mtime": 1779844975.6489463,
     "hash": "af82753654f147a3d2320f99b1e5779d"
@@ -2866,6 +2994,10 @@
   "/home/andre/software/neuro-system/tmp/bfp_result_layout_map.md": {
     "mtime": 1779207101.6495085,
     "hash": "c1c6d2fffc007ab7e73b21501c7c860c"
+  },
+  "/home/andre/software/neuro-system/tmp/skill_tabela_comparacao_pontos_compostos.md": {
+    "mtime": 1779904164.1218784,
+    "hash": "6e6995bdcec5e3300c41989a6def5d20"
   },
   "/home/andre/software/neuro-system/tmp/skill_bfp_grafico_radar_17_facetas.md": {
     "mtime": 1779134983.8217075,
@@ -2980,7 +3112,7 @@
     "hash": "2af110667876c7c4fae470e130684c16"
   },
   "/home/andre/software/neuro-system/config/templates/tests/pdf/bfp_report.html": {
-    "mtime": 1779196784.0617292,
+    "mtime": 1779883859.9107952,
     "hash": "b23ceba6f23114e9ae1aa498a9879a98"
   },
   "/home/andre/software/neuro-system/config/templates/evaluations/detail.html": {
@@ -3004,19 +3136,23 @@
     "hash": "3fb7c2aaf3e97b227ab1af3001fb1c2a"
   },
   "/home/andre/software/neuro-system/templates/neuroavalia-logo.html": {
-    "mtime": 1779736166.849812,
+    "mtime": 1779883862.9863954,
     "hash": "af82753654f147a3d2320f99b1e5779d"
   },
   "/home/andre/software/neuro-system/srs2_laudo_test_v2.pdf": {
-    "mtime": 1779665618.238996,
+    "mtime": 1779883862.9863954,
     "hash": "10849314621d9b6d11e79dcadf8cd0de"
   },
   "/home/andre/software/neuro-system/bfp_report_test.pdf": {
-    "mtime": 1779308854.4720705,
+    "mtime": 1779883859.9107952,
     "hash": "a3a174219c77f2a5d546d280ba042845"
   },
+  "/home/andre/software/neuro-system/srs-2-teste.pdf": {
+    "mtime": 1782266010.9681826,
+    "hash": "0f07e3138a8ee7aab3fa11265b2025eb"
+  },
   "/home/andre/software/neuro-system/srs2_laudo_test.pdf": {
-    "mtime": 1779665589.1228569,
+    "mtime": 1779883862.9863954,
     "hash": "d30226efb3114c3b0d4f5b035422e4e1"
   },
   "/home/andre/software/neuro-system/media/documents/patient_2/evaluation_3/Avalia\u00e7\u00e3o_Funcional_ABC.pdf": {
@@ -3024,11 +3160,11 @@
     "hash": "157e117ac05b1da84d68173de019b3a1"
   },
   "/home/andre/software/neuro-system/apps/tests/fdt/template_assets/FDT_Relatorio.pdf": {
-    "mtime": 1778797640.8082516,
+    "mtime": 1779883859.8799953,
     "hash": "f83bc6f95c5c0c1584bb2fe8802aa867"
   },
   "/home/andre/software/neuro-system/apps/tests/ebadep_a/template/EBADEP-A_modelo relat\u00f3rio completo.pdf": {
-    "mtime": 1779847122.7676015,
+    "mtime": 1779883859.8711953,
     "hash": "08c62f530f9a8525501140af4dc66385"
   },
   "/home/andre/software/neuro-system/apps/tests/ebaped_ij/EBADEP-IJ_modelo de relat\u00f3rio completo.pdf": {
@@ -3083,9 +3219,17 @@
     "mtime": 1779669018.8161821,
     "hash": "0349bc61560d27fc2de2db2f2f03aabd"
   },
+  "/home/andre/software/neuro-system/tmp/ceabb2a1-35c0-4dc1-9925-7775dfa4e4f9.pdf": {
+    "mtime": 1782266041.8778024,
+    "hash": "0f07e3138a8ee7aab3fa11265b2025eb"
+  },
   "/home/andre/software/neuro-system/tmp/test_bfp_playwright.pdf": {
     "mtime": 1779326298.311871,
     "hash": "38ec22700775800e49f7e64870fa5e65"
+  },
+  "/home/andre/software/neuro-system/tmp/srs-2-completo.pdf": {
+    "mtime": 1782264240.5272882,
+    "hash": "e5697581dcd278e550ae124a472f32f9"
   },
   "/home/andre/software/neuro-system/media/documents/patient_2/evaluation_1/bams.jpg": {
     "mtime": 1778700111.8629525,
@@ -3100,51 +3244,51 @@
     "hash": "c7cb4874870bf12675f130b1390cab04"
   },
   "/home/andre/software/neuro-system/apps/tests/fdt/template_assets/d01fba5bc6eed56713b0179efce7579ec2485150.png": {
-    "mtime": 1778797640.8082516,
+    "mtime": 1779883859.8799953,
     "hash": "87f048366b2dbc628fdb9f21a1f8e7d6"
   },
   "/home/andre/software/neuro-system/apps/tests/fdt/template_assets/788f888ffa3de41ce1f8355f5500eb2524aa3155.png": {
-    "mtime": 1778797640.8082516,
+    "mtime": 1779883859.8755953,
     "hash": "a3886d176bd89a261a9201e0aa0ed77f"
   },
   "/home/andre/software/neuro-system/apps/tests/fdt/template_assets/18e72fa2eacacf5f78c99d94ac820f8bccd9ed3a.png": {
-    "mtime": 1778797640.8082516,
+    "mtime": 1779883859.8755953,
     "hash": "0c81b0659bdbfe9b2ee57820d6348ef2"
   },
   "/home/andre/software/neuro-system/apps/tests/fdt/template_assets/95fd2596dfe3f4b5b89ad6dabd2883a7443ef582.png": {
-    "mtime": 1778797640.8082516,
+    "mtime": 1779883859.8755953,
     "hash": "36b5407fec358ecfdfec2c3956f82c9b"
   },
   "/home/andre/software/neuro-system/apps/tests/fdt/template_assets/47471c79f7b7b207ceb625b21491bffd66f50100.png": {
-    "mtime": 1778797640.8082516,
+    "mtime": 1779883859.8755953,
     "hash": "fcc0e3f0610956464ea4654e77d421cc"
   },
   "/home/andre/software/neuro-system/apps/tests/fdt/template_assets/40adaf95af1e705f09edcddeb739d4bf4ea322b1.png": {
-    "mtime": 1778797640.8082516,
+    "mtime": 1779883859.8755953,
     "hash": "cd87ed50ce5048d275f828fa479eb1e0"
   },
   "/home/andre/software/neuro-system/apps/tests/fdt/template_assets/56f9617e3d3bb5ec14106e64490c2352d46c772d.png": {
-    "mtime": 1778797640.8082516,
+    "mtime": 1779883859.8755953,
     "hash": "95b67001d8a31e4ae886a0ecd38b74af"
   },
   "/home/andre/software/neuro-system/apps/tests/fdt/template_assets/3ad07784f3c0ff2feefa5562718e6ab7d1d8150a.png": {
-    "mtime": 1778797640.8082516,
+    "mtime": 1779883859.8755953,
     "hash": "f19f6457a0b19e1b1e4a3d20d6cd0885"
   },
   "/home/andre/software/neuro-system/apps/tests/fdt/template_assets/2ae0e70f403f61bf70bce439a687686ea5f4d7f1.png": {
-    "mtime": 1778797640.8082516,
+    "mtime": 1779883859.8755953,
     "hash": "1d61213ddecd1f929d2bb5e9b1b58226"
   },
   "/home/andre/software/neuro-system/apps/tests/fdt/template_assets/5c270da86412971109f2b3bd35c082ce8503909a.png": {
-    "mtime": 1778797640.8082516,
+    "mtime": 1779883859.8755953,
     "hash": "0a8dc74d77ae0246c288221872402d7d"
   },
   "/home/andre/software/neuro-system/apps/tests/fdt/template_assets/8fcd9a222a18f31af81b2779be247b838e8e070e.png": {
-    "mtime": 1778797640.8082516,
+    "mtime": 1779883859.8755953,
     "hash": "7fac84669c70e4e44df7b6c46f8054b4"
   },
   "/home/andre/software/neuro-system/apps/tests/fdt/template_assets/2342d2016d8b9dc6571eb926f41794c03d73ca12.png": {
-    "mtime": 1778797640.8082516,
+    "mtime": 1779883859.8755953,
     "hash": "11544e5e38fea9177426fb712df31ae2"
   },
   "/home/andre/software/neuro-system/config/staticfiles/admin/img/icon-no-dark.svg": {

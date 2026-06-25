@@ -26,8 +26,8 @@ WASI_LAYOUT_SPEC = {
 }
 
 WASI_CHART_SPEC = {
-    "title": "WASI - ÍNDICES DE QIs",
-    "caption_template": "Gráfico {index} WASI - ÍNDICES DE QIs",
+    "title": "WASI - INDICES DE QIS",
+    "caption_template": "Gráfico {index} WASI - INDICES DE QIS",
     "labels": ["QIV", "QIE", "QIT"],
     "y_label": "Valores de QI",
     "average_band": (90, 110),

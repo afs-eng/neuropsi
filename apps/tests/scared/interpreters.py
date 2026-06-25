@@ -21,10 +21,10 @@ def _source_phrase(form_type: str) -> str:
 def _opening_paragraph(form_type: str) -> str:
     if form_type == "parent":
         return (
-            "Interpretação e Observações Clínicas: A Escala SCARED foi aplicada com o objetivo de rastrear sintomas ansiosos em crianças e adolescentes, a partir do relato dos pais/cuidadores, investigando manifestações relacionadas à ansiedade generalizada, ansiedade de separação, ansiedade social, sintomas de pânico/somatização e evitação escolar."
+            "SCARED - Pais/Cuidadores. Interpretação e Observações Clínicas: A Escala SCARED foi aplicada com o objetivo de rastrear sintomas ansiosos em crianças e adolescentes, a partir do relato dos pais/cuidadores, investigando manifestações relacionadas à ansiedade generalizada, ansiedade de separação, ansiedade social, sintomas de pânico/somatização e evitação escolar."
         )
     return (
-        "Interpretação e Observações Clínicas: A Escala SCARED foi aplicada com o objetivo de rastrear sintomas ansiosos em crianças e adolescentes, a partir do autorrelato, investigando manifestações relacionadas à ansiedade generalizada, ansiedade de separação, ansiedade social, sintomas de pânico/somatizacao e evitacao escolar."
+        "SCARED - Autorrelato. Interpretação e Observações Clínicas: A Escala SCARED foi aplicada com o objetivo de rastrear sintomas ansiosos em crianças e adolescentes, a partir do autorrelato, investigando manifestações relacionadas à ansiedade generalizada, ansiedade de separação, ansiedade social, sintomas de pânico/somatização e evitação escolar."
     )
 
 

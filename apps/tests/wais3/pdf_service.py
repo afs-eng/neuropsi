@@ -86,14 +86,14 @@ class WAIS3PdfService:
     @classmethod
     def _render_html(cls, source: str, application) -> str:
         context = cls._build_context(application)
-        rendered = source.replace("    $1\n\n", "")
+        rendered = source
 
         replacements = {
             "Nome do Avaliado": context["patient_name"],
             "Masculino": context["patient_sex"],
             "32 anos e 4 meses": context["patient_age"],
             "Ensino superior completo": context["patient_schooling"],
-            "Andre Alekhine": context["professional"],
+            "Jacqueline O. Caires - CRP09/6017": context["professional"],
             "WAIS-III / Brasil / Faixa etária correspondente": context["normative_table"],
             "AVL-102": context["application_code"],
             "13/05/2026": context["applied_on"],
@@ -108,27 +108,23 @@ class WAIS3PdfService:
             count=1,
             flags=re.S,
         )
+
         rendered = re.sub(
-            r'<div class="ruler-col rc1"></div>.*?<div class="ruler-col rc7"></div>',
-            cls._ruler_cols_html(context["index_rows"]),
+            r"<!-- SUBTEST_CIRCLES_START -->.*?<!-- SUBTEST_CIRCLES_END -->",
+            cls._subtest_svg_markers(context["verbal_profile"], context["execution_profile"]),
             rendered,
             count=1,
             flags=re.S,
         )
+
         rendered = re.sub(
-            r'<div class="mini-body"><i class="dot-standard v1"></i>.*?</div>',
-            f'<div class="mini-body">{cls._subtest_dots_html(context["verbal_profile"])}</div>',
+            r"<!-- QI_MARKERS_START -->.*?<!-- QI_MARKERS_END -->",
+            cls._qi_svg_markers(context["index_rows"]),
             rendered,
             count=1,
             flags=re.S,
         )
-        rendered = re.sub(
-            r'<div class="mini-body"><i class="dot-standard e1"></i>.*?</div>',
-            f'<div class="mini-body">{cls._subtest_dots_html(context["execution_profile"])}</div>',
-            rendered,
-            count=1,
-            flags=re.S,
-        )
+
         rendered = re.sub(
             r"<tbody>\s*<tr><td>QI Verbal</td>.*?</tbody>",
             f"<tbody>\n{cls._summary_rows_html(context['index_rows'])}\n          </tbody>",
@@ -151,14 +147,14 @@ class WAIS3PdfService:
             flags=re.S,
         )
         rendered = re.sub(
-            r'(<table aria-label="Análise de Clusters">.*?<tbody>\s*).*?(\s*</tbody>)',
+            r'(<section class="panel"><h2>Análise de Clusters</h2>.*?<tbody>\s*).*?(\s*</tbody>)',
             lambda match: f"{match.group(1)}\n{cls._cluster_rows_html(context['cluster_rows'])}\n        {match.group(2)}",
             rendered,
             count=1,
             flags=re.S,
         )
         rendered = re.sub(
-            r'(<table aria-label="Comparações Clínicas">.*?<tbody>\s*).*?(\s*</tbody>)',
+            r'(<section class="panel"><h2>Comparações Clínicas</h2>.*?<tbody>\s*).*?(\s*</tbody>)',
             lambda match: f"{match.group(1)}\n{cls._clinical_comparison_rows_html(context['clinical_comparison_rows'])}\n        {match.group(2)}",
             rendered,
             count=1,
@@ -264,7 +260,7 @@ class WAIS3PdfService:
                 return f"{name} - {registration}"
             if name:
                 return str(name)
-        return "Dra. Jacqueline O. Caires - CRP09/6017"
+        return "Jacqueline O. Caires - CRP09/6017"
 
     @classmethod
     def _age_label(cls, patient, raw_payload: dict, applied_on: date | None) -> str:
@@ -499,13 +495,6 @@ class WAIS3PdfService:
     def _format_frequency(cls, value) -> str:
         return cls._format_number(value, decimals=1)
 
-    @staticmethod
-    def _chart_position(value: float | None, minimum: float, maximum: float) -> float:
-        if value is None:
-            return 50.0
-        clamped = max(minimum, min(maximum, value))
-        return ((maximum - clamped) / (maximum - minimum)) * 100.0
-
     @classmethod
     def _index_matrix_rows_html(cls, rows: list[dict]) -> str:
         def cells(field: str) -> str:
@@ -530,19 +519,57 @@ class WAIS3PdfService:
             for row in rows
         )
 
-    @classmethod
-    def _ruler_cols_html(cls, rows: list[dict]) -> str:
-        return "".join(
-            f'<div class="ruler-col" style="--score:{cls._chart_position(row.get("score_raw"), 45, 155):.2f}%"></div>'
-            for row in rows
-        )
+    @staticmethod
+    def _subtest_svg_markers(verbal: list[dict], execution: list[dict]) -> str:
+        VERBAL_START_X = 27.0
+        EXEC_START_X = 223.0
+        GRID_Y = 83.0
+        COL_W = 178.0 / 7.0
+        ROW_H = 316.0 / 19.0
+
+        def marker(col: int, score: float | None, start_x: float) -> str:
+            if score is None:
+                return ""
+            cx = start_x + (col + 0.5) * COL_W
+            cy = GRID_Y + (19 - score) * ROW_H + ROW_H / 2.0
+            return f'<circle cx="{cx:.2f}" cy="{cy:.2f}" fill="#1B7F8C" r="4.8"></circle>'
+
+        marks = []
+        for idx, row in enumerate(verbal):
+            marks.append(marker(idx, row.get("score"), VERBAL_START_X))
+        for idx, row in enumerate(execution):
+            marks.append(marker(idx, row.get("score"), EXEC_START_X))
+        return "".join(marks)
 
     @staticmethod
-    def _subtest_dots_html(rows: list[dict]) -> str:
-        return "".join(
-            f'<i class="dot-standard" style="left:{row["left"]:.2f}%;top:{row["top"]:.2f}%"></i>'
-            for row in rows
-            if row.get("score") is not None
+    def _qi_svg_markers(rows: list[dict]) -> str:
+        GRID_X = 44.0
+        GRID_W = 372.0
+        GRID_Y = 36.0
+        GRID_H = 360.0
+        MIN_SCORE = 45
+        MAX_SCORE = 155
+
+        def marker(row: dict, index: int) -> str:
+            score = row.get("score_raw")
+            if score is None:
+                return ""
+            clamped = max(MIN_SCORE, min(MAX_SCORE, score))
+            cx = GRID_X + (index + 0.5) * (GRID_W / 7.0)
+            cy = GRID_Y + (float(MAX_SCORE) - clamped) / (float(MAX_SCORE) - float(MIN_SCORE)) * GRID_H
+            x1_shadow = cx - 15.0
+            x2_shadow = cx + 15.0
+            x1_cyan = cx - 14.0
+            x2_cyan = cx + 14.0
+            return (
+                f'<line filter="url(#barShadowV6)" stroke="#123A5A" stroke-linecap="round" '
+                f'stroke-width="4.4" x1="{x1_shadow:.2f}" x2="{x2_shadow:.2f}" y1="{cy:.2f}" y2="{cy:.2f}"></line>\n'
+                f'<line stroke="#27BBD0" stroke-linecap="round" '
+                f'stroke-width="2.1" x1="{x1_cyan:.2f}" x2="{x2_cyan:.2f}" y1="{cy:.2f}" y2="{cy:.2f}"></line>'
+            )
+
+        return "\n".join(
+            marker(row, idx) for idx, row in enumerate(rows)
         )
 
     @staticmethod
@@ -579,10 +606,12 @@ class WAIS3PdfService:
     @staticmethod
     def _clinical_comparison_rows_html(rows: list[dict]) -> str:
         def difference_class(row: dict) -> str:
-            return ' class="negative"' if row.get("difference_raw") is not None and row["difference_raw"] < 0 else ""
+            if row.get("difference_raw") is not None and row["difference_raw"] < 0:
+                return ' class="difference negative-highlight"'
+            return ""
 
         return "\n".join(
-            f"<tr><td>{html.escape(row['label'])}</td><td class=\"abbr\">{html.escape(row['first_code'])}</td><td>{html.escape(row['first_score'])}</td><td class=\"abbr\">{html.escape(row['second_code'])}</td><td>{html.escape(row['second_score'])}</td><td{difference_class(row)}>{html.escape(row['difference'])}</td><td>{html.escape(row['critical'])}</td><td>{html.escape(row['rarity'])}</td><td class=\"abbr\">{html.escape(row['first_code'])}</td><td class=\"relation\">{html.escape(row['relation'])}</td><td class=\"abbr\">{html.escape(row['second_code'])}</td></tr>"
+            f"<tr><td class=\"comparison-name\">{html.escape(row['label'])}</td><td class=\"compound-label\">{html.escape(row['first_code'])}</td><td>{html.escape(row['first_score'])}</td><td class=\"compound-label\">{html.escape(row['second_code'])}</td><td>{html.escape(row['second_score'])}</td><td{difference_class(row)}>{html.escape(row['difference'])}</td><td>{html.escape(row['critical'])}</td><td>{html.escape(row['rarity'])}</td><td class=\"compound-label\">{html.escape(row['first_code'])}</td><td class=\"direction-symbol\">{html.escape(row['relation'])}</td><td class=\"compound-label\">{html.escape(row['second_code'])}</td></tr>"
             for row in rows
         )
 
@@ -624,23 +653,22 @@ class WAIS3PdfService:
             for index, page_blocks in enumerate(pages)
         )
         rendered = rendered[: match.start(1)] + clinical_pages + rendered[match.end(1) :]
-        return re.sub(r"PÁGINA ([1-3]) DE 4", rf"PÁGINA \1 DE {total_pages}", rendered)
+        return re.sub(r"Página ([1-3]) de 5", rf"Página \1 de {total_pages}", rendered)
 
     @classmethod
     def _standardize_footers(cls, rendered: str) -> str:
         return re.sub(
-            r'<div class="footer"><span>.*?</span><span>PÁGINA (\d+) DE (\d+)</span></div>',
-            lambda match: cls._footer_html(int(match.group(1)), int(match.group(2))),
+            r'<span class="footer-page-number">Página (\d+) de (\d+)</span>',
+            lambda match: f'<span class="footer-page-number">Página {match.group(1)} de {match.group(2)}</span>',
             rendered,
         )
 
     @staticmethod
     def _footer_html(page_number: int, total_pages: int) -> str:
         return (
-            '    <div class="footer" aria-label="Rodapé Neuroavalia">'
-            '<div class="footer-logo">Neuro<span>avalia</span></div>'
-            f'<div class="footer-right">Página {page_number} de {total_pages}</div>'
-            '</div>'
+            f'  <footer class="page-footer"><div class="footer-logo">'
+            f'<span>Neuro<span style="color:#1B7F8C">avalia</span></span>'
+            f'</div><span class="footer-page-number">Página {page_number} de {total_pages}</span></footer>'
         )
 
     @classmethod
@@ -681,6 +709,7 @@ class WAIS3PdfService:
         return (
             f"{header_html}\n"
             f"{content}\n\n"
+            f"  </main>\n"
             f'{WAIS3PdfService._footer_html(page_number, total_pages)}\n'
             "  </section>"
         )

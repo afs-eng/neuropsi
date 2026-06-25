@@ -34,6 +34,13 @@ interface QuickPatientForm {
   notes: string;
   responsible_name: string;
   responsible_phone: string;
+  examiner_id: string;
+}
+
+interface UserOption {
+  id: number;
+  full_name: string;
+  is_active: boolean;
 }
 
 const INITIAL_FORM: QuickPatientForm = {
@@ -52,6 +59,7 @@ const INITIAL_FORM: QuickPatientForm = {
   notes: "",
   responsible_name: "",
   responsible_phone: "",
+  examiner_id: "",
 };
 
 const SCHOOLING_OPTIONS = [
@@ -82,6 +90,7 @@ export default function QuickTestPageClient({ initialTest = "" }: QuickTestPageC
   const router = useRouter();
   const [instruments, setInstruments] = useState<Instrument[]>([]);
   const [selectedCode, setSelectedCode] = useState("");
+  const [professionals, setProfessionals] = useState<UserOption[]>([]);
   const [form, setForm] = useState<QuickPatientForm>(INITIAL_FORM);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -90,9 +99,17 @@ export default function QuickTestPageClient({ initialTest = "" }: QuickTestPageC
   useEffect(() => {
     async function loadInstruments() {
       try {
-        const data = await api.get<Instrument[]>("/api/tests/instruments");
+        const [data, users] = await Promise.all([
+          api.get<Instrument[]>("/api/tests/instruments"),
+          api.get<UserOption[]>("/api/accounts/users").catch(() => [] as UserOption[]),
+        ]);
         const active = data.filter((item) => item.is_active);
         setInstruments(active);
+        setProfessionals(
+          users
+            .filter((item) => item.is_active)
+            .sort((a, b) => a.full_name.localeCompare(b.full_name, "pt-BR"))
+        );
 
         const requested = normalizeTestCode(initialTest);
         const matched = active.find((item) => normalizeTestCode(item.code) === requested);
@@ -159,6 +176,7 @@ export default function QuickTestPageClient({ initialTest = "" }: QuickTestPageC
       const evaluation = await api.post<Evaluation>("/api/evaluations/", {
         patient_id: patient.id,
         title: `Teste rapido - ${selectedInstrument.name}`,
+        examiner_id: form.examiner_id ? parseInt(form.examiner_id, 10) : undefined,
         referral_reason: "Aplicacao avulsa pelo fluxo rapido de testes.",
         evaluation_purpose: `Aplicacao rapida do instrumento ${selectedInstrument.name}.`,
         clinical_hypothesis: "",
@@ -278,6 +296,18 @@ export default function QuickTestPageClient({ initialTest = "" }: QuickTestPageC
                   {SCHOOLING_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="block text-sm">
+                <span className="mb-2 block font-medium text-slate-700">Nome do profissional</span>
+                <select value={form.examiner_id} onChange={(event) => updateField("examiner_id", event.target.value)} className="h-12 w-full rounded-xl border border-slate-200 px-4 outline-none focus:border-indigo-400">
+                  <option value="">Profissional logado</option>
+                  {professionals.map((professional) => (
+                    <option key={professional.id} value={String(professional.id)}>
+                      {professional.full_name}
                     </option>
                   ))}
                 </select>

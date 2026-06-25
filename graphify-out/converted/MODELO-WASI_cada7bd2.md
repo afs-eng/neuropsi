@@ -185,7 +185,7 @@ Dessa forma, as elevações observadas na SRS-2 parecem estar mais associadas ao
 
 
 Gráfico 9 SRS-2 Resultados
-# CONCLUSÃO
+# Conclusão
 Júllia apresenta funcionamento intelectual global acima da média esperada para sua faixa etária e escolaridade, com recursos cognitivos amplamente preservados, associado a dificuldades relacionadas à autorregulação emocional, impulsividade, organização funcional, qualidade do sono, ansiedade significativa e sofrimento emocional internalizante.
 Na Escala Wechsler Abreviada de Inteligência – WASI, Júllia apresentou Quociente de Inteligência Total (QIT = 113), classificado na faixa Média Superior, evidenciando funcionamento intelectual global acima da média normativa. O desempenho verbal mostrou-se preservado, com boa capacidade de compreensão verbal, formação de conceitos e raciocínio abstrato mediado pela linguagem. O funcionamento não verbal apresentou desempenho relativamente superior, especialmente em tarefas de organização perceptual, raciocínio visuoespacial e resolução prática de problemas.
 Na avaliação atencional, realizada por meio da BPA-2, observou-se funcionamento global preservado, com desempenho muito superior em atenção dividida e alternada, além de atenção geral classificada em média superior. Identificou-se fragilidade pontual em atenção concentrada, sugerindo maior suscetibilidade a oscilações do foco em tarefas prolongadas, repetitivas ou sob maior carga mental. No FDT, observou-se fragilidade em velocidade de processamento e automatização, especialmente em leitura, contagem e escolha, com preservação dos componentes executivos centrais, como alternância, controle inibitório e flexibilidade cognitiva.

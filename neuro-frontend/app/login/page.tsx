@@ -21,6 +21,9 @@ export default function LoginPage() {
   const [setupComplete, setSetupComplete] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [twoFactorAttempts, setTwoFactorAttempts] = useState(0);
+  const [showBackupInput, setShowBackupInput] = useState(false);
+  const MAX_2FA_ATTEMPTS = 3;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,6 +61,8 @@ export default function LoginPage() {
         setChallengeOtpauthUrl(response.otpauth_url || "");
         setBackupCodes(response.backup_codes || []);
         setAwaitingTwoFactor(true);
+        setTwoFactorAttempts(0);
+        setShowBackupInput(false);
         setError("");
         return;
       }
@@ -100,7 +105,14 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       console.error("2FA error:", err);
-      setError(err?.message || "Código 2FA inválido. Tente novamente.");
+      const newAttempts = twoFactorAttempts + 1;
+      setTwoFactorAttempts(newAttempts);
+      if (newAttempts >= MAX_2FA_ATTEMPTS) {
+        setShowBackupInput(true);
+        setError("Código inválido. Use um código de backup abaixo.");
+      } else {
+        setError(`Código 2FA inválido. Tentativa ${newAttempts} de ${MAX_2FA_ATTEMPTS}.`);
+      }
     } finally {
       setLoading(false);
     }
@@ -200,14 +212,16 @@ export default function LoginPage() {
               )}
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Código 2FA</label>
+                <label className="text-sm font-medium text-slate-700">
+                  {showBackupInput ? "Código de backup" : "Código 2FA"}
+                </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <Input
                     type="text"
-                    inputMode="numeric"
+                    inputMode={showBackupInput ? "text" : "numeric"}
                     autoComplete="one-time-code"
-                    placeholder="000000"
+                    placeholder={showBackupInput ? "0000-0000-0000-0000" : "000000"}
                     value={twoFactorCode}
                     onChange={(e) => setTwoFactorCode(e.target.value)}
                     className="h-11 pl-10"
@@ -215,6 +229,13 @@ export default function LoginPage() {
                   />
                 </div>
               </div>
+
+              {showBackupInput && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 space-y-2">
+                  <p className="font-medium">Perdeu o acesso ao autenticador?</p>
+                  <p>Digite um dos códigos de backup gerados na ativação do 2FA. Cada código só pode ser usado uma vez.</p>
+                </div>
+              )}
 
               <Button type="submit" className="h-11 w-full gap-2" disabled={loading}>
                 {loading ? (

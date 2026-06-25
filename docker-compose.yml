@@ -7,7 +7,6 @@ services:
   # PostgreSQL
   db:
     image: postgres:16-alpine
-    container_name: neuro-db
     restart: unless-stopped
     ports:
       - "5432:5432"
@@ -26,7 +25,6 @@ services:
   # Redis
   redis:
     image: redis:7-alpine
-    container_name: neuro-redis
     restart: unless-stopped
     ports:
       - "6379:6379"
@@ -41,7 +39,6 @@ services:
   # Ollama
   ollama:
     image: ollama/ollama:latest
-    container_name: neuro-ollama
     restart: unless-stopped
     ports:
       - "11434:11434"
@@ -54,7 +51,6 @@ services:
       context: .
       dockerfile: infra/docker/backend.Dockerfile
       target: dev
-    container_name: neuro-backend
     entrypoint: ["/app/infra/docker/backend.entrypoint.sh"]
     command: sh -c "uv run python manage.py migrate --noinput && uv run python manage.py runserver 0.0.0.0:8000"
     restart: unless-stopped
@@ -89,7 +85,6 @@ services:
       context: ./neuro-frontend
       dockerfile: Dockerfile
       target: dev
-    container_name: neuro-frontend
     command: sh -c "npm ci && npm run dev"
     restart: unless-stopped
     ports:
@@ -107,5 +102,7 @@ services:
 
 volumes:
   neuro_postgres_data:
+    external: true
+    name: neuro_neuro_postgres_data
   neuro_redis_data:
   neuro_ollama_data:

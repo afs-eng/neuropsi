@@ -12,7 +12,7 @@ fi
 LOCAL_PYTHON="$ROOT_DIR/.venv/bin/python"
 LOCAL_OLLAMA_URL="${OLLAMA_BASE_URL:-http://localhost:11434}"
 DOCKER_OLLAMA_URL="${DOCKER_OLLAMA_BASE_URL:-http://host.docker.internal:11434}"
-DOCKER_CONTAINER="${DOCKER_BACKEND_CONTAINER:-neuro-backend}"
+DOCKER_COMPOSE_SERVICE="${DOCKER_BACKEND_SERVICE:-backend}"
 REPORT_ID="${REPORT_ID:-1}"
 
 if [ ! -x "$LOCAL_PYTHON" ]; then
@@ -31,18 +31,18 @@ printf '\n[3/6] Executando teste local rapido (FDT)...\n'
 "$ROOT_DIR/test_ia_local.sh"
 
 printf '\n[4/6] Verificando Docker e Ollama no container...\n'
-docker exec "$DOCKER_CONTAINER" python manage.py check
-docker exec "$DOCKER_CONTAINER" python manage.py shell -c "import requests; r = requests.get('$DOCKER_OLLAMA_URL/api/tags', timeout=30); r.raise_for_status(); print(r.json())"
+docker compose exec -T "$DOCKER_COMPOSE_SERVICE" python manage.py check
+docker compose exec -T "$DOCKER_COMPOSE_SERVICE" python manage.py shell -c "import requests; r = requests.get('$DOCKER_OLLAMA_URL/api/tags', timeout=30); r.raise_for_status(); print(r.json())"
 
 printf '\n[5/6] Validando cobertura das chaves suportadas no Docker...\n'
-docker exec "$DOCKER_CONTAINER" python manage.py shell -c "from pathlib import Path; from apps.reports.models import Report; from apps.reports.services.report_ai_service import ReportAIService; from apps.ai.services.text_generation_service import TextGenerationService; report=Report.objects.get(id=$REPORT_ID); context=report.context_payload or {}; tests={item.get('instrument_code') for item in context.get('validated_tests') or []}; base=Path(TextGenerationService.PROMPTS_DIR); summary=[]; 
+docker compose exec -T "$DOCKER_COMPOSE_SERVICE" python manage.py shell -c "from pathlib import Path; from apps.reports.models import Report; from apps.reports.services.report_ai_service import ReportAIService; from apps.ai.services.text_generation_service import TextGenerationService; report=Report.objects.get(id=$REPORT_ID); context=report.context_payload or {}; tests={item.get('instrument_code') for item in context.get('validated_tests') or []}; base=Path(TextGenerationService.PROMPTS_DIR); summary=[]; 
 for key in sorted(ReportAIService.SUPPORTED_SECTIONS):
     config=ReportAIService._generator_config(key)
     summary.append({'key': key, 'kind': config['kind'], 'prompt_exists': (base / config['prompt']).is_file(), 'has_data': bool(tests & set(config['codes']))})
 print(summary)"
 
 printf '\n[6/6] Rodando suite completa de geracao no Docker...\n'
-docker exec "$DOCKER_CONTAINER" python manage.py shell -c "import json; from apps.reports.models import Report; from apps.reports.services.report_ai_service import ReportAIService; report=Report.objects.get(id=$REPORT_ID); context=report.context_payload or {}; tests={item.get('instrument_code') for item in context.get('validated_tests') or []}; results=[]; 
+docker compose exec -T "$DOCKER_COMPOSE_SERVICE" python manage.py shell -c "import json; from apps.reports.models import Report; from apps.reports.services.report_ai_service import ReportAIService; report=Report.objects.get(id=$REPORT_ID); context=report.context_payload or {}; tests={item.get('instrument_code') for item in context.get('validated_tests') or []}; results=[]; 
 for key in sorted(ReportAIService.SUPPORTED_SECTIONS):
     config=ReportAIService._generator_config(key)
     has_data=bool(tests & set(config['codes']))
