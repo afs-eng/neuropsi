@@ -1,0 +1,56 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv/
+
+# Node.js and frontend build output
+node_modules/
+.next/
+out/
+playwright-report/
+test-results/
+.playwright-runner/
+neuro-frontend/node_modules/
+neuro-frontend/.next/
+neuro-frontend/out/
+neuro-frontend/.playwright-runner/
+
+# Django
+staticfiles/
+media/
+db.sqlite3
+config/db.sqlite3
+
+# Caches
+.ruff_cache/
+.pytest_cache/
+
+# IDE
+.vscode/
+
+# Generated documents (patient-specific)
+*.docx
+!apps/reports/templates_assets/*.docx
+
+# Environment files (contain secrets)
+.env
+!.env.example
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+*.log
+
+# AI agent configs (optional - uncomment if team prefers to keep them local)
+# .agent/
+# .opencode/
+# .qwen/
