@@ -1,31 +1,15 @@
 # ============================================================
-# NeuroAvalia — Docker Compose (Producao Self-Hosted)
-# Uso: docker compose -f docker-compose.prod.yml up -d --build
+# NeuroAvalia — DigitalOcean (Droplet + Managed PostgreSQL)
+# Uso: docker compose --env-file .env.digitalocean -f docker-compose.digitalocean.yml up -d --build
 # ============================================================
 
 services:
-  # PostgreSQL
-  db:
-    image: postgres:16-alpine
-    container_name: neuro-db-prod
-    restart: always
-    env_file:
-      - ${APP_ENV_FILE:-.env.prod}
-    volumes:
-      - neuro_postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-
-  # Backend Django (Gunicorn)
   backend:
     build:
       context: .
       dockerfile: infra/docker/backend.Dockerfile
       target: prod
-    container_name: neuro-backend-prod
+    container_name: neuro-backend-do
     entrypoint: ["sh", "/app/infra/docker/backend.entrypoint.sh"]
     command: uv run gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --log-file -
     restart: always
@@ -37,15 +21,11 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     env_file:
-      - ${APP_ENV_FILE:-.env.prod}
+      - ${APP_ENV_FILE:-.env.digitalocean}
     environment:
       - DEBUG=False
       - DJANGO_ENV=production
-    depends_on:
-      db:
-        condition: service_healthy
 
-  # Frontend Next.js (standalone production)
   frontend:
     build:
       context: ./neuro-frontend
@@ -54,7 +34,7 @@ services:
       args:
         INTERNAL_API_BASE_URL: ${INTERNAL_API_BASE_URL:-http://backend:8000}
         NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-}
-    container_name: neuro-frontend-prod
+    container_name: neuro-frontend-do
     restart: always
     expose:
       - "3000"
@@ -66,24 +46,28 @@ services:
     depends_on:
       - backend
 
-  # Nginx Reverse Proxy
-  nginx:
-    image: nginx:alpine
-    container_name: neuro-nginx-prod
+  caddy:
+    image: caddy:2-alpine
+    container_name: neuro-caddy-do
     restart: always
     ports:
       - "80:80"
       - "443:443"
+    environment:
+      - APP_DOMAIN=${APP_DOMAIN}
+      - ACME_EMAIL=${ACME_EMAIL}
     volumes:
-      - ./infra/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - neuro_static_data:/var/www/django/static:ro
       - neuro_media_data:/var/www/django/media:ro
+      - caddy_data:/data
+      - caddy_config:/config
     depends_on:
       - frontend
       - backend
 
 volumes:
-  neuro_postgres_data:
-    name: neuro_neuro_postgres_data
   neuro_static_data:
   neuro_media_data:
+  caddy_data:
+  caddy_config:

@@ -1630,6 +1630,28 @@ class SRS2ModuleTests(SimpleTestCase):
 
         self.assertTrue(any("Percepção Social" in error for error in errors))
 
+    def test_adult_heteroreport_interpretation_does_not_confuse_cis_with_communication_domain(self):
+        module = SRS2Module()
+        context = TestContext(
+            patient_name="Paciente SRS-2",
+            evaluation_id=1,
+            instrument_code="srs2",
+            raw_scores={
+                "form": "adulto_heterorrelato",
+                "gender": "F",
+                "age": 30,
+                "responses": {str(item): 1 for item in range(1, 66)},
+            },
+        )
+
+        computed = module.compute(context)
+        classified = module.classify(computed, gender="F", age=30)
+        interpretation = module.interpret(context, classified)
+
+        self.assertIn("rastreio de indicadores associados", interpretation)
+        self.assertIn("O domínio de Comunicação Social situou-se dentro dos limites normativos", interpretation)
+        self.assertIn("A escala de Comunicação e Interação Social apresentou elevação em nível leve", interpretation)
+
     def test_pdf_export_service_registers_srs2_exporter(self):
         self.assertIn("srs2", TestPdfExportService.EXPORTERS)
 

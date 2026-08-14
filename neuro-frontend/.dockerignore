@@ -1,0 +1,9 @@
+node_modules
+.next
+out
+playwright-report
+test-results
+.playwright-runner
+*:Zone.Identifier
+.env
+.env.*

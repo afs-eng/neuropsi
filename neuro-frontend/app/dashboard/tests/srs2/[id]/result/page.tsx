@@ -15,6 +15,7 @@ const CLASSIFICATION_STYLES: Record<string, string> = {
   Moderado: "bg-orange-50 text-orange-700 border-orange-200",
   Grave: "bg-red-50 text-red-700 border-red-200",
   Severo: "bg-red-50 text-red-700 border-red-200",
+  "Não classificado": "bg-slate-100 text-slate-700 border-slate-200",
   "Norma não localizada": "bg-slate-100 text-slate-700 border-slate-200",
 };
 
@@ -38,6 +39,14 @@ function getFormLabel(value: string) {
   };
 
   return labels[value] || value || "-";
+}
+
+function formatResultValue(value: unknown) {
+  if (value === null || value === undefined || value === "") return "N/D";
+  if (typeof value === "number") {
+    return Number.isInteger(value) ? String(value) : value.toLocaleString("pt-BR");
+  }
+  return String(value);
 }
 
 function SRS2ResultPageContent() {
@@ -137,6 +146,10 @@ function SRS2ResultPageContent() {
   const scoreResults = classified.resultados || [];
   const totalResult = scoreResults.find((item: any) => item["variável"] === "total");
   const cisResult = scoreResults.find((item: any) => item["variável"] === "cis");
+  const missingNormRows = scoreResults.filter((item: any) => {
+    const classification = String(item?.["classificação"] || "").trim();
+    return classification === "Norma não localizada" || item?.tscore == null || item?.percentil == null;
+  });
   const interpretation = String(result.interpretation || result.interpretation_text || "").trim();
   const interpretationParagraphs = interpretation
     .split(/\n\s*\n/)
@@ -169,6 +182,21 @@ function SRS2ResultPageContent() {
 
       <TestReportSummaryCard reportPayload={result.report_payload} fallbackText={result.interpretation || result.interpretation_text} />
 
+      {missingNormRows.length > 0 ? (
+        <Card className="border-amber-200 bg-amber-50 report-print-content">
+          <CardContent className="pt-6">
+            <p className="font-medium text-amber-900">Norma indisponível para parte deste protocolo</p>
+            <p className="mt-2 text-sm leading-6 text-amber-800">
+              {missingNormRows.length === 1 ? "Uma escala" : `${missingNormRows.length} escalas`} deste formulário está sem tabela normativa completa no sistema.
+              O dado bruto foi salvo, mas o T-score e o percentil aparecem como <code>N/D</code> enquanto a norma não estiver disponível.
+            </p>
+            <p className="mt-2 text-sm text-amber-900">
+              Escalas afetadas: {missingNormRows.map((item: any) => item?.nome || item?.["variável"] || "-").join(", ")}.
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
+
       <Card className="border-slate-100 shadow-spike overflow-hidden report-print-content">
         <CardHeader>
           <CardTitle className="text-xl font-semibold text-slate-900">Resumo da aplicação</CardTitle>
@@ -196,21 +224,21 @@ function SRS2ResultPageContent() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="rounded-2xl border border-slate-200 bg-white p-5">
               <p className="text-sm text-slate-500">Pontuação Total</p>
-              <p className="mt-2 text-3xl font-semibold text-slate-900">{totalResult?.tscore ?? "-"}</p>
-              <p className="mt-2 text-sm text-slate-600">Bruto: {totalResult?.bruto ?? "-"} • Percentil: {totalResult?.percentil ?? "-"}</p>
+              <p className="mt-2 text-3xl font-semibold text-slate-900">{formatResultValue(totalResult?.tscore)}</p>
+              <p className="mt-2 text-sm text-slate-600">Bruto: {formatResultValue(totalResult?.bruto)} • Percentil: {formatResultValue(totalResult?.percentil)}</p>
               <div className="mt-3">
                 <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${getClassificationStyle(totalResult?.["classificação"] || "")}`}>
-                  {totalResult?.["classificação"] || "-"}
+                  {totalResult?.["classificação"] || "N/D"}
                 </span>
               </div>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-5">
               <p className="text-sm text-slate-500">Comunicação e Interação Social</p>
-              <p className="mt-2 text-3xl font-semibold text-slate-900">{cisResult?.tscore ?? "-"}</p>
-              <p className="mt-2 text-sm text-slate-600">Bruto: {cisResult?.bruto ?? "-"} • Percentil: {cisResult?.percentil ?? "-"}</p>
+              <p className="mt-2 text-3xl font-semibold text-slate-900">{formatResultValue(cisResult?.tscore)}</p>
+              <p className="mt-2 text-sm text-slate-600">Bruto: {formatResultValue(cisResult?.bruto)} • Percentil: {formatResultValue(cisResult?.percentil)}</p>
               <div className="mt-3">
                 <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${getClassificationStyle(cisResult?.["classificação"] || "")}`}>
-                  {cisResult?.["classificação"] || "-"}
+                  {cisResult?.["classificação"] || "N/D"}
                 </span>
               </div>
             </div>
@@ -231,10 +259,10 @@ function SRS2ResultPageContent() {
                 {scoreResults.map((item: any, index: number) => (
                   <tr key={item["variável"] || item.nome || index} className={`border-t border-slate-200 ${index % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`}>
                     <td className="px-4 py-3 font-medium text-slate-900">{item.nome || "-"}</td>
-                    <td className="px-4 py-3 text-center text-slate-700">{item.bruto ?? "-"}</td>
-                    <td className="px-4 py-3 text-center text-slate-700">{item.tscore ?? "-"}</td>
-                    <td className="px-4 py-3 text-center text-slate-700">{item.percentil ?? "-"}</td>
-                    <td className="px-4 py-3 text-slate-700">{item["classificação"] || "-"}</td>
+                    <td className="px-4 py-3 text-center text-slate-700">{formatResultValue(item.bruto)}</td>
+                    <td className="px-4 py-3 text-center text-slate-700">{formatResultValue(item.tscore)}</td>
+                    <td className="px-4 py-3 text-center text-slate-700">{formatResultValue(item.percentil)}</td>
+                    <td className="px-4 py-3 text-slate-700">{item["classificação"] || "N/D"}</td>
                   </tr>
                 ))}
               </tbody>

@@ -7,13 +7,19 @@ wheels/
 *.egg-info
 
 # Virtual environments
-.venv
+.venv/
 
-# Node.js
+# Node.js and frontend build output
 node_modules/
 .next/
+out/
+playwright-report/
+test-results/
+.playwright-runner/
+neuro-frontend/node_modules/
 neuro-frontend/.next/
 neuro-frontend/out/
+neuro-frontend/.playwright-runner/
 
 # Django
 staticfiles/
@@ -23,6 +29,7 @@ config/db.sqlite3
 
 # Caches
 .ruff_cache/
+.pytest_cache/
 
 # IDE
 .vscode/

@@ -1,0 +1,29 @@
+{$APP_DOMAIN} {
+    tls {$ACME_EMAIL}
+    encode zstd gzip
+
+    request_body {
+        max_size 10MB
+    }
+
+    @static path /static/*
+    handle @static {
+        root * /var/www/django
+        file_server
+    }
+
+    @media path /media/*
+    handle @media {
+        root * /var/www/django
+        file_server
+    }
+
+    @backend path /api/* /admin/* /healthz/
+    handle @backend {
+        reverse_proxy backend:8000
+    }
+
+    handle {
+        reverse_proxy frontend:3000
+    }
+}

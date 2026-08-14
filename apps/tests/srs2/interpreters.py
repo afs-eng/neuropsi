@@ -135,6 +135,16 @@ def _join_names(names: list[str]) -> str:
     return f"{', '.join(names[:-1])} e {names[-1]}"
 
 
+def _explicit_sentence_anchor(row: dict) -> str:
+    key = row.get("variável")
+    name = (row.get("nome") or DISPLAY_NAMES.get(key, "")).lower()
+    if key == "cis":
+        return f"a escala de {name}"
+    if key in PRIMARY_DOMAIN_KEYS:
+        return f"o domínio de {name}"
+    return name
+
+
 def _ordered_rows(by_key: dict[str, dict]) -> list[dict]:
     return [by_key[key] for key in INTERPRETATION_ORDER if key in by_key]
 
@@ -342,7 +352,8 @@ def validate_srs2_interpretation(rows: list[dict], text: str) -> list[str]:
         if row.get("variável") == "total" or _is_elevated(row):
             continue
         name = row.get("nome") or DISPLAY_NAMES.get(row.get("variável"), "")
-        related_sentences = [sentence.lower() for sentence in sentences if name.lower() in sentence.lower()]
+        anchor = _explicit_sentence_anchor(row)
+        related_sentences = [sentence.lower() for sentence in sentences if anchor in sentence.lower()]
         for sentence in related_sentences:
             for phrase in normal_forbidden:
                 if phrase in sentence:

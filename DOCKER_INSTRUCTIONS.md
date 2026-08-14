@@ -51,8 +51,35 @@ docker compose -f docker-compose.prod.yml exec backend python manage.py createsu
 
 Apos iniciar em producao:
 - **Frontend:** https://seu-dominio.com
-- **Backend API:** https://api.seu-dominio.com/api
-- **Django Admin:** https://api.seu-dominio.com/admin
+- **Backend API:** https://seu-dominio.com/api
+- **Django Admin:** https://seu-dominio.com/admin
+
+## DigitalOcean (Droplet + Managed PostgreSQL)
+
+```bash
+# 1. Copie o arquivo de exemplo
+cp .env.example.digitalocean .env.digitalocean
+
+# 2. Edite as variaveis de producao
+nano .env.digitalocean
+
+# 3. Suba a stack do DigitalOcean
+docker compose --env-file .env.digitalocean -f docker-compose.digitalocean.yml up -d --build
+
+# 4. Crie superusuario
+docker compose --env-file .env.digitalocean -f docker-compose.digitalocean.yml exec backend python manage.py createsuperuser
+
+# 5. Carregue os instrumentos
+docker compose --env-file .env.digitalocean -f docker-compose.digitalocean.yml exec backend python manage.py create_instruments
+```
+
+Apos iniciar no DigitalOcean:
+- **Sistema:** `https://seu-dominio.com`
+- **Backend API:** `https://seu-dominio.com/api`
+- **Django Admin:** `https://seu-dominio.com/admin`
+- **Healthcheck:** `https://seu-dominio.com/healthz/`
+
+Guia detalhado: `DEPLOY_DIGITALOCEAN.md`
 
 ## Comandos Uteis
 

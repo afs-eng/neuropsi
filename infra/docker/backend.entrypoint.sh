@@ -7,6 +7,10 @@ set -e
 
 echo "🔄 [entrypoint] Iniciando verificacao do ambiente..."
 
+if [ -z "$DATABASE_URL" ] && [ -n "$POSTGRES_USER" ] && [ -n "$POSTGRES_PASSWORD" ] && [ -n "$POSTGRES_DB" ]; then
+    export DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
+fi
+
 # Espera o banco ficar disponivel
 retries=30
 while ! python manage.py check --database default > /dev/null 2>&1; do
