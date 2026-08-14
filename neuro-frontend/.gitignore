@@ -6,6 +6,7 @@ node_modules/
 # Build
 out/
 build/
+.playwright-runner/
 
 # Misc
 .DS_Store
