@@ -4,9 +4,9 @@ services:
     env: python
     plan: free
     rootDir: .
-    buildCommand: pip install -r requirements.txt && PLAYWRIGHT_BROWSERS_PATH=0 python -m playwright install chromium && python manage.py collectstatic --noinput
+    buildCommand: pip install -r requirements.txt && PLAYWRIGHT_BROWSERS_PATH=/opt/render/project/src/.playwright-browsers python -m playwright install chromium && python manage.py collectstatic --noinput
     preDeployCommand: python manage.py migrate
-    startCommand: python manage.py migrate && gunicorn config.wsgi:application --log-file -
+    startCommand: PLAYWRIGHT_BROWSERS_PATH=/opt/render/project/src/.playwright-browsers python -m playwright install chromium && python manage.py migrate && gunicorn config.wsgi:application --log-file -
     healthCheckPath: /healthz/
     envVars:
       - key: DJANGO_ENV
@@ -32,7 +32,7 @@ services:
       - key: BACKEND_PUBLIC_URL
         value: https://neuropsi-ddag.onrender.com
       - key: PLAYWRIGHT_BROWSERS_PATH
-        value: "0"
+        value: /opt/render/project/src/.playwright-browsers
       - key: ALLOW_VERCEL_PREVIEWS
         value: "True"
       - key: AI_PROVIDER
