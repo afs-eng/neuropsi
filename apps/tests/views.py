@@ -1,5 +1,5 @@
 from datetime import date
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
 from apps.patients.models import Patient
 from apps.evaluations.models import Evaluation
@@ -8,7 +8,7 @@ from apps.tests.models.applications import TestApplication
 from apps.tests.registry import get_test_module
 from apps.tests.base.types import TestContext
 from apps.tests.bpa2.interpreters import get_report_interpretation, get_synthesis
-from apps.common.utils import get_param
+from apps.common.utils import get_param as _get_param
 
 
 def _get_application(application_id):
@@ -397,15 +397,7 @@ def wisc4_form_view(request, application_id=None):
                 int(raw_value) if raw_value is not None and raw_value != "" else 0
             )
 
-        from datetime import date as date_cls
-
         confidence_level = _get_param(request, "confidence_level", "95")
-
-        reviewed_scores = {
-            "birth_date": str(patient.birth_date) if patient.birth_date else None,
-            "evaluation_date": str(evaluation_date or date_cls.today()),
-            "confidence_level": confidence_level,
-        }
 
         result = _process_and_save_test(
             patient,

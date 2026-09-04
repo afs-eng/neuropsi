@@ -2231,6 +2231,34 @@ class BFPModuleTests(SimpleTestCase):
         self.assertEqual(codes, ["N1", "N2", "N3", "N4", "NN", "E1"])
         self.assertEqual(payload["chart_payload"]["norm_reference"], 50)
 
+    def test_pdf_factor_interpretations_are_structured_by_factor(self):
+        payload = {
+            "sample": "feminino",
+            "factors": {
+                "NN": {"code": "NN", "name": "Neuroticismo", "classification": "Média", "domain_level": "medio"},
+                "EE": {"code": "EE", "name": "Extroversão", "classification": "Média", "domain_level": "medio"},
+                "SS": {"code": "SS", "name": "Socialização", "classification": "Média Superior", "domain_level": "elevado"},
+                "RR": {"code": "RR", "name": "Realização", "classification": "Média", "domain_level": "medio"},
+                "AA": {"code": "AA", "name": "Abertura", "classification": "Baixo", "domain_level": "reduzido"},
+            },
+            "facets": {
+                "S2": {"code": "S2", "classification": "Superior", "domain_level": "elevado"},
+                "S3": {"code": "S3", "classification": "Média Superior", "domain_level": "elevado"},
+                "A2": {"code": "A2", "classification": "Baixo", "domain_level": "reduzido"},
+            },
+        }
+
+        exporter = TestPdfExportService.EXPORTERS["bfp"]
+        items = exporter._factor_interpretation_items(payload, "Cristina Moura da Silva")
+        by_code = {item["code"]: item for item in items}
+
+        self.assertTrue(by_code["NN"]["text"].startswith("O fator Neuroticismo"))
+        self.assertTrue(by_code["SS"]["text"].startswith("O fator Socialização"))
+        self.assertTrue(by_code["AA"]["text"].startswith("O fator Abertura"))
+        self.assertIn("Pró-sociabilidade", " ".join(by_code["SS"]["facets"]))
+        self.assertIn("Confiança nas Pessoas", " ".join(by_code["SS"]["facets"]))
+        self.assertIn("Liberalismo", " ".join(by_code["AA"]["facets"]))
+
     def test_pdf_export_service_generates_bfp_pdf(self):
         module = BFPModule()
         context = TestContext(

@@ -51,8 +51,8 @@ services:
       context: .
       dockerfile: infra/docker/backend.Dockerfile
       target: dev
-    entrypoint: ["sh", "/app/infra/docker/backend.entrypoint.sh"]
-    command: sh -c "uv run python manage.py migrate --noinput && uv run python manage.py runserver 0.0.0.0:8000"
+    entrypoint: ["/app/infra/docker/backend.entrypoint.sh"]
+    command: uv run python manage.py runserver 0.0.0.0:8000
     restart: unless-stopped
     ports:
       - "8000:8000"
@@ -88,7 +88,7 @@ services:
     command: sh -c "npm ci && npm run dev"
     restart: unless-stopped
     ports:
-      - "3002:3000"
+      - "3000:3000"
     volumes:
       - ./neuro-frontend:/app:cached
       - /app/node_modules

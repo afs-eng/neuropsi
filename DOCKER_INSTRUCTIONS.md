@@ -17,10 +17,10 @@ docker compose up --build
 docker compose exec ollama ollama pull qwen3.5:27b
 
 # 4. Crie superusuario
-docker compose exec backend python manage.py createsuperuser
+docker compose exec backend uv run python manage.py createsuperuser
 
 # 5. Crie instrumentos de teste
-docker compose exec backend python manage.py create_instruments
+docker compose exec backend uv run python manage.py create_instruments
 ```
 
 Apos iniciar:
@@ -43,10 +43,10 @@ nano .env.prod
 docker compose -f docker-compose.prod.yml up -d --build
 
 # 4. Rode as migracoes
-docker compose -f docker-compose.prod.yml exec backend python manage.py migrate
+docker compose -f docker-compose.prod.yml exec backend uv run python manage.py migrate
 
 # 5. Crie superusuario
-docker compose -f docker-compose.prod.yml exec backend python manage.py createsuperuser
+docker compose -f docker-compose.prod.yml exec backend uv run python manage.py createsuperuser
 ```
 
 Apos iniciar em producao:
@@ -67,10 +67,10 @@ nano .env.digitalocean
 docker compose --env-file .env.digitalocean -f docker-compose.digitalocean.yml up -d --build
 
 # 4. Crie superusuario
-docker compose --env-file .env.digitalocean -f docker-compose.digitalocean.yml exec backend python manage.py createsuperuser
+docker compose --env-file .env.digitalocean -f docker-compose.digitalocean.yml exec backend uv run python manage.py createsuperuser
 
 # 5. Carregue os instrumentos
-docker compose --env-file .env.digitalocean -f docker-compose.digitalocean.yml exec backend python manage.py create_instruments
+docker compose --env-file .env.digitalocean -f docker-compose.digitalocean.yml exec backend uv run python manage.py create_instruments
 ```
 
 Apos iniciar no DigitalOcean:
@@ -99,6 +99,6 @@ docker compose down -v
 docker compose up -d --build backend
 
 # Executar comando no container
-docker compose exec backend python manage.py shell
-docker compose exec backend python manage.py test
+docker compose exec backend uv run python manage.py shell
+docker compose exec backend uv run python manage.py test
 ```

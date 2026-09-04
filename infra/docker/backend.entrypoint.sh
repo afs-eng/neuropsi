@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # ============================================================
 # NeuroAvalia — Backend Entrypoint (Docker)
 # Aguarda o DB, roda migrations e inicia o servidor.
@@ -13,7 +13,7 @@ fi
 
 # Espera o banco ficar disponivel
 retries=30
-while ! python manage.py check --database default > /dev/null 2>&1; do
+while ! uv run python manage.py check --database default > /dev/null 2>&1; do
     echo "⏳ Aguardando conexao com o banco de dados..."
     sleep 2
     retries=$((retries - 1))
@@ -27,12 +27,12 @@ echo "✅ Banco de dados disponivel."
 
 # Aplica migrations
 echo "🛠️ Rodando migrations..."
-python manage.py migrate --noinput
+uv run python manage.py migrate --noinput
 
 # Collectstatic apenas em producao
 if [ "$DJANGO_ENV" = "production" ]; then
     echo "📦 collectstatic..."
-    python manage.py collectstatic --noinput
+    uv run python manage.py collectstatic --noinput
 fi
 
 echo "🚀 Iniciando servidor..."

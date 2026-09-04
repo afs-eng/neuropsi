@@ -1,4 +1,4 @@
-// File: /home/andre/software/neuro-system/neuro-frontend/app/dashboard/evaluations/[id]/anamnesis/[anamnesisId]/page.tsx
+// File: /home/andre/neuropsi/neuro-frontend/app/dashboard/evaluations/[id]/anamnesis/[anamnesisId]/page.tsx
 import * as entry from '../../../../../../../../app/dashboard/evaluations/[id]/anamnesis/[anamnesisId]/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

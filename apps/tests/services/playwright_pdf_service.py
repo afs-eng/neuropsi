@@ -1,4 +1,5 @@
 from pathlib import Path
+import shutil
 import tempfile
 
 from playwright.sync_api import sync_playwright
@@ -11,9 +12,23 @@ def generate_pdf_from_html(html: str) -> bytes:
     output_path = tmp / "report.pdf"
 
     with sync_playwright() as p:
+        executable_path = next(
+            (
+                path
+                for command in ("google-chrome-stable", "google-chrome", "chromium", "chromium-browser")
+                if (path := shutil.which(command))
+            ),
+            None,
+        )
+        launch_options = {
+            "headless": True,
+            "args": ["--no-sandbox", "--disable-setuid-sandbox"],
+        }
+        if executable_path:
+            launch_options["executable_path"] = executable_path
+
         browser = p.chromium.launch(
-            headless=True,
-            args=["--no-sandbox", "--disable-setuid-sandbox"],
+            **launch_options,
         )
         page = browser.new_page(
             viewport={"width": 1240, "height": 1754},

@@ -26,7 +26,7 @@ services:
       dockerfile: infra/docker/backend.Dockerfile
       target: prod
     container_name: neuro-backend-prod
-    entrypoint: ["sh", "/app/infra/docker/backend.entrypoint.sh"]
+    entrypoint: ["/app/infra/docker/backend.entrypoint.sh"]
     command: uv run gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --log-file -
     restart: always
     expose:

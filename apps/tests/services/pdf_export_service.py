@@ -9,6 +9,7 @@ from django.template import engines
 
 from apps.tests.bpa2.pdf_service import BPA2PdfService
 from apps.tests.bfp.config import FACTOR_DEFINITIONS, FACET_DEFINITIONS, SAMPLE_LABELS
+from apps.tests.bfp.interpreters import build_bfp_interpretation_payload
 from apps.tests.ebadep_a.pdf_service import EBADEPAPdfService
 from apps.tests.fdt.pdf_service import FDTPdfService
 from apps.tests.ravlt.pdf_service import RAVLTPdfService
@@ -334,6 +335,33 @@ class BFPPdfExporter(BaseTestPdfExporter):
         return groups
 
     @classmethod
+    def _factor_interpretation_items(cls, computed: dict, patient_name: str) -> list[dict]:
+        payload = build_bfp_interpretation_payload(computed, patient_name=patient_name)
+        factor_texts = payload.get("factors") or {}
+        facet_texts = payload.get("facets") or {}
+
+        items = []
+        for code in cls.FACTOR_ORDER:
+            title = FACTOR_DEFINITIONS[code]["name"]
+            fallback = cls._factor_summary(title)
+            text = cls._clean_text(factor_texts.get(code) or fallback)
+            facets = [
+                cls._clean_text(facet_texts[facet_code])
+                for facet_code in FACTOR_DEFINITIONS[code]["facets"]
+                if facet_code in facet_texts
+            ]
+            items.append(
+                {
+                    "code": code,
+                    "title": title,
+                    "text": text,
+                    "summary": cls._first_sentence(text, fallback),
+                    "facets": facets,
+                }
+            )
+        return items
+
+    @classmethod
     def build_pdf_bytes(cls, application) -> bytes:
         patient = application.evaluation.patient
         computed = application.computed_payload or {}
@@ -341,27 +369,10 @@ class BFPPdfExporter(BaseTestPdfExporter):
         facets = computed.get("facets") or {}
         sample = computed.get("sample") or (application.raw_payload or {}).get("sample") or "geral"
         sample_label = computed.get("sample_label") or SAMPLE_LABELS.get(sample, str(sample).title())
-        interpretation_paragraphs = [
-            paragraph.strip()
-            for paragraph in (application.interpretation_text or "").split("\n\n")
-            if paragraph.strip()
-        ]
-        factor_interpretations = []
-        for index, code in enumerate(cls.FACTOR_ORDER):
-            title = FACTOR_DEFINITIONS[code]["name"]
-            full_text = interpretation_paragraphs[index + 1] if len(interpretation_paragraphs) > index + 1 else ""
-            fallback = cls._factor_summary(title)
-            factor_interpretations.append(
-                {
-                    "code": code,
-                    "title": title,
-                    "text": cls._clean_text(full_text) or fallback,
-                    "summary": cls._first_sentence(full_text, fallback),
-                }
-            )
-
         responsible_professional = "Dra. Jacqueline O. Caires - CRP09/6017"
-        patient_age = str(patient.age) if patient.age is not None else "—"
+        age = getattr(patient, "age", None)
+        patient_age = str(age) if age is not None else "—"
+        factor_interpretations = cls._factor_interpretation_items(computed, patient.full_name)
 
         context = {
             "application": application,
@@ -372,8 +383,8 @@ class BFPPdfExporter(BaseTestPdfExporter):
             "patient_sex": cls._format_sex(patient.sex),
             "patient_age": patient_age,
             "patient_schooling": cls._format_schooling(patient.schooling),
-            "patient_state": patient.state or "—",
-            "patient_email": patient.email or "—",
+            "patient_state": getattr(patient, "state", None) or "—",
+            "patient_email": getattr(patient, "email", None) or "—",
             "responsible_professional": responsible_professional,
             "applied_on": application.applied_on.strftime("%d/%m/%Y") if application.applied_on else "—",
             "sample_label": sample_label,
