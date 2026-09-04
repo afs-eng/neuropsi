@@ -80,10 +80,15 @@ is_internal_db = "dpg-" in db_url_env and "-a" in db_url_env
 if db_url_env.startswith("postgres://"):
     db_url_env = db_url_env.replace("postgres://", "postgresql://", 1)
 
+database_url = db_url_env or default_database_url
+requires_ssl = database_url.startswith(("postgres://", "postgresql://")) and env_bool(
+    "DATABASE_SSL_REQUIRE", not is_internal_db
+)
+
 DATABASES["default"] = dj_database_url.parse(
-    db_url_env or default_database_url,
+    database_url,
     conn_max_age=600,
-    ssl_require=env_bool("DATABASE_SSL_REQUIRE", not is_internal_db),
+    ssl_require=requires_ssl,
 )
 
 LOGGING["root"]["level"] = os.getenv("DJANGO_LOG_LEVEL", "INFO")
