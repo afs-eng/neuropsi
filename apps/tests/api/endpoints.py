@@ -49,6 +49,11 @@ def calcAge(birth_date, reference_date=None):
     return relativedelta(base_date, birth_date).years
 
 
+def calc_age_parts(birth_date, reference_date=None) -> dict[str, int]:
+    delta = relativedelta(reference_date or date_cls.today(), birth_date)
+    return {"anos": delta.years, "meses": delta.months}
+
+
 def get_faixa_wisc(age):
     if 6 <= age <= 7:
         return "6-7 anos"
@@ -125,6 +130,66 @@ def can_edit_tests(user) -> bool:
         UserRole.NEUROPSYCHOLOGIST,
         UserRole.ASSISTANT,
     }
+
+
+WAIS3_SUBTEST_PAYLOAD_FIELDS = [
+    "vocabulario",
+    "semelhancas",
+    "aritmetica",
+    "digitos",
+    "informacao",
+    "compreensao",
+    "sequencia_numeros_letras",
+    "completar_figuras",
+    "codigos",
+    "cubos",
+    "raciocinio_matricial",
+    "arranjo_figuras",
+    "procurar_simbolos",
+    "armar_objetos",
+]
+
+
+WAIS3_PROCESS_PAYLOAD_FIELDS = [
+    "digitos_ordem_direta",
+    "digitos_ordem_inversa",
+    "maior_sequencia_digitos_direta",
+    "maior_sequencia_digitos_inversa",
+]
+
+
+def _optional_int(value, label: str) -> tuple[int | None, str | None]:
+    if value in (None, ""):
+        return None, None
+    try:
+        return int(value), None
+    except (TypeError, ValueError):
+        return None, f"{label}: informe um número inteiro válido."
+
+
+def _build_wais3_raw_scores(payload: WAIS3SubmitIn, age_parts: dict[str, int]) -> tuple[dict, list[str]]:
+    errors: list[str] = []
+    subtestes = {}
+    for field in WAIS3_SUBTEST_PAYLOAD_FIELDS:
+        value, error = _optional_int(getattr(payload, field), field)
+        if error:
+            errors.append(error)
+        elif value is not None:
+            subtestes[field] = {"pontos_brutos": value}
+
+    process_scores = {}
+    for field in WAIS3_PROCESS_PAYLOAD_FIELDS:
+        value, error = _optional_int(getattr(payload, field), field)
+        if error:
+            errors.append(error)
+        elif value is not None:
+            process_scores[field] = value
+
+    return {
+        "idade": age_parts,
+        "subtestes": subtestes,
+        "process_scores": process_scores,
+    }, errors
 
 
 def serialize_instrument(instrument):
@@ -482,6 +547,7 @@ def ebadep_a_submit(request, payload: EBADEPASubmitIn) -> tuple[int, dict]:
     from apps.tests.models.instruments import Instrument
     from apps.tests.models.applications import TestApplication
     from apps.evaluations.models import Evaluation
+    from apps.tests.base.types import TestContext
 
     if not can_edit_tests(request.auth):
         return 403, {"message": "Você não tem permissão para submeter testes."}
@@ -1103,47 +1169,38 @@ def wais3_preview(request, payload: WAIS3SubmitIn) -> tuple[int, dict]:
         return 400, {"message": "Paciente não tem data de nascimento."}
     
     reference_date = get_reference_date(evaluation, payload.applied_on)
-    age = calcAge(patient.birth_date, reference_date)
+    age_parts = calc_age_parts(patient.birth_date, reference_date)
+    age = age_parts["anos"]
     if age < 16 or age > 89:
         return 400, {"message": "WAIS-III é indicado para pacientes entre 16 e 89 anos."}
-    
-    raw_scores = {
-        "idade": {"anos": age, "meses": 0},
-        "subtestes": {
-            "vocabulario": {"pontos_brutos": int(payload.vocabulario)} if payload.vocabulario else None,
-            "semelhancas": {"pontos_brutos": int(payload.semelhancas)} if payload.semelhancas else None,
-            "aritmetica": {"pontos_brutos": int(payload.aritmetica)} if payload.aritmetica else None,
-            "digitos": {"pontos_brutos": int(payload.digitos)} if payload.digitos else None,
-            "informacao": {"pontos_brutos": int(payload.informacao)} if payload.informacao else None,
-            "compreensao": {"pontos_brutos": int(payload.compreensao)} if payload.compreensao else None,
-            "sequencia_numeros_letras": {"pontos_brutos": int(payload.sequencia_numeros_letras)} if payload.sequencia_numeros_letras else None,
-            "completar_figuras": {"pontos_brutos": int(payload.completar_figuras)} if payload.completar_figuras else None,
-            "codigos": {"pontos_brutos": int(payload.codigos)} if payload.codigos else None,
-            "cubos": {"pontos_brutos": int(payload.cubos)} if payload.cubos else None,
-            "raciocinio_matricial": {"pontos_brutos": int(payload.raciocinio_matricial)} if payload.raciocinio_matricial else None,
-            "arranjo_figuras": {"pontos_brutos": int(payload.arranjo_figuras)} if payload.arranjo_figuras else None,
-            "procurar_simbolos": {"pontos_brutos": int(payload.procurar_simbolos)} if payload.procurar_simbolos else None,
-            "armar_objetos": {"pontos_brutos": int(payload.armar_objetos)} if payload.armar_objetos else None,
-        },
-        "process_scores": {
-            "digitos_ordem_direta": int(payload.digitos_ordem_direta) if payload.digitos_ordem_direta else None,
-            "digitos_ordem_inversa": int(payload.digitos_ordem_inversa) if payload.digitos_ordem_inversa else None,
-            "maior_sequencia_digitos_direta": int(payload.maior_sequencia_digitos_direta) if payload.maior_sequencia_digitos_direta else None,
-            "maior_sequencia_digitos_inversa": int(payload.maior_sequencia_digitos_inversa) if payload.maior_sequencia_digitos_inversa else None,
-        },
-    }
-    raw_scores["subtestes"] = {k: v for k, v in raw_scores["subtestes"].items() if v is not None}
-    raw_scores["process_scores"] = {k: v for k, v in raw_scores["process_scores"].items() if v is not None}
-    
-    # Compute directly without saving
-    from apps.tests.wais3.calculators import compute_wais3_payload
+    raw_scores, input_errors = _build_wais3_raw_scores(payload, age_parts)
+    if input_errors:
+        return 400, {"message": "; ".join(input_errors)}
+
+    from apps.tests.wais3 import WAIS3Module
     from apps.tests.wais3.classifiers import classify_wais3_payload
-    
-    computed = compute_wais3_payload(raw_scores)
+
+    wais3_module = WAIS3Module()
+    errors = wais3_module.validate(TestContext(
+        patient_name=patient.full_name,
+        evaluation_id=evaluation.id,
+        instrument_code="wais3",
+        raw_scores=raw_scores,
+    ))
+    if errors:
+        return 400, {"message": "; ".join(errors)}
+
+    computed = wais3_module.compute(TestContext(
+        patient_name=patient.full_name,
+        evaluation_id=evaluation.id,
+        instrument_code="wais3",
+        raw_scores=raw_scores,
+    ))
     classified = classify_wais3_payload(computed)
     
     return 200, {
         "age": age,
+        "age_months": age_parts["meses"],
         "age_range": computed.get("idade_normativa"),
         "indices": computed.get("indices", {}),
         "subtestes": computed.get("subtestes", {}),
@@ -1178,37 +1235,14 @@ def wais3_submit(request, payload: WAIS3SubmitIn) -> tuple[int, dict]:
         return 400, {"message": "Paciente não tem data de nascimento."}
 
     reference_date = get_reference_date(evaluation, payload.applied_on)
-    age = calcAge(patient.birth_date, reference_date)
+    age_parts = calc_age_parts(patient.birth_date, reference_date)
+    age = age_parts["anos"]
     if age < 16 or age > 89:
         return 400, {"message": "WAIS-III é indicado para pacientes entre 16 e 89 anos."}
 
-    raw_scores = {
-        "idade": {"anos": age, "meses": 0},
-        "subtestes": {
-            "vocabulario": {"pontos_brutos": int(payload.vocabulario)} if payload.vocabulario else None,
-            "semelhancas": {"pontos_brutos": int(payload.semelhancas)} if payload.semelhancas else None,
-            "aritmetica": {"pontos_brutos": int(payload.aritmetica)} if payload.aritmetica else None,
-            "digitos": {"pontos_brutos": int(payload.digitos)} if payload.digitos else None,
-            "informacao": {"pontos_brutos": int(payload.informacao)} if payload.informacao else None,
-            "compreensao": {"pontos_brutos": int(payload.compreensao)} if payload.compreensao else None,
-            "sequencia_numeros_letras": {"pontos_brutos": int(payload.sequencia_numeros_letras)} if payload.sequencia_numeros_letras else None,
-            "completar_figuras": {"pontos_brutos": int(payload.completar_figuras)} if payload.completar_figuras else None,
-            "codigos": {"pontos_brutos": int(payload.codigos)} if payload.codigos else None,
-            "cubos": {"pontos_brutos": int(payload.cubos)} if payload.cubos else None,
-            "raciocinio_matricial": {"pontos_brutos": int(payload.raciocinio_matricial)} if payload.raciocinio_matricial else None,
-            "arranjo_figuras": {"pontos_brutos": int(payload.arranjo_figuras)} if payload.arranjo_figuras else None,
-            "procurar_simbolos": {"pontos_brutos": int(payload.procurar_simbolos)} if payload.procurar_simbolos else None,
-            "armar_objetos": {"pontos_brutos": int(payload.armar_objetos)} if payload.armar_objetos else None,
-        },
-        "process_scores": {
-            "digitos_ordem_direta": int(payload.digitos_ordem_direta) if payload.digitos_ordem_direta else None,
-            "digitos_ordem_inversa": int(payload.digitos_ordem_inversa) if payload.digitos_ordem_inversa else None,
-            "maior_sequencia_digitos_direta": int(payload.maior_sequencia_digitos_direta) if payload.maior_sequencia_digitos_direta else None,
-            "maior_sequencia_digitos_inversa": int(payload.maior_sequencia_digitos_inversa) if payload.maior_sequencia_digitos_inversa else None,
-        },
-    }
-    raw_scores["subtestes"] = {k: v for k, v in raw_scores["subtestes"].items() if v is not None}
-    raw_scores["process_scores"] = {k: v for k, v in raw_scores["process_scores"].items() if v is not None}
+    raw_scores, input_errors = _build_wais3_raw_scores(payload, age_parts)
+    if input_errors:
+        return 400, {"message": "; ".join(input_errors)}
 
     ctx = TestContext(
         patient_name=patient.full_name,

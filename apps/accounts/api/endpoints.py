@@ -3,7 +3,6 @@ from django.contrib.auth import authenticate
 from django.conf import settings
 import logging
 from django.contrib.auth.tokens import default_token_generator
-from django.core import signing
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
@@ -23,10 +22,6 @@ from apps.accounts.services import (
     update_user,
     issue_api_token,
     regenerate_api_token,
-    generate_two_factor_secret,
-    build_two_factor_uri,
-    confirm_two_factor_setup,
-    verify_two_factor_login,
 )
 
 from .schemas import (
@@ -42,31 +37,11 @@ from .schemas import (
     ResetPasswordConfirmIn,
     RegisterIn,
     RegisterOut,
-    TwoFactorVerifyIn,
 )
 
 
 router = Router(tags=["accounts"])
 logger = logging.getLogger(__name__)
-
-
-def _make_2fa_challenge(user, mode: str) -> str:
-    return signing.dumps(
-        {"user_id": user.id, "mode": mode},
-        salt="neuroavalia-2fa-login",
-    )
-
-
-def _read_2fa_challenge(token: str) -> dict | None:
-    try:
-        data = signing.loads(
-            token,
-            salt="neuroavalia-2fa-login",
-            max_age=600,
-        )
-    except signing.BadSignature:
-        return None
-    return data if isinstance(data, dict) else None
 
 
 @router.post("/login", response={200: LoginOut, 429: MessageOut})
@@ -98,64 +73,6 @@ def login(request, payload: LoginIn):
                 request, "login_blocked", "account", resource_id=str(user.id)
             )
             raise HttpError(403, "Usuário inativo")
-        if not user.two_factor_enabled or not user.two_factor_secret:
-            if not user.two_factor_secret:
-                user.two_factor_secret = generate_two_factor_secret()
-                user.save(update_fields=["two_factor_secret"])
-
-            challenge_token = _make_2fa_challenge(user, "setup")
-            return {
-                "two_factor_required": True,
-                "two_factor_setup_required": True,
-                "challenge_token": challenge_token,
-                "otpauth_url": build_two_factor_uri(user, user.two_factor_secret),
-                "secret": user.two_factor_secret,
-                "backup_codes": [],
-            }
-
-        challenge_token = _make_2fa_challenge(user, "verify")
-        AuditService.log(
-            request, "login_2fa_required", "account", resource_id=str(user.id)
-        )
-        return {
-            "two_factor_required": True,
-            "two_factor_setup_required": False,
-            "challenge_token": challenge_token,
-        }
-
-    except Exception as e:
-        logger.exception("Erro crítico no login")
-        raise e
-
-
-@router.post(
-    "/login/2fa",
-    response={200: LoginOut, 400: MessageOut, 401: MessageOut, 429: MessageOut},
-)
-def login_two_factor(request, payload: TwoFactorVerifyIn):
-    rate_limit(request, "accounts-login-2fa", limit=10, window_seconds=900)
-
-    challenge = _read_2fa_challenge(payload.challenge_token)
-    if not challenge:
-        return 401, {"message": "Desafio de autenticação inválido ou expirado."}
-
-    from django.contrib.auth import get_user_model
-
-    User = get_user_model()
-    user = User.objects.filter(id=challenge.get("user_id"), is_active=True).first()
-    if not user:
-        return 401, {"message": "Usuário inválido."}
-
-    if challenge.get("mode") == "setup":
-        ok, backup_codes = confirm_two_factor_setup(
-            user, user.two_factor_secret, payload.code
-        )
-        if not ok:
-            AuditService.log(
-                request, "login_2fa_failed", "account", resource_id=str(user.id)
-            )
-            return 401, {"message": "Código 2FA inválido."}
-
         access = issue_api_token(user)
         AuditService.log(request, "login", "account", resource_id=str(user.id))
         return {
@@ -171,31 +88,11 @@ def login_two_factor(request, payload: TwoFactorVerifyIn):
                 "specialty": user.specialty,
                 "two_factor_enabled": user.two_factor_enabled,
             },
-            "backup_codes": backup_codes,
         }
 
-    if not verify_two_factor_login(user, payload.code):
-        AuditService.log(
-            request, "login_2fa_failed", "account", resource_id=str(user.id)
-        )
-        return 401, {"message": "Código 2FA inválido."}
-
-    access = issue_api_token(user)
-    AuditService.log(request, "login", "account", resource_id=str(user.id))
-    return {
-        "access": access,
-        "user": {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "full_name": user.full_name or user.get_full_name() or user.username,
-            "display_name": user.display_name,
-            "role": user.role,
-            "sex": user.sex,
-            "specialty": user.specialty,
-            "two_factor_enabled": user.two_factor_enabled,
-        },
-    }
+    except Exception as e:
+        logger.exception("Erro crítico no login")
+        raise e
 
 
 @router.post(
