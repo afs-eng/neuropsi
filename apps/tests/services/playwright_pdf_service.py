@@ -1,8 +1,13 @@
 from pathlib import Path
+import os
 import shutil
 import tempfile
 
 from playwright.sync_api import sync_playwright
+
+
+if os.getenv("RENDER") and not os.getenv("PLAYWRIGHT_BROWSERS_PATH"):
+    os.environ["PLAYWRIGHT_BROWSERS_PATH"] = "/opt/render/project/src/.playwright-browsers"
 
 
 def generate_pdf_from_html(html: str) -> bytes:
