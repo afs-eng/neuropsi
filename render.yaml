@@ -4,7 +4,7 @@ services:
     env: python
     plan: free
     rootDir: .
-    buildCommand: pip install -r requirements.txt && python -m playwright install chromium && python manage.py collectstatic --noinput
+    buildCommand: pip install -r requirements.txt && PLAYWRIGHT_BROWSERS_PATH=0 python -m playwright install chromium && python manage.py collectstatic --noinput
     preDeployCommand: python manage.py migrate
     startCommand: python manage.py migrate && gunicorn config.wsgi:application --log-file -
     healthCheckPath: /healthz/
@@ -22,15 +22,17 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: ALLOWED_HOSTS
-        value: neuro-k06p.onrender.com
+        value: neuropsi-ddag.onrender.com
       - key: CSRF_TRUSTED_ORIGINS
-        value: https://neuro-k06p.onrender.com,https://neuro-7rqkwf1xv-andrefsilvas-projects.vercel.app
+        value: https://neuropsi-ddag.onrender.com,https://neuropsi-eta.vercel.app
       - key: CORS_ALLOWED_ORIGINS
-        value: https://neuro-7rqkwf1xv-andrefsilvas-projects.vercel.app
+        value: https://neuropsi-eta.vercel.app
       - key: FRONTEND_BASE_URL
-        value: https://neuro-7rqkwf1xv-andrefsilvas-projects.vercel.app
+        value: https://neuropsi-eta.vercel.app
       - key: BACKEND_PUBLIC_URL
-        value: https://neuro-k06p.onrender.com
+        value: https://neuropsi-ddag.onrender.com
+      - key: PLAYWRIGHT_BROWSERS_PATH
+        value: "0"
       - key: ALLOW_VERCEL_PREVIEWS
         value: "True"
       - key: AI_PROVIDER
@@ -40,7 +42,7 @@ services:
       - key: OPENAI_BASE_URL
         value: https://openrouter.ai/api/v1
       - key: OPENAI_REFERER
-        value: https://neuro-7rqkwf1xv-andrefsilvas-projects.vercel.app
+        value: https://neuropsi-eta.vercel.app
       - key: OPENAI_TITLE
         value: NeuroAvalia
       - key: OPENAI_MODEL_TEXT
