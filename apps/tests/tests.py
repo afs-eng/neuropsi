@@ -1104,7 +1104,7 @@ class WAIS3PdfServiceTests(SimpleTestCase):
 
         clinical_pages = re.findall(r'<section class="page clinical-page">.*?</section>', rendered, flags=re.S)
 
-        self.assertGreater(len(clinical_pages), 1)
+        self.assertEqual(len(clinical_pages), 1)
         self.assertTrue(all('<header class="page-header">' in page for page in clinical_pages))
         self.assertIn(f"Página {3 + len(clinical_pages)} de {3 + len(clinical_pages)}", clinical_pages[-1])
 
@@ -1150,8 +1150,8 @@ class WAIS3PdfServiceTests(SimpleTestCase):
         self.assertIn("No perfil de Camila", text)
         self.assertIn("Raciocínio Fluido (Gf), com diferença interna de 5 pontos ponderados", text)
         self.assertIn("a leitura deve retornar aos subtestes", text)
-        self.assertIn("Esses achados devem ser integrados ao padrão intraindividual", text)
-        self.assertIn("O WAIS-III não deve ser utilizado isoladamente para fechamento diagnóstico", text)
+        self.assertIn("Os achados devem ser integrados à anamnese", text)
+        self.assertIn("sem uso isolado para fechamento diagnóstico", text)
         self.assertLess(len(text), 8000)
         self.assertNotIn("WISC-IV", text)
         self.assertNotIn("confirma diagnóstico", text)

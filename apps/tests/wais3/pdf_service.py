@@ -684,7 +684,7 @@ class WAIS3PdfService:
         )
         blocks.append(
             '    <div class="summary-title">Pontos de Atenção Clínica</div>\n'
-            '    <div class="note-box">O WAIS-III não deve ser utilizado isoladamente para estabelecimento de hipótese diagnóstica. Quando houver queixas de lentificação, desatenção, baixa produtividade, fadiga cognitiva ou dificuldade em tarefas cronometradas, recomenda-se integrar estes achados com medidas específicas de atenção, funções executivas, memória, humor, comportamento adaptativo e histórico funcional.</div>'
+            '    <div class="note-box">O WAIS-III não deve ser utilizado isoladamente para hipótese diagnóstica. Seus achados devem ser integrados à anamnese, observação clínica, funcionalidade, atenção, funções executivas, memória e aspectos emocionais.</div>'
         )
         return blocks
 
@@ -693,7 +693,7 @@ class WAIS3PdfService:
         pages = []
         current = []
         current_size = 0
-        page_limit = 3600
+        page_limit = 4500
         for block in blocks:
             block_size = len(re.sub(r"<[^>]+>", "", block)) + 180
             if current and current_size + block_size > page_limit:

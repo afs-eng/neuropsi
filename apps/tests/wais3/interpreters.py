@@ -178,6 +178,19 @@ def _metric_text(item: dict) -> str:
     return ", ".join(parts)
 
 
+def _metric_short(item: dict) -> str:
+    value = item.get("pontuacao_composta")
+    percentile = item.get("percentil")
+    interval = item.get("ic_95") or item.get("ic_90")
+    parts = [f"{value}" if value is not None else "não informado"]
+    parts.append(str(_classification_lower(item)))
+    if percentile is not None:
+        parts.append(f"P{percentile}")
+    if interval:
+        parts.append(f"IC {interval}")
+    return ", ".join(parts)
+
+
 def _performance_descriptor(classification: str) -> str:
     normalized = classification.lower()
     if "muito superior" in normalized:
@@ -517,14 +530,14 @@ def build_wais3_interpretation(merged_data: dict, patient_name: str) -> str:
     highest_index, lowest_index = _top_bottom_indices(indices)
     high_subtests, low_subtests = _relevant_subtests(subtestes)
 
-    if heterogeneous:
-        global_text = (
-            f"No WAIS-III, {first_name} apresentou QI Total de {qit.get('pontuacao_composta')}, classificado como {_classification_lower(qit)} ({_metric_text(qit)}). Como o perfil apresentou heterogeneidade/discrepâncias relevantes, a leitura dos índices fatoriais e subtestes é clinicamente mais informativa do que a interpretação isolada do QIT."
-        )
-    else:
-        global_text = (
-            f"No WAIS-III, {first_name} apresentou QI Total de {qit.get('pontuacao_composta')}, classificado como {_classification_lower(qit)} ({_metric_text(qit)}), sugerindo eficiência intelectual global {_performance_descriptor(_classification(qit))} para a faixa etária."
-        )
+    profile_note = (
+        "perfil heterogêneo, exigindo maior peso interpretativo aos índices fatoriais e subtestes"
+        if heterogeneous
+        else f"perfil relativamente homogêneo, compatível com funcionamento intelectual {_performance_descriptor(_classification(qit))}"
+    )
+    global_text = (
+        f"No WAIS-III, {first_name} apresentou QI Total de {qit.get('pontuacao_composta')}, classificado como {_classification_lower(qit)} ({_metric_short(qit)}), com {profile_note}."
+    )
 
     if qiv_qie_difference is None:
         qiv_qie_text = "A comparação entre QI Verbal e QI de Execução não pôde ser detalhada por ausência de um dos valores compostos necessários."
@@ -532,11 +545,11 @@ def build_wais3_interpretation(merged_data: dict, patient_name: str) -> str:
         qiv_qie_text = "A comparação entre QI Verbal e QI de Execução sugere equilíbrio entre habilidades verbais e não verbais, sem diferença observada entre os pontos compostos registrados."
     elif qiv_score > qie_score:
         qiv_qie_text = (
-            f"O QI Verbal ficou em {_classification_lower(qiv)} ({_metric_text(qiv)}) e o QI de Execução em {_classification_lower(qie)} ({_metric_text(qie)}). A diferença de {qiv_qie_difference} pontos favorece o desempenho verbal, indicando maior eficiência relativa em tarefas mediadas pela linguagem."
+            f"QIV={_metric_short(qiv)} e QIE={_metric_short(qie)}; diferença de {qiv_qie_difference} pontos favorece o desempenho verbal."
         )
     else:
         qiv_qie_text = (
-            f"O QI Verbal ficou em {_classification_lower(qiv)} ({_metric_text(qiv)}) e o QI de Execução em {_classification_lower(qie)} ({_metric_text(qie)}). A diferença de {qiv_qie_difference} pontos favorece o desempenho não verbal."
+            f"QIV={_metric_short(qiv)} e QIE={_metric_short(qie)}; diferença de {qiv_qie_difference} pontos favorece o desempenho não verbal."
         )
 
     index_texts = []
@@ -545,9 +558,9 @@ def build_wais3_interpretation(merged_data: dict, patient_name: str) -> str:
         if item.get("pontuacao_composta") is None:
             continue
         index_texts.append(
-            f"{item.get('nome') or key.replace('_', ' ').title()}: {_classification_lower(item)} ({_metric_text(item)})."
+            f"{INDEX_SHORT_LABELS.get(key)}={_metric_short(item)}"
         )
-    index_analysis = "Índices fatoriais: " + " ".join(index_texts) if index_texts else "A análise dos índices fatoriais ficou limitada pela ausência de pontos compostos suficientes."
+    index_analysis = "Índices fatoriais: " + "; ".join(index_texts) + "." if index_texts else "A análise dos índices fatoriais ficou limitada pela ausência de pontos compostos suficientes."
 
     if highest_index and lowest_index and highest_index[0] != lowest_index[0] and highest_index[2] != lowest_index[2]:
         contrast = (
@@ -559,8 +572,7 @@ def build_wais3_interpretation(merged_data: dict, patient_name: str) -> str:
     subtest_analysis = (
         f"Subtestes com maior rendimento relativo: {_subtest_phrase(high_subtests)}. "
         f"Menor rendimento relativo: {_subtest_phrase(low_subtests)}. "
-        f"{_processing_speed_subtest_text(subtestes)} "
-        "Esses achados devem ser integrados ao padrão intraindividual e às observações da aplicação."
+        f"{_processing_speed_subtest_text(subtestes)}"
     )
 
     discrepancy_analysis = _discrepancy_text(discrepancias, indices, first_name)
@@ -577,28 +589,21 @@ def build_wais3_interpretation(merged_data: dict, patient_name: str) -> str:
         )
     optional_text = " ".join(optional_indexes)
 
-    synthesis_parts = [
-        f"Em síntese, {first_name} apresentou funcionamento intelectual global na faixa {_classification_lower(qit)}, com perfil {'heterogêneo' if heterogeneous else 'relativamente homogêneo'} entre os domínios avaliados.",
-    ]
+    synthesis_parts = [f"Em síntese, {first_name} apresentou funcionamento intelectual global na faixa {_classification_lower(qit)}."]
     if highest_index and lowest_index and highest_index[0] != lowest_index[0] and highest_index[2] != lowest_index[2]:
         synthesis_parts.append(
             f"Os resultados sugerem maior eficiência relativa em {highest_index[1].get('nome')} e menor rendimento relativo em {lowest_index[1].get('nome')}."
         )
     synthesis_parts.append(
-        "O WAIS-III não deve ser utilizado isoladamente para fechamento diagnóstico; seus achados devem ser integrados à anamnese, observação clínica, funcionamento adaptativo e demais instrumentos da avaliação."
+        "Os achados devem ser integrados à anamnese, observação clínica, funcionamento adaptativo e demais instrumentos, sem uso isolado para fechamento diagnóstico."
     )
     synthesis = " ".join(synthesis_parts)
 
     sections = [
         "WAIS-III – Escala de Inteligência Wechsler para Adultos",
         "Análise dos Resultados Psicométricos",
-        global_text,
-        qiv_qie_text,
-        index_analysis + " " + contrast,
-        subtest_analysis,
-        discrepancy_analysis,
-        facilities_analysis,
-        profile_patterns,
+        f"{global_text} {qiv_qie_text} {index_analysis} {contrast}",
+        f"{subtest_analysis} {discrepancy_analysis} {facilities_analysis} {profile_patterns}".strip(),
     ]
     if optional_text:
         sections.append(optional_text)
