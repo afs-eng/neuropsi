@@ -19,79 +19,55 @@ class WAIS3StandardizationService:
 
     DOMAIN_INTROS = {
         "funcoes_executivas": (
-            "Interpretação e Observações Clínicas: A avaliação das funções executivas de {patient} foi realizada "
-            "por meio dos subtestes Semelhanças, Compreensão e Raciocínio Matricial "
-            "da Escala Wechsler de Inteligência para Adultos – Terceira Edição (WAIS-III). "
-            "Esses subtestes permitem examinar habilidades de raciocínio abstrato, categorização "
-            "conceitual, julgamento prático e resolução de problemas, domínios diretamente "
-            "relacionados ao controle inibitório, flexibilidade cognitiva e planejamento."
+            "Interpretação e Observações Clínicas: No WAIS-III, os subtestes Semelhanças, "
+            "Compreensão e Raciocínio Matricial foram considerados para análise sintética das "
+            "funções executivas de {patient}."
         ),
         "linguagem": (
-            "Interpretação e Observações Clínicas: A avaliação da linguagem de {patient} "
-            "foi realizada por meio dos subtestes Semelhanças, Vocabulário e Compreensão "
-            "da Escala Wechsler de Inteligência para Adultos – Terceira Edição (WAIS-III). "
-            "Esses instrumentos permitem examinar habilidades de conceituação verbal, "
-            "conhecimento lexical, formulação linguística, julgamento social e compreensão "
-            "de normas."
+            "Interpretação e Observações Clínicas: No WAIS-III, os subtestes Semelhanças, "
+            "Vocabulário e Compreensão foram considerados para análise sintética da linguagem "
+            "de {patient}."
         ),
         "gnosias_praxias": (
-            "Interpretação e Observações Clínicas: A avaliação das habilidades visuoperceptivas e construtivas de "
-            "{patient} foi realizada por meio dos subtestes Raciocínio Matricial e Cubos "
-            "da Escala Wechsler de Inteligência para Adultos – Terceira Edição (WAIS-III). "
-            "Esses subtestes investigam processos de percepção visual, integração "
-            "visomotora, análise de padrões e organização espacial."
+            "Interpretação e Observações Clínicas: No WAIS-III, os subtestes Raciocínio "
+            "Matricial e Cubos foram considerados para análise sintética das habilidades "
+            "visuoperceptivas e construtivas de {patient}."
         ),
         "memoria_aprendizagem": (
-            "Interpretação e Observações Clínicas: A avaliação da memória e aprendizagem de {patient} foi "
-            "realizada por meio dos subtestes Sequência de Números e Letras e Dígitos "
-            "da Escala Wechsler de Inteligência para Adultos – Terceira Edição (WAIS-III). "
-            "Esses instrumentos examinam processos de memória operacional auditiva, atenção "
-            "sustentada, manipulação de informações e capacidade de atualização cognitiva."
+            "Interpretação e Observações Clínicas: No WAIS-III, os subtestes Sequência de "
+            "Números e Letras e Dígitos foram considerados para análise sintética da memória "
+            "operacional e aprendizagem de {patient}."
         ),
     }
 
     SUBTEST_SENTENCE_BUILDERS = {
         "semelhancas": lambda item: (
-            "No subteste Semelhanças, o desempenho "
-            f"situou-se na faixa {WAIS3StandardizationService._classification(item)}, "
-            "sugerindo "
-            f"{WAIS3StandardizationService._level_phrase(item, 'abstração verbal, formação de conceitos e estabelecimento de relações semânticas')}"
+            f"Semelhanças: {WAIS3StandardizationService._score_label(item)}, "
+            f"{WAIS3StandardizationService._level_phrase(item, 'abstração verbal e formação de conceitos')}"
         ),
         "compreensao": lambda item: (
-            "No subteste Compreensão, o desempenho "
-            f"situou-se na faixa {WAIS3StandardizationService._classification(item)}, "
-            "sugerindo "
-            f"{WAIS3StandardizationService._level_phrase(item, 'julgamento prático, entendimento de normas sociais e resolução de situações do cotidiano')}"
+            f"Compreensão: {WAIS3StandardizationService._score_label(item)}, "
+            f"{WAIS3StandardizationService._level_phrase(item, 'julgamento prático e compreensão de normas')}"
         ),
         "raciocinio_matricial": lambda item: (
-            "No subteste Raciocínio Matricial, o desempenho "
-            f"situou-se na faixa {WAIS3StandardizationService._classification(item)}, "
-            "indicando "
-            f"{WAIS3StandardizationService._level_phrase(item, 'raciocínio lógico-abstrato não verbal, identificação de padrões, relações visuoespaciais e inferência visual')}"
+            f"Raciocínio Matricial: {WAIS3StandardizationService._score_label(item)}, "
+            f"{WAIS3StandardizationService._level_phrase(item, 'raciocínio lógico-abstrato não verbal')}"
         ),
         "vocabulario": lambda item: (
-            "No subteste Vocabulário, o desempenho "
-            f"situou-se na faixa {WAIS3StandardizationService._classification(item)}, "
-            "sugerindo "
-            f"{WAIS3StandardizationService._level_phrase(item, 'repertório lexical expressivo, precisão conceitual e definição verbal de palavras')}"
+            f"Vocabulário: {WAIS3StandardizationService._score_label(item)}, "
+            f"{WAIS3StandardizationService._level_phrase(item, 'repertório lexical e precisão conceitual')}"
         ),
         "cubos": lambda item: (
-            "No subteste Cubos, o desempenho "
-            f"situou-se na faixa {WAIS3StandardizationService._classification(item)}, "
-            "indicando "
-            f"{WAIS3StandardizationService._level_phrase(item, 'praxias construtivas, organização visomotora, planejamento da ação e integração espacial')}"
+            f"Cubos: {WAIS3StandardizationService._score_label(item)}, "
+            f"{WAIS3StandardizationService._level_phrase(item, 'organização visuoespacial e integração visomotora')}"
         ),
         "sequencia_numeros_letras": lambda item: (
-            "No subteste Sequência de Números e Letras, o resultado "
-            f"situou-se na faixa {WAIS3StandardizationService._classification(item)}, "
-            "sugerindo "
-            f"{WAIS3StandardizationService._level_phrase(item, 'capacidade de reter, reorganizar e manipular informações auditivas em curto prazo')}"
+            f"Sequência de Números e Letras: {WAIS3StandardizationService._score_label(item)}, "
+            f"{WAIS3StandardizationService._level_phrase(item, 'retenção e reorganização mental de informações auditivas')}"
         ),
         "digitos": lambda item: (
-            "No subteste Dígitos, o desempenho "
-            f"situou-se na faixa {WAIS3StandardizationService._classification(item)}, "
-            "indicando "
-            f"{WAIS3StandardizationService._level_phrase(item, 'atenção auditiva imediata, manutenção sequencial de informações verbais e sustentação atencional')}"
+            f"Dígitos: {WAIS3StandardizationService._score_label(item)}, "
+            f"{WAIS3StandardizationService._level_phrase(item, 'atenção auditiva imediata e memória sequencial')}"
         ),
     }
 
@@ -177,38 +153,36 @@ class WAIS3StandardizationService:
             )
         
         intro = (
-            f"Capacidade Cognitiva Global: {cls._patient_label(context)} obteve, a partir da Escala Wechsler de "
-            f"Inteligência para Adultos – Terceira Edição (WAIS-III), "
-            f"Quociente de Inteligência Total (QIT = {qit_score}), classificado como {qit.get('classificacao', 'não informada')}. "
+            f"Capacidade Cognitiva Global: {cls._patient_label(context)} obteve QIT = {qit_score} "
+            f"no WAIS-III, classificado como {qit.get('classificacao', 'não informada')}. "
+            "A interpretação deve priorizar o perfil dos índices fatoriais quando houver heterogeneidade."
         )
-        
-        intro += "Em relação aos índices fatoriais, apresentou os seguintes resultados:"
         
         rows = []
         definitions = [
-            ("Compreensão Verbal (ICV)", icv, "Conhecimento verbal e raciocínio verbal"),
-            ("Organização Perceptual (IOP)", iop, "Raciocínio visual e integração espacial"),
-            ("Memória Operacional (IMO)", imo, "Atenção e manipulação mental"),
-            ("Velocidade de Processamento (IVP)", ivp, "Rapidez e eficiência visuomotora"),
-            ("QI Verbal (QIV)", qiv, "Recursos verbais, compreensão e expressão"),
-            ("QI de Execução (QIE)", qie, "Raciocínio não verbal e solução de problemas"),
+            ("ICV", icv),
+            ("IOP", iop),
+            ("IMO", imo),
+            ("IVP", ivp),
+            ("QIV", qiv),
+            ("QIE", qie),
         ]
         
         if gai.get("pontuacao_composta"):
-            definitions.append(("Habilidade Geral (GAI)", gai, "Índice geral sem memória e velocidade"))
+            definitions.append(("GAI", gai))
         
-        for label, item, _ in definitions:
+        for label, item in definitions:
             score = item.get("pontuacao_composta")
             classification = item.get("classificacao")
             if score is not None:
-                rows.append(f"- {label}: {score} — {classification or 'não classificado'}")
+                rows.append(f"{label} = {score} ({classification or 'não classificado'})")
         
         closing = (
             f"Os resultados indicam funcionamento intelectual global situado na faixa {qit.get('classificacao', 'não definida')}, "
             "com análise detalhada dos domínios cognitivo-comportamentais apresentada nas seções seguintes."
         )
         
-        parts = [intro] + rows + [closing]
+        parts = [intro, "Índices: " + "; ".join(rows) + "." if rows else "", closing]
         return "\n\n".join(parts)
 
     @classmethod
@@ -262,8 +236,18 @@ class WAIS3StandardizationService:
                 "Os achados de memória operacional devem ser analisados em conjunto com o desempenho obtido no RAVLT, especialmente quanto à curva de aprendizagem, evocação tardia e reconhecimento."
             )
 
-        parts = [intro] + sentences + extras + [closing]
+        detail = "; ".join(sentences) + "." if sentences else "Dados dos subtestes não disponíveis para análise."
+        parts = [intro, detail] + extras + [closing]
         return "\n\n".join(parts)
+
+    @classmethod
+    def _score_label(cls, item: dict) -> str:
+        score = item.get("escore_ponderado")
+        if score is None:
+            score = item.get("pontuacao_composta")
+        if score is None:
+            return f"faixa {cls._classification(item)}"
+        return f"PP={score}, faixa {cls._classification(item)}"
 
     @staticmethod
     def _has_test(context: dict, instrument_code: str) -> bool:

@@ -3208,11 +3208,7 @@ class ReportExportService:
             )
             anchor = cls._insert_interpretation_block_after(
                 anchor,
-                cls._normalize_interpretation_text(
-                    section_or_test_interpretation(
-                        "eficiencia_intelectual", None, tests.get("wais3")
-                    )
-                ),
+                cls._wais3_compact_interpretation_text(tests.get("wais3"), context),
             )
         elif tests.get("wasi"):
             add_text(cls._wasi_intro_text(tests.get("wasi"), context))
@@ -4526,16 +4522,16 @@ class ReportExportService:
         indices = payload.get("indices") or {}
         gai_item = cls._wais3_gai_item(payload)
         definitions = [
-            ("Compreensão Verbal (ICV)", indices.get("compreensao_verbal"), "Avaliou o conhecimento verbal adquirido, o raciocínio verbal, a formação de conceitos e a compreensão verbal."),
-            ("Organização Perceptual (IOP)", indices.get("organizacao_perceptual"), "Avaliou o raciocínio não verbal, a organização perceptual, a análise visuoespacial e a solução de problemas com estímulos visuais."),
-            ("Memória Operacional (IMO)", indices.get("memoria_operacional"), "Avaliou atenção, concentração, memória operacional e manipulação mental de informações."),
-            ("Velocidade de Processamento (IVP)", indices.get("velocidade_processamento"), "Avaliou rapidez, precisão, eficiência visuomotora e velocidade em tarefas simples e automatizadas."),
-            ("Quociente Intelectual Verbal (QIV)", indices.get("qi_verbal"), "Avaliou recursos verbais globais, compreensão, expressão verbal e raciocínio mediado pela linguagem."),
-            ("Quociente de Execução (QIE)", indices.get("qi_execucao"), "Avaliou raciocínio não verbal, organização visuoespacial, atenção a detalhes e solução prática de problemas."),
-            ("Índice de Habilidade Geral (GAI)", gai_item, "Estimou habilidades intelectuais gerais com menor influência da memória operacional e da velocidade de processamento."),
+            ("Compreensão Verbal (ICV)", indices.get("compreensao_verbal")),
+            ("Organização Perceptual (IOP)", indices.get("organizacao_perceptual")),
+            ("Memória Operacional (IMO)", indices.get("memoria_operacional")),
+            ("Velocidade de Processamento (IVP)", indices.get("velocidade_processamento")),
+            ("Quociente Intelectual Verbal (QIV)", indices.get("qi_verbal")),
+            ("Quociente de Execução (QIE)", indices.get("qi_execucao")),
+            ("Índice de Habilidade Geral (GAI)", gai_item),
         ]
         rows: list[tuple[str, str]] = []
-        for label, item, description in definitions:
+        for label, item in definitions:
             item = item or {}
             score = item.get("pontuacao_composta")
             classification = item.get("classificacao")
@@ -4543,8 +4539,69 @@ class ReportExportService:
                 lead = f"{label} — não calculado"
             else:
                 lead = f"{label} — {score if score is not None else 'não informado'} — {classification or 'não informada'}"
-            rows.append((lead, description))
+            rows.append((lead, ""))
         return rows
+
+    @classmethod
+    def _wais3_compact_interpretation_text(cls, test: dict | None, context: dict) -> str:
+        payload = cls._wais3_payload(test)
+        indices = payload.get("indices") or {}
+        qit = indices.get("qi_total") or {}
+        qiv = indices.get("qi_verbal") or {}
+        qie = indices.get("qi_execucao") or {}
+        patient = cls._patient_reference_name(context or {})
+        qit_score = qit.get("pontuacao_composta")
+        if qit_score is None:
+            return ""
+
+        def fmt(label: str, item: dict) -> str:
+            score = item.get("pontuacao_composta")
+            classification = item.get("classificacao") or "não informada"
+            percentile = item.get("percentil")
+            ic = item.get("ic_95") or item.get("ic_90")
+            details = [f"valor {score}", f"classificação {str(classification).lower()}"]
+            if percentile is not None:
+                details.append(f"percentil {cls._num(percentile)}")
+            if ic:
+                details.append(f"IC {ic}")
+            return f"{label}: {', '.join(details)}"
+
+        paragraphs = [
+            f"Interpretação: No WAIS-III, {patient} apresentou QI Total de {qit_score}, classificado como {str(qit.get('classificacao') or 'não informado').lower()}. O resultado deve ser interpretado em conjunto com os índices fatoriais, subtestes, observação clínica e demais instrumentos da avaliação.",
+        ]
+
+        if qiv.get("pontuacao_composta") is not None and qie.get("pontuacao_composta") is not None:
+            diff = abs(qiv.get("pontuacao_composta") - qie.get("pontuacao_composta"))
+            direction = "verbal" if qiv.get("pontuacao_composta") >= qie.get("pontuacao_composta") else "de execução"
+            paragraphs.append(
+                f"O QI Verbal ficou em {str(qiv.get('classificacao') or 'não informado').lower()} ({fmt('QIV', qiv)}) e o QI de Execução em {str(qie.get('classificacao') or 'não informado').lower()} ({fmt('QIE', qie)}). A diferença de {diff} ponto(s) favorece o desempenho {direction}."
+            )
+
+        factor_items = [
+            ("ICV", indices.get("compreensao_verbal") or {}),
+            ("IOP", indices.get("organizacao_perceptual") or {}),
+            ("IMO", indices.get("memoria_operacional") or {}),
+            ("IVP", indices.get("velocidade_processamento") or {}),
+        ]
+        factor_texts = [fmt(label, item) for label, item in factor_items if item.get("pontuacao_composta") is not None]
+        if factor_texts:
+            valid = [item for _, item in factor_items if item.get("pontuacao_composta") is not None]
+            highest = max(valid, key=lambda item: item.get("pontuacao_composta"))
+            lowest = min(valid, key=lambda item: item.get("pontuacao_composta"))
+            paragraphs.append(
+                "Índices fatoriais: "
+                + "; ".join(factor_texts)
+                + f". No contraste intraindividual, o maior índice foi {highest.get('nome') or 'o índice de maior pontuação'} ({highest.get('pontuacao_composta')}) e o menor foi {lowest.get('nome') or 'o índice de menor pontuação'} ({lowest.get('pontuacao_composta')})."
+            )
+
+        gai_item = cls._wais3_gai_item(payload)
+        if gai_item.get("pontuacao_composta") is not None:
+            paragraphs.append(f"GAI: {fmt('GAI', gai_item)}.")
+
+        paragraphs.append(
+            f"Em síntese, {patient} apresentou funcionamento intelectual global na faixa {str(qit.get('classificacao') or 'não informada').lower()}, com perfil que deve ser integrado à anamnese, funcionalidade cotidiana e hipóteses clínicas em investigação. O WAIS-III não deve ser utilizado isoladamente para fechamento diagnóstico."
+        )
+        return "\n\n".join(paragraphs)
 
     @classmethod
     def _wais3_indices_rows(cls, test: dict | None):

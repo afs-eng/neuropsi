@@ -1374,7 +1374,7 @@ class ReportExportChartSanitizationTests(SimpleTestCase):
 
         desempenho_index = texts.index("Desempenho do paciente no WAIS III")
         interpretacao_index = next(
-            i for i, text in enumerate(texts) if "Interpretação global do WAIS3." in text
+            i for i, text in enumerate(texts) if text.startswith("Interpretação: No WAIS-III")
         )
         subescalas_index = texts.index("Subescalas WAIS III")
 
