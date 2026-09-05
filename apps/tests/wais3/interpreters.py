@@ -240,10 +240,9 @@ def _relevant_subtests(subtestes: dict) -> tuple[list[tuple[str, dict, float]], 
 
 def _subtest_phrase(rows: list[tuple[str, dict, float]]) -> str:
     parts = []
-    for key, item, value in rows:
+    for key, item, value in rows[:2]:
         name = item.get("nome") or key.replace("_", " ").title()
-        construct = SUBTEST_CONSTRUCTS.get(key, "processos cognitivos específicos")
-        parts.append(f"{name} (PP={int(value)}, {_classification_lower(item)}; {construct})")
+        parts.append(f"{name} (PP={int(value)}, {_classification_lower(item)})")
     return "; ".join(parts) if parts else "não foram identificados subtestes com destaque suficiente para análise isolada"
 
 
@@ -308,18 +307,17 @@ def _discrepancy_text(discrepancias: list, indices: dict, first_name: str) -> st
             "Não foram registradas discrepâncias clinicamente relevantes entre os principais quocientes ou índices."
         )
     pairs = sorted(_flatten_discrepancies(discrepancias), key=lambda pair: pair.get("diferenca") or 0, reverse=True)
-    described = " ".join(_directional_discrepancy_text(pair, indices) for pair in pairs[:2]) or "diferenças entre índices."
+    described = _directional_discrepancy_text(pairs[0], indices) if pairs else "diferenças entre índices."
     return (
-        f"Foram observadas discrepâncias clinicamente relevantes no perfil de {first_name}. {described} "
-        "Esse padrão recomenda cautela na leitura isolada do QI Total."
+        f"Discrepâncias relevantes: no perfil de {first_name}, {described} Recomenda-se cautela na leitura isolada do QI Total."
     )
 
 
 def _facilities_text(facilidades: list, first_name: str) -> str:
     if not facilidades:
-        return "Não foram registradas facilidades ou dificuldades relativas com suporte estatístico no conjunto disponível."
+        return ""
     parts = []
-    for item in facilidades[:5]:
+    for item in facilidades[:2]:
         subtest = item.get("subteste") or "subteste"
         kind = str(item.get("tipo") or "variação").lower()
         difference = item.get("diferenca")
@@ -350,24 +348,24 @@ def _profile_patterns_text(indices: dict, first_name: str) -> str:
 
     if icv_ivp is not None and icv_ivp >= 15:
         patterns.append(
-            f"O contraste entre ICV e IVP indica que a capacidade de raciocínio verbal de {first_name} pode estar mais preservada do que a eficiência para executar tarefas simples sob pressão temporal. Funcionalmente, isso pode aparecer como boa compreensão de informações complexas, porém com maior lentidão, menor produtividade ou maior custo cognitivo em atividades cronometradas."
+            "O contraste entre ICV e IVP indica melhor rendimento verbal relativo do que eficiência em tarefas rápidas sob pressão temporal."
         )
     if iop_ivp is not None and iop_ivp >= 15:
         patterns.append(
-            f"O desempenho relativamente superior em organização perceptual, associado a velocidade de processamento inferior, sugere que {first_name} pode resolver problemas visuais com melhor rendimento quando dispõe de tempo suficiente, mas apresentar menor eficiência em tarefas rápidas, repetitivas ou dependentes de automatização visuomotora."
+            "O desempenho relativamente superior em organização perceptual, associado a velocidade de processamento inferior, sugere melhor resolução visual quando há tempo suficiente e menor eficiência em tarefas rápidas ou automatizadas."
         )
     if icv_imo is not None and icv_imo >= 15:
         patterns.append(
-            "A discrepância entre ICV e IMO sugere recursos verbais e conceituais mais eficientes do que a capacidade de manter e manipular informações em tempo real. Esse padrão pode gerar bom desempenho em compreensão verbal estruturada, mas dificuldade relativa em múltiplas instruções, cálculo mental, atualização de informações e controle atencional contínuo."
+            "A discrepância entre ICV e IMO sugere recursos verbais mais eficientes do que a manipulação mental de informações em tempo real."
         )
     if imo is not None and ivp is not None and imo < 90 and ivp < 90:
         patterns.append(
-            "A associação entre memória operacional e velocidade de processamento reduzidas sugere fragilidade na eficiência cognitiva online, especialmente em tarefas que exigem manter informações ativas, responder rapidamente e monitorar a própria execução. Esse achado deve ser integrado a medidas de atenção, funções executivas e indicadores emocionais antes de qualquer inferência diagnóstica."
+            "A associação entre memória operacional e velocidade de processamento reduzidas sugere menor eficiência em tarefas que exigem manter informações ativas e responder rapidamente."
         )
 
     if not patterns:
-        return "Não foram identificados padrões diferenciais adicionais suficientemente marcados entre ICV, IOP, IMO e IVP a partir dos pontos compostos disponíveis."
-    return " ".join(patterns[:2])
+        return ""
+    return patterns[0]
 
 
 def _processing_speed_subtest_text(subtestes: dict) -> str:
@@ -381,10 +379,10 @@ def _processing_speed_subtest_text(subtestes: dict) -> str:
 
     difference = abs(codigos - procurar)
     if difference < 3:
-        return "Em Velocidade de Processamento, Códigos e Procurar Símbolos apresentaram desempenho relativamente próximo, sem contraste descritivo relevante entre componente grafomotor-associativo e busca visual rápida."
+        return "Em Velocidade de Processamento, Códigos e Procurar Símbolos ficaram relativamente próximos."
     if codigos < procurar:
-        return "Em Velocidade de Processamento, Códigos ficou abaixo de Procurar Símbolos, padrão que pode sugerir maior custo no componente grafomotor, na automatização associativa ou na execução escrita sob tempo, quando comparado à varredura e decisão visual rápida."
-    return "Em Velocidade de Processamento, Procurar Símbolos ficou abaixo de Códigos, padrão que pode sugerir maior custo em varredura visual, discriminação perceptiva rápida, tomada de decisão sob tempo ou monitoramento atencional."
+        return "Códigos ficou abaixo de Procurar Símbolos, sugerindo maior custo grafomotor ou de automatização sob tempo."
+    return "Procurar Símbolos ficou abaixo de Códigos, sugerindo maior custo em varredura visual e decisão rápida."
 
 
 def _subtest_span(subtestes: dict, keys: list[str]) -> float | None:
@@ -466,14 +464,12 @@ def _cluster_analysis_text(clusters: dict, subtestes: dict, first_name: str) -> 
             "Quando disponíveis, esses clusters devem ser tratados como indicadores complementares aos índices fatoriais e aos subtestes, não como medidas diagnósticas isoladas."
         )
 
-    parts = [
-        "Análise dos Clusters e Comparações Complementares. A análise dos clusters foi utilizada como recurso complementar à interpretação principal do WAIS-III. Foram considerados interpretáveis apenas os agrupamentos com consistência interna adequada e coerência entre escore composto, percentil, intervalo de confiança e classificação."
-    ]
+    parts = ["Análise dos Clusters e Comparações Complementares: recurso complementar à interpretação principal do WAIS-III."]
     if interpretable:
         highest = max(interpretable, key=lambda row: row.get("score") or 0)
         lowest = min(interpretable, key=lambda row: row.get("score") or 0)
         parts.append(
-            f"No perfil de {first_name}, o maior resultado interpretável foi {highest['label']} ({highest['code']}: {_cluster_metric_text(highest)}, {str(highest.get('classification') or 'não classificado').lower()}) e o menor foi {lowest['label']} ({lowest['code']}: {_cluster_metric_text(lowest)}, {str(lowest.get('classification') or 'não classificado').lower()})."
+            f"No perfil de {first_name}, maior cluster interpretável: {highest['label']} ({highest['code']}, escore {highest.get('score')}, {str(highest.get('classification') or 'não classificado').lower()}); menor: {lowest['label']} ({lowest['code']}, escore {lowest.get('score')}, {str(lowest.get('classification') or 'não classificado').lower()})."
         )
         parts.append(_cluster_comparison_text(rows))
     if inconsistent:
@@ -482,7 +478,7 @@ def _cluster_analysis_text(clusters: dict, subtestes: dict, first_name: str) -> 
             for row in inconsistent[:4]
         )
         parts.append(
-            f"Clusters bloqueados por inconsistência psicométrica: {blocked}. Esses agrupamentos e suas comparações derivadas não foram interpretados clinicamente até revisão da conversão normativa."
+            f"Clusters bloqueados por inconsistência psicométrica: {blocked}."
         )
     if not_interpretable:
         limited = "; ".join(
@@ -490,7 +486,7 @@ def _cluster_analysis_text(clusters: dict, subtestes: dict, first_name: str) -> 
             for row in not_interpretable[:4]
         )
         parts.append(
-            f"Clusters não interpretáveis por heterogeneidade interna: {limited}. Nesses casos, a leitura deve retornar aos subtestes."
+            f"Clusters não interpretáveis por heterogeneidade interna: {limited}; nesses casos, a leitura deve retornar aos subtestes."
         )
     return " ".join(parts)
 
@@ -608,4 +604,4 @@ def build_wais3_interpretation(merged_data: dict, patient_name: str) -> str:
         sections.append(optional_text)
     sections.append(cluster_analysis)
     sections.append(synthesis)
-    return "\n\n".join(sections)
+    return "\n\n".join(section for section in sections if section.strip())

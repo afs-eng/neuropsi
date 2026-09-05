@@ -7,6 +7,7 @@ from datetime import date
 from pathlib import Path
 
 from apps.tests.services.playwright_pdf_service import generate_pdf_from_html
+from apps.tests.wais3.interpreters import build_wais3_interpretation
 
 
 class WAIS3PdfService:
@@ -186,7 +187,9 @@ class WAIS3PdfService:
         classified = getattr(application, "classified_payload", None) or {}
         indices = classified.get("indices") or computed.get("indices") or {}
         subtests = classified.get("subtestes") or computed.get("subtestes") or {}
-        interpretation_text = getattr(application, "interpretation_text", None) or ""
+        interpretation_text = build_wais3_interpretation(
+            {**computed, **classified}, getattr(patient, "full_name", None) or None
+        )
 
         index_rows = cls._index_rows(indices)
         verbal_profile = cls._profile_rows(subtests, cls.VERBAL_PROFILE)
@@ -690,7 +693,7 @@ class WAIS3PdfService:
         pages = []
         current = []
         current_size = 0
-        page_limit = 2600
+        page_limit = 3600
         for block in blocks:
             block_size = len(re.sub(r"<[^>]+>", "", block)) + 180
             if current and current_size + block_size > page_limit:
