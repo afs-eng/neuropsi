@@ -36,7 +36,7 @@ class ETDAHPdfBase:
         evaluation = application.evaluation
         classified = application.classified_payload or {}
         computed = application.computed_payload or {}
-        results = classified.get("results") or computed.get("results") or {}
+        results = cls._results(application, computed, classified)
         rows = cls._result_rows(results)
         interpretation = cls._interpretation_text(application, computed, classified)
         paragraphs = cls._paragraphs(interpretation)
@@ -71,6 +71,7 @@ class ETDAHPdfBase:
         for code in cls.row_order:
             item = results.get(code) or {}
             percentile_text = cls._first_present(item.get("percentile_text"), item.get("percentile"), item.get("percentile_guilmette"), "-")
+            percentile = cls._percentile_number(percentile_text)
             classification = item.get("classification") or "Não classificado"
             rows.append(
                 {
@@ -79,8 +80,8 @@ class ETDAHPdfBase:
                     "short_label": cls._short_label(code),
                     "points": cls._format_number(cls._first_present(item.get("raw_score"), item.get("score"))),
                     "mean": cls._format_number(item.get("mean")),
-                    "percentile": cls._format_percentile(percentile_text),
-                    "percentile_raw": cls._percentile_number(percentile_text),
+                    "percentile": cls._format_number(percentile),
+                    "percentile_raw": percentile,
                     "classification": classification,
                     "badge_class": cls._badge_class(classification),
                 }
@@ -115,9 +116,16 @@ class ETDAHPdfBase:
     def _interpretation_text(cls, application, computed: dict, classified: dict) -> str:
         return application.interpretation_text or ""
 
-    @staticmethod
-    def _paragraphs(text: str) -> list[str]:
-        return [part.strip() for part in re.split(r"\n\s*\n", str(text or "")) if part.strip()]
+    @classmethod
+    def _results(cls, application, computed: dict, classified: dict) -> dict:
+        return classified.get("results") or computed.get("results") or {}
+
+    @classmethod
+    def _paragraphs(cls, text: str) -> list[str]:
+        cleaned = re.sub(r"\[\s*Image\s+\d+\s*\]", "", str(text or ""), flags=re.IGNORECASE)
+        cleaned = re.sub(r"^={3,}.*$", "", cleaned, flags=re.MULTILINE)
+        cleaned = re.sub(r"^\s*[▸▶]+\s*", "", cleaned, flags=re.MULTILINE)
+        return [part.strip() for part in re.split(r"\n\s*\n", cleaned) if part.strip()]
 
     @classmethod
     def _normative_label(cls, classified: dict, computed: dict, patient, applied_on) -> str:
@@ -212,10 +220,12 @@ class ETDAHPdfBase:
 
     @staticmethod
     def _percentile_number(value) -> float:
-        match = re.search(r"\d+(?:[\.,]\d+)?", str(value or ""))
-        if not match:
+        numbers = [float(match.replace(",", ".")) for match in re.findall(r"\d+(?:[\.,]\d+)?", str(value or ""))]
+        if not numbers:
             return 0.0
-        return float(match.group(0).replace(",", "."))
+        if len(numbers) >= 2:
+            return sum(numbers[:2]) / 2
+        return numbers[0]
 
     @staticmethod
     def _chart_height(value: int | float) -> str:

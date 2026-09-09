@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from apps.tests.etdah_ad.config import FACTOR_NAMES
-from apps.tests.etdah_ad.interpreters import generate_report
+from apps.tests.etdah_ad.interpreters import generate_report, interpret_results
 from apps.tests.services.etdah_pdf_base import ETDAHPdfBase
 
 
@@ -22,11 +22,17 @@ class ETDAHADPdfService(ETDAHPdfBase):
 
     @classmethod
     def _interpretation_text(cls, application, computed: dict, classified: dict) -> str:
-        if application.interpretation_text:
-            return application.interpretation_text
         raw_scores = classified.get("raw_scores") or computed.get("raw_scores") or {}
         schooling = classified.get("schooling") or computed.get("schooling") or (application.raw_payload or {}).get("schooling") or "elementary"
         return generate_report(raw_scores, schooling, patient_name=application.evaluation.patient.full_name)
+
+    @classmethod
+    def _results(cls, application, computed: dict, classified: dict) -> dict:
+        raw_scores = classified.get("raw_scores") or computed.get("raw_scores") or {}
+        schooling = classified.get("schooling") or computed.get("schooling") or (application.raw_payload or {}).get("schooling") or "elementary"
+        if raw_scores:
+            return interpret_results(raw_scores, schooling)
+        return super()._results(application, computed, classified)
 
     @classmethod
     def _reference_label(cls, classified: dict, computed: dict) -> str:

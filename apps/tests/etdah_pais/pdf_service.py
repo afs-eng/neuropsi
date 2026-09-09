@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from apps.tests.etdah_pais.config import FACTOR_NAMES
-from apps.tests.etdah_pais.interpreters import generate_report
+from apps.tests.etdah_pais.interpreters import generate_report, interpret_results
 from apps.tests.services.etdah_pdf_base import ETDAHPdfBase
 
 
@@ -22,12 +22,19 @@ class ETDAHPAISPdfService(ETDAHPdfBase):
 
     @classmethod
     def _interpretation_text(cls, application, computed: dict, classified: dict) -> str:
-        if application.interpretation_text:
-            return application.interpretation_text
         raw_scores = classified.get("raw_scores") or computed.get("raw_scores") or {}
         age = classified.get("age") or computed.get("age") or (application.raw_payload or {}).get("age") or 10
         sex = classified.get("sex") or computed.get("sex") or (application.raw_payload or {}).get("sex") or "M"
         return generate_report(raw_scores, int(age), str(sex), patient_name=application.evaluation.patient.full_name)
+
+    @classmethod
+    def _results(cls, application, computed: dict, classified: dict) -> dict:
+        raw_scores = classified.get("raw_scores") or computed.get("raw_scores") or {}
+        age = classified.get("age") or computed.get("age") or (application.raw_payload or {}).get("age") or 10
+        sex = classified.get("sex") or computed.get("sex") or (application.raw_payload or {}).get("sex") or "M"
+        if raw_scores:
+            return interpret_results(raw_scores, int(age), str(sex))
+        return super()._results(application, computed, classified)
 
     @classmethod
     def _normative_label(cls, classified: dict, computed: dict, patient, applied_on) -> str:

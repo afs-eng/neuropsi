@@ -1365,7 +1365,7 @@ class ETDAHPAISModuleTests(SimpleTestCase):
                     "escore_geral": {"name": "Escore Geral", "raw_score": 144, "mean": 162.4, "percentile_text": "40", "classification": "Média Inferior"},
                 },
             },
-            interpretation_text="Interpretação e Observações Clínicas: Texto ETDAH pais.\n\nEm análise clínica, perfil preservado.",
+            interpretation_text="[Image 1]\n================================\nTexto legado ETDAH pais.",
             evaluation=SimpleNamespace(
                 examiner=None,
                 patient=SimpleNamespace(
@@ -1387,7 +1387,10 @@ class ETDAHPAISModuleTests(SimpleTestCase):
         self.assertEqual(context["title"], "E-TDAH-PAIS")
         self.assertEqual([row["short_label"] for row in context["rows"]], ["F1", "F2", "F3", "F4", "EG"])
         self.assertEqual(context["rows"][0]["points"], "40")
-        self.assertEqual(context["chart_bars"][1]["height"], "55")
+        self.assertEqual(context["chart_bars"][1]["height"], "77")
+        self.assertTrue(all("<" not in row["percentile"] and ">" not in row["percentile"] for row in context["rows"]))
+        self.assertNotIn("Image 1", " ".join(context["clinical_paragraphs_html"]))
+        self.assertNotIn("Texto legado", " ".join(context["clinical_paragraphs_html"]))
         self.assertIn("10 anos / sexo F", context["referencia_normativa"])
 
     def test_pdf_export_service_registers_etdah_pais_exporter(self):
@@ -1484,7 +1487,7 @@ class ETDAHADModuleTests(SimpleTestCase):
                     "H": {"name": "Fator 5 - Hiperatividade (H)", "raw_score": 10, "mean": 10.9, "percentile_text": "35", "classification": "Média Inferior"},
                 },
             },
-            interpretation_text="Interpretação e Observações Clínicas: Texto ETDAH AD.\n\nEm análise integrada, perfil preservado.",
+            interpretation_text="[Image 1]\n================================\nTexto legado ETDAH AD.",
             evaluation=SimpleNamespace(
                 examiner=None,
                 patient=SimpleNamespace(
@@ -1506,11 +1509,19 @@ class ETDAHADModuleTests(SimpleTestCase):
         self.assertEqual(context["title"], "E-TDAH-AD")
         self.assertEqual([row["short_label"] for row in context["rows"]], ["D", "I", "AE", "AAMA", "H"])
         self.assertEqual(context["rows"][0]["points"], "30")
-        self.assertEqual(context["chart_bars"][0]["height"], "40")
+        self.assertEqual(context["chart_bars"][0]["height"], "42")
+        self.assertTrue(all("<" not in row["percentile"] and ">" not in row["percentile"] for row in context["rows"]))
+        self.assertNotIn("Image 1", " ".join(context["clinical_paragraphs_html"]))
+        self.assertNotIn("Texto legado", " ".join(context["clinical_paragraphs_html"]))
         self.assertIn("Ensino superior", context["referencia_normativa"])
 
     def test_pdf_export_service_registers_etdah_ad_exporter(self):
         self.assertIn("etdah_ad", TestPdfExportService.EXPORTERS)
+
+    def test_pdf_percentile_range_is_rendered_as_single_number(self):
+        value = ETDAHADPdfService._percentile_number("> 55 e < 60")
+
+        self.assertEqual(ETDAHADPdfService._format_number(value), "57,5")
 
     @patch("apps.tests.services.etdah_pdf_base.generate_pdf_from_html")
     def test_pdf_service_renders_etdah_ad_template(self, mock_generate):
