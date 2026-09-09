@@ -30,13 +30,13 @@ export function isFemaleUser(user: AuthUser | null): boolean {
     return false;
   }
 
-  const sex = (user.sex || "").trim().toLowerCase();
-  if (["f", "feminino", "female", "mulher"].includes(sex)) {
+  const displayName = (user.display_name || user.full_name || "").trim().toLowerCase();
+  if (/^dra\.?\s/.test(displayName)) {
     return true;
   }
 
-  const displayName = (user.display_name || user.full_name || "").trim().toLowerCase();
-  if (/^dra\.?\s/.test(displayName)) {
+  const sex = (user.sex || "").trim().toLowerCase();
+  if (["f", "feminino", "female", "mulher"].includes(sex)) {
     return true;
   }
 

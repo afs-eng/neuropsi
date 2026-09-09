@@ -13,6 +13,7 @@ class UserOut(Schema):
     email: EmailStr | str
     full_name: str
     role: str
+    sex: str
     phone: str
     crp: str
     specialty: str
@@ -27,6 +28,7 @@ class MeOut(Schema):
     email: EmailStr | str
     full_name: str
     role: str
+    sex: str
     is_superuser: bool
     is_staff: bool
     is_active: bool
@@ -39,6 +41,7 @@ class CreateUserIn(Schema):
     password: str
     full_name: Optional[str] = ""
     role: str = "assistant"
+    sex: Optional[str] = "M"
     phone: Optional[str] = ""
     crp: Optional[str] = ""
     specialty: Optional[str] = ""
@@ -50,6 +53,7 @@ class UpdateUserIn(Schema):
     email: Optional[EmailStr] = None
     full_name: Optional[str] = None
     role: Optional[str] = None
+    sex: Optional[str] = None
     phone: Optional[str] = None
     crp: Optional[str] = None
     specialty: Optional[str] = None
@@ -88,6 +92,7 @@ class RegisterIn(Schema):
     password: str
     full_name: str
     role: str = "assistant"
+    sex: Optional[str] = "M"
     phone: Optional[str] = ""
     crp: Optional[str] = ""
     specialty: Optional[str] = ""
