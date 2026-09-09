@@ -11,6 +11,8 @@ from apps.tests.bpa2.pdf_service import BPA2PdfService
 from apps.tests.bfp.config import FACTOR_DEFINITIONS, FACET_DEFINITIONS, SAMPLE_LABELS
 from apps.tests.bfp.interpreters import build_bfp_interpretation_payload
 from apps.tests.ebadep_a.pdf_service import EBADEPAPdfService
+from apps.tests.etdah_ad.pdf_service import ETDAHADPdfService
+from apps.tests.etdah_pais.pdf_service import ETDAHPAISPdfService
 from apps.tests.epq_j.pdf_service import EPQJPdfService
 from apps.tests.fdt.pdf_service import FDTPdfService
 from apps.tests.ravlt.pdf_service import RAVLTPdfService
@@ -63,6 +65,22 @@ class BPA2PdfExporter(BaseTestPdfExporter):
     @classmethod
     def build_pdf_bytes(cls, application) -> bytes:
         return BPA2PdfService.generate_pdf_bytes(application)
+
+
+class ETDAHADPdfExporter(BaseTestPdfExporter):
+    instrument_code = "etdah_ad"
+
+    @classmethod
+    def build_pdf_bytes(cls, application) -> bytes:
+        return ETDAHADPdfService.generate_pdf_bytes(application)
+
+
+class ETDAHPAISPdfExporter(BaseTestPdfExporter):
+    instrument_code = "etdah_pais"
+
+    @classmethod
+    def build_pdf_bytes(cls, application) -> bytes:
+        return ETDAHPAISPdfService.generate_pdf_bytes(application)
 
 
 class EPQJPdfExporter(BaseTestPdfExporter):
@@ -463,6 +481,8 @@ class SCAREDPdfExporter(BaseTestPdfExporter):
 class TestPdfExportService:
     EXPORTERS: dict[str, type[BaseTestPdfExporter]] = {
         BPA2PdfExporter.instrument_code: BPA2PdfExporter,
+        ETDAHADPdfExporter.instrument_code: ETDAHADPdfExporter,
+        ETDAHPAISPdfExporter.instrument_code: ETDAHPAISPdfExporter,
         EBADEPAPdfExporter.instrument_code: EBADEPAPdfExporter,
         EPQJPdfExporter.instrument_code: EPQJPdfExporter,
         FDTPdfExporter.instrument_code: FDTPdfExporter,

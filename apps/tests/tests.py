@@ -20,7 +20,9 @@ from apps.tests.cars2_hf.loaders import load_cars2_hf_norms
 from apps.tests.etdah_ad import ETDAHADModule
 from apps.tests.etdah_ad.calculators import calculate_raw_scores
 from apps.tests.etdah_ad.interpreters import interpret_results as interpret_etdah_ad_results
+from apps.tests.etdah_ad.pdf_service import ETDAHADPdfService
 from apps.tests.etdah_pais import ETDAHPAISModule
+from apps.tests.etdah_pais.pdf_service import ETDAHPAISPdfService
 from apps.tests.ebadep_a.pdf_service import EBADEPAPdfService
 from apps.tests.epq_j import EPQJModule
 from apps.tests.epq_j.calculators import calcular_escore
@@ -1343,6 +1345,63 @@ class WISC4SupplementalTablesTests(SimpleTestCase):
 
 
 class ETDAHPAISModuleTests(SimpleTestCase):
+    def _application_fixture(self):
+        return SimpleNamespace(
+            id=71,
+            evaluation_id=12,
+            applied_on=date(2026, 5, 22),
+            instrument=SimpleNamespace(code="etdah_pais", name="E-TDAH-PAIS"),
+            raw_payload={"age": 10, "sex": "F", "schooling": "elementary", "responses": {}},
+            computed_payload={},
+            classified_payload={
+                "age": 10,
+                "sex": "F",
+                "raw_scores": {"fator_1": 40, "fator_2": 35, "fator_3": 45, "fator_4": 24, "escore_geral": 144},
+                "results": {
+                    "fator_1": {"name": "Fator 1 - Regulação Emocional (RE)", "raw_score": 40, "mean": 46.2, "percentile_text": "35", "classification": "Média Inferior"},
+                    "fator_2": {"name": "Fator 2 - Hiperatividade / Impulsividade (HI)", "raw_score": 35, "mean": 39.3, "percentile_text": "55", "classification": "Média"},
+                    "fator_3": {"name": "Fator 3 - Comportamento Adaptativo (CA)", "raw_score": 45, "mean": 48.2, "percentile_text": "45", "classification": "Média"},
+                    "fator_4": {"name": "Fator 4 - Atenção (A)", "raw_score": 24, "mean": 27.1, "percentile_text": "45", "classification": "Média"},
+                    "escore_geral": {"name": "Escore Geral", "raw_score": 144, "mean": 162.4, "percentile_text": "40", "classification": "Média Inferior"},
+                },
+            },
+            interpretation_text="Interpretação e Observações Clínicas: Texto ETDAH pais.\n\nEm análise clínica, perfil preservado.",
+            evaluation=SimpleNamespace(
+                examiner=None,
+                patient=SimpleNamespace(
+                    full_name="Debora Silva",
+                    sex="F",
+                    age=10,
+                    birth_date=None,
+                    schooling="elementary",
+                    grade_year=None,
+                ),
+            ),
+        )
+
+    def test_pdf_context_uses_etdah_pais_layout_data(self):
+        context = ETDAHPAISPdfService._build_context(self._application_fixture())
+
+        self.assertEqual(context["codigo_avaliado"], "AVL-071")
+        self.assertEqual(context["codigo_relatorio"], "RPT-ETDAHPAIS-071")
+        self.assertEqual(context["title"], "E-TDAH-PAIS")
+        self.assertEqual([row["short_label"] for row in context["rows"]], ["F1", "F2", "F3", "F4", "EG"])
+        self.assertEqual(context["rows"][0]["points"], "40")
+        self.assertEqual(context["chart_bars"][1]["height"], "55")
+        self.assertIn("10 anos / sexo F", context["referencia_normativa"])
+
+    def test_pdf_export_service_registers_etdah_pais_exporter(self):
+        self.assertIn("etdah_pais", TestPdfExportService.EXPORTERS)
+
+    @patch("apps.tests.services.etdah_pdf_base.generate_pdf_from_html")
+    def test_pdf_service_renders_etdah_pais_template(self, mock_generate):
+        mock_generate.return_value = b"%PDF-etdah-pais"
+
+        payload = ETDAHPAISPdfService.generate_pdf_bytes(self._application_fixture())
+
+        self.assertEqual(payload, b"%PDF-etdah-pais")
+        self.assertIn("E-TDAH-PAIS", mock_generate.call_args.args[0])
+
     def test_non_clinical_classifications_are_not_treated_as_deficit(self):
         module = ETDAHPAISModule()
         context = TestContext(
@@ -1406,6 +1465,62 @@ class ETDAHPAISModuleTests(SimpleTestCase):
 
 
 class ETDAHADModuleTests(SimpleTestCase):
+    def _application_fixture(self):
+        return SimpleNamespace(
+            id=72,
+            evaluation_id=12,
+            applied_on=date(2026, 5, 22),
+            instrument=SimpleNamespace(code="etdah_ad", name="E-TDAH-AD"),
+            raw_payload={"schooling": "higher", "responses": {}},
+            computed_payload={},
+            classified_payload={
+                "schooling": "higher",
+                "raw_scores": {"D": 30, "I": 30, "AE": 4, "AAMA": 18, "H": 10},
+                "results": {
+                    "D": {"name": "Fator 1 - Desatenção (D)", "raw_score": 30, "mean": 30.8, "percentile_text": "40", "classification": "Média Inferior"},
+                    "I": {"name": "Fator 2 - Impulsividade (I)", "raw_score": 30, "mean": 27.5, "percentile_text": "55", "classification": "Média"},
+                    "AE": {"name": "Fator 3 - Aspectos Emocionais (AE)", "raw_score": 4, "mean": 4.8, "percentile_text": "50", "classification": "Média"},
+                    "AAMA": {"name": "Fator 4 - Autorregulação da Atenção, Motivação e Ação (AAMA)", "raw_score": 18, "mean": 18.2, "percentile_text": "45", "classification": "Média"},
+                    "H": {"name": "Fator 5 - Hiperatividade (H)", "raw_score": 10, "mean": 10.9, "percentile_text": "35", "classification": "Média Inferior"},
+                },
+            },
+            interpretation_text="Interpretação e Observações Clínicas: Texto ETDAH AD.\n\nEm análise integrada, perfil preservado.",
+            evaluation=SimpleNamespace(
+                examiner=None,
+                patient=SimpleNamespace(
+                    full_name="Marina Costa",
+                    sex="F",
+                    age=29,
+                    birth_date=None,
+                    schooling="higher",
+                    grade_year=None,
+                ),
+            ),
+        )
+
+    def test_pdf_context_uses_etdah_ad_layout_data(self):
+        context = ETDAHADPdfService._build_context(self._application_fixture())
+
+        self.assertEqual(context["codigo_avaliado"], "AVL-072")
+        self.assertEqual(context["codigo_relatorio"], "RPT-ETDAHAD-072")
+        self.assertEqual(context["title"], "E-TDAH-AD")
+        self.assertEqual([row["short_label"] for row in context["rows"]], ["D", "I", "AE", "AAMA", "H"])
+        self.assertEqual(context["rows"][0]["points"], "30")
+        self.assertEqual(context["chart_bars"][0]["height"], "40")
+        self.assertIn("Ensino superior", context["referencia_normativa"])
+
+    def test_pdf_export_service_registers_etdah_ad_exporter(self):
+        self.assertIn("etdah_ad", TestPdfExportService.EXPORTERS)
+
+    @patch("apps.tests.services.etdah_pdf_base.generate_pdf_from_html")
+    def test_pdf_service_renders_etdah_ad_template(self, mock_generate):
+        mock_generate.return_value = b"%PDF-etdah-ad"
+
+        payload = ETDAHADPdfService.generate_pdf_bytes(self._application_fixture())
+
+        self.assertEqual(payload, b"%PDF-etdah-ad")
+        self.assertIn("E-TDAH-AD", mock_generate.call_args.args[0])
+
     def test_factor_mapping_matches_official_order(self):
         raw_scores = calculate_raw_scores(
             {
