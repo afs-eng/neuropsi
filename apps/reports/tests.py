@@ -13,6 +13,7 @@ from lxml import etree as LET
 from apps.reports.builders.tests_builder import _build_wais3_tables
 from apps.reports.builders.references_builder import build_references
 from apps.reports.services.report_export_service import ReportExportService
+from apps.reports.services.patient_identity_service import PatientIdentityService
 from apps.reports.services.report_generation_service import ReportGenerationService
 from apps.reports.services.section_regeneration_service import SectionRegenerationService
 from apps.reports.services.wisc4_standardization import WISC4StandardizationService
@@ -1875,6 +1876,14 @@ class ReportExportChartSanitizationTests(SimpleTestCase):
         )
 
         self.assertEqual(foreign_names, [])
+
+    def test_patient_identity_service_detects_foreign_patient_names(self):
+        foreign_names = PatientIdentityService.foreign_patient_names_in_text(
+            "O desempenho de Maria Clara foi preservado.",
+            "Isis Carvalho de Sá Bezerra",
+        )
+
+        self.assertEqual(foreign_names, ["Maria Clara"])
 
     def test_sanitize_chart_xml_inlines_cached_refs_and_removes_external_data(self):
         chart_xml = b'''<?xml version="1.0" encoding="UTF-8"?>

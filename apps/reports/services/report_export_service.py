@@ -49,6 +49,7 @@ from apps.reports.specs import (
 from apps.reports.builders.references_builder import build_references
 from apps.reports.builders.wais3_report_builder import WAIS3ReportBuilder
 from apps.reports.services.report_context_service import ReportContextService
+from apps.reports.services.patient_identity_service import PatientIdentityService
 from apps.reports.services.ptbr_text_service import PtBrTextService
 from apps.reports.services.wisc4_standardization import WISC4StandardizationService
 from apps.reports.services.wais3_standardization import WAIS3StandardizationService
@@ -2640,140 +2641,15 @@ class ReportExportService:
 
     @classmethod
     def _foreign_patient_names_in_text(cls, text: str | None, patient_name: str | None) -> list[str]:
-        patient_name = (patient_name or "").strip()
-        if not patient_name:
-            return []
-        allowed_tokens = {token for token in patient_name.split() if token}
-        technical_tokens = {
-            "Raciocínio", "Matricial", "Execução", "Tabela", "Rey", "Auditory", "Verbal",
-            "Learning", "Test", "Flexibilidade", "Cognitiva", "Big", "Five", "Interações",
-            "Sociais", "Espectro", "Autista", "Pontuação", "Total", "Vocabulário",
-            "Semelhanças", "Cubos", "Pânico", "Sintomas", "Somáticos", "Ansiedade",
-            "Generalizada", "Separação", "Fobia", "Social", "Evitação", "Escolar",
-            "Percepção", "Cognição", "Comunicação", "Motivação", "Realização", "Abertura",
-            "Comportamento", "Adaptativo", "Evitamento", "São", "Paulo", "Second",
-            "Edition", "Western", "Psychological", "Services", "Adolescent", "Psychiatry",
-            "American", "Academy", "Childhood", "Autism", "Rating", "Scale", "High",
-            "Functioning", "Version", "Modified", "Checklist", "Toddlers", "Compreensão",
-            "Organização", "Perceptual", "Habilidade", "Geral", "Função", "Executiva",
-            "Saúde", "Mental", "Referências", "Bibliográficas", "Vetor", "Editora",
-            "Times", "New", "Roman",
-        }
-        ignored_names = {
-            patient_name,
-            cls.FIXED_AUTHOR.split("(", 1)[0].strip(),
-            "Conselho Federal",
-            "Microsoft Word",
-            "Escala Wechsler",
-            "Bateria Psicológica",
-            "Teste dos",
-            "Rey Auditory",
-            "Escala Baptista",
-            "Bateria Fatorial",
-            "Social Responsiveness",
-            "Screen for Child",
-            "Rey Auditory Verbal Learning Test",
-            "Raciocínio Matricial",
-            "Flexibilidade Cognitiva",
-            "Interações Sociais",
-            "Espectro Autista",
-            "Pontuação Total",
-            "Big Five",
-            "Execução Tabela",
-            "Escala Wechsler Abreviada",
-            "Segunda Edição",
-            "Versão Adulto",
-            "Capacidade Cognitiva Global",
-            "Inteligência Verbal",
-            "Inteligência Total",
-            "Observações Clínicas",
-            "Interpretação Integrada",
-            "Análise Clínica",
-            "Avaliação Neuropsicológica",
-            "Comunicação Social",
-            "Cognição Social",
-            "Interação Social",
-            "Percepção Social",
-            "Motivação Social",
-            "Responsividade Social",
-            "Padrões Restritos",
-            "Escore Geral",
-            "Escore Total",
-            "Processos Automáticos",
-            "Processos Controlados",
-            "Instabilidade Emocional",
-            "Ética Profissional",
-            "Média Inferior",
-            "Média Superior",
-            "Muito Baixo",
-            "Atenção Concentrada",
-            "Atenção Dividida",
-            "Atenção Alternada",
-            "Atenção Geral",
-            "Cinco Dígitos",
-            "Cinco Grandes Fatores",
-            "Child Anxiety Related Emotional Disorders",
-            "Comportamento Adaptativo",
-            "Evitamento Escolar",
-            "São Paulo",
-            "Second Edition",
-            "Western Psychological Services",
-            "Adolescent Psychiatry",
-            "Childhood Autism Rating Scale",
-            "High Functioning Version",
-            "Modified Checklist",
-            "Autism in Toddlers",
-        }
-        candidates = re.findall(
-            r"\b[A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-záéíóúâêôãõç]+(?:[ \t]+[A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-záéíóúâêôãõç]+)+\b",
-            text or "",
-        )
-        foreign_names = []
-        for name in candidates:
-            if name in ignored_names:
-                continue
-            if any(pattern.lower() in name.lower() for pattern in cls.SKIP_PATTERNS):
-                continue
-            words = name.split()
-            if len(words) < 2 or len(words) > 5:
-                continue
-            if all(word in technical_tokens for word in words):
-                continue
-            first_name = words[0]
-            if name == patient_name or first_name in allowed_tokens:
-                continue
-            if name not in foreign_names:
-                foreign_names.append(name)
-        return foreign_names
+        return PatientIdentityService.foreign_patient_names_in_text(text, patient_name)
 
     @classmethod
     def _sanitize_section_text_for_patient(cls, text: str | None, context: dict) -> str:
-        patient_name = ((context or {}).get("patient") or {}).get("full_name") or ""
-        cleaned = str(text or "").strip()
-        if not cleaned:
-            return ""
-        if cls._foreign_patient_names_in_text(cleaned, patient_name):
-            return ""
-        return cleaned
+        return PatientIdentityService.sanitize_section_text_for_patient(text, context)
 
     @classmethod
     def _validate_patient_identity(cls, document: Document, report, context: dict):
-        patient_name = ((context or {}).get("patient") or {}).get("full_name")
-        if not patient_name and getattr(report, "patient", None) is not None:
-            patient_name = getattr(report.patient, "full_name", "")
-        patient_name = (patient_name or "").strip()
-        if not patient_name:
-            return
-
-        foreign_names = cls._foreign_patient_names_in_text(
-            cls._document_text_before_references(document),
-            patient_name,
-        )
-        if foreign_names:
-            raise ValueError(
-                "Exportação bloqueada: o laudo contém nomes divergentes de pacientes: "
-                + ", ".join(foreign_names)
-            )
+        PatientIdentityService.validate_document_identity(document, report, context)
 
     @classmethod
     def _validate_unique_wasi_result(cls, document: Document):
@@ -2795,15 +2671,7 @@ class ReportExportService:
 
     @classmethod
     def _document_text_before_references(cls, document: Document) -> str:
-        lines = []
-        for paragraph in document.paragraphs:
-            text = (paragraph.text or "").strip()
-            if any(heading in text.upper() for heading in cls.REFERENCE_SECTION_HEADINGS):
-                break
-            if text.startswith(("Autora:", "Filiação:")):
-                continue
-            lines.append(text)
-        return "\n".join(lines)
+        return PatientIdentityService.document_text_before_references(document)
 
     @staticmethod
     def _body_element_text(element) -> str:

@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { NeuroavaliaLogo } from "@/components/brand/NeuroavaliaLogo";
+import { AuthUser, getStoredUser } from "@/lib/auth-user";
 import {
   LayoutDashboard,
   Users,
@@ -60,22 +61,13 @@ export function AppSidebar({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [user, setUser] = React.useState<any>(null);
+  const [user, setUser] = React.useState<AuthUser | null>(null);
 
   React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedUser = localStorage.getItem("user");
-      if (savedUser) {
-        try {
-          setUser(JSON.parse(savedUser));
-        } catch (e) {
-          console.error("Error parsing user data");
-        }
-      }
-    }
+    setUser(getStoredUser());
   }, []);
 
-  const getUserInitials = (userObj: any) => {
+  const getUserInitials = (userObj: AuthUser | null) => {
     if (!userObj) return "Dr.";
     const rawName = userObj.full_name || userObj.username || "Profissional";
     const cleanName = rawName.replace(/^(Dr\.|Dra\.|Dr|Dra)\s+/i, "").trim();

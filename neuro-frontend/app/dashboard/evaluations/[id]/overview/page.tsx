@@ -774,6 +774,7 @@ export default function EvaluationDetailPage() {
       "etdah_pais": "/dashboard/tests/etdah-pais",
       "ravlt": "/dashboard/tests/ravlt",
       "srs2": "/dashboard/tests/srs2",
+      "ssrs": "/dashboard/tests/ssrs",
       "scared": "/dashboard/tests/scared",
       "cars2_hf": "/dashboard/tests/cars2-hf",
       "mchat": "/dashboard/tests/mchat",

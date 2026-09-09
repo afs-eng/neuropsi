@@ -20,6 +20,11 @@ def get_instruments() -> QuerySet[Instrument]:
             "category": "Social / Autismo",
         },
         {
+            "code": "ssrs",
+            "name": "SSRS - Habilidades Sociais",
+            "category": "Social / Comportamento",
+        },
+        {
             "code": "cars2_hf",
             "name": "CARS2-HF - Childhood Autism Rating Scale – Second Edition, High Functioning Version",
             "category": "Social / Autismo",

@@ -4,15 +4,24 @@ from django.http import HttpResponse
 from django.utils.text import slugify
 
 from apps.api.auth import bearer_auth
-from apps.accounts.models import UserRole
 from apps.evaluations.models import Evaluation
 from apps.tests.models import Instrument
-from apps.tests.age_rules import get_instrument_age_rule
+from apps.tests.api.age_utils import (
+    calcAge,
+    calc_age_parts,
+    get_reference_date,
+    validate_instrument_age,
+)
+from apps.tests.api.catalog import ensure_required_instruments
+from apps.tests.api.permissions import can_edit_tests, can_view_tests
+from apps.tests.api.serializers import serialize_instrument, serialize_test_application
+from apps.tests.base.types import TestContext
 from apps.tests.api.schemas import (
     BFPSubmitIn,
     EPQJSubmitIn,
     RAVLTSubmitIn,
     SRS2SubmitIn,
+    SSRSSubmitIn,
     SCAREDSubmitIn,
     BAISubmitIn,
     MCHATSubmitIn,
@@ -31,63 +40,8 @@ from apps.tests.services import (
     TestScoringService,
     TestReportPayloadService,
 )
-from apps.tests.fdt.pdf_service import FDTPdfService
 from apps.tests.services.pdf_export_service import TestPdfExportService
 from apps.audit.services import AuditService
-from datetime import date as date_cls
-from dateutil.relativedelta import relativedelta
-
-
-def get_reference_date(evaluation, applied_on=None):
-    return (
-        applied_on or evaluation.start_date or evaluation.end_date or date_cls.today()
-    )
-
-
-def calcAge(birth_date, reference_date=None):
-    base_date = reference_date or date_cls.today()
-    return relativedelta(base_date, birth_date).years
-
-
-def calc_age_parts(birth_date, reference_date=None) -> dict[str, int]:
-    delta = relativedelta(reference_date or date_cls.today(), birth_date)
-    return {"anos": delta.years, "meses": delta.months}
-
-
-def get_faixa_wisc(age):
-    if 6 <= age <= 7:
-        return "6-7 anos"
-    elif 8 <= age <= 9:
-        return "8-9 anos"
-    elif 10 <= age <= 11:
-        return "10-11 anos"
-    elif 12 <= age <= 13:
-        return "12-13 anos"
-    elif 14 <= age <= 15:
-        return "14-15 anos"
-    elif age == 16:
-        return "16 anos"
-    return "6-7 anos"
-
-
-def validate_instrument_age(evaluation, instrument):
-    patient = evaluation.patient
-    if not patient or not patient.birth_date:
-        return None
-
-    rules = get_instrument_age_rule(instrument.code)
-    if not rules:
-        return None
-
-    age = calcAge(patient.birth_date, get_reference_date(evaluation))
-    min_age = rules.get("min_age")
-    max_age = rules.get("max_age")
-
-    if min_age is not None and age < min_age:
-        return rules["message"]
-    if max_age is not None and age > max_age:
-        return rules["message"]
-    return None
 
 
 from .schemas import (
@@ -112,24 +66,6 @@ from .schemas import (
 
 
 router = Router(tags=["tests"])
-
-
-def can_view_tests(user) -> bool:
-    return bool(user) and user.role in {
-        UserRole.ADMIN,
-        UserRole.NEUROPSYCHOLOGIST,
-        UserRole.ASSISTANT,
-        UserRole.REVIEWER,
-        UserRole.READONLY,
-    }
-
-
-def can_edit_tests(user) -> bool:
-    return bool(user) and user.role in {
-        UserRole.ADMIN,
-        UserRole.NEUROPSYCHOLOGIST,
-        UserRole.ASSISTANT,
-    }
 
 
 WAIS3_SUBTEST_PAYLOAD_FIELDS = [
@@ -192,107 +128,9 @@ def _build_wais3_raw_scores(payload: WAIS3SubmitIn, age_parts: dict[str, int]) -
     }, errors
 
 
-def serialize_instrument(instrument):
-    age_rule = get_instrument_age_rule(instrument.code) or {}
-    descriptions = {
-        "bfp": "Avalia traços de personalidade nos cinco grandes fatores e suas facetas.",
-        "wasi": "Estimativa abreviada de inteligencia verbal, de execucao e global por quatro subtestes.",
-        "scared": "Triagem de sintomas de ansiedade em crianças e adolescentes.",
-        "ravlt": "Avalia aprendizagem verbal, evocação e memória episódica.",
-        "srs2": "Mensura responsividade social e traços associados ao espectro autista.",
-        "bai": "Inventário de sintomas de ansiedade com foco em intensidade e gravidade.",
-        "cars2_hf": "Escala clínica para perfil autista em alto funcionamento, com foco em reciprocidade social, comunicação e flexibilidade.",
-        "mchat": "Triagem precoce para sinais compatíveis com TEA em crianças de 18 a 24 meses.",
-    }
-    return {
-        "id": instrument.id,
-        "code": instrument.code,
-        "name": instrument.name,
-        "category": instrument.category,
-        "version": instrument.version,
-        "description": descriptions.get(instrument.code, ""),
-        "is_active": instrument.is_active,
-        "min_age": age_rule.get("min_age"),
-        "max_age": age_rule.get("max_age"),
-        "age_message": age_rule.get("message", ""),
-    }
-
-
-def serialize_test_application(application):
-    patient = application.evaluation.patient if application.evaluation else None
-    return {
-        "id": application.id,
-        "evaluation_id": application.evaluation_id,
-        "patient_name": patient.full_name if patient else None,
-        "patient_sex": patient.sex if patient else None,
-        "patient_schooling": patient.schooling if patient else None,
-        "instrument_id": application.instrument_id,
-        "instrument_code": application.instrument.code,
-        "instrument_name": application.instrument.name,
-        "applied_on": application.applied_on,
-        "raw_payload": application.raw_payload or {},
-        "computed_payload": application.computed_payload or {},
-        "classified_payload": application.classified_payload or {},
-        "reviewed_payload": application.reviewed_payload or {},
-        "interpretation_text": application.interpretation_text or "",
-        "report_payload": TestReportPayloadService.build_for_application(application),
-        "is_validated": application.is_validated,
-        "status": application.status,
-        "status_display": application.get_status_display(),
-    }
-
-
 @router.get("/instruments", response=list[InstrumentOut], auth=bearer_auth)
 def list_instruments(request) -> list[dict]:
-    # Auto-seed essencial após reset de banco
-    required = [
-        {
-            "code": "bfp",
-            "name": "BFP - Bateria Fatorial de Personalidade",
-            "category": "Personalidade",
-        },
-        {
-            "code": "wasi",
-            "name": "WASI - Escala Wechsler Abreviada de Inteligência",
-            "category": "Inteligência",
-        },
-        {
-            "code": "scared",
-            "name": "SCARED - Screen for Child Anxiety",
-            "category": "Ansiedade",
-        },
-        {"code": "ravlt", "name": "RAVLT - Memória Auditiva", "category": "Memoria"},
-        {
-            "code": "srs2",
-            "name": "SRS-2 - Escala de Responsividade Social",
-            "category": "Social / Autismo",
-        },
-        {
-            "code": "bai",
-            "name": "BAI - Inventário de Ansiedade de Beck",
-            "category": "Ansiedade",
-        },
-        {
-            "code": "cars2_hf",
-            "name": "CARS2-HF - Childhood Autism Rating Scale – Second Edition, High Functioning Version",
-            "category": "Social / Autismo",
-        },
-        {
-            "code": "mchat",
-            "name": "M-CHAT - Modified Checklist for Autism in Toddlers",
-            "category": "Social / Autismo",
-        },
-    ]
-    for item in required:
-        Instrument.objects.get_or_create(
-            code=item["code"],
-            defaults={
-                "name": item["name"],
-                "category": item["category"],
-                "is_active": True,
-            },
-        )
-
+    ensure_required_instruments()
     return [serialize_instrument(item) for item in get_instruments()]
 
 
@@ -2379,6 +2217,68 @@ def cars2_hf_submit(request, payload: CARS2HFSubmitIn) -> tuple[int, dict]:
 
 
 # --- M-CHAT ---
+
+
+@router.post(
+    "/ssrs/submit",
+    response={200: dict, 400: MessageOut, 403: MessageOut, 404: MessageOut},
+    auth=bearer_auth,
+)
+def ssrs_submit(request, payload: SSRSSubmitIn) -> tuple[int, dict]:
+    from apps.tests.base.types import TestContext
+    from apps.tests.ssrs import SSRSModule
+    from apps.tests.models.instruments import Instrument
+    from apps.tests.models.applications import TestApplication
+
+    if not can_edit_tests(request.auth):
+        return 403, {"message": "Você não tem permissão para submeter testes."}
+
+    evaluation = Evaluation.objects.filter(id=payload.evaluation_id).first()
+    if not evaluation:
+        return 404, {"message": "Avaliação não encontrada."}
+
+    raw_scores = payload.model_dump(exclude={"evaluation_id", "applied_on"})
+    module = SSRSModule()
+    ctx = TestContext(
+        patient_name=evaluation.patient.full_name,
+        evaluation_id=evaluation.pk,
+        instrument_code="ssrs",
+        raw_scores=raw_scores,
+    )
+
+    errors = module.validate(ctx)
+    if errors:
+        return 400, {"message": "; ".join(errors)}
+
+    computed = module.compute(ctx)
+    classified = module.classify(computed, gender=payload.gender)
+    interpretation = module.interpret(ctx, classified)
+
+    instrument = Instrument.objects.filter(code="ssrs", is_active=True).first()
+    if not instrument:
+        return 404, {"message": "Instrumento SSRS não encontrado."}
+
+    reference_date = get_reference_date(evaluation, payload.applied_on)
+    application, _ = TestApplication.objects.get_or_create(
+        evaluation=evaluation,
+        instrument=instrument,
+        defaults={"applied_on": reference_date},
+    )
+
+    application.raw_payload = raw_scores
+    application.computed_payload = computed
+    application.classified_payload = classified
+    application.interpretation_text = interpretation
+    application.is_validated = True
+    application.applied_on = reference_date
+    application.save()
+
+    return 200, {
+        "application_id": application.pk,
+        "computed_payload": computed,
+        "classified_payload": classified,
+        "interpretation": interpretation,
+    }
 
 
 @router.post(

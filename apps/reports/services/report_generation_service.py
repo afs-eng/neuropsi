@@ -1,15 +1,11 @@
 import re
 
-from django.utils import timezone
-
-from apps.ai.services.ai_healthcheck_service import AIHealthcheckService
-from apps.evaluations.models import EvaluationStatus
-from apps.reports.models import Report, ReportSection, ReportStatus
+from apps.reports.models import Report
 from apps.reports.builders.references_builder import build_references_text
+from apps.reports.services.patient_identity_service import PatientIdentityService
 from apps.reports.services.report_ai_service import ReportAIService
 from apps.reports.services.report_context_service import ReportContextService
 from apps.reports.services.ptbr_text_service import PtBrTextService
-from apps.reports.services.report_review_service import ReportReviewService
 from apps.reports.services.wisc4_standardization import WISC4StandardizationService
 from apps.reports.services.wais3_standardization import WAIS3StandardizationService
 from apps.tests.srs2.interpreters import interpret_srs2_results
@@ -17,7 +13,6 @@ from apps.reports.services.section_registry import (
     get_section_config,
     list_section_configs,
 )
-from apps.reports.services.report_version_service import ReportVersionService
 
 
 class ReportGenerationService:
@@ -101,7 +96,6 @@ class ReportGenerationService:
     @classmethod
     def generate_full_report(cls, report: Report, user=None):
         context = cls.construct_clinical_context(report.evaluation)
-        sections_config = cls._enabled_sections_config(context)
         from apps.reports.services.report_pipeline_service import ReportPipelineService
 
         ReportPipelineService.generate_full_report(report, context, user=user)
@@ -538,57 +532,7 @@ class ReportGenerationService:
 
     @staticmethod
     def _foreign_patient_names_in_text(text: str | None, patient_name: str | None) -> list[str]:
-        patient_name = (patient_name or "").strip()
-        if not patient_name:
-            return []
-        allowed_tokens = {token for token in patient_name.split() if token}
-        technical_tokens = {
-            "Raciocínio", "Matricial", "Execução", "Tabela", "Rey", "Auditory", "Verbal",
-            "Learning", "Test", "Flexibilidade", "Cognitiva", "Big", "Five", "Interações",
-            "Sociais", "Espectro", "Autista", "Pontuação", "Total", "Vocabulário",
-            "Semelhanças", "Cubos", "Pânico", "Sintomas", "Somáticos", "Ansiedade",
-            "Generalizada", "Separação", "Fobia", "Social", "Evitação", "Escolar",
-            "Percepção", "Cognição", "Comunicação", "Motivação", "Realização", "Abertura",
-        }
-        ignored_names = {
-            patient_name,
-            "Conselho Federal",
-            "Microsoft Word",
-            "Escala Wechsler",
-            "Bateria Psicológica",
-            "Teste dos",
-            "Rey Auditory",
-            "Escala Baptista",
-            "Bateria Fatorial",
-            "Social Responsiveness",
-            "Screen for Child",
-            "Rey Auditory Verbal Learning Test",
-            "Raciocínio Matricial",
-            "Flexibilidade Cognitiva",
-            "Interações Sociais",
-            "Espectro Autista",
-            "Pontuação Total",
-            "Big Five",
-            "Execução Tabela",
-        }
-        candidates = re.findall(
-            r"\b[A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-záéíóúâêôãõç]+(?:\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-záéíóúâêôãõç]+)+\b",
-            text or "",
-        )
-        foreign_names = []
-        for name in candidates:
-            if name in ignored_names:
-                continue
-            words = name.split()
-            if len(words) < 2 or len(words) > 5:
-                continue
-            if all(word in technical_tokens for word in words):
-                continue
-            if name == patient_name or words[0] in allowed_tokens:
-                continue
-            if name not in foreign_names:
-                foreign_names.append(name)
-        return foreign_names
+        return PatientIdentityService.foreign_patient_names_in_text(text, patient_name)
 
     @classmethod
     def _section_text(cls, report: Report, key: str, context: dict) -> str:
@@ -777,7 +721,7 @@ class ReportGenerationService:
             f"As alterações identificadas repercutem funcionalmente sobre o contexto {context_target}, as interações sociais, a organização do comportamento e a adaptação às exigências ambientais, com intensidade dependente da complexidade das demandas e do nível de suporte disponível."
         )
         prognosis_sentence = (
-            f"O perfil apresentado sugere prognóstico dependente da articulação entre fatores de proteção, como recursos cognitivos preservados, possibilidade de intervenção precoce e suporte familiar/escolar, e fatores de risco, como persistência das vulnerabilidades identificadas, impacto emocional e sobrecarga adaptativa."
+            "O perfil apresentado sugere prognóstico dependente da articulação entre fatores de proteção, como recursos cognitivos preservados, possibilidade de intervenção precoce e suporte familiar/escolar, e fatores de risco, como persistência das vulnerabilidades identificadas, impacto emocional e sobrecarga adaptativa."
         )
         dynamic_sentence = (
             "Ressalta-se que o ser humano possui uma natureza dinâmica, não definitiva e não cristalizada, de modo que o funcionamento descrito refere-se ao momento atual da avaliação e pode modificar-se conforme desenvolvimento, intervenções, condições contextuais e resposta terapêutica."
@@ -817,7 +761,6 @@ class ReportGenerationService:
         )
         structured = wisc4_test.get("structured_results") or {}
         qit = structured.get("qit_data") or {}
-        indices = {item.get("indice"): item for item in structured.get("indices") or []}
 
         cognitive_text = cls._section_text(report, "capacidade_cognitiva_global", context)
         language_text = cls._section_text(report, "linguagem", context)

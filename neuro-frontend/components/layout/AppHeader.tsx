@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { NeuroavaliaLogo } from "@/components/brand/NeuroavaliaLogo";
+import { AuthUser, getStoredUser } from "@/lib/auth-user";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,19 +27,10 @@ import {
 
 export function AppHeader({ onToggleSidebar, isMobile }: { onToggleSidebar?: () => void; isMobile?: boolean }) {
   const router = useRouter();
-  const [user, setUser] = React.useState<any>(null);
+  const [user, setUser] = React.useState<AuthUser | null>(null);
 
   React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedUser = localStorage.getItem("user");
-      if (savedUser) {
-        try {
-          setUser(JSON.parse(savedUser));
-        } catch (e) {
-          console.error("Error parsing user data");
-        }
-      }
-    }
+    setUser(getStoredUser());
   }, []);
 
   const getUserInitials = () => {

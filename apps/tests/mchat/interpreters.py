@@ -7,7 +7,7 @@ def build_mchat_interpretation(computed_payload: dict, classification: dict) -> 
 
     parts = [
         f"No M-CHAT, observou-se {total_failures} falha(s) no total, sendo {critical_failures} em item(ns) crítico(s).",
-        f"O resultado indica {screen_result.lower()}.",
+        f"O resultado indica {screen_result}.",
     ]
 
     if failed_items:

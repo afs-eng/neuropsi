@@ -37,9 +37,11 @@ from apps.tests.norms.bai import get_norms_metadata, lookup_t_score
 from apps.tests.scared import SCAREDModule
 from apps.tests.scared.pdf_service import SCAREDPdfService
 from apps.tests.services.pdf_export_service import TestPdfExportService
+from apps.tests.ssrs import SSRSModule
 from apps.tests.srs2 import SRS2Module
 from apps.tests.srs2.interpreters import validate_srs2_interpretation
 from apps.tests.srs2.pdf_service import SRS2PdfService
+from apps.tests.ssrs.norms import format_percentile_range, percentile_for_score, percentile_range_for_score
 from apps.tests.wisc4 import WISC4Module
 from apps.tests.wisc4.calculators import _carregar_tabela_ncp, buscar_ponderado
 from apps.tests.wisc4.pdf_service import WISC4PdfService
@@ -67,6 +69,61 @@ class BAINormsTests(SimpleTestCase):
         self.assertEqual(metadata["age_range"], "18-90")
         self.assertEqual(metadata["fidedignidade"], 0.90)
         self.assertEqual(metadata["reliability"], 0.90)
+
+
+class SSRSModuleTests(SimpleTestCase):
+    def test_norms_match_excel_reference_edge_values(self):
+        self.assertEqual(percentile_for_score("crianca", "F", "social_skills", "f3", 12), 99)
+        self.assertEqual(percentile_for_score("professores", "F", "behavior_problems", "f3", 0), 35)
+
+    def test_percentile_range_preserves_repeated_normative_scores(self):
+        percentile_range = percentile_range_for_score("pais", "M", "social_skills", "f1", 4)
+
+        self.assertEqual(percentile_range, (45, 65))
+        self.assertEqual(format_percentile_range(percentile_range), "P45-P65")
+
+    def test_child_self_report_scores_and_classifies_social_skills(self):
+        module = SSRSModule()
+        ctx = TestContext(
+            patient_name="Paciente SSRS",
+            evaluation_id=1,
+            instrument_code="ssrs",
+            raw_scores={
+                "informant": "crianca",
+                "gender": "F",
+                "responses": {str(item): 2 for item in range(1, 21)},
+            },
+        )
+
+        self.assertEqual(module.validate(ctx), [])
+        computed = module.compute(ctx)
+        classified = module.classify(computed, gender="F")
+
+        total = next(row for row in classified["resultados"] if row["domain"] == "social_skills" and row["scale"] == "eg")
+        self.assertEqual(total["raw_score"], 40)
+        self.assertEqual(total["percentile"], 100)
+        self.assertEqual(total["percentile_label"], "P99-P100")
+        self.assertEqual(total["classification"], "Altamente elaborado")
+
+    def test_teacher_report_includes_behavior_and_academic_domains(self):
+        module = SSRSModule()
+        responses = {str(item): 2 for item in range(1, 39)}
+        responses.update({str(item): 5 for item in range(39, 48)})
+        ctx = TestContext(
+            patient_name="Paciente SSRS",
+            evaluation_id=1,
+            instrument_code="ssrs",
+            raw_scores={"informant": "professores", "gender": "M", "responses": responses},
+        )
+
+        computed = module.compute(ctx)
+        classified = module.classify(computed, gender="M")
+        domains = {row["domain"] for row in classified["resultados"]}
+        academic = next(row for row in classified["resultados"] if row["domain"] == "academic_competence" and row["scale"] == "eg")
+
+        self.assertEqual(domains, {"social_skills", "behavior_problems", "academic_competence"})
+        self.assertEqual(academic["raw_score"], 45)
+        self.assertEqual(academic["percentile"], 100)
 
 
 class BAIModuleTests(SimpleTestCase):

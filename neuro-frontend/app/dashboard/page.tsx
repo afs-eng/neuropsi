@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { PageContainer, PageHeader, SectionCard, StatCard } from "@/components/ui/page";
 import { Button } from "@/components/ui/button";
+import { AuthUser, getStoredUser } from "@/lib/auth-user";
 import { compareEvaluationsByDeadline, getEvaluationDeadlineMeta } from "@/lib/evaluation-deadline";
 import { 
   Users, 
@@ -62,18 +63,13 @@ function StatusBadge({ children }: { children: string }) {
 }
 
 export default function DashboardPage() {
-  const [user, setUser] = React.useState<any>(null);
+  const [user, setUser] = React.useState<AuthUser | null>(null);
   const [evaluations, setEvaluations] = React.useState<Evaluation[]>([]);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
     const initDashboard = async () => {
-      if (typeof window !== "undefined") {
-        const savedUser = localStorage.getItem("user");
-        if (savedUser) {
-          setUser(JSON.parse(savedUser));
-        }
-      }
+      setUser(getStoredUser());
 
       try {
         const { api } = await import("@/lib/api");

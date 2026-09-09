@@ -22,3 +22,4 @@ class TestsConfig(AppConfig):
         from apps.tests.scared import SCAREDModule  # noqa
         from apps.tests.cars2_hf import CARS2HFModule  # noqa
         from apps.tests.mchat import MCHATModule  # noqa
+        from apps.tests.ssrs import SSRSModule  # noqa

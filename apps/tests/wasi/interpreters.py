@@ -116,8 +116,6 @@ def build_wasi_interpretation(merged_data: dict, patient_name: str | None = None
     qie_data = composites.get("qi_execucao", {})
     qit4_data = composites.get("qit_4", {})
     qit2_data = composites.get("qit_2", {})
-    age = merged_data.get("age", {})
-
     qiv = qiv_data.get("qi")
     qie = qie_data.get("qi")
     qit = qit4_data.get("qi") or qit2_data.get("qi")
@@ -136,9 +134,9 @@ def build_wasi_interpretation(merged_data: dict, patient_name: str | None = None
 
     if not discrepancy_text and discrepancy["level"] != "sem discrepância clinicamente relevante":
         if discrepancy["stronger_domain"] == "verbal":
-            discrepancy_text = f"Observa-se, portanto, um perfil cognitivo heterogêneo, com desempenho relativamente mais preservado nas habilidades verbais quando comparado ao desempenho não verbal."
+            discrepancy_text = "Observa-se, portanto, um perfil cognitivo heterogêneo, com desempenho relativamente mais preservado nas habilidades verbais quando comparado ao desempenho não verbal."
         elif discrepancy["stronger_domain"] == "execução":
-            discrepancy_text = f"Observa-se, portanto, um perfil cognitivo heterogêneo, com desempenho relativamente mais preservado nas habilidades de execução quando comparado ao desempenho verbal."
+            discrepancy_text = "Observa-se, portanto, um perfil cognitivo heterogêneo, com desempenho relativamente mais preservado nas habilidades de execução quando comparado ao desempenho verbal."
         else:
             discrepancy_text = "Observa-se, portanto, um perfil cognitivo relativamente homogêneo entre os domínios verbal e de execução."
 
@@ -151,12 +149,10 @@ def build_wasi_interpretation(merged_data: dict, patient_name: str | None = None
         elif 70 <= qit <= 79:
             diagnostic_hypothesis = "Há hipótese diagnóstica de funcionamento intelectual limítrofe, a ser compreendida de forma integrada aos dados da anamnese, da funcionalidade adaptativa e das demais evidências clínicas."
 
-    age_text = f"{age.get('years', 0)} anos e {age.get('months', 0)} meses" if age else "idade informada"
-
     paragraphs = [
         f"A avaliação neuropsicológica de {name}, por meio da Escala Wechsler Abreviada de Inteligência – WASI, possibilitou a análise do funcionamento intelectual global e de domínios cognitivos centrais, oferecendo indicadores objetivos acerca de seu perfil intelectual.",
-        f"{name} obteve Quociente de Inteligência Verbal igual a {qiv}, classificado na faixa {qiv_classification}. {qiv_text}",
-        f"No Quociente de Inteligência de Execução, {name} obteve escore {qie}, classificado na faixa {qie_classification}. {qie_text}",
+        f"{name} obteve Quociente de Inteligência Verbal (QI Verbal) igual a {qiv}, classificado na faixa {qiv_classification}. {qiv_text}",
+        f"No Quociente de Inteligência de Execução (QI Execucao), {name} obteve escore {qie}, classificado na faixa {qie_classification}. {qie_text}",
         f"O Quociente de Inteligência Total foi {qit}, classificado na faixa {qit_classification}. {qit_text}",
     ]
 

@@ -79,6 +79,7 @@ def system_status(request, setup: bool = False):
                 {"code": "fdt", "name": "FDT", "category": "Funções Executivas"},
                 {"code": "ravlt", "name": "RAVLT", "category": "Memória"},
                 {"code": "srs2", "name": "SRS-2", "category": "Autismo"},
+                {"code": "ssrs", "name": "SSRS", "category": "Social / Comportamento"},
                 {"code": "wisc4", "name": "WISC-IV", "category": "Inteligência"},
                 {"code": "bpa2", "name": "BPA-2", "category": "Atenção"},
                 {"code": "ebadep_a", "name": "EBADEP-A", "category": "Depressão"},

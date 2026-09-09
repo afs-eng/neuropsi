@@ -46,6 +46,7 @@ class BFPModule(BaseTestModule):
             "factor_classifications": factor_classifications,
             "facet_classifications": facet_classifications,
             "highlights": highlights,
+            "interpretation": get_report_interpretation(computed_data),
         }
 
     def interpret(self, context: TestContext, merged_data: dict) -> str:

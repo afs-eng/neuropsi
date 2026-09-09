@@ -84,6 +84,13 @@ class Command(BaseCommand):
                 "version": "1.0",
                 "is_active": True,
             },
+            {
+                "code": "ssrs",
+                "name": "SSRS - Inventario de Habilidades Sociais, Problemas de Comportamento e Competencia Academica",
+                "category": "Social / Comportamento",
+                "version": "1.0",
+                "is_active": True,
+            },
         ]
 
         for inst in instrumentos:

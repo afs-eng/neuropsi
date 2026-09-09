@@ -5,7 +5,8 @@ from .loaders import load_cars2_hf_norms
 
 
 def calculate_raw_total(items: dict) -> float:
-    return round(sum(float(items[key]["score"]) for key, _ in ITEMS), 1)
+    total = sum(float(items[key]["score"]) for key, _ in ITEMS)
+    return float(int(total))
 
 
 def convert_raw_to_norms(raw_total: float) -> dict:

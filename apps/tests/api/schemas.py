@@ -241,6 +241,16 @@ class MCHATSubmitIn(Schema):
     items: dict[str, MCHATResponseItem]
 
 
+class SSRSSubmitIn(Schema):
+    evaluation_id: int
+    applied_on: Optional[date] = None
+    informant: str = "crianca"
+    gender: str = "F"
+    respondent_name: Optional[str] = None
+    responses: dict[str, int]
+    importance: Optional[dict[str, int]] = None
+
+
 # --- CARS2-HF ---
 
 
