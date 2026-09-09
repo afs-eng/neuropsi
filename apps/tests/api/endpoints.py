@@ -9,6 +9,7 @@ from apps.tests.models import Instrument
 from apps.tests.api.age_utils import (
     calcAge,
     calc_age_parts,
+    get_faixa_wisc,
     get_reference_date,
     validate_instrument_age,
 )
@@ -946,9 +947,12 @@ def wisc4_submit(request, payload: WISC4SubmitIn) -> tuple[int, dict]:
     )
 
     wisc_module = WISC4Module()
-    computed = wisc_module.compute(ctx)
-    classified = wisc_module.classify(computed, faixa="95")
-    interpretation = wisc_module.interpret(ctx, {**computed, **classified})
+    try:
+        computed = wisc_module.compute(ctx)
+        classified = wisc_module.classify(computed, faixa="95")
+        interpretation = wisc_module.interpret(ctx, {**computed, **classified})
+    except ValueError as exc:
+        return 400, {"message": str(exc)}
 
     instrument = Instrument.objects.filter(code="wisc4", is_active=True).first()
     if not instrument:

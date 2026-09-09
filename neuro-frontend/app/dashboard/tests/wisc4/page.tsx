@@ -161,7 +161,7 @@ function WISC4FormPageContent() {
       router.push(`/dashboard/tests/wisc4/${result.application_id}/result?evaluation_id=${evaluationId}`)
     } catch (error: any) {
       console.error('Erro completo:', error)
-      alert('Erro ao salvar. Ver console para detalhes.')
+      alert(error?.message || 'Erro ao salvar o WISC-IV.')
     }
   }
 
