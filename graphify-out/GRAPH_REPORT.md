@@ -1,11 +1,11 @@
 # Graph Report - neuropsi  (2026-09-09)
 
 ## Corpus Check
-- 743 files · ~916,847 words
+- 743 files · ~917,093 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 7126 nodes · 13094 edges · 215 communities detected
+- 7126 nodes · 13096 edges · 215 communities detected
 - Extraction: 72% EXTRACTED · 28% INFERRED · 0% AMBIGUOUS · INFERRED: 3719 edges (avg confidence: 0.72)
 - Token cost: 0 input · 0 output
 
@@ -254,11 +254,11 @@
 
 ### Community 0 - "Community 0"
 Cohesion: 0.01
-Nodes (369): gerar_grafico_bpa(), gerar_grafico_bpa_bytes(), _render_bpa_chart(), _calcular_idade(), calculate_factor_score(), compute_srs2_scores(), convert_response(), get_factor_name() (+361 more)
+Nodes (372): gerar_grafico_bpa(), gerar_grafico_bpa_bytes(), _render_bpa_chart(), _calcular_idade(), _carregar_tabela_ncp(), get_percentil_subteste(), Converte ponto ponderado (1-19) em percentil usando tabela normativa do WISC-IV., get_severity_level() (+364 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.02
-Nodes (189): get_instrument_age_rule(), calc_age_parts(), calcAge(), get_faixa_wisc(), get_reference_date(), validate_instrument_age(), create_test_application(), update_test_application() (+181 more)
+Nodes (185): get_instrument_age_rule(), calc_age_parts(), calcAge(), get_faixa_wisc(), get_reference_date(), validate_instrument_age(), create_test_application(), update_test_application() (+177 more)
 
 ### Community 2 - "Community 2"
 Cohesion: 0.02
@@ -282,31 +282,31 @@ Nodes (190): 10. CSS dos gráficos, 11. HTML correto para processos com e sem er
 
 ### Community 7 - "Community 7"
 Cohesion: 0.02
-Nodes (132): check(), ensure_available(), _timeout(), AILogService, log_generation_end(), log_generation_error(), log_generation_start(), build_anamnesis_snapshot() (+124 more)
+Nodes (133): check(), ensure_available(), _timeout(), AILogService, log_generation_end(), log_generation_error(), log_generation_start(), build_anamnesis_snapshot() (+125 more)
 
 ### Community 8 - "Community 8"
 Cohesion: 0.01
 Nodes (182): 10. I.P. – Índice de Interferência Proativa, 11. A6 – recuperação pós-interferência, 12. I.R. – Índice de Interferência Retroativa, 13. A7 – evocação tardia, retenção e consolidação, 14. Velocidade de esquecimento / Índice de retenção, 15. Reconhecimento verbal – R, 16. Discrepância entre A7 e R, 17. Análise qualitativa complementar (+174 more)
 
 ### Community 9 - "Community 9"
-Cohesion: 0.03
-Nodes (155): e(), build_js(), main(), merge(), Merge user data over defaults recursively for top-level keys., Retorna o código Node.js completo que gera o .docx., $(), A() (+147 more)
+Cohesion: 0.02
+Nodes (114): EvaluationAdmin, EvaluationDocumentAdmin, PatientAdmin, AIHealthcheckService, Patient, ReportStub, can_access_patient(), can_edit_patients() (+106 more)
 
 ### Community 10 - "Community 10"
 Cohesion: 0.03
-Nodes (110): EvaluationAdmin, EvaluationDocumentAdmin, PatientAdmin, AIHealthcheckService, Patient, ReportStub, can_access_patient(), can_edit_patients() (+102 more)
+Nodes (155): e(), build_js(), main(), merge(), Merge user data over defaults recursively for top-level keys., Retorna o código Node.js completo que gera o .docx., $(), A() (+147 more)
 
 ### Community 11 - "Community 11"
 Cohesion: 0.01
 Nodes (165): 10.1. Dados de entrada, 10.2. Texto-base, 10.3. Modelo interpretativo, 10. Módulo BPA-2, 11.1. Dados de entrada, 11.2. Texto-base, 11.3. Estrutura interpretativa obrigatória, 11.4. Fechamento clínico (+157 more)
 
 ### Community 12 - "Community 12"
-Cohesion: 0.07
-Nodes (96): _class(), _education_label(), _normative_label(), _num(), _build_user_prompt(), generate_for_application(), _parse_json_response(), _provider_configured() (+88 more)
+Cohesion: 0.03
+Nodes (124): _build_chart_series_item(), build_fdt_charts(), _build_scale_result(), calculate_derived_scores(), calculate_error_result(), calculate_fdt_results(), calculate_metric_result(), calculate_raw_scores() (+116 more)
 
 ### Community 13 - "Community 13"
-Cohesion: 0.03
-Nodes (101): _build_chart_series_item(), build_fdt_charts(), _build_scale_result(), calculate_derived_scores(), calculate_error_result(), calculate_fdt_results(), calculate_metric_result(), calculate_raw_scores() (+93 more)
+Cohesion: 0.07
+Nodes (96): _class(), _education_label(), _normative_label(), _num(), _build_user_prompt(), generate_for_application(), _parse_json_response(), _provider_configured() (+88 more)
 
 ### Community 14 - "Community 14"
 Cohesion: 0.02
@@ -314,15 +314,15 @@ Nodes (45): fetchAPI(), getToken(), resolveApiUrl(), stringifyApiError(), Boolea
 
 ### Community 15 - "Community 15"
 Cohesion: 0.04
-Nodes (104): BaseCommand, build_computed_payload(), calculate_raw_total(), convert_raw_to_norms(), get_highest_domains(), is_failure(), handleClick(), ready() (+96 more)
+Nodes (100): BaseCommand, handleClick(), ready(), Command, Management command to create an admin user from environment variables., Command, addCombinator(), addGetHookIf() (+92 more)
 
 ### Community 16 - "Community 16"
-Cohesion: 0.05
-Nodes (93): Meta, Status, TestApplication, TestApplicationQuerySet, ai_health(), Preview WAIS-III results without saving to database.          This endpoint is u, Preview WAIS-III results without saving to database.          This endpoint is u, Preview WAIS-III results without saving to database.          This endpoint is u (+85 more)
-
-### Community 17 - "Community 17"
 Cohesion: 0.02
 Nodes (110): 10.1 Velocidade de esquecimento, 10.2 I.P. – interferência proativa, 10.3 I.R. – interferência retroativa, 10. Regras para indicadores derivados, 11.1 Perfil globalmente preservado, 11.2 Perfil preservado com interferência rebaixada, 11.3 Perfil heterogêneo com Escore Total preservado e aprendizagem ao longo das tentativas rebaixada, 11.4 Perfil heterogêneo com retenção e reconhecimento preservados (+102 more)
+
+### Community 17 - "Community 17"
+Cohesion: 0.05
+Nodes (92): Meta, Status, TestApplication, TestApplicationQuerySet, Preview WAIS-III results without saving to database.          This endpoint is u, Preview WAIS-III results without saving to database.          This endpoint is u, Preview WAIS-III results without saving to database.          This endpoint is u, Preview WAIS-III results without saving to database.          This endpoint is u (+84 more)
 
 ### Community 18 - "Community 18"
 Cohesion: 0.04
@@ -341,16 +341,16 @@ Cohesion: 0.02
 Nodes (91): 10. Comparação entre discrepâncias dos índices, 11. Comparação entre discrepâncias dos subtestes, 12.1 Médias obrigatórias, 12.2 Qual média usar, 12.3 Fórmula, 12.4 Critério, 12.5 Frequência acumulada, 12. Determinação das Facilidades e Dificuldades (+83 more)
 
 ### Community 22 - "Community 22"
-Cohesion: 0.05
-Nodes (87): _ag_and_qualitative_paragraph(), _automatic_paragraph(), _available_core_indices(), build_gold_standard_interpretation(), build_report_intro(), build_wais3_interpretation(), build_wasi_interpretation(), _class_level() (+79 more)
-
-### Community 23 - "Community 23"
 Cohesion: 0.02
 Nodes (94): 1. Objetivo do mapeamento, 2.1 Título e abertura institucional, 2.2 Macroestrutura do laudo, 2.3 Texto institucional fixo, 2. Partes fixas do modelo, 3.1 Identificação, 3.2 Descrição da demanda, 3.3 Procedimentos (+86 more)
 
+### Community 23 - "Community 23"
+Cohesion: 0.04
+Nodes (67): _age_metric(), _b7_column_indexes(), _b8_column_name(), build_process_scores(), buscar_ponderado(), calculate_confidence_interval(), calculate_index_score(), calculate_qi_total() (+59 more)
+
 ### Community 24 - "Community 24"
 Cohesion: 0.04
-Nodes (68): _age_metric(), _b7_column_indexes(), _b8_column_name(), build_process_scores(), buscar_ponderado(), calculate_confidence_interval(), calculate_index_score(), calculate_qi_total() (+60 more)
+Nodes (52): build_computed_payload(), calculate_factor_score(), calculate_raw_total(), compute_srs2_scores(), convert_raw_to_norms(), convert_response(), get_factor_name(), get_highest_domains() (+44 more)
 
 ### Community 25 - "Community 25"
 Cohesion: 0.07
@@ -433,12 +433,12 @@ Cohesion: 0.06
 Nodes (34): 1. API JSON, 2. Telas Django server-rendered, Anamnese, API e Interfaces, `apps/documents/`, `apps/reports/`, Areas funcionais expostas, Artefatos operacionais (+26 more)
 
 ### Community 45 - "Community 45"
-Cohesion: 0.07
-Nodes (18): classify_srs2_scores(), _build_ravlt_chart_payload(), _first_name(), _format_score(), _ravlt_obtained_chart_values(), calc_weighted_score(), classify_by_percentile(), classify_tscore() (+10 more)
-
-### Community 46 - "Community 46"
 Cohesion: 0.06
 Nodes (32): 1.1 Criar Banco PostgreSQL no Render, 1.2 Criar Web Service (Backend), 1.3 Variáveis de Ambiente do Backend, 1.4 Executar comandos pós-deploy, 1.5 Verificar Health, 1. Backend no Render, 2.1 Configurar Projeto, 2.2 Variáveis de Ambiente do Frontend (+24 more)
+
+### Community 46 - "Community 46"
+Cohesion: 0.14
+Nodes (31): build_wais3_interpretation(), _classification_lower(), _cluster_analysis_text(), _cluster_comparison_text(), _cluster_inconsistency_reasons(), _cluster_metric_text(), _cluster_rows(), _directional_discrepancy_text() (+23 more)
 
 ### Community 47 - "Community 47"
 Cohesion: 0.1
@@ -501,8 +501,8 @@ Cohesion: 0.08
 Nodes (23): 1.1. Identificação do laudo:, 1.2. Identificação do Paciente:, ANÁLISE, ANÁLISE QUALITATIVA, BPA-2 Bateria Psicológica para Avaliação da Atenção, Conclusão, Considerações Finais, DESCRIÇÃO DA DEMANDA (+15 more)
 
 ### Community 62 - "Community 62"
-Cohesion: 0.15
-Nodes (10): compute_ssrs_importance(), compute_ssrs_scores(), _item_score(), _normalize_response(), classify_ssrs_scores(), interpret_percentile(), interpret_ssrs_results(), format_percentile_range() (+2 more)
+Cohesion: 0.13
+Nodes (11): compute_ssrs_importance(), compute_ssrs_scores(), _item_score(), _normalize_response(), classify_ssrs_scores(), interpret_percentile(), interpret_ssrs_results(), format_percentile_range() (+3 more)
 
 ### Community 63 - "Community 63"
 Cohesion: 0.1
@@ -593,32 +593,32 @@ Cohesion: 0.13
 Nodes (13): Adding a new icon, code:xml (<!--!Font Awesome Free 6.7.2 by @fontawesome - https://fonta), code:xml (<!--!Font Awesome Free X.Y.Z by @fontawesome - https://fonta), code:xml (<!--!Font Awesome Free 6.7.2 by @fontawesome - https://fonta), code:xml (<!--), code:xml (<svg width="13" height="13" xmlns="http://www.w3.org/2000/sv), Contributing SVG Icons, Example SVG Structure (+5 more)
 
 ### Community 85 - "Community 85"
-Cohesion: 0.17
-Nodes (1): TestEditPage()
+Cohesion: 0.18
+Nodes (5): compute_scared_scores(), classify_scared_scores(), normal_cdf(), percentil_para_classificacao(), validate_scared_input()
 
 ### Community 86 - "Community 86"
 Cohesion: 0.17
-Nodes (10): Clinical Box (após parágrafo 5), Estrutura Fixa da Interpretação Clínica (Seção 5), Parágrafo 1 — Perfil mnésico geral + aquisição + codificação, Parágrafo 2 — Curva de aprendizagem + Escore Total + ALT, Parágrafo 3 — Interferência (B1 e A6), Parágrafo 4 — Evocação tardia (A7) + Reconhecimento (R), Parágrafo 5 — Índices técnicos (I.P. e I.R.), Regras de Linguagem (Obrigatórias) (+2 more)
+Nodes (1): TestEditPage()
 
 ### Community 87 - "Community 87"
+Cohesion: 0.17
+Nodes (10): Clinical Box (após parágrafo 5), Estrutura Fixa da Interpretação Clínica (Seção 5), Parágrafo 1 — Perfil mnésico geral + aquisição + codificação, Parágrafo 2 — Curva de aprendizagem + Escore Total + ALT, Parágrafo 3 — Interferência (B1 e A6), Parágrafo 4 — Evocação tardia (A7) + Reconhecimento (R), Parágrafo 5 — Índices técnicos (I.P. e I.R.), Regras de Linguagem (Obrigatórias) (+2 more)
+
+### Community 88 - "Community 88"
 Cohesion: 0.18
 Nodes (9): code:text (apps/tests/), code:python (from apps.tests.bai import BAIModule), code:python (module = TEST_REGISTRY["BAI"]), code:python ({), Formato esperado do raw_payload, Integração rápida, Módulo BAI em Python para o sistema, O que este módulo entrega (+1 more)
 
-### Community 88 - "Community 88"
+### Community 89 - "Community 89"
 Cohesion: 0.2
 Nodes (1): Migration
 
-### Community 89 - "Community 89"
+### Community 90 - "Community 90"
 Cohesion: 0.2
 Nodes (9): ============================================================, ============================================================, code:bash (# 1. Copie o arquivo de exemplo), code:bash (# 1. Copie o arquivo de exemplo), code:bash (# Ver logs), Comandos Uteis, Desenvolvimento Local, NeuroAvalia — Docker Compose Instructions (+1 more)
 
-### Community 90 - "Community 90"
+### Community 91 - "Community 91"
 Cohesion: 0.33
 Nodes (4): handleSave(), handleScoreChange(), loadApplication(), normalizeScore()
-
-### Community 91 - "Community 91"
-Cohesion: 0.22
-Nodes (8): 14. CONCLUSÃO, 16. CONSIDERAÇÕES FINAIS, 17. REFERÊNCIAS BIBLIOGRÁFICAS, ANÁLISE, ANÁLISE QUALITATIVA, DESCRIÇÃO DA DEMANDA, IDENTIFICAÇÃO, PROCEDIMENTOS
 
 ### Community 92 - "Community 92"
 Cohesion: 0.22
@@ -633,24 +633,24 @@ Cohesion: 0.22
 Nodes (8): 14. CONCLUSÃO, 16. CONSIDERAÇÕES FINAIS, 17. REFERÊNCIAS BIBLIOGRÁFICAS, ANÁLISE, ANÁLISE QUALITATIVA, DESCRIÇÃO DA DEMANDA, IDENTIFICAÇÃO, PROCEDIMENTOS
 
 ### Community 95 - "Community 95"
-Cohesion: 0.25
-Nodes (4): getPrimaryTechnicalSummary(), getTestWorkflowMeta(), TestReportSummaryCard(), TestWorkflowBadge()
+Cohesion: 0.22
+Nodes (8): 14. CONCLUSÃO, 16. CONSIDERAÇÕES FINAIS, 17. REFERÊNCIAS BIBLIOGRÁFICAS, ANÁLISE, ANÁLISE QUALITATIVA, DESCRIÇÃO DA DEMANDA, IDENTIFICAÇÃO, PROCEDIMENTOS
 
 ### Community 96 - "Community 96"
 Cohesion: 0.25
-Nodes (1): loadResult()
+Nodes (4): getPrimaryTechnicalSummary(), getTestWorkflowMeta(), TestReportSummaryCard(), TestWorkflowBadge()
 
 ### Community 97 - "Community 97"
 Cohesion: 0.25
-Nodes (6): 1. Importando o Projeto na Vercel, 2. Configurações Iniciais da Build, 3. Configurando Variáveis de Ambiente, 4. O Lado do Django (Backend / Render), 5. Teste Prático, Guia Oficial de Deploy na Vercel (Frontend Next.js)
+Nodes (1): loadResult()
 
 ### Community 98 - "Community 98"
 Cohesion: 0.25
-Nodes (6): Arquivos neste diretório, Faixas de classificação atuais, Normas do BAI (Beck Anxiety Inventory), Notas para atualização futura, Referência, Status atual
+Nodes (6): 1. Importando o Projeto na Vercel, 2. Configurações Iniciais da Build, 3. Configurando Variáveis de Ambiente, 4. O Lado do Django (Backend / Render), 5. Teste Prático, Guia Oficial de Deploy na Vercel (Frontend Next.js)
 
 ### Community 99 - "Community 99"
-Cohesion: 0.48
-Nodes (5): handleSubmit(), loadInstruments(), normalizeTestCode(), todayIso(), toTestPath()
+Cohesion: 0.25
+Nodes (6): Arquivos neste diretório, Faixas de classificação atuais, Normas do BAI (Beck Anxiety Inventory), Notas para atualização futura, Referência, Status atual
 
 ### Community 100 - "Community 100"
 Cohesion: 0.29
@@ -1115,11 +1115,11 @@ Nodes (1): Preview WAIS-III results without saving to database.          This en
 ## Knowledge Gaps
 - **2180 isolated node(s):** `Run administrative tasks.`, `Send WhatsApp message via Evolution API if configured, otherwise return wa.me li`, `SchoolingLevel`, `Migration`, `Migration` (+2175 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **Thin community `Community 85`** (12 nodes): `page.tsx`, `page.tsx`, `page.tsx`, `page.tsx`, `page.tsx`, `page.tsx`, `page.tsx`, `page.tsx`, `page.tsx`, `page.tsx`, `page.tsx`, `TestEditPage()`
+- **Thin community `Community 86`** (12 nodes): `page.tsx`, `page.tsx`, `page.tsx`, `page.tsx`, `page.tsx`, `page.tsx`, `page.tsx`, `page.tsx`, `page.tsx`, `page.tsx`, `page.tsx`, `TestEditPage()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 88`** (10 nodes): `Migration`, `seed_templates()`, `0001_initial.py`, `0001_initial.py`, `0001_initial.py`, `0001_initial.py`, `0001_initial.py`, `0001_initial.py`, `0001_initial.py`, `0001_initial.py`
+- **Thin community `Community 89`** (10 nodes): `Migration`, `seed_templates()`, `0001_initial.py`, `0001_initial.py`, `0001_initial.py`, `0001_initial.py`, `0001_initial.py`, `0001_initial.py`, `0001_initial.py`, `0001_initial.py`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 96`** (8 nodes): `page.tsx`, `page.tsx`, `classificationStyle()`, `displayClassification()`, `formatValue()`, `loadResult()`, `PercentileBars()`, `scaleLabel()`
+- **Thin community `Community 97`** (8 nodes): `page.tsx`, `page.tsx`, `classificationStyle()`, `displayClassification()`, `formatValue()`, `loadResult()`, `PercentileBars()`, `scaleLabel()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 - **Thin community `Community 100`** (7 nodes): `env_bool()`, `env_list()`, `Base Django settings shared across environments.`, `base.py`, `production.py`, `_append_unique()`, `_hostname_from_url()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
@@ -1345,9 +1345,9 @@ Nodes (1): Preview WAIS-III results without saving to database.          This en
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `GET()` connect `Community 0` to `Community 1`, `Community 2`, `Community 4`, `Community 7`, `Community 9`, `Community 10`, `Community 12`, `Community 13`, `Community 14`, `Community 15`, `Community 18`, `Community 22`, `Community 24`, `Community 25`, `Community 26`, `Community 39`, `Community 45`, `Community 62`, `Community 66`, `Community 90`, `Community 99`?**
+- **Why does `GET()` connect `Community 0` to `Community 1`, `Community 2`, `Community 4`, `Community 7`, `Community 9`, `Community 10`, `Community 12`, `Community 13`, `Community 14`, `Community 15`, `Community 18`, `Community 23`, `Community 24`, `Community 25`, `Community 26`, `Community 39`, `Community 46`, `Community 62`, `Community 66`, `Community 85`, `Community 91`?**
   _High betweenness centrality (0.149) - this node is a cross-community bridge._
-- **Why does `split()` connect `Community 0` to `Community 1`, `Community 2`, `Community 4`, `Community 7`, `Community 9`, `Community 10`, `Community 12`, `Community 13`, `Community 14`, `Community 15`, `Community 18`, `Community 22`, `Community 24`, `Community 26`, `Community 39`, `Community 45`, `Community 47`, `Community 66`, `Community 100`, `Community 101`?**
+- **Why does `split()` connect `Community 0` to `Community 1`, `Community 2`, `Community 4`, `Community 7`, `Community 9`, `Community 10`, `Community 12`, `Community 13`, `Community 14`, `Community 15`, `Community 18`, `Community 23`, `Community 24`, `Community 26`, `Community 39`, `Community 46`, `Community 47`, `Community 66`, `Community 100`, `Community 101`?**
   _High betweenness centrality (0.014) - this node is a cross-community bridge._
 - **Why does `SKILL — Geração de PDF Padrão Ouro via HTML + Playwright` connect `Community 28` to `Community 15`?**
   _High betweenness centrality (0.010) - this node is a cross-community bridge._

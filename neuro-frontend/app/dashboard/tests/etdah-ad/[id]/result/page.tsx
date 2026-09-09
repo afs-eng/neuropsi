@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { printCurrentPage } from '@/lib/print'
 import { TestReportSummaryCard } from '@/components/tests/TestReportSummaryCard'
+import { getToken, resolveApiUrl } from '@/lib/api'
 
 const FACTOR_NAMES: Record<string, string> = {
   D: "Fator 1 - Desatenção (D)",
@@ -37,6 +37,7 @@ export default function ETDAHADResultPage() {
   const params = useParams()
   const [result, setResult] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [exportingPdf, setExportingPdf] = useState(false)
 
   useEffect(() => {
     const fetchResult = async () => {
@@ -54,6 +55,37 @@ export default function ETDAHADResultPage() {
       fetchResult()
     }
   }, [params.id])
+
+  const handleExportPdf = async () => {
+    if (!params.id || exportingPdf) return
+    setExportingPdf(true)
+    try {
+      const token = getToken() || ''
+      const response = await fetch(resolveApiUrl(`/api/tests/applications/${params.id}/export-pdf`), {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        cache: 'no-store',
+      })
+
+      if (!response.ok) {
+        let message = `Falha ao gerar PDF (${response.status})`
+        try {
+          const payload = await response.json()
+          if (payload?.message) message = `${message}: ${payload.message}`
+        } catch {}
+        throw new Error(message)
+      }
+
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      window.open(url, '_blank', 'noopener,noreferrer')
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
+    } catch (error: any) {
+      console.error(error)
+      alert(error?.message || 'Não foi possível gerar o PDF do E-TDAH-AD.')
+    } finally {
+      setExportingPdf(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -130,8 +162,8 @@ export default function ETDAHADResultPage() {
               <Link href={`/dashboard/tests/etdah-ad?evaluation_id=${result.evaluation_id}&application_id=${params.id}&edit=true`} className="rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50">
                 Editar
               </Link>
-              <button onClick={printCurrentPage} className="rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm">
-                Imprimir / PDF
+              <button onClick={handleExportPdf} disabled={exportingPdf} className="rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm disabled:cursor-not-allowed disabled:opacity-60">
+                {exportingPdf ? 'Gerando PDF...' : 'Imprimir / PDF'}
               </button>
               <Link href={`/dashboard/evaluations/${result.evaluation_id}?tab=overview`} className="rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white shadow-lg">
                 Voltar
