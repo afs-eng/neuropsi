@@ -1,8 +1,8 @@
+import re
 from typing import Any, Dict
 
 
 CLINICAL_DIFFICULTY = {"Média Superior", "Superior"}
-NON_CLINICAL = {"Inferior", "Média Inferior", "Média"}
 
 FACTOR_ORDER = ["fator_1", "fator_2", "fator_3", "fator_4", "escore_geral"]
 
@@ -98,102 +98,49 @@ def _classification_text(result: dict) -> str:
 
 def _percentile_text(result: dict) -> str:
     text = str(result.get("percentile_text") or "")
-    return text.replace("Percentil ", "").replace("percentil ", "") or "-"
+    return _single_percentile(text)
 
 
-def _severity_text(classification: str) -> str:
-    if classification == "Superior":
-        return "prejuízo clínico grave"
-    if classification == "Média Superior":
-        return "prejuízo clínico moderado"
-    return "ausência de prejuízo clínico significativo"
+def _single_percentile(value) -> str:
+    text = str(value or "-").replace("Percentil ", "").replace("percentil ", "").strip()
+    numbers = [float(match.replace(",", ".")) for match in re.findall(r"\d+(?:[\.,]\d+)?", text)]
+    if not numbers:
+        return text or "-"
+    if len(numbers) >= 2:
+        number = sum(numbers[:2]) / 2
+    else:
+        number = numbers[0]
+    return str(int(number)) if number.is_integer() else f"{number:.1f}".replace(".", ",")
 
 
 def _factor_paragraph(factor_key: str, result: dict) -> str:
     classification = _classification_text(result)
     percentile = _percentile_text(result)
+    elevated = _is_clinical(classification)
 
     if factor_key == "fator_1":
-        if classification == "Superior":
-            body = (
-                "indica presença significativa de dificuldades na modulação das emoções, com maior reatividade emocional, baixa tolerância à frustração e dificuldade em manejar respostas emocionais de forma adaptativa. "
-                "Esse resultado sugere prejuízo clínico grave nesse domínio, com impacto na autorregulação, no comportamento cotidiano e na adaptação às demandas do ambiente."
-            )
-        elif classification == "Média Superior":
-            body = (
-                "sugere dificuldades moderadas na modulação emocional, com tendência à maior sensibilidade a frustrações, oscilação afetiva e dificuldade em regular respostas emocionais diante de demandas ambientais. "
-                "Esse padrão indica prejuízo clínico moderado, devendo ser compreendido em conjunto com a observação clínica e os demais dados da avaliação."
-            )
-        else:
-            body = (
-                f"indica funcionamento dentro dos limites esperados, sem evidências de prejuízo clínico significativo nesse domínio segundo a percepção dos responsáveis. "
-                f"Esse resultado sugere {_severity_text(classification)} em regulação emocional."
-            )
+        body = "O achado descreve manifestações observadas pelos responsáveis relacionadas à modulação emocional, reatividade afetiva e manejo de frustrações no cotidiano."
+        if elevated:
+            body += " Observa-se elevação de indicadores relacionados à regulação emocional em comparação ao grupo normativo."
     elif factor_key == "fator_2":
-        if classification == "Superior":
-            body = (
-                "indica presença significativa de sintomas relacionados à agitação motora, impulsividade e dificuldade de inibir respostas comportamentais. "
-                "Esse padrão sugere prejuízo clínico grave, com possível impacto na convivência familiar, no cumprimento de regras, na permanência em atividades e na adaptação a contextos que exigem autocontrole."
-            )
-        elif classification == "Média Superior":
-            body = (
-                "sugere presença moderada de comportamentos associados à impulsividade e à inquietação motora, podendo envolver dificuldade de aguardar, tendência a agir antes de pensar e necessidade aumentada de movimento. "
-                "Esse resultado indica prejuízo clínico moderado nesse domínio."
-            )
-        else:
-            body = (
-                "indica ausência de prejuízos significativos relacionados à agitação motora excessiva ou impulsividade comportamental, sugerindo que esses sintomas não se apresentam de forma clinicamente relevante no contexto avaliado."
-            )
+        body = "O fator reúne manifestações percebidas pelos responsáveis relativas à inquietação, atividade motora, respostas imediatas e manejo comportamental diante de situações que exigem inibição."
+        if elevated:
+            body += " O resultado aponta elevação de indicadores relacionados à hiperatividade/impulsividade segundo a percepção dos responsáveis."
     elif factor_key == "fator_3":
-        if classification == "Superior":
-            body = (
-                "indica prejuízo grave na adaptação comportamental, com dificuldades importantes no cumprimento de regras, organização das condutas, adequação às demandas ambientais e manutenção de comportamentos funcionais no cotidiano. "
-                "Esse resultado sugere impacto clínico relevante na autonomia, na convivência familiar e na adaptação social."
-            )
-        elif classification == "Média Superior":
-            body = (
-                "aponta dificuldades importantes na adaptação comportamental, incluindo desafios no cumprimento de regras, organização do comportamento e adequação às exigências do ambiente, configurando prejuízo clínico moderado nesse domínio."
-            )
-        else:
-            body = (
-                f"sugere funcionamento adaptativo dentro dos limites esperados, sem evidências de prejuízo clínico significativo nesse domínio segundo a percepção dos responsáveis."
-            )
+        body = "O fator contempla indicadores de comportamento adaptativo observados no contexto familiar e cotidiano, conforme a direção normativa da escala."
+        if elevated:
+            body += " O resultado indica elevação de manifestações nesse domínio em relação ao grupo normativo, devendo ser interpretado com atenção à direção dos itens e ao contexto informante."
     elif factor_key == "fator_4":
-        if classification == "Superior":
-            body = (
-                "indica presença significativa de dificuldades atencionais, com prejuízo grave na manutenção do foco, na persistência em tarefas, na organização das atividades e na resistência à distração. "
-                "Esse resultado sugere impacto funcional relevante no cotidiano e deve ser integrado aos achados objetivos das testagens neuropsicológicas."
-            )
-        elif classification == "Média Superior":
-            body = (
-                "sugere dificuldades moderadas relacionadas à manutenção do foco, organização atencional e persistência em tarefas. "
-                "Esse padrão indica prejuízo clínico moderado, especialmente em atividades que exigem continuidade, autonomia e controle voluntário da atenção."
-            )
-        else:
-            body = (
-                "indica funcionamento dentro da normalidade, sem evidências de prejuízo clínico significativo segundo a percepção dos responsáveis, embora esse resultado deva ser analisado em conjunto com os achados objetivos das testagens neuropsicológicas."
-            )
+        body = "O achado descreve manifestações relacionadas à manutenção do foco, organização atencional, persistência em tarefas e resistência à distração segundo a percepção dos responsáveis."
+        if elevated:
+            body += " O resultado indica elevação de indicadores relacionados à atenção em comparação ao grupo normativo."
     else:
-        if classification == "Superior":
-            body = (
-                "sugere prejuízo comportamental global grave, com impacto clinicamente significativo em múltiplos domínios avaliados. "
-                "Esse padrão indica necessidade de análise integrada quanto à presença de sintomas compatíveis com TDAH, dificuldades de autorregulação emocional, prejuízos adaptativos e repercussões funcionais no cotidiano."
-            )
-        elif classification == "Média Superior":
-            body = (
-                "sugere prejuízo comportamental global moderado, com presença de dificuldades clinicamente relevantes em parte dos domínios avaliados. "
-                "Esse resultado indica necessidade de investigação integrada, especialmente quando houver convergência com queixas da anamnese, observação clínica e testes de atenção ou funções executivas."
-            )
-        else:
-            body = (
-                f"sugere funcionamento comportamental global dentro dos limites esperados, podendo coexistir com prejuízos específicos em fatores isolados. "
-                f"Nesses casos, a interpretação deve destacar os domínios clinicamente elevados, quando houver, e evitar concluir que há prejuízo global quando o escore total não estiver elevado."
-            )
+        body = "O escore geral sintetiza os indicadores comportamentais informados pelos responsáveis, mas não deve ser convertido automaticamente em diagnóstico, prejuízo funcional ou apresentação clínica do TDAH."
 
     prefix = FACTOR_LABELS[factor_key]
     if factor_key == "escore_geral":
-        return f"{prefix}: classificado como {classification} (percentil {percentile}), {body}"
-    return f"No {prefix}, o desempenho classificado como {classification} (percentil {percentile}) {body}"
+        return f"{prefix}: o resultado situou-se no percentil {percentile}, classificado como {classification}. {body}"
+    return f"No {prefix}, o resultado situou-se no percentil {percentile}, classificado como {classification}. {body} O resultado deve ser integrado à anamnese, observação clínica, funcionamento em diferentes contextos e demais instrumentos utilizados."
 
 
 def _elevated_domains(results: Dict[str, Any]) -> list[str]:
@@ -214,53 +161,23 @@ def _joined(items: list[str]) -> str:
 
 def _analysis_text(name: str, results: Dict[str, Any]) -> str:
     elevated = _elevated_domains(results)
-    global_elevated = _is_clinical(results["escore_geral"].get("classification", ""))
 
     if not elevated:
         return (
-            f"Em análise clínica, os resultados do E-TDAH-PAIS indicam que {name} apresenta funcionamento comportamental globalmente dentro dos limites esperados nos domínios avaliados, sem evidências de prejuízo clinicamente relevante em regulação emocional, hiperatividade/impulsividade, comportamento adaptativo ou atenção. O perfil sugere preservação funcional segundo a percepção dos responsáveis, devendo ser compreendido de forma integrada aos dados cognitivos, atencionais, executivos, emocionais e comportamentais obtidos ao longo da avaliação neuropsicológica."
+            "Em análise clínica, o perfil obtido no E-TDAH-PAIS não apresentou elevações normativas nos fatores investigados. Esse achado descreve indicadores comportamentais informados pelos responsáveis e deve ser compreendido de forma integrada aos dados cognitivos, atencionais, executivos, emocionais, comportamentais e contextuais obtidos ao longo da avaliação."
         )
 
     joined = _joined(elevated)
-    if global_elevated:
-        synthesis = f"prejuízos comportamentais clinicamente relevantes, com maior comprometimento em {joined}"
-        profile = "um padrão mais disseminado de dificuldades, com impacto funcional mais amplo no cotidiano"
-    else:
-        synthesis = f"prejuízos específicos, com maior comprometimento em {joined}, sem configuração de comprometimento global amplo"
-        profile = "um padrão focal de dificuldades, com repercussões mais localizadas e dependentes do contexto"
+    remaining = [DOMAIN_NAMES[key] for key in ["fator_1", "fator_2", "fator_3", "fator_4"] if DOMAIN_NAMES[key] not in elevated]
+    remaining_text = _joined(remaining) if remaining else "os demais domínios"
 
     return (
-        f"Em análise clínica, os resultados do E-TDAH-PAIS indicam que {name} apresenta {synthesis}. O perfil sugere {profile}, devendo ser compreendido de forma integrada aos dados cognitivos, atencionais, executivos, emocionais e comportamentais obtidos ao longo da avaliação neuropsicológica."
+        f"Em análise clínica, o perfil obtido caracteriza-se principalmente por elevação nos fatores {joined}, enquanto {remaining_text} não apresentaram elevação equivalente. Esse padrão sugere concentração dos indicadores comportamentais em determinados domínios, não devendo ser interpretado isoladamente como definição diagnóstica ou apresentação clínica do TDAH."
     )
 
 
 def _hypothesis_text(results: Dict[str, Any]) -> str:
-    attention = _is_clinical(results["fator_4"].get("classification", ""))
-    hyperactivity = _is_clinical(results["fator_2"].get("classification", ""))
-    emotion = _is_clinical(results["fator_1"].get("classification", ""))
-    adaptive = _is_clinical(results["fator_3"].get("classification", ""))
-
-    if attention and hyperactivity:
-        return (
-            "Há hipótese diagnóstica de Transtorno do Déficit de Atenção e Hiperatividade, apresentação combinada, conforme critérios do DSM-5-TR, desde que os achados sejam convergentes com a anamnese, observação clínica, prejuízo funcional e demais instrumentos aplicados."
-        )
-
-    if attention:
-        return (
-            "Há hipótese diagnóstica de Transtorno do Déficit de Atenção e Hiperatividade, apresentação predominantemente desatenta, conforme critérios do DSM-5-TR, desde que haja convergência com os demais dados clínicos e funcionais da avaliação."
-        )
-
-    if hyperactivity:
-        return (
-            "Há hipótese diagnóstica de Transtorno do Déficit de Atenção e Hiperatividade, apresentação predominantemente hiperativa/impulsiva, conforme critérios do DSM-5-TR, desde que os sintomas estejam presentes em diferentes contextos e com prejuízo funcional clinicamente significativo."
-        )
-
-    if emotion and adaptive and not attention and not hyperactivity:
-        return (
-            "Os resultados indicam prejuízos emocionais e adaptativos relevantes, sem configuração suficiente, pelo E-TDAH-PAIS isoladamente, de perfil típico de TDAH. Recomenda-se análise integrada com os demais instrumentos, especialmente medidas de ansiedade, humor, responsividade social, funções executivas e dados da anamnese."
-        )
-
-    return ""
+    return "Os resultados constituem indicadores comportamentais derivados do instrumento e devem ser integrados aos demais dados do processo avaliativo. Isoladamente, a E-TDAH-PAIS não estabelece diagnóstico nem determina a apresentação clínica do TDAH."
 
 
 def generate_report(raw_scores: Dict[str, int], age: int, sex: str, patient_name: str | None = None) -> str:
@@ -268,7 +185,7 @@ def generate_report(raw_scores: Dict[str, int], age: int, sex: str, patient_name
     first_name = _first_name(patient_name)
 
     paragraphs = [
-        f"Interpretação e Observações Clínicas: A avaliação comportamental de {first_name} por meio da Escala E-TDAH-PAIS permitiu investigar aspectos relacionados à regulação emocional, hiperatividade/impulsividade, comportamento adaptativo e atenção, a partir da percepção dos responsáveis, fornecendo subsídios para a compreensão do funcionamento comportamental no contexto familiar e cotidiano.",
+        f"Interpretação e Observações Clínicas: A avaliação comportamental de {first_name} por meio da Escala E-TDAH-PAIS permitiu investigar indicadores relacionados à regulação emocional, hiperatividade/impulsividade, comportamento adaptativo e atenção a partir da percepção dos responsáveis. Os resultados descrevem manifestações observadas no contexto deste instrumento e devem ser integrados às demais fontes do processo avaliativo.",
     ]
 
     for key in FACTOR_ORDER:

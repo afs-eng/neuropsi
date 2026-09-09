@@ -1432,8 +1432,10 @@ class ETDAHPAISModuleTests(SimpleTestCase):
         interpretation = module.interpret(context, merged_data)
 
         self.assertIn("Fator 1 — Regulação Emocional", interpretation)
-        self.assertIn("funcionamento dentro dos limites esperados", interpretation)
+        self.assertIn("indicadores comportamentais informados pelos responsáveis", interpretation)
         self.assertEqual(interpretation.count("Em análise clínica"), 1)
+        self.assertNotIn("prejuízo grave", interpretation)
+        self.assertNotIn("Há hipótese diagnóstica", interpretation)
 
     def test_focal_elevation_is_described_without_automatic_diagnostic_hypothesis(self):
         module = ETDAHPAISModule()
@@ -1463,8 +1465,10 @@ class ETDAHPAISModuleTests(SimpleTestCase):
 
         self.assertIn("Fator 2 — Hiperatividade/Impulsividade", interpretation)
         self.assertIn("Fator 4 — Atenção", interpretation)
-        self.assertIn("sem configuração de comprometimento global amplo", interpretation)
-        self.assertIn("Há hipótese diagnóstica de Transtorno do Déficit de Atenção e Hiperatividade, apresentação combinada", interpretation)
+        self.assertIn("não devendo ser interpretado isoladamente como definição diagnóstica", interpretation)
+        self.assertIn("Isoladamente, a E-TDAH-PAIS não estabelece diagnóstico", interpretation)
+        self.assertNotIn("prejuízo grave", interpretation)
+        self.assertNotIn("Há hipótese diagnóstica", interpretation)
 
 
 class ETDAHADModuleTests(SimpleTestCase):
@@ -1594,8 +1598,10 @@ class ETDAHADModuleTests(SimpleTestCase):
         interpretation = module.interpret(context, merged_data)
 
         self.assertIn("Fator 1 — Desatenção", interpretation)
-        self.assertIn("funcionamento dentro dos limites esperados", interpretation)
+        self.assertIn("indicadores comportamentais derivados do instrumento", interpretation)
         self.assertEqual(interpretation.count("Em análise integrada"), 1)
+        self.assertNotIn("prejuízo grave", interpretation)
+        self.assertNotIn("há hipótese diagnóstica", interpretation.lower())
 
     def test_elevated_domains_are_summarized_without_automatic_diagnostic_hypothesis(self):
         module = ETDAHADModule()
@@ -1624,7 +1630,11 @@ class ETDAHADModuleTests(SimpleTestCase):
         self.assertIn("Fator 1 — Desatenção", interpretation)
         self.assertIn("Fator 4 — Autorregulação da Atenção, Motivação e Ação", interpretation)
         self.assertIn("Em análise integrada", interpretation)
-        self.assertIn("há hipótese diagnóstica de Transtorno do Déficit de Atenção e Hiperatividade (TDAH), apresentação combinada", interpretation)
+        self.assertIn("Isoladamente, a E-TDAH-AD não estabelece diagnóstico", interpretation)
+        self.assertNotIn("prejuízo grave", interpretation)
+        self.assertNotIn("há hipótese diagnóstica", interpretation.lower())
+        self.assertNotIn(">", interpretation)
+        self.assertNotIn("<", interpretation)
 
 
 class EBADEPAPdfServiceTests(SimpleTestCase):
