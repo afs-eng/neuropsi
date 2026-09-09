@@ -24,6 +24,7 @@ from apps.tests.etdah_pais import ETDAHPAISModule
 from apps.tests.ebadep_a.pdf_service import EBADEPAPdfService
 from apps.tests.epq_j import EPQJModule
 from apps.tests.epq_j.calculators import calcular_escore
+from apps.tests.epq_j.pdf_service import EPQJPdfService
 from apps.tests.fdt import FDTModule
 from apps.tests.fdt.pdf_service import FDTPdfService
 from apps.tests.ravlt.pdf_service import RAVLTPdfService
@@ -2159,6 +2160,92 @@ class EPQJModuleTests(SimpleTestCase):
         self.assertIn("O fator Sinceridade apresentou classificação médio (percentil 30)", interpretation)
         self.assertIn("Em análise clínica", interpretation)
         self.assertIn("Análise Clínica:", interpretation)
+
+    def test_pdf_context_uses_bpa2_model_structure_values(self):
+        application = SimpleNamespace(
+            id=42,
+            pk=42,
+            applied_on=date(2026, 9, 9),
+            raw_payload={"sexo": "F"},
+            computed_payload={},
+            classified_payload={
+                "sexo": "F",
+                "fatores": {
+                    "P": {"escore": 2, "percentil": 40, "classificacao": "MEDIO"},
+                    "E": {"escore": 12, "percentil": 90, "classificacao": "ALTO"},
+                    "N": {"escore": 6, "percentil": 20, "classificacao": "BAIXO"},
+                    "S": {"escore": 8, "percentil": 30, "classificacao": "MEDIO"},
+                },
+            },
+            interpretation_text="Interpretação clínica do EPQ-J.",
+            evaluation=SimpleNamespace(
+                examiner=None,
+                patient=SimpleNamespace(
+                    full_name="Maria da Silva",
+                    sex="F",
+                    birth_date=date(2014, 9, 9),
+                    schooling="elementary",
+                    age=12,
+                ),
+            ),
+        )
+
+        context = EPQJPdfService._build_context(application)
+
+        self.assertEqual(context["codigo_avaliado"], "AVL-042")
+        self.assertEqual(context["codigo_relatorio"], "RPT-EPQJ-042")
+        self.assertEqual(context["tabela_normativa"], "Feminino / 10 a 16 anos")
+        self.assertEqual(context["rows"][1]["label"], "Extroversão - E")
+        self.assertEqual(context["rows"][1]["badge_class"], "alto")
+
+    @patch("apps.tests.services.pdf_export_service.EPQJPdfService.generate_pdf_bytes")
+    def test_pdf_export_service_routes_epq_j(self, mock_generate):
+        mock_generate.return_value = b"%PDF-epq-j"
+        application = SimpleNamespace(instrument=SimpleNamespace(code="epq_j"))
+
+        payload = TestPdfExportService.build_pdf_bytes(application)
+
+        self.assertEqual(payload, b"%PDF-epq-j")
+        mock_generate.assert_called_once_with(application)
+
+    @patch("apps.tests.epq_j.pdf_service.generate_pdf_from_html")
+    def test_pdf_service_renders_template(self, mock_generate):
+        mock_generate.return_value = b"%PDF-epq-j"
+        application = SimpleNamespace(
+            id=42,
+            pk=42,
+            applied_on=date(2026, 9, 9),
+            raw_payload={"sexo": "F"},
+            computed_payload={},
+            classified_payload={
+                "sexo": "F",
+                "fatores": {
+                    "P": {"escore": 2, "percentil": 40, "classificacao": "MEDIO"},
+                    "E": {"escore": 12, "percentil": 90, "classificacao": "ALTO"},
+                    "N": {"escore": 6, "percentil": 20, "classificacao": "BAIXO"},
+                    "S": {"escore": 8, "percentil": 30, "classificacao": "MEDIO"},
+                },
+            },
+            interpretation_text="Interpretação clínica do EPQ-J.",
+            evaluation=SimpleNamespace(
+                examiner=None,
+                patient=SimpleNamespace(
+                    full_name="Maria da Silva",
+                    sex="F",
+                    birth_date=date(2014, 9, 9),
+                    schooling="elementary",
+                    age=12,
+                ),
+            ),
+        )
+
+        payload = EPQJPdfService.generate_pdf_bytes(application)
+
+        self.assertEqual(payload, b"%PDF-epq-j")
+        rendered_html = mock_generate.call_args.args[0]
+        self.assertIn("EPQ-J", rendered_html)
+        self.assertIn("Gráfico de Desempenho", rendered_html)
+        self.assertIn("RPT-EPQJ-042", rendered_html)
 
 
 class BFPModuleTests(SimpleTestCase):

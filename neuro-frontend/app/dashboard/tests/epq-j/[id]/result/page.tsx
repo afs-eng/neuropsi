@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, Printer, Edit, LayoutDashboard } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { api } from "@/lib/api";
+import { api, getToken, resolveApiUrl } from "@/lib/api";
 import { printCurrentPage } from "@/lib/print";
 import { TestReportSummaryCard } from "@/components/tests/TestReportSummaryCard";
 
@@ -83,6 +83,7 @@ function EPQJResultPageContent() {
   const [evaluationId, setEvaluationId] = useState(searchParams.get("evaluation_id") || "");
   const [application, setApplication] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [exportingPdf, setExportingPdf] = useState(false);
 
   const nome = searchParams.get("nome") || "";
   const sexo = application?.computed_payload?.sexo || application?.classified_payload?.sexo || searchParams.get("sexo") || "M";
@@ -179,6 +180,37 @@ function EPQJResultPageContent() {
     return evaluationId ? `/dashboard/evaluations/${evaluationId}?tab=overview` : "/dashboard/evaluations?tab=overview";
   }, [evaluationId]);
 
+  const handleExportPdf = async () => {
+    if (!params.id || exportingPdf) return;
+    setExportingPdf(true);
+    try {
+      const token = getToken() || "";
+      const response = await fetch(resolveApiUrl(`/api/tests/applications/${params.id}/export-pdf`), {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        let message = `Falha ao gerar PDF (${response.status})`;
+        try {
+          const payload = await response.json();
+          if (payload?.message) message = `${message}: ${payload.message}`;
+        } catch {}
+        throw new Error(message);
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (error: any) {
+      console.error(error);
+      alert(error?.message || "Não foi possível gerar o PDF do EPQ-J.");
+    } finally {
+      setExportingPdf(false);
+    }
+  };
+
   if (loading && !application) {
     return <div className="py-16 text-center text-slate-500">Carregando resultado...</div>;
   }
@@ -212,9 +244,9 @@ function EPQJResultPageContent() {
             <Printer className="h-4 w-4" />
             Imprimir
           </Button>
-          <Button className="rounded-xl gap-2" onClick={printCurrentPage}>
+          <Button className="rounded-xl gap-2" onClick={handleExportPdf} disabled={exportingPdf}>
             <Download className="h-4 w-4" />
-            Salvar em PDF
+            {exportingPdf ? "Gerando PDF..." : "Salvar em PDF"}
           </Button>
         </div>
       </div>

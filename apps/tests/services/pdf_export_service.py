@@ -11,6 +11,7 @@ from apps.tests.bpa2.pdf_service import BPA2PdfService
 from apps.tests.bfp.config import FACTOR_DEFINITIONS, FACET_DEFINITIONS, SAMPLE_LABELS
 from apps.tests.bfp.interpreters import build_bfp_interpretation_payload
 from apps.tests.ebadep_a.pdf_service import EBADEPAPdfService
+from apps.tests.epq_j.pdf_service import EPQJPdfService
 from apps.tests.fdt.pdf_service import FDTPdfService
 from apps.tests.ravlt.pdf_service import RAVLTPdfService
 from apps.tests.scared.pdf_service import SCAREDPdfService
@@ -62,6 +63,14 @@ class BPA2PdfExporter(BaseTestPdfExporter):
     @classmethod
     def build_pdf_bytes(cls, application) -> bytes:
         return BPA2PdfService.generate_pdf_bytes(application)
+
+
+class EPQJPdfExporter(BaseTestPdfExporter):
+    instrument_code = "epq_j"
+
+    @classmethod
+    def build_pdf_bytes(cls, application) -> bytes:
+        return EPQJPdfService.generate_pdf_bytes(application)
 
 
 class BFPPdfExporter(BaseTestPdfExporter):
@@ -455,6 +464,7 @@ class TestPdfExportService:
     EXPORTERS: dict[str, type[BaseTestPdfExporter]] = {
         BPA2PdfExporter.instrument_code: BPA2PdfExporter,
         EBADEPAPdfExporter.instrument_code: EBADEPAPdfExporter,
+        EPQJPdfExporter.instrument_code: EPQJPdfExporter,
         FDTPdfExporter.instrument_code: FDTPdfExporter,
         BFPPdfExporter.instrument_code: BFPPdfExporter,
         RAVLTPdfExporter.instrument_code: RAVLTPdfExporter,
