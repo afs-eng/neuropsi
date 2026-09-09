@@ -54,3 +54,5 @@ tmp/
 # .agent/
 # .opencode/
 # .qwen/
+.vercel
+.env*
