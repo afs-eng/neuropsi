@@ -1,4 +1,5 @@
 import hashlib
+import re
 from django.contrib.auth.models import AbstractUser
 
 from django.db import models
@@ -71,13 +72,7 @@ class User(AbstractUser):
         first_name = name_parts[0] if name_parts else self.username
 
         # Clean name from existing Dr/Dra (case insensitive)
-        clean_name = (
-            first_name.replace("Dr.", "")
-            .replace("Dra.", "")
-            .replace("Dr", "")
-            .replace("Dra", "")
-            .strip()
-        )
+        clean_name = re.sub(r"^(dr\.|dra\.|dr|dra)\s*", "", first_name, flags=re.IGNORECASE).strip()
 
         prefix = "Dra. " if self.sex == "F" else "Dr. "
         return f"{prefix}{clean_name}"

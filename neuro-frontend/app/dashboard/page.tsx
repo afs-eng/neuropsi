@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { PageContainer, PageHeader, SectionCard, StatCard } from "@/components/ui/page";
 import { Button } from "@/components/ui/button";
-import { AuthUser, getStoredUser } from "@/lib/auth-user";
+import { AuthUser, getStoredUser, professionalDisplayName } from "@/lib/auth-user";
 import { compareEvaluationsByDeadline, getEvaluationDeadlineMeta } from "@/lib/evaluation-deadline";
 import { 
   Users, 
@@ -92,11 +92,7 @@ export default function DashboardPage() {
 
   const getGreeting = () => {
     if (!user) return "Bem-vindo(a) de volta.";
-    const rawName = user.full_name || user.username || "Profissional";
-    const cleanName = rawName.replace(/^(Dr\.|Dra\.|Dr|Dra)\s+/i, "").trim();
-    const firstName = cleanName.split(/\s+/)[0];
-    const isFemale = user.sex === "F" || (firstName.toLowerCase().endsWith("a") && !["luca", "joshua"].includes(firstName.toLowerCase()));
-    return `Bem-vindo(a) de volta, ${isFemale ? "Dra. " : "Dr. "}${firstName}.`;
+    return `Bem-vindo(a) de volta, ${professionalDisplayName(user)}.`;
   };
 
   const dashboardStats = [

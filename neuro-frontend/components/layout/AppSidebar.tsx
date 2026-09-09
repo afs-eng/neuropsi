@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { NeuroavaliaLogo } from "@/components/brand/NeuroavaliaLogo";
-import { AuthUser, getStoredUser } from "@/lib/auth-user";
+import { AuthUser, getStoredUser, professionalDisplayName, professionalSpecialty, professionalTitle } from "@/lib/auth-user";
 import {
   LayoutDashboard,
   Users,
@@ -68,23 +68,11 @@ export function AppSidebar({
   }, []);
 
   const getUserInitials = (userObj: AuthUser | null) => {
-    if (!userObj) return "Dr.";
-    const rawName = userObj.full_name || userObj.username || "Profissional";
-    const cleanName = rawName.replace(/^(Dr\.|Dra\.|Dr|Dra)\s+/i, "").trim();
-    const firstName = cleanName.split(/\s+/)[0];
-    const isFemale = userObj.sex === "F" || 
-                     (firstName.toLowerCase().endsWith("a") && !["luca", "joshua"].includes(firstName.toLowerCase()));
-    return isFemale ? "Dra." : "Dr.";
+    return professionalTitle(userObj);
   };
 
   const getDisplayName = () => {
-    if (!user) return "Dr. André";
-    if (user.display_name) return user.display_name;
-    const rawName = user.full_name || user.username || "Profissional";
-    const cleanName = rawName.replace(/^(Dr\.|Dra\.|Dr|Dra)\s+/i, "").trim();
-    const firstName = cleanName.split(/\s+/)[0];
-    const isFemale = user.sex === "F" || (firstName.toLowerCase().endsWith("a") && !["luca", "joshua"].includes(firstName.toLowerCase()));
-    return `${isFemale ? "Dra. " : "Dr. "}${firstName}`;
+    return professionalDisplayName(user, "Dr. André");
   };
 
   const handleLogout = () => {
@@ -155,7 +143,7 @@ export function AppSidebar({
           {!collapsed && (
             <div className="flex-1 min-w-0">
               <p className="truncate text-sm font-bold text-slate-900">{getDisplayName()}</p>
-              <p className="truncate text-[11px] font-medium text-slate-500 uppercase tracking-wider">{user?.specialty || "Neuropsicólogo"}</p>
+              <p className="truncate text-[11px] font-medium text-slate-500 uppercase tracking-wider">{professionalSpecialty(user)}</p>
             </div>
           )}
           {!collapsed && (

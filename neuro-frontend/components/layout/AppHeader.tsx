@@ -15,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { NeuroavaliaLogo } from "@/components/brand/NeuroavaliaLogo";
-import { AuthUser, getStoredUser } from "@/lib/auth-user";
+import { AuthUser, getStoredUser, professionalDisplayName, professionalSpecialty } from "@/lib/auth-user";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,12 +44,12 @@ export function AppHeader({ onToggleSidebar, isMobile }: { onToggleSidebar?: () 
 
   const getDisplayName = () => {
     if (!user) return "Profissional";
-    return user.full_name || user.username || "Profissional";
+    return professionalDisplayName(user);
   };
 
   const getRole = () => {
     if (!user) return "";
-    return user.role || user.specialty || "Neuropsicólogo";
+    return user.role || professionalSpecialty(user);
   };
 
   const handleLogout = () => {
