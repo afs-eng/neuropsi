@@ -14,6 +14,7 @@ export default function RegisterPage() {
     username: "",
     email: "",
     password: "",
+    sex: "F",
     phone: "",
     crp: "",
     specialty: "",
@@ -24,7 +25,7 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -201,6 +202,21 @@ export default function RegisterPage() {
                   className="h-11 pl-10"
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Sexo</label>
+              <select
+                name="sex"
+                value={formData.sex}
+                onChange={handleChange}
+                className="h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 shadow-sm outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                required
+              >
+                <option value="F">Feminino</option>
+                <option value="M">Masculino</option>
+                <option value="O">Outro</option>
+              </select>
             </div>
 
             <div className="space-y-2">
