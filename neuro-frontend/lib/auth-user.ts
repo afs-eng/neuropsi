@@ -26,7 +26,22 @@ export function getStoredUser(): AuthUser | null {
 }
 
 export function isFemaleUser(user: AuthUser | null): boolean {
-  return user?.sex === "F";
+  if (!user) {
+    return false;
+  }
+
+  const sex = (user.sex || "").trim().toLowerCase();
+  if (["f", "feminino", "female", "mulher"].includes(sex)) {
+    return true;
+  }
+
+  const displayName = (user.display_name || user.full_name || "").trim().toLowerCase();
+  if (/^dra\.?\s/.test(displayName)) {
+    return true;
+  }
+
+  const specialty = (user.specialty || "").trim().toLowerCase();
+  return /neuropsic[oó]loga/.test(specialty);
 }
 
 export function cleanProfessionalName(name?: string): string {
