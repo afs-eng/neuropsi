@@ -488,13 +488,15 @@
       </tbody>
     </table>
 
-    <h2>Interpretação dos resultados</h2>
+    <h2>Interpretação do resultado</h2>
     <p>{{ patient_name }} foi submetido(a) à EBADEP-A e obteve pontuação bruta total de <strong>{{ score }}</strong> ponto(s), correspondente ao percentil <strong>{{ percentile }}</strong>.</p>
     <p>{{ interpretation_text }}</p>
-    {% if clinical_alert %}<div class="note-box alert-box">{{ clinical_alert }}</div>{% endif %}
+
+    <h2 style="margin-top: 10mm;">Análise integrada</h2>
+    <p>{{ integrated_analysis }}</p>
 
     <h2 style="margin-top: 10mm;">Síntese interpretativa</h2>
-    <div class="note-box">O resultado é descrito como {{ synthesis }}. A leitura clínica deve considerar que a EBADEP-A é um instrumento de rastreio e deve ser integrada aos demais dados do processo avaliativo.</div>
+    <div class="note-box">{{ synthesis }}</div>
 
     {% if critical_items %}
     <h2 style="margin-top: 10mm;">Itens de atenção</h2>

@@ -8,7 +8,7 @@ from django.template import Context, engines
 from apps.tests.services.playwright_pdf_service import generate_pdf_from_html
 
 from .config import ITEM_LABELS
-from .interpreters import get_report_interpretation
+from .interpreters import build_pdf_interpretation
 
 
 class EBADEPAPdfService:
@@ -37,7 +37,7 @@ class EBADEPAPdfService:
         percentile = classified.get("percentil", "—")
         classification = classified.get("classificacao") or "Não classificado"
         patient_name = getattr(patient, "full_name", None) or "Não informado"
-        interpretation_text = get_report_interpretation(classification, patient_name)
+        interpretation = build_pdf_interpretation(score, percentile, classification, patient_name)
 
         return {
             "application": application,
@@ -58,9 +58,10 @@ class EBADEPAPdfService:
             "percentile": percentile,
             "classification": classification,
             "classification_level": cls._classification_level(classification),
-            "interpretation_text": interpretation_text,
-            "clinical_alert": cls._clinical_alert(classification),
-            "synthesis": classified.get("sintese") or "não classificado",
+            "interpretation_text": interpretation["factor_interpretation"],
+            "integrated_analysis": interpretation["integrated_analysis"],
+            "clinical_alert": "",
+            "synthesis": interpretation["synthesis"],
             "critical_items": cls._critical_items(classified),
             "response_rows": cls._response_rows(classified, raw_payload),
         }

@@ -1681,7 +1681,10 @@ class EBADEPAPdfServiceTests(SimpleTestCase):
         self.assertEqual(context["patient_schooling"], "Ensino superior completo")
         self.assertEqual(context["classification_level"], "moderate")
         self.assertEqual(context["response_rows"][0]["cells"][0]["item"], "001")
-        self.assertTrue(context["clinical_alert"])
+        self.assertFalse(context["clinical_alert"])
+        self.assertIn("classificação normativa Sintomatologia Depressiva Moderada", context["integrated_analysis"])
+        self.assertNotIn("demais fatores", context["integrated_analysis"])
+        self.assertIn("indicador psicométrico", context["synthesis"])
 
     def test_render_template_uses_neuroavalia_wais3_layout(self):
         rendered = EBADEPAPdfService._render_html(self._application_fixture())
@@ -1693,6 +1696,10 @@ class EBADEPAPdfServiceTests(SimpleTestCase):
         self.assertIn("Avaliado Teste", rendered)
         self.assertIn("Página 4 de 4", rendered)
         self.assertIn("Sintomatologia Depressiva Moderada", rendered)
+        self.assertIn("Análise integrada", rendered)
+        self.assertIn("Síntese interpretativa", rendered)
+        self.assertNotIn("observou-se elevação em Fator", rendered)
+        self.assertNotIn("limitações funcionais são significativas", rendered)
         self.assertIn("Registro de respostas", rendered)
         self.assertNotIn("Nome do Avaliado", rendered)
 
