@@ -325,8 +325,8 @@
     .response-table td { border: 1px solid #d8e2e8; padding: 2mm 1.4mm; text-align: center; }
     .response-table .item { font-weight: 800; color: var(--azul-profundo); background: #f6fafc; }
     .response-table .critical { background: #fff1f2; color: #a61b1b; font-weight: 800; }
-    .critical-list { display: flex; flex-wrap: wrap; gap: 2mm; margin-top: 4mm; }
-    .critical-item { border: 1px solid #fecdd3; background: #fff1f2; color: #9f1239; padding: 2mm 3mm; border-radius: 4mm; font: 700 8pt Arial, Helvetica, sans-serif; }
+    .critical-list { display: flex; flex-direction: column; align-items: flex-start; gap: 2mm; margin-top: 4mm; }
+    .critical-item { border: 1px solid #fecdd3; background: #fff1f2; color: #9f1239; padding: 2mm 3mm; border-radius: 4mm; font: 700 8pt Arial, Helvetica, sans-serif; page-break-inside: avoid; break-inside: avoid; }
   </style>
 </head>
 
@@ -498,16 +498,30 @@
     <h2 style="margin-top: 10mm;">Síntese interpretativa</h2>
     <div class="note-box">{{ synthesis }}</div>
 
-    {% if critical_items %}
-    <h2 style="margin-top: 10mm;">Itens de atenção</h2>
+    <div class="footer" aria-label="Rodapé Neuroavalia"><div class="footer-logo">Neuro<span>avalia</span></div><div class="footer-right">Página 3 de {{ page_count }}</div></div>
+  </section>
+
+  {% if critical_items %}
+  <section class="page">
+    <div class="report-header">
+      <div class="report-header-gradient"></div>
+      <div class="report-header-logo">Neuro<span>avalia</span></div>
+      <div class="meta">
+        <span>Código do Avaliado</span><strong>{{ application_code }}</strong>
+        <span>Código do Relatório</span><strong>{{ report_code }}</strong>
+        <span>Data da Aplicação</span><strong>{{ applied_on }}</strong>
+      </div>
+    </div>
+
+    <h1>Itens de atenção</h1>
     <p>Itens com pontuação máxima registrada no protocolo:</p>
     <div class="critical-list">
       {% for item in critical_items %}<span class="critical-item">Item {{ item.item }} · {{ item.label }}</span>{% endfor %}
     </div>
-    {% endif %}
 
-    <div class="footer" aria-label="Rodapé Neuroavalia"><div class="footer-logo">Neuro<span>avalia</span></div><div class="footer-right">Página 3 de {{ page_count }}</div></div>
+    <div class="footer" aria-label="Rodapé Neuroavalia"><div class="footer-logo">Neuro<span>avalia</span></div><div class="footer-right">Página {{ critical_page_number }} de {{ page_count }}</div></div>
   </section>
+  {% endif %}
 
   <section class="page">
     <div class="report-header">
@@ -538,7 +552,7 @@
       </tbody>
     </table>
 
-    <div class="footer" aria-label="Rodapé Neuroavalia"><div class="footer-logo">Neuro<span>avalia</span></div><div class="footer-right">Página 4 de {{ page_count }}</div></div>
+    <div class="footer" aria-label="Rodapé Neuroavalia"><div class="footer-logo">Neuro<span>avalia</span></div><div class="footer-right">Página {{ response_page_number }} de {{ page_count }}</div></div>
   </section>
 </body>
 

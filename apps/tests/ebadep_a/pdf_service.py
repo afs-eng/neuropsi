@@ -39,11 +39,16 @@ class EBADEPAPdfService:
         patient_name = getattr(patient, "full_name", None) or "Não informado"
         interpretation = build_pdf_interpretation(score, percentile, classification, patient_name)
 
+        critical_items = cls._critical_items(classified)
+        page_count = 5 if critical_items else 4
+
         return {
             "application": application,
             "application_code": cls._application_code(application),
             "report_code": cls._report_code(application),
-            "page_count": 4,
+            "page_count": page_count,
+            "critical_page_number": 4,
+            "response_page_number": 5 if critical_items else 4,
             "patient_name": patient_name,
             "patient_cpf": getattr(patient, "cpf", None) or "—",
             "patient_sex": cls._sex_label(getattr(patient, "sex", None)),
@@ -62,7 +67,7 @@ class EBADEPAPdfService:
             "integrated_analysis": interpretation["integrated_analysis"],
             "clinical_alert": "",
             "synthesis": interpretation["synthesis"],
-            "critical_items": cls._critical_items(classified),
+            "critical_items": critical_items,
             "response_rows": cls._response_rows(classified, raw_payload),
         }
 
