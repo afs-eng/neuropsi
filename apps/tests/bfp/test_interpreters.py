@@ -78,18 +78,23 @@ def test_build_bfp_interpretation_includes_all_available_facets_and_cautions():
 
     text = build_bfp_interpretation(payload, patient_name="Leticia Bolonha Lucati")
 
-    assert "Leticia apresentou elevação em Neuroticismo" in text
-    assert "Depressão: O resultado em faixa Muito Superior sugere" in text
+    assert text.startswith("INTERPRETAÇÃO DOS RESULTADOS")
+    assert "\n\nNeuroticismo\n\n" in text
+    assert "O resultado em Neuroticismo situa-se em faixa Superior" in text
+    assert "Depressão em faixa Muito Superior" in text
     assert "exigindo investigação específica" in text
     assert "sem concluir comportamento antissocial ou ausência de ética" in text
     assert "sem inferência política, religiosa ou ideológica" in text
     assert "SÍNTESE INTEGRATIVA" in text
+    assert "Síntese dos resultados" not in text
+    assert "INTERPRETAÇÃO CLÍNICA" not in text
     assert "diagnóstico" in text
     assert "escore" not in text.lower()
     assert "percentil" not in text.lower()
     assert "Análise intrafator" not in text
     assert "Análise interfatores" not in text
     assert "A faceta apresentou" not in text
+    assert "Depressão:" not in text
     assert "a maior" not in text
     assert "a menor" not in text
 

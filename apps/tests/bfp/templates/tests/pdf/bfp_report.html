@@ -431,21 +431,6 @@
       widows: 2;
     }
 
-    .clinical .facet-note {
-      margin-left: 0;
-      color: #000;
-      font-size: 12pt;
-      page-break-inside: avoid;
-      break-inside: avoid;
-    }
-
-    .clinical .facet-note strong {
-      color: #000;
-      font-family: "Times New Roman", Times, serif;
-      font-size: 12pt;
-      font-weight: 700;
-    }
-
     .clinical .synthesis-title {
       margin: 18pt 0 6pt;
       padding-top: 8pt;
@@ -604,16 +589,11 @@
   </section>
 
   <section class="page clinical">
-    <span class="tiny-title">Interpretação clínica</span>
-    <h2>Síntese dos resultados</h2>
-    <p>A Bateria Fatorial de Personalidade permite compreender tendências relativamente estáveis do funcionamento emocional, interpessoal, motivacional e comportamental. Os resultados devem ser interpretados em conjunto com entrevista clínica, observação comportamental e demais instrumentos utilizados.</p>
+    <h2>INTERPRETAÇÃO DOS RESULTADOS</h2>
     {% for item in factor_interpretations %}
       <div class="factor-block">
         <h3>{{ item.title }}</h3>
         <p>{{ item.text }}</p>
-        {% for facet in item.facets %}
-          <p class="facet-note"><strong>{{ facet.label }}:</strong> {{ facet.body }}</p>
-        {% endfor %}
       </div>
     {% endfor %}
     {% if synthesis_paragraphs %}

@@ -57,7 +57,7 @@ _FACET_MEANINGS = {
     },
     "N3": {
         "elevado": "maior passividade subjetiva, menor energia percebida e possível dificuldade para iniciar ou sustentar ações",
-        "reduzido": "menor expressão de passividade, com tendência a maior iniciativa e prontidão para agir",
+        "reduzido": "menor expressão de passividade, com tendência de iniciativa e prontidão para agir mais preservadas",
         "medio": "energia e iniciativa autorrelatadas dentro do esperado",
     },
     "N4": {
@@ -184,6 +184,15 @@ def _interpret_facet(facet_result: dict) -> str:
     return f"{name}: O resultado em faixa {classification} sugere {meaning}."
 
 
+def _facet_clause(facet: dict) -> str:
+    code = facet.get("code")
+    name = facet.get("name") or FACET_DEFINITIONS.get(code, {}).get("name") or code
+    classification = facet.get("classification") or "classificação não informada"
+    level = _domain_level(facet)
+    meaning = _FACET_MEANINGS.get(code, {}).get(level) or "resultado a ser integrado aos demais achados"
+    return f"{name} em faixa {classification}, relacionada ao seguinte padrão: {meaning}"
+
+
 def _relevant_factors(factors: dict) -> list[dict]:
     return [
         result
@@ -237,6 +246,33 @@ def _build_intrafactor_analysis(factor_code: str, factor_result: dict, facets: d
     )
 
 
+def _build_factor_paragraph(factor_code: str, factor_result: dict, facets: dict) -> str:
+    factor_name = factor_result.get("name") or FACTOR_DEFINITIONS[factor_code]["name"]
+    classification = factor_result.get("classification") or "classificação não informada"
+    level = _domain_level(factor_result)
+    factor_meaning = _FACTOR_MEANINGS.get(factor_code, {}).get(level) or "resultado a ser integrado aos demais achados"
+    available_facets = [facets[code] for code in FACTOR_DEFINITIONS[factor_code]["facets"] if code in facets]
+    salient_facets = [facet for facet in available_facets if _domain_level(facet) != "medio"]
+    facets_to_describe = salient_facets or available_facets[:2]
+    facet_text = "; ".join(_facet_clause(facet) for facet in facets_to_describe)
+    intrafactor = _build_intrafactor_analysis(factor_code, factor_result, facets)
+
+    parts = [
+        f"O resultado em {factor_name} situa-se em faixa {classification}, sugerindo {factor_meaning}.",
+    ]
+    if facet_text:
+        parts.append(f"Na composição do fator, destacam-se {facet_text}.")
+    if intrafactor:
+        parts.append(intrafactor)
+    if factor_code == "NN":
+        parts.append("Esses indicadores representam características dimensionais de personalidade e, isoladamente, não configuram condição psicopatológica.")
+    if factor_code == "SS":
+        parts.append("Esse achado deve ser compreendido de forma dimensional, sem implicar, isoladamente, inadequação ética ou comportamento antissocial.")
+    if factor_code == "AA":
+        parts.append("A faceta Liberalismo é interpretada apenas no sentido psicológico avaliado pela BFP, sem inferências políticas, religiosas ou ideológicas.")
+    return " ".join(parts)
+
+
 def _build_synthesis_paragraphs(factors: dict, facets: dict) -> list[str]:
     notes: list[str] = []
     nn = _factor_result(factors, "NN")
@@ -247,15 +283,15 @@ def _build_synthesis_paragraphs(factors: dict, facets: dict) -> list[str]:
 
     if _domain_level(nn) == "elevado" and _domain_level(rr) == "reduzido":
         notes.append(
-            "maior responsividade emocional associada a menor orientação para organização, persistência ou autorregulação de metas"
+            "maior responsividade emocional associada à redução na orientação para organização, persistência ou autorregulação de metas"
         )
     if _domain_level(nn) == "elevado" and _domain_level(ee) == "reduzido":
         notes.append(
-            "maior sensibilidade emocional combinada a menor exposição interpessoal ou menor busca espontânea por contato social"
+            "maior sensibilidade emocional combinada à redução da exposição interpessoal ou da busca espontânea por contato social"
         )
     if _domain_level(ss) == "reduzido" and _domain_level(nn) == "elevado":
         notes.append(
-            "menor abertura cooperativa ou interpessoal combinada a maior reatividade emocional em contextos relacionais"
+            "menor abertura cooperativa ou interpessoal combinada à elevação da reatividade emocional em contextos relacionais"
         )
     if _domain_level(rr) == "reduzido":
         notes.append(
@@ -279,7 +315,7 @@ def _build_synthesis_paragraphs(factors: dict, facets: dict) -> list[str]:
     if not notes:
         return [
             "O conjunto dos resultados sugere funcionamento emocional, interpessoal, motivacional e de abertura à experiência globalmente compatível com a amostra normativa. Nesse contexto, não se observam contrastes fatoriais amplos que modifiquem de modo expressivo a leitura clínica geral do perfil.",
-            "A comunicação, a interação social, a orientação para metas e a tomada de decisão devem ser compreendidas a partir da relação entre fatores e facetas, pois a BFP descreve tendências dimensionais e não sintomas. A interpretação ganha maior precisão quando articulada à entrevista clínica, à observação comportamental e aos demais instrumentos utilizados.",
+            "A comunicação, a interação social, a orientação para metas e a tomada de decisão devem ser compreendidas a partir da relação entre fatores e facetas, pois a BFP descreve tendências dimensionais e não sintomas. A interpretação torna-se mais precisa quando articulada à entrevista clínica, à observação comportamental e aos demais instrumentos utilizados.",
         ]
 
     if len(notes) == 1:
@@ -324,11 +360,7 @@ def build_bfp_interpretation_payload(merged_data: dict, patient_name: str | None
     for code in FACTOR_DEFINITIONS:
         if code not in factors:
             continue
-        parts = [_interpret_factor(factors[code])]
-        intrafactor = _build_intrafactor_analysis(code, factors[code], facets)
-        if intrafactor:
-            parts.append(intrafactor)
-        factor_texts[code] = "\n\n".join(parts)
+        factor_texts[code] = _build_factor_paragraph(code, factors[code], facets)
 
     facet_texts = {
         code: _interpret_facet(facets[code])
@@ -351,23 +383,14 @@ def build_bfp_interpretation_payload(merged_data: dict, patient_name: str | None
 
 def build_bfp_interpretation(merged_data: dict, patient_name: str | None = None) -> str:
     payload = build_bfp_interpretation_payload(merged_data, patient_name=patient_name)
-    sample_label = payload.get("sample_label", "Geral")
-    paragraphs = [
-        f"A Bateria Fatorial de Personalidade (BFP) foi utilizada para investigar traços dimensionais de personalidade com base no modelo dos Cinco Grandes Fatores. A correção foi realizada com base na amostra {sample_label.lower()}, e a leitura clínica abaixo considera as classificações normativas apresentadas na tabela de resultados.",
-        payload["summary"],
-    ]
+    paragraphs = ["INTERPRETAÇÃO DOS RESULTADOS"]
 
     factor_texts = payload.get("factors", {})
-    facet_texts = payload.get("facets", {})
     for code in FACTOR_DEFINITIONS:
         if code not in factor_texts:
             continue
+        paragraphs.append(FACTOR_DEFINITIONS[code]["name"])
         paragraphs.append(factor_texts[code])
-        paragraphs.extend(
-            facet_texts[facet_code]
-            for facet_code in FACTOR_DEFINITIONS[code]["facets"]
-            if facet_code in facet_texts
-        )
 
     paragraphs.append("SÍNTESE INTEGRATIVA")
     paragraphs.extend(payload.get("synthesis") or [payload["clinical_integration"]])

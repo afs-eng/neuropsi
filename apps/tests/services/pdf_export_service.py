@@ -375,29 +375,18 @@ class BFPPdfExporter(BaseTestPdfExporter):
     def _factor_interpretation_items(cls, computed: dict, patient_name: str) -> list[dict]:
         payload = build_bfp_interpretation_payload(computed, patient_name=patient_name)
         factor_texts = payload.get("factors") or {}
-        facet_texts = payload.get("facets") or {}
 
         items = []
         for code in cls.FACTOR_ORDER:
             title = FACTOR_DEFINITIONS[code]["name"]
             fallback = cls._factor_summary(title)
             text = cls._clean_text(factor_texts.get(code) or fallback)
-            facets = []
-            for facet_code in FACTOR_DEFINITIONS[code]["facets"]:
-                if facet_code not in facet_texts:
-                    continue
-                label = FACET_DEFINITIONS[facet_code]["name"]
-                cleaned = cls._clean_text(facet_texts[facet_code])
-                prefix = f"{label}:"
-                body = cleaned[len(prefix):].strip() if cleaned.startswith(prefix) else cleaned
-                facets.append({"label": label, "body": body})
             items.append(
                 {
                     "code": code,
                     "title": title,
                     "text": text,
                     "summary": cls._first_sentence(text, fallback),
-                    "facets": facets,
                 }
             )
         return items
