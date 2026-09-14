@@ -79,7 +79,7 @@ def test_build_bfp_interpretation_includes_all_available_facets_and_cautions():
     text = build_bfp_interpretation(payload, patient_name="Leticia Bolonha Lucati")
 
     assert "Leticia apresentou elevação em Neuroticismo" in text
-    assert "Depressão: Em Depressão, a classificação Muito Superior sugere" in text
+    assert "Depressão: O resultado em faixa Muito Superior sugere" in text
     assert "exigindo investigação específica" in text
     assert "sem concluir comportamento antissocial ou ausência de ética" in text
     assert "sem inferência política, religiosa ou ideológica" in text

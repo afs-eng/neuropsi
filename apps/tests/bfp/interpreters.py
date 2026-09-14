@@ -178,7 +178,10 @@ def _interpret_factor(factor_result: dict) -> str:
 def _interpret_facet(facet_result: dict) -> str:
     code = facet_result.get("code")
     name = facet_result.get("name") or FACET_DEFINITIONS.get(code, {}).get("name") or code
-    return f"{name}: Em {name}, {_interpret_result(facet_result, _FACET_MEANINGS.get(code, {}))}"
+    classification = facet_result.get("classification") or "classificação não informada"
+    level = _domain_level(facet_result)
+    meaning = _FACET_MEANINGS.get(code, {}).get(level) or "resultado a ser integrado aos demais achados"
+    return f"{name}: O resultado em faixa {classification} sugere {meaning}."
 
 
 def _relevant_factors(factors: dict) -> list[dict]:

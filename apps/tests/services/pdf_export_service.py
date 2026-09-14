@@ -382,11 +382,15 @@ class BFPPdfExporter(BaseTestPdfExporter):
             title = FACTOR_DEFINITIONS[code]["name"]
             fallback = cls._factor_summary(title)
             text = cls._clean_text(factor_texts.get(code) or fallback)
-            facets = [
-                cls._clean_text(facet_texts[facet_code])
-                for facet_code in FACTOR_DEFINITIONS[code]["facets"]
-                if facet_code in facet_texts
-            ]
+            facets = []
+            for facet_code in FACTOR_DEFINITIONS[code]["facets"]:
+                if facet_code not in facet_texts:
+                    continue
+                label = FACET_DEFINITIONS[facet_code]["name"]
+                cleaned = cls._clean_text(facet_texts[facet_code])
+                prefix = f"{label}:"
+                body = cleaned[len(prefix):].strip() if cleaned.startswith(prefix) else cleaned
+                facets.append({"label": label, "body": body})
             items.append(
                 {
                     "code": code,
