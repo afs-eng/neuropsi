@@ -83,7 +83,7 @@ def test_build_bfp_interpretation_includes_all_available_facets_and_cautions():
     assert "O resultado em Neuroticismo situa-se em Superior" in text
     assert "Depressão em Muito Superior" in text
     assert "comportamento antissocial" in text
-    assert "sem inferências políticas ou religiosas" in text
+    assert "não autoriza inferências políticas ou religiosas" in text
     assert "SÍNTESE INTEGRATIVA" in text
     assert "Síntese dos resultados" not in text
     assert "INTERPRETAÇÃO CLÍNICA" not in text
@@ -106,7 +106,7 @@ def test_build_bfp_interpretation_payload_compares_facets_within_factor():
 
     out = build_bfp_interpretation_payload(payload, patient_name="Paciente")
 
-    assert "Há heterogeneidade interna" in out["factors"]["EE"]
+    assert "Há contraste interno" in out["factors"]["EE"]
     assert "Comunicação aparece em Muito Superior" in out["factors"]["EE"]
     assert "Interações Sociais se situa em Baixo" in out["factors"]["EE"]
     assert 2 <= len(out["synthesis"]) <= 4

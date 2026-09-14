@@ -281,10 +281,10 @@ def _build_intrafactor_analysis(factor_code: str, factor_result: dict, facets: d
     factor_classification = factor_result.get("classification") or "classificação não informada"
 
     if high_rank - low_rank <= 1:
-        return f"As facetas mantêm padrão convergente, sustentando a leitura global em {factor_classification}."
+        return f"As facetas sustentam a leitura global em {factor_classification}."
 
     return (
-        f"Há heterogeneidade interna: {highest.get('name')} aparece em {highest.get('classification')}, "
+        f"Há contraste interno: {highest.get('name')} aparece em {highest.get('classification')}, "
         f"enquanto {lowest.get('name')} se situa em {lowest.get('classification')}."
     )
 
@@ -308,11 +308,11 @@ def _build_factor_paragraph(factor_code: str, factor_result: dict, facets: dict)
     if intrafactor:
         parts.append(intrafactor)
     if factor_code == "NN":
-        parts.append("O achado é dimensional e não configura diagnóstico isolado.")
+        parts.append("Não configura diagnóstico isolado.")
     if factor_code == "SS":
-        parts.append("Não implica, isoladamente, inadequação ética ou comportamento antissocial.")
+        parts.append("Não implica inadequação ética ou comportamento antissocial.")
     if factor_code == "AA":
-        parts.append("Liberalismo é lido apenas como construto psicológico, sem inferências políticas ou religiosas.")
+        parts.append("Liberalismo não autoriza inferências políticas ou religiosas.")
     return " ".join(parts)
 
 
@@ -358,7 +358,7 @@ def _build_synthesis_paragraphs(factors: dict, facets: dict) -> list[str]:
     if not notes:
         return [
             "O perfil sugere funcionamento emocional, interpessoal, motivacional e de abertura à experiência globalmente compatível com a amostra normativa.",
-            "A leitura deve integrar fatores e facetas, pois a BFP descreve tendências dimensionais e não sintomas ou diagnósticos.",
+            "A leitura deve integrar fatores e facetas, pois a BFP descreve tendências dimensionais e não estabelece diagnósticos isoladamente.",
         ]
 
     if len(notes) == 1:
@@ -375,9 +375,8 @@ def _build_synthesis_paragraphs(factors: dict, facets: dict) -> list[str]:
     resources_text = ", ".join(resources) if resources else "recursos que devem ser examinados em conjunto com a história clínica e observacional"
 
     return [
-        f"A integração dos fatores sugere {joined}, articulando aspectos emocionais, interpessoais, motivacionais e de abertura à experiência.",
-        f"Como recursos do perfil, destacam-se {resources_text}. Contrastes entre fator global e facetas devem ser considerados sem reduzir o perfil a uma única característica.",
-        "As vulnerabilidades descritas são dimensionais e sem valor diagnóstico isolado, exigindo integração com entrevista, observação e demais instrumentos.",
+        f"A integração dos fatores sugere {joined}. Esses achados articulam aspectos emocionais, interpessoais, motivacionais e de abertura à experiência.",
+        f"Como recursos, destacam-se {resources_text}. Vulnerabilidades e contrastes devem ser integrados à entrevista, observação e demais instrumentos, sem valor diagnóstico isolado.",
     ]
 
 
