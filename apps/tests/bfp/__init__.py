@@ -39,7 +39,7 @@ class BFPModule(BaseTestModule):
                 "percentile": result["percentile"],
             }
             for code, result in computed_data.get("facets", {}).items()
-            if result["classification"] != "Médio"
+            if result["classification"] != "Média"
         ]
         return {
             "sample": computed_data.get("sample", "geral"),

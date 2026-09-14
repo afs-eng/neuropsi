@@ -5594,6 +5594,17 @@ class ReportExportService:
             from apps.tests.wasi.interpreters import build_wasi_interpretation
             return (build_wasi_interpretation(merged_data, patient_name=patient_name) or "").strip()
 
+        if instrument_code == "bfp":
+            from apps.tests.bfp.interpreters import build_bfp_interpretation
+
+            merged_data = {
+                **(test_payload.get("computed_payload") or {}),
+                **(test_payload.get("classified_payload") or {}),
+                **(test_payload.get("structured_results") or {}),
+            }
+            patient_name = (((test_payload or {}).get("patient_context") or {}).get("full_name") or "Paciente").split()[0] or "Paciente"
+            return (build_bfp_interpretation(merged_data, patient_name=patient_name) or "").strip()
+
         if instrument_code == "bai":
             from apps.tests.bai.interpreters import get_report_interpretation
 

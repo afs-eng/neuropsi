@@ -1,15 +1,136 @@
 from __future__ import annotations
 
-from .calculators import classify_bfp_domain
+from .calculators import CLASSIFICATION_ORDER, classify_bfp_domain
 from .config import (
     BFP_CLOSING_TEXT,
     FACTOR_DEFINITIONS,
-    FACTOR_INTERPRETATION_TEMPLATES,
     FACTOR_INTERPRETIVE_NAMES,
     FACET_DEFINITIONS,
-    FACET_TEMPLATES,
     SAMPLE_LABELS,
 )
+
+
+_CLASSIFICATION_ALIASES = {
+    "Médio": "Média",
+    "Médio Inferior": "Média Inferior",
+    "Médio Superior": "Média Superior",
+}
+
+_FACTOR_MEANINGS = {
+    "NN": {
+        "elevado": "maior responsividade emocional, sensibilidade a estressores e maior expressão de afetividade negativa, conforme os componentes específicos observados nas facetas",
+        "reduzido": "menor expressão de responsividade emocional e de características associadas à afetividade negativa, sem que isso represente ausência de dificuldades emocionais",
+        "medio": "funcionamento emocional compatível com a faixa esperada para a amostra normativa",
+    },
+    "EE": {
+        "elevado": "maior tendência à expressão interpessoal, exposição social, iniciativa e busca por interações, dependendo da configuração das facetas",
+        "reduzido": "menor tendência à exposição interpessoal, ao contato social espontâneo ou ao ritmo expansivo de interação, conforme indicado pelas facetas",
+        "medio": "padrão de expressão interpessoal compatível com a referência normativa",
+    },
+    "SS": {
+        "elevado": "maior expressão de cordialidade, cooperação e disposição para confiar ou considerar o outro nas relações interpessoais",
+        "reduzido": "menor expressão de disposições cooperativas ou de abertura interpessoal, sem inferir inadequação social, desonestidade ou comportamento antissocial",
+        "medio": "funcionamento interpessoal dentro do esperado para a referência normativa",
+    },
+    "RR": {
+        "elevado": "maior orientação para metas, percepção de eficácia, planejamento ou persistência, conforme a combinação das facetas",
+        "reduzido": "menor expressão de organização, persistência, prudência ou percepção de eficácia, a depender das facetas disponíveis",
+        "medio": "padrão de realização e investimento em objetivos compatível com a faixa normativa",
+    },
+    "AA": {
+        "elevado": "maior abertura intelectual e comportamental para ideias, mudanças, variedade e perspectivas diferentes",
+        "reduzido": "menor busca por variedade ou menor flexibilidade diante de ideias, costumes e experiências novas, conforme as facetas avaliadas",
+        "medio": "abertura intelectual e comportamental compatível com a amostra normativa",
+    },
+}
+
+_FACET_MEANINGS = {
+    "N1": {
+        "elevado": "maior sensibilidade à aceitação interpessoal, à avaliação dos outros e a situações percebidas como emocionalmente ameaçadoras",
+        "reduzido": "menor dependência da aprovação externa e menor vulnerabilidade subjetiva diante de críticas ou desaprovação",
+        "medio": "expressão de vulnerabilidade dentro do esperado para a referência normativa",
+    },
+    "N2": {
+        "elevado": "maior oscilação emocional, irritabilidade ou reatividade diante de desconfortos e frustrações",
+        "reduzido": "menor tendência a variações emocionais intensas e maior estabilidade autorrelatada em situações de tensão",
+        "medio": "nível de instabilidade emocional compatível com a faixa normativa",
+    },
+    "N3": {
+        "elevado": "maior passividade subjetiva, menor energia percebida e possível dificuldade para iniciar ou sustentar ações",
+        "reduzido": "menor expressão de passividade, com tendência a maior iniciativa e prontidão para agir",
+        "medio": "energia e iniciativa autorrelatadas dentro do esperado",
+    },
+    "N4": {
+        "elevado": "maior expressão de desânimo, pessimismo ou redução subjetiva de vitalidade, exigindo investigação específica caso haja queixas clínicas compatíveis",
+        "reduzido": "menor expressão de pessimismo, desesperança ou desânimo no construto avaliado pela BFP",
+        "medio": "expressão de características depressivas dimensionais compatível com a faixa normativa, sem equivaler a diagnóstico clínico",
+    },
+    "E1": {
+        "elevado": "maior facilidade para expressão verbal, exposição e compartilhamento de ideias em contextos interpessoais",
+        "reduzido": "menor tendência à exposição verbal ou à comunicação espontânea em situações sociais",
+        "medio": "comunicação autorrelatada compatível com a referência normativa",
+    },
+    "E2": {
+        "elevado": "maior percepção do próprio valor, busca de reconhecimento, exposição pessoal ou valorização da própria imagem",
+        "reduzido": "menor necessidade de destaque, autopromoção ou reconhecimento externo, sem equivaler diretamente a autoestima baixa",
+        "medio": "expressão de altivez dentro da faixa normativa",
+    },
+    "E3": {
+        "elevado": "maior ritmo de atividade, iniciativa e energia para envolver-se em tarefas e situações variadas",
+        "reduzido": "menor ritmo de atividade, menor iniciativa espontânea ou preferência por envolvimento mais contido em demandas",
+        "medio": "dinamismo compatível com a amostra normativa",
+    },
+    "E4": {
+        "elevado": "maior interesse por contato social, atividades em grupo e busca ativa por interações",
+        "reduzido": "menor busca por situações sociais intensas ou preferência por contatos mais seletivos e reservados",
+        "medio": "interações sociais dentro do esperado para a referência normativa",
+    },
+    "S1": {
+        "elevado": "maior cordialidade, consideração e disponibilidade afetiva nas relações interpessoais",
+        "reduzido": "menor expressão de cordialidade ou disponibilidade interpessoal, descrita de forma dimensional e não moralizante",
+        "medio": "amabilidade compatível com a faixa normativa",
+    },
+    "S2": {
+        "elevado": "maior consideração por regras, convenções e padrões de convivência contemplados pelo instrumento",
+        "reduzido": "menor alinhamento autorrelatado a regras, convenções ou padrões de convivência, sem concluir comportamento antissocial ou ausência de ética",
+        "medio": "pró-sociabilidade compatível com a amostra normativa",
+    },
+    "S3": {
+        "elevado": "maior disposição para confiar nas intenções de outras pessoas",
+        "reduzido": "menor disposição para confiar nos outros, sem caracterizar desconfiança patológica ou paranoia",
+        "medio": "confiança interpessoal dentro do esperado",
+    },
+    "R1": {
+        "elevado": "maior percepção de eficácia pessoal e de capacidade para lidar com demandas e objetivos",
+        "reduzido": "menor percepção de eficácia ou menor segurança subjetiva diante de demandas e objetivos",
+        "medio": "competência percebida compatível com a referência normativa",
+    },
+    "R2": {
+        "elevado": "maior tendência a avaliar consequências, refletir e ponderar antes de agir",
+        "reduzido": "menor tendência à ponderação prévia, com decisões potencialmente mais rápidas ou menos planejadas",
+        "medio": "ponderação e prudência compatíveis com a faixa normativa",
+    },
+    "R3": {
+        "elevado": "maior persistência, dedicação e investimento de esforço em atividades dirigidas a objetivos",
+        "reduzido": "menor persistência ou investimento de esforço continuado em tarefas e compromissos",
+        "medio": "empenho e comprometimento dentro do esperado",
+    },
+    "A1": {
+        "elevado": "maior curiosidade intelectual, interesse por conceitos e disposição para explorar perspectivas de pensamento",
+        "reduzido": "menor inclinação para explorar ideias abstratas ou perspectivas conceituais novas",
+        "medio": "abertura a ideias compatível com a amostra normativa",
+    },
+    "A2": {
+        "elevado": "maior flexibilidade frente a valores, costumes, normas ou perspectivas, no sentido psicológico avaliado pela BFP",
+        "reduzido": "menor relativização de valores, costumes ou perspectivas, sem inferência política, religiosa ou ideológica",
+        "medio": "liberalismo psicológico dentro da faixa normativa",
+    },
+    "A3": {
+        "elevado": "maior interesse por variedade, experiências novas, mudanças e situações pouco rotineiras",
+        "reduzido": "menor busca por novidades e maior preferência por previsibilidade ou rotinas conhecidas",
+        "medio": "busca por novidades compatível com a referência normativa",
+    },
+}
 
 
 def _first_name(patient_name: str) -> str:
@@ -24,47 +145,80 @@ def _factor_result(factors: dict, code: str) -> dict:
     return factors.get(code) or {}
 
 
-def _facet_direction(classification: str) -> str:
-    level = classify_bfp_domain(classification)
-    if level == "elevado":
-        return "a maior"
-    if level == "reduzido":
-        return "a menor"
-    return "a moderada"
+def _normalize_classification(classification: str | None) -> str:
+    value = (classification or "").strip()
+    return _CLASSIFICATION_ALIASES.get(value, value)
+
+
+def _classification_rank(classification: str | None) -> int | None:
+    value = _normalize_classification(classification)
+    try:
+        return CLASSIFICATION_ORDER.index(value)
+    except ValueError:
+        return None
+
+
+def _domain_level(result: dict) -> str:
+    return result.get("domain_level") or classify_bfp_domain(_normalize_classification(result.get("classification")))
+
+
+def _classification_intensity(classification: str | None) -> str:
+    value = _normalize_classification(classification)
+    mapping = {
+        "Muito Baixo": "expressão muito reduzida",
+        "Baixo": "tendência reduzida",
+        "Média Inferior": "expressão discretamente menor em relação à amostra normativa",
+        "Média": "funcionamento dentro do esperado para a referência normativa",
+        "Média Superior": "expressão aumentada, sem caráter extremo",
+        "Superior": "presença acentuada",
+        "Muito Superior": "presença muito acentuada",
+    }
+    return mapping.get(value, "resultado informado pelo sistema")
+
+
+def _fmt_number(value) -> str:
+    if value is None or value == "":
+        return "não informado"
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return str(value)
+    if number.is_integer():
+        return str(int(number))
+    return f"{number:.1f}".replace(".", ",")
+
+
+def _result_prefix(result: dict) -> str:
+    raw_score = _fmt_number(result.get("raw_score"))
+    percentile = _fmt_number(result.get("percentile"))
+    classification = result.get("classification") or "classificação não informada"
+    return f"escore {raw_score}, percentil {percentile}, classificação {classification}"
+
+
+def _interpret_result(result: dict, meanings: dict[str, str]) -> str:
+    classification = result.get("classification")
+    level = _domain_level(result)
+    meaning = meanings.get(level) or meanings.get("medio") or "resultado a ser integrado aos demais achados"
+    return f"{_result_prefix(result)}, indicando {_classification_intensity(classification)}: {meaning}."
 
 
 def _interpret_factor(factor_result: dict) -> str:
-    factor_name = _factor_key(factor_result["code"])
-    level = factor_result.get("domain_level") or classify_bfp_domain(factor_result["classification"])
-    template_key = "medio" if level == "medio" else level
-    return FACTOR_INTERPRETATION_TEMPLATES[factor_name][template_key].format(
-        classification=factor_result["classification"]
-    )
+    code = factor_result.get("code")
+    name = factor_result.get("name") or FACTOR_DEFINITIONS.get(code, {}).get("name") or code
+    return f"{name}: O fator apresentou {_interpret_result(factor_result, _FACTOR_MEANINGS.get(code, {}))}"
 
 
 def _interpret_facet(facet_result: dict) -> str:
-    template = FACET_TEMPLATES.get(facet_result["code"])
-    if not template:
-        return ""
-    return template.format(
-        classification=facet_result["classification"],
-        direction=_facet_direction(facet_result["classification"]),
-    )
+    code = facet_result.get("code")
+    name = facet_result.get("name") or FACET_DEFINITIONS.get(code, {}).get("name") or code
+    return f"{name}: A faceta apresentou {_interpret_result(facet_result, _FACET_MEANINGS.get(code, {}))}"
 
 
 def _relevant_factors(factors: dict) -> list[dict]:
     return [
         result
         for code in FACTOR_DEFINITIONS
-        if (result := factors.get(code)) and result.get("domain_level") != "medio"
-    ]
-
-
-def _relevant_facets(facets: dict) -> list[dict]:
-    return [
-        result
-        for code in FACET_DEFINITIONS
-        if (result := facets.get(code)) and result.get("domain_level") != "medio"
+        if (result := factors.get(code)) and _domain_level(result) != "medio"
     ]
 
 
@@ -72,12 +226,12 @@ def _build_summary(name: str, relevant_factors: list[dict]) -> str:
     if not relevant_factors:
         return (
             f"{name} apresentou resultados globalmente situados em faixas médias nos fatores principais do BFP, "
-            "sem elevações ou reduções clinicamente salientes na estrutura geral da personalidade."
+            "com perfil geral compatível com a amostra normativa nos domínios avaliados."
         )
 
     parts = []
     for factor in relevant_factors:
-        level = factor.get("domain_level")
+        level = _domain_level(factor)
         direction = "elevação" if level == "elevado" else "redução"
         parts.append(f"{direction} em {factor['name']}")
 
@@ -86,10 +240,35 @@ def _build_summary(name: str, relevant_factors: list[dict]) -> str:
     else:
         joined = ", ".join(parts[:-1]) + f" e {parts[-1]}"
 
-    return f"{name} apresentou {joined} entre os fatores principais do BFP, configurando um perfil de personalidade com aspectos clinicamente relevantes a serem integrados ao restante da avaliação."
+    return f"{name} apresentou {joined} entre os fatores principais do BFP. Esses achados descrevem tendências dimensionais de personalidade e devem ser compreendidos em conjunto com as facetas de cada domínio."
 
 
-def _build_integration(factors: dict) -> str:
+def _build_intrafactor_analysis(factor_code: str, factor_result: dict, facets: dict) -> str:
+    available = [facets[code] for code in FACTOR_DEFINITIONS[factor_code]["facets"] if code in facets]
+    ranked = [(facet, _classification_rank(facet.get("classification"))) for facet in available]
+    ranked = [(facet, rank) for facet, rank in ranked if rank is not None]
+    if len(ranked) < 2:
+        return ""
+
+    highest, high_rank = max(ranked, key=lambda item: item[1])
+    lowest, low_rank = min(ranked, key=lambda item: item[1])
+    factor_classification = factor_result.get("classification") or "classificação não informada"
+
+    if high_rank - low_rank <= 1:
+        labels = ", ".join(facet.get("name") or facet.get("code") for facet, _ in ranked)
+        return (
+            f"Análise intrafator: As facetas de {factor_result.get('name')} apresentaram padrão relativamente convergente "
+            f"({labels}), sustentando a leitura do fator global em {factor_classification}."
+        )
+
+    return (
+        f"Análise intrafator: Embora o fator global tenha se situado em {factor_classification}, observa-se heterogeneidade entre suas facetas. "
+        f"{highest.get('name')} apresentou {highest.get('classification')}, enquanto {lowest.get('name')} apresentou {lowest.get('classification')}, "
+        "indicando que diferentes componentes desse domínio se expressam de maneira distinta no perfil avaliado."
+    )
+
+
+def _build_integration(factors: dict, facets: dict) -> str:
     notes: list[str] = []
     nn = _factor_result(factors, "NN")
     ee = _factor_result(factors, "EE")
@@ -97,34 +276,50 @@ def _build_integration(factors: dict) -> str:
     rr = _factor_result(factors, "RR")
     aa = _factor_result(factors, "AA")
 
-    if nn.get("domain_level") == "elevado" and rr.get("domain_level") == "reduzido":
+    if _domain_level(nn) == "elevado" and _domain_level(rr) == "reduzido":
         notes.append(
-            "A combinação entre elevação em Neuroticismo e redução em Realização pode sugerir maior vulnerabilidade emocional associada a dificuldades de organização, persistência e autorregulação comportamental."
+            "maior responsividade emocional associada a menor orientação para organização, persistência ou autorregulação de metas"
         )
-    if nn.get("domain_level") == "elevado" and ee.get("domain_level") == "reduzido":
+    if _domain_level(nn) == "elevado" and _domain_level(ee) == "reduzido":
         notes.append(
-            "A elevação em Neuroticismo associada à redução em Extroversão pode indicar maior tendência à vivência interna de sofrimento emocional, com menor busca espontânea por apoio social ou maior reserva interpessoal."
+            "maior sensibilidade emocional combinada a menor exposição interpessoal ou menor busca espontânea por contato social"
         )
-    if ss.get("domain_level") == "reduzido" and nn.get("domain_level") == "elevado":
+    if _domain_level(ss) == "reduzido" and _domain_level(nn) == "elevado":
         notes.append(
-            "A combinação entre menor Socialização e maior Neuroticismo pode sugerir maior vulnerabilidade a conflitos interpessoais, sensibilidade a críticas e dificuldade de regulação emocional em contextos relacionais."
+            "menor abertura cooperativa ou interpessoal combinada a maior reatividade emocional em contextos relacionais"
         )
-    if rr.get("domain_level") == "reduzido":
+    if _domain_level(rr) == "reduzido":
         notes.append(
-            "A redução em Realização pode reforçar a hipótese de dificuldades funcionais em planejamento, organização, persistência e gerenciamento de tarefas, especialmente quando articulada a queixas atencionais ou executivas."
+            "menor expressão de recursos ligados a planejamento, persistência e manutenção de esforço em objetivos"
         )
-    if aa.get("domain_level") == "reduzido":
+    if _domain_level(aa) == "reduzido":
         notes.append(
-            "A redução em Abertura à Experiência pode sugerir maior preferência por previsibilidade, rotinas conhecidas e menor tolerância a mudanças, quando compatível com os dados clínicos e observacionais."
+            "maior preferência por previsibilidade e menor busca por variedade intelectual ou comportamental"
+        )
+
+    extreme_facets = [
+        item.get("name") or code
+        for code, item in facets.items()
+        if _normalize_classification(item.get("classification")) in {"Muito Baixo", "Muito Superior"}
+    ]
+    if extreme_facets:
+        notes.append(
+            "resultados extremos em " + ", ".join(extreme_facets[:4]) + ", que merecem integração clínica proporcional, sem interpretação diagnóstica isolada"
         )
 
     if not notes:
         return (
-            "Em análise clínica, o perfil de personalidade sugere tendências globalmente compatíveis com a amostra normativa, "
-            "sem combinações fatoriais que indiquem, isoladamente, risco interpretativo elevado."
+            "SÍNTESE INTEGRATIVA: O perfil sugere funcionamento emocional, interpessoal, motivacional e de abertura à experiência globalmente compatível com a amostra normativa. A comunicação, a interação social, a orientação para metas e a tomada de decisão devem ser interpretadas a partir da convergência entre fatores e facetas, sem transformar traços dimensionais em sintomas ou diagnósticos."
         )
 
-    return "Em análise clínica, " + " ".join(notes)
+    if len(notes) == 1:
+        joined = notes[0]
+    else:
+        joined = "; ".join(notes[:-1]) + f"; e {notes[-1]}"
+    return (
+        "SÍNTESE INTEGRATIVA: A integração dos cinco fatores sugere "
+        f"{joined}. Esses padrões ajudam a compreender o funcionamento emocional, o estilo interpessoal, a comunicação, a persistência, a tomada de decisão e a abertura intelectual/comportamental do perfil, devendo ser articulados à entrevista clínica, à observação comportamental, à história de vida e aos demais instrumentos utilizados."
+    )
 
 
 def build_bfp_interpretation_payload(merged_data: dict, patient_name: str | None = None) -> dict:
@@ -139,20 +334,25 @@ def build_bfp_interpretation_payload(merged_data: dict, patient_name: str | None
             "factors": {},
             "facets": {},
             "clinical_integration": BFP_CLOSING_TEXT,
+            "closing": "",
         }
 
     relevant_factors = _relevant_factors(factors)
-    relevant_facets = _relevant_facets(facets)
 
-    factor_texts = {
-        code: _interpret_factor(factors[code])
-        for code in FACTOR_DEFINITIONS
-        if code in factors
-    }
+    factor_texts = {}
+    for code in FACTOR_DEFINITIONS:
+        if code not in factors:
+            continue
+        parts = [_interpret_factor(factors[code])]
+        intrafactor = _build_intrafactor_analysis(code, factors[code], facets)
+        if intrafactor:
+            parts.append(intrafactor)
+        factor_texts[code] = "\n\n".join(parts)
+
     facet_texts = {
-        facet["code"]: _interpret_facet(facet)
-        for facet in relevant_facets
-        if _interpret_facet(facet)
+        code: _interpret_facet(facets[code])
+        for code in FACET_DEFINITIONS
+        if code in facets and _interpret_facet(facets[code])
     }
 
     return {
@@ -160,8 +360,8 @@ def build_bfp_interpretation_payload(merged_data: dict, patient_name: str | None
         "sample_label": SAMPLE_LABELS.get(sample, sample.title()),
         "factors": factor_texts,
         "facets": facet_texts,
-        "clinical_integration": _build_integration(factors),
-        "closing": BFP_CLOSING_TEXT,
+        "clinical_integration": _build_integration(factors, facets),
+        "closing": "Os resultados descrevem características dimensionais de personalidade, não estabelecem diagnóstico isoladamente e devem ser interpretados em conjunto com entrevista clínica, observação comportamental, história de vida e demais instrumentos utilizados no processo avaliativo.",
     }
 
 
@@ -169,24 +369,21 @@ def build_bfp_interpretation(merged_data: dict, patient_name: str | None = None)
     payload = build_bfp_interpretation_payload(merged_data, patient_name=patient_name)
     sample_label = payload.get("sample_label", "Geral")
     paragraphs = [
-        f"A Bateria Fatorial de Personalidade (BFP) foi utilizada para investigar traços de personalidade com base no modelo dos Cinco Grandes Fatores, permitindo compreender tendências emocionais, interpessoais, motivacionais e comportamentais. A correção foi realizada com base na amostra {sample_label.lower()}.",
+        f"A Bateria Fatorial de Personalidade (BFP) foi utilizada para investigar traços dimensionais de personalidade com base no modelo dos Cinco Grandes Fatores. A correção foi realizada com base na amostra {sample_label.lower()}, preservando os escores, percentis e classificações normativas informados pelo sistema.",
         payload["summary"],
     ]
 
     factor_texts = payload.get("factors", {})
-    relevant_factor_codes = [
-        code
-        for code in FACTOR_DEFINITIONS
-        if code in factor_texts and classify_bfp_domain((merged_data.get("factors", {}).get(code) or {}).get("classification", "Média")) != "medio"
-    ]
-    if not relevant_factor_codes:
-        relevant_factor_codes = [code for code in FACTOR_DEFINITIONS if code in factor_texts]
-    paragraphs.extend(factor_texts[code] for code in relevant_factor_codes)
-
     facet_texts = payload.get("facets", {})
-    if facet_texts:
-        paragraphs.append("Nas facetas clinicamente relevantes, observaram-se os seguintes destaques:")
-        paragraphs.extend(facet_texts[code] for code in FACET_DEFINITIONS if code in facet_texts)
+    for code in FACTOR_DEFINITIONS:
+        if code not in factor_texts:
+            continue
+        paragraphs.append(factor_texts[code])
+        paragraphs.extend(
+            facet_texts[facet_code]
+            for facet_code in FACTOR_DEFINITIONS[code]["facets"]
+            if facet_code in facet_texts
+        )
 
     paragraphs.append(payload["clinical_integration"])
     paragraphs.append(payload["closing"])
@@ -251,7 +448,6 @@ def build_bfp_report_highlights(merged_data: dict) -> dict:
     ee = factors.get("EE") or {}
     rr = factors.get("RR") or {}
     ss = factors.get("SS") or {}
-    aa = factors.get("AA") or {}
 
     try:
         if float(nn.get("percentile") or 0) >= 85 and float(rr.get("percentile") or 100) < 30:
