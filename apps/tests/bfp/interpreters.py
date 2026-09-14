@@ -162,56 +162,23 @@ def _domain_level(result: dict) -> str:
     return result.get("domain_level") or classify_bfp_domain(_normalize_classification(result.get("classification")))
 
 
-def _classification_intensity(classification: str | None) -> str:
-    value = _normalize_classification(classification)
-    mapping = {
-        "Muito Baixo": "expressão muito reduzida",
-        "Baixo": "tendência reduzida",
-        "Média Inferior": "expressão discretamente menor em relação à amostra normativa",
-        "Média": "funcionamento dentro do esperado para a referência normativa",
-        "Média Superior": "expressão aumentada, sem caráter extremo",
-        "Superior": "presença acentuada",
-        "Muito Superior": "presença muito acentuada",
-    }
-    return mapping.get(value, "resultado informado pelo sistema")
-
-
-def _fmt_number(value) -> str:
-    if value is None or value == "":
-        return "não informado"
-    try:
-        number = float(value)
-    except (TypeError, ValueError):
-        return str(value)
-    if number.is_integer():
-        return str(int(number))
-    return f"{number:.1f}".replace(".", ",")
-
-
-def _result_prefix(result: dict) -> str:
-    raw_score = _fmt_number(result.get("raw_score"))
-    percentile = _fmt_number(result.get("percentile"))
-    classification = result.get("classification") or "classificação não informada"
-    return f"escore {raw_score}, percentil {percentile}, classificação {classification}"
-
-
 def _interpret_result(result: dict, meanings: dict[str, str]) -> str:
-    classification = result.get("classification")
+    classification = result.get("classification") or "classificação não informada"
     level = _domain_level(result)
     meaning = meanings.get(level) or meanings.get("medio") or "resultado a ser integrado aos demais achados"
-    return f"{_result_prefix(result)}, indicando {_classification_intensity(classification)}: {meaning}."
+    return f"a classificação {classification} sugere {meaning}."
 
 
 def _interpret_factor(factor_result: dict) -> str:
     code = factor_result.get("code")
     name = factor_result.get("name") or FACTOR_DEFINITIONS.get(code, {}).get("name") or code
-    return f"{name}: O fator apresentou {_interpret_result(factor_result, _FACTOR_MEANINGS.get(code, {}))}"
+    return f"{name}: No fator {name}, {_interpret_result(factor_result, _FACTOR_MEANINGS.get(code, {}))}"
 
 
 def _interpret_facet(facet_result: dict) -> str:
     code = facet_result.get("code")
     name = facet_result.get("name") or FACET_DEFINITIONS.get(code, {}).get("name") or code
-    return f"{name}: A faceta apresentou {_interpret_result(facet_result, _FACET_MEANINGS.get(code, {}))}"
+    return f"{name}: Em {name}, {_interpret_result(facet_result, _FACET_MEANINGS.get(code, {}))}"
 
 
 def _relevant_factors(factors: dict) -> list[dict]:
@@ -257,18 +224,17 @@ def _build_intrafactor_analysis(factor_code: str, factor_result: dict, facets: d
     if high_rank - low_rank <= 1:
         labels = ", ".join(facet.get("name") or facet.get("code") for facet, _ in ranked)
         return (
-            f"Análise intrafator: As facetas de {factor_result.get('name')} apresentaram padrão relativamente convergente "
-            f"({labels}), sustentando a leitura do fator global em {factor_classification}."
+            f"As facetas desse domínio mostraram padrão relativamente convergente ({labels}), o que torna a leitura global em {factor_classification} mais homogênea."
         )
 
     return (
-        f"Análise intrafator: Embora o fator global tenha se situado em {factor_classification}, observa-se heterogeneidade entre suas facetas. "
-        f"{highest.get('name')} apresentou {highest.get('classification')}, enquanto {lowest.get('name')} apresentou {lowest.get('classification')}, "
-        "indicando que diferentes componentes desse domínio se expressam de maneira distinta no perfil avaliado."
+        f"Apesar da classificação global em {factor_classification}, o domínio não se expressa de modo uniforme: "
+        f"{highest.get('name')} aparece em faixa {highest.get('classification')}, enquanto {lowest.get('name')} se situa em {lowest.get('classification')}. "
+        "Esse contraste sugere que componentes distintos do mesmo fator podem se manifestar de maneira diferente no cotidiano."
     )
 
 
-def _build_integration(factors: dict, facets: dict) -> str:
+def _build_synthesis_paragraphs(factors: dict, facets: dict) -> list[str]:
     notes: list[str] = []
     nn = _factor_result(factors, "NN")
     ee = _factor_result(factors, "EE")
@@ -308,18 +274,29 @@ def _build_integration(factors: dict, facets: dict) -> str:
         )
 
     if not notes:
-        return (
-            "SÍNTESE INTEGRATIVA: O perfil sugere funcionamento emocional, interpessoal, motivacional e de abertura à experiência globalmente compatível com a amostra normativa. A comunicação, a interação social, a orientação para metas e a tomada de decisão devem ser interpretadas a partir da convergência entre fatores e facetas, sem transformar traços dimensionais em sintomas ou diagnósticos."
-        )
+        return [
+            "O conjunto dos resultados sugere funcionamento emocional, interpessoal, motivacional e de abertura à experiência globalmente compatível com a amostra normativa. Nesse contexto, não se observam contrastes fatoriais amplos que modifiquem de modo expressivo a leitura clínica geral do perfil.",
+            "A comunicação, a interação social, a orientação para metas e a tomada de decisão devem ser compreendidas a partir da relação entre fatores e facetas, pois a BFP descreve tendências dimensionais e não sintomas. A interpretação ganha maior precisão quando articulada à entrevista clínica, à observação comportamental e aos demais instrumentos utilizados.",
+        ]
 
     if len(notes) == 1:
         joined = notes[0]
     else:
         joined = "; ".join(notes[:-1]) + f"; e {notes[-1]}"
-    return (
-        "SÍNTESE INTEGRATIVA: A integração dos cinco fatores sugere "
-        f"{joined}. Esses padrões ajudam a compreender o funcionamento emocional, o estilo interpessoal, a comunicação, a persistência, a tomada de decisão e a abertura intelectual/comportamental do perfil, devendo ser articulados à entrevista clínica, à observação comportamental, à história de vida e aos demais instrumentos utilizados."
-    )
+    resources = []
+    if _domain_level(ee) in {"medio", "elevado"}:
+        resources.append("recursos de comunicação ou envolvimento interpessoal")
+    if _domain_level(rr) in {"medio", "elevado"}:
+        resources.append("capacidade de organização e investimento em objetivos")
+    if _domain_level(ss) in {"medio", "elevado"}:
+        resources.append("disposição para convivência cooperativa")
+    resources_text = ", ".join(resources) if resources else "recursos que devem ser examinados em conjunto com a história clínica e observacional"
+
+    return [
+        f"A integração dos cinco fatores sugere {joined}. Essa combinação ajuda a compreender como aspectos emocionais, interpessoais, motivacionais e de abertura à experiência podem se articular no funcionamento cotidiano.",
+        f"Entre os recursos do perfil, destacam-se {resources_text}. Quando há contrastes entre fator global e facetas específicas, a leitura clínica deve privilegiar essa heterogeneidade em vez de reduzir o resultado a uma única característica geral.",
+        "As possíveis vulnerabilidades indicadas pela BFP devem ser entendidas como tendências dimensionais de personalidade, sem valor diagnóstico isolado. A interpretação final depende da convergência com entrevista clínica, observação comportamental, história de vida e demais instrumentos utilizados no processo avaliativo.",
+    ]
 
 
 def build_bfp_interpretation_payload(merged_data: dict, patient_name: str | None = None) -> dict:
@@ -334,6 +311,7 @@ def build_bfp_interpretation_payload(merged_data: dict, patient_name: str | None
             "factors": {},
             "facets": {},
             "clinical_integration": BFP_CLOSING_TEXT,
+            "synthesis": [],
             "closing": "",
         }
 
@@ -355,12 +333,15 @@ def build_bfp_interpretation_payload(merged_data: dict, patient_name: str | None
         if code in facets and _interpret_facet(facets[code])
     }
 
+    synthesis = _build_synthesis_paragraphs(factors, facets)
+
     return {
         "summary": _build_summary(name, relevant_factors),
         "sample_label": SAMPLE_LABELS.get(sample, sample.title()),
         "factors": factor_texts,
         "facets": facet_texts,
-        "clinical_integration": _build_integration(factors, facets),
+        "clinical_integration": "\n\n".join(synthesis),
+        "synthesis": synthesis,
         "closing": "Os resultados descrevem características dimensionais de personalidade, não estabelecem diagnóstico isoladamente e devem ser interpretados em conjunto com entrevista clínica, observação comportamental, história de vida e demais instrumentos utilizados no processo avaliativo.",
     }
 
@@ -369,7 +350,7 @@ def build_bfp_interpretation(merged_data: dict, patient_name: str | None = None)
     payload = build_bfp_interpretation_payload(merged_data, patient_name=patient_name)
     sample_label = payload.get("sample_label", "Geral")
     paragraphs = [
-        f"A Bateria Fatorial de Personalidade (BFP) foi utilizada para investigar traços dimensionais de personalidade com base no modelo dos Cinco Grandes Fatores. A correção foi realizada com base na amostra {sample_label.lower()}, preservando os escores, percentis e classificações normativas informados pelo sistema.",
+        f"A Bateria Fatorial de Personalidade (BFP) foi utilizada para investigar traços dimensionais de personalidade com base no modelo dos Cinco Grandes Fatores. A correção foi realizada com base na amostra {sample_label.lower()}, e a leitura clínica abaixo considera as classificações normativas apresentadas na tabela de resultados.",
         payload["summary"],
     ]
 
@@ -385,7 +366,8 @@ def build_bfp_interpretation(merged_data: dict, patient_name: str | None = None)
             if facet_code in facet_texts
         )
 
-    paragraphs.append(payload["clinical_integration"])
+    paragraphs.append("SÍNTESE INTEGRATIVA")
+    paragraphs.extend(payload.get("synthesis") or [payload["clinical_integration"]])
     paragraphs.append(payload["closing"])
     return "\n\n".join(paragraphs)
 

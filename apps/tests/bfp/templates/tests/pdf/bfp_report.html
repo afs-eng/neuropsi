@@ -418,6 +418,23 @@
       font-size: 11.1px;
     }
 
+    .clinical .synthesis-title {
+      margin-top: 20px;
+      padding-top: 12px;
+      border-top: 1px solid #b7c2cf;
+      color: #000;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 22px;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+
+    .clinical .synthesis-text {
+      font-size: 11.7px;
+      line-height: 1.55;
+      margin-bottom: 9px;
+    }
+
 
 
     svg, table, tr, td, th, .chart, .card, .section {
@@ -549,6 +566,12 @@
         <p class="facet-note">{{ facet_text }}</p>
       {% endfor %}
     {% endfor %}
+    {% if synthesis_paragraphs %}
+      <h3 class="synthesis-title">Síntese Integrativa</h3>
+      {% for paragraph in synthesis_paragraphs %}
+        <p class="synthesis-text">{{ paragraph }}</p>
+      {% endfor %}
+    {% endif %}
   </section>
 </body>
 </html>

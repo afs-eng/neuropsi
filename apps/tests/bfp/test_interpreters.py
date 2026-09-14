@@ -79,12 +79,17 @@ def test_build_bfp_interpretation_includes_all_available_facets_and_cautions():
     text = build_bfp_interpretation(payload, patient_name="Leticia Bolonha Lucati")
 
     assert "Leticia apresentou elevação em Neuroticismo" in text
-    assert "Depressão: A faceta apresentou escore 3,5, percentil 99, classificação Muito Superior" in text
+    assert "Depressão: Em Depressão, a classificação Muito Superior sugere" in text
     assert "exigindo investigação específica" in text
     assert "sem concluir comportamento antissocial ou ausência de ética" in text
     assert "sem inferência política, religiosa ou ideológica" in text
     assert "SÍNTESE INTEGRATIVA" in text
     assert "diagnóstico" in text
+    assert "escore" not in text.lower()
+    assert "percentil" not in text.lower()
+    assert "Análise intrafator" not in text
+    assert "Análise interfatores" not in text
+    assert "A faceta apresentou" not in text
     assert "a maior" not in text
     assert "a menor" not in text
 
@@ -97,6 +102,7 @@ def test_build_bfp_interpretation_payload_compares_facets_within_factor():
 
     out = build_bfp_interpretation_payload(payload, patient_name="Paciente")
 
-    assert "heterogeneidade" in out["factors"]["EE"]
-    assert "Comunicação apresentou Muito Superior" in out["factors"]["EE"]
-    assert "Interações Sociais apresentou Baixo" in out["factors"]["EE"]
+    assert "não se expressa de modo uniforme" in out["factors"]["EE"]
+    assert "Comunicação aparece em faixa Muito Superior" in out["factors"]["EE"]
+    assert "Interações Sociais se situa em Baixo" in out["factors"]["EE"]
+    assert 2 <= len(out["synthesis"]) <= 4

@@ -206,6 +206,16 @@ class BFPPdfExporter(BaseTestPdfExporter):
         return text
 
     @staticmethod
+    def _format_fixed_value(value, decimals: int = 2) -> str:
+        if value is None or value == "":
+            return "—"
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            return str(value)
+        return f"{number:.{decimals}f}".replace(".", ",")
+
+    @staticmethod
     def _clean_text(text: str) -> str:
         return re.sub(r"\s+", " ", (text or "").strip())
 
@@ -332,7 +342,7 @@ class BFPPdfExporter(BaseTestPdfExporter):
                     {
                         "code": facet_code,
                         "name": source.get("name") or FACET_DEFINITIONS[facet_code]["name"],
-                        "raw_score": cls._format_value(source.get("raw_score"), 4),
+                        "raw_score": cls._format_fixed_value(source.get("raw_score"), 2),
                         "percentile": cls._format_value(source.get("percentile"), 1),
                         "classification": source.get("classification") or "—",
                     }
@@ -344,7 +354,7 @@ class BFPPdfExporter(BaseTestPdfExporter):
                 summary_row = {
                     "code": factor_code,
                     "name": factor_definition["name"],
-                    "raw_score": cls._format_value(factor_result.get("raw_score"), 4),
+                    "raw_score": cls._format_fixed_value(factor_result.get("raw_score"), 2),
                     "percentile": cls._format_value(factor_result.get("percentile"), 1),
                     "classification": factor_result.get("classification") or "—",
                 }
@@ -430,6 +440,7 @@ class BFPPdfExporter(BaseTestPdfExporter):
             "factor_radar_svg": cls._factor_radar_svg(factors),
             "facet_radar_svg": cls._facet_radar_svg(facets),
             "factor_interpretations": factor_interpretations,
+            "synthesis_paragraphs": build_bfp_interpretation_payload(computed, patient_name=patient.full_name).get("synthesis") or [],
         }
         template_source = cls.TEMPLATE_PATH.read_text(encoding="utf-8")
         template = engines["django"].from_string(template_source)

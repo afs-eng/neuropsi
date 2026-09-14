@@ -5813,14 +5813,14 @@ class ReportExportService:
                 if facet:
                     rows.append([
                         facet_names.get(facet_code, facet_code),
-                        cls._num(facet.get("raw_score")),
+                        cls._num_fixed(facet.get("raw_score"), 2),
                         cls._num(facet.get("percentile")),
                         facet.get("classification") or "-",
                     ])
             
             rows.append([
                 factor_names.get(factor_code, factor_code),
-                cls._num(factor.get("raw_score")),
+                cls._num_fixed(factor.get("raw_score"), 2),
                 cls._num(factor.get("percentile")),
                 factor.get("classification") or "-",
             ])
@@ -6999,6 +6999,16 @@ class ReportExportService:
         if isinstance(value, float):
             return f"{value:.2f}".rstrip("0").rstrip(".").replace(".", ",")
         return str(value).replace(".", ",")
+
+    @staticmethod
+    def _num_fixed(value, decimals: int = 2):
+        if value is None:
+            return "-"
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            return str(value).replace(".", ",")
+        return f"{number:.{decimals}f}".replace(".", ",")
 
     @staticmethod
     def _to_float(value, default: float = 0.0) -> float:
