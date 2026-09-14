@@ -132,6 +132,54 @@ _FACET_MEANINGS = {
     },
 }
 
+_FACTOR_BRIEF = {
+    "NN": {
+        "elevado": "maior responsividade emocional e sensibilidade a estressores",
+        "reduzido": "menor reatividade emocional autorrelatada",
+        "medio": "funcionamento emocional dentro do esperado",
+    },
+    "EE": {
+        "elevado": "maior expressividade, iniciativa e exposição interpessoal",
+        "reduzido": "postura mais reservada e menor busca espontânea por exposição social",
+        "medio": "expressividade interpessoal compatível com a média normativa",
+    },
+    "SS": {
+        "elevado": "maior cordialidade, cooperação e abertura interpessoal",
+        "reduzido": "menor abertura cooperativa ou confiança interpessoal",
+        "medio": "funcionamento interpessoal dentro do esperado",
+    },
+    "RR": {
+        "elevado": "maior orientação para metas, persistência e percepção de eficácia",
+        "reduzido": "menor organização, persistência ou investimento em metas",
+        "medio": "orientação para metas compatível com a faixa normativa",
+    },
+    "AA": {
+        "elevado": "maior abertura intelectual e busca por variedade",
+        "reduzido": "maior preferência por previsibilidade e referenciais conhecidos",
+        "medio": "abertura à experiência dentro da faixa normativa",
+    },
+}
+
+_FACET_BRIEF = {
+    "N1": "vulnerabilidade emocional",
+    "N2": "instabilidade emocional",
+    "N3": "passividade ou energia subjetiva",
+    "N4": "desânimo, pessimismo ou vitalidade subjetiva",
+    "E1": "comunicação e exposição verbal",
+    "E2": "valorização da própria imagem e reconhecimento",
+    "E3": "ritmo de atividade e iniciativa",
+    "E4": "busca por interação social",
+    "S1": "cordialidade e consideração interpessoal",
+    "S2": "alinhamento a regras e convenções de convivência",
+    "S3": "disposição para confiar nas pessoas",
+    "R1": "percepção de competência",
+    "R2": "ponderação e prudência",
+    "R3": "empenho e comprometimento",
+    "A1": "curiosidade intelectual",
+    "A2": "flexibilidade frente a valores e perspectivas",
+    "A3": "busca por novidades",
+}
+
 
 def _first_name(patient_name: str) -> str:
     return (patient_name or "Paciente").strip().split(" ", 1)[0] or "Paciente"
@@ -188,9 +236,8 @@ def _facet_clause(facet: dict) -> str:
     code = facet.get("code")
     name = facet.get("name") or FACET_DEFINITIONS.get(code, {}).get("name") or code
     classification = facet.get("classification") or "classificação não informada"
-    level = _domain_level(facet)
-    meaning = _FACET_MEANINGS.get(code, {}).get(level) or "resultado a ser integrado aos demais achados"
-    return f"{name} em faixa {classification}, relacionada ao seguinte padrão: {meaning}"
+    meaning = _FACET_BRIEF.get(code, "componente específico do fator")
+    return f"{name} em {classification}, envolvendo {meaning}"
 
 
 def _relevant_factors(factors: dict) -> list[dict]:
@@ -234,15 +281,11 @@ def _build_intrafactor_analysis(factor_code: str, factor_result: dict, facets: d
     factor_classification = factor_result.get("classification") or "classificação não informada"
 
     if high_rank - low_rank <= 1:
-        labels = ", ".join(facet.get("name") or facet.get("code") for facet, _ in ranked)
-        return (
-            f"As facetas desse domínio mostraram padrão relativamente convergente ({labels}), o que torna a leitura global em {factor_classification} mais homogênea."
-        )
+        return f"As facetas mantêm padrão convergente, sustentando a leitura global em {factor_classification}."
 
     return (
-        f"Apesar da classificação global em {factor_classification}, o domínio não se expressa de modo uniforme: "
-        f"{highest.get('name')} aparece em faixa {highest.get('classification')}, enquanto {lowest.get('name')} se situa em {lowest.get('classification')}. "
-        "Esse contraste sugere que componentes distintos do mesmo fator podem se manifestar de maneira diferente no cotidiano."
+        f"Há heterogeneidade interna: {highest.get('name')} aparece em {highest.get('classification')}, "
+        f"enquanto {lowest.get('name')} se situa em {lowest.get('classification')}."
     )
 
 
@@ -250,26 +293,26 @@ def _build_factor_paragraph(factor_code: str, factor_result: dict, facets: dict)
     factor_name = factor_result.get("name") or FACTOR_DEFINITIONS[factor_code]["name"]
     classification = factor_result.get("classification") or "classificação não informada"
     level = _domain_level(factor_result)
-    factor_meaning = _FACTOR_MEANINGS.get(factor_code, {}).get(level) or "resultado a ser integrado aos demais achados"
+    factor_meaning = _FACTOR_BRIEF.get(factor_code, {}).get(level) or "padrão a ser integrado aos demais achados"
     available_facets = [facets[code] for code in FACTOR_DEFINITIONS[factor_code]["facets"] if code in facets]
     salient_facets = [facet for facet in available_facets if _domain_level(facet) != "medio"]
-    facets_to_describe = salient_facets or available_facets[:2]
+    facets_to_describe = (salient_facets or available_facets[:2])[:2]
     facet_text = "; ".join(_facet_clause(facet) for facet in facets_to_describe)
     intrafactor = _build_intrafactor_analysis(factor_code, factor_result, facets)
 
     parts = [
-        f"O resultado em {factor_name} situa-se em faixa {classification}, sugerindo {factor_meaning}.",
+        f"O resultado em {factor_name} situa-se em {classification}, sugerindo {factor_meaning}.",
     ]
     if facet_text:
-        parts.append(f"Na composição do fator, destacam-se {facet_text}.")
+        parts.append(f"Destacam-se {facet_text}.")
     if intrafactor:
         parts.append(intrafactor)
     if factor_code == "NN":
-        parts.append("Esses indicadores representam características dimensionais de personalidade e, isoladamente, não configuram condição psicopatológica.")
+        parts.append("O achado é dimensional e não configura diagnóstico isolado.")
     if factor_code == "SS":
-        parts.append("Esse achado deve ser compreendido de forma dimensional, sem implicar, isoladamente, inadequação ética ou comportamento antissocial.")
+        parts.append("Não implica, isoladamente, inadequação ética ou comportamento antissocial.")
     if factor_code == "AA":
-        parts.append("A faceta Liberalismo é interpretada apenas no sentido psicológico avaliado pela BFP, sem inferências políticas, religiosas ou ideológicas.")
+        parts.append("Liberalismo é lido apenas como construto psicológico, sem inferências políticas ou religiosas.")
     return " ".join(parts)
 
 
@@ -314,8 +357,8 @@ def _build_synthesis_paragraphs(factors: dict, facets: dict) -> list[str]:
 
     if not notes:
         return [
-            "O conjunto dos resultados sugere funcionamento emocional, interpessoal, motivacional e de abertura à experiência globalmente compatível com a amostra normativa. Nesse contexto, não se observam contrastes fatoriais amplos que modifiquem de modo expressivo a leitura clínica geral do perfil.",
-            "A comunicação, a interação social, a orientação para metas e a tomada de decisão devem ser compreendidas a partir da relação entre fatores e facetas, pois a BFP descreve tendências dimensionais e não sintomas. A interpretação torna-se mais precisa quando articulada à entrevista clínica, à observação comportamental e aos demais instrumentos utilizados.",
+            "O perfil sugere funcionamento emocional, interpessoal, motivacional e de abertura à experiência globalmente compatível com a amostra normativa.",
+            "A leitura deve integrar fatores e facetas, pois a BFP descreve tendências dimensionais e não sintomas ou diagnósticos.",
         ]
 
     if len(notes) == 1:
@@ -332,9 +375,9 @@ def _build_synthesis_paragraphs(factors: dict, facets: dict) -> list[str]:
     resources_text = ", ".join(resources) if resources else "recursos que devem ser examinados em conjunto com a história clínica e observacional"
 
     return [
-        f"A integração dos cinco fatores sugere {joined}. Essa combinação ajuda a compreender como aspectos emocionais, interpessoais, motivacionais e de abertura à experiência podem se articular no funcionamento cotidiano.",
-        f"Entre os recursos do perfil, destacam-se {resources_text}. Quando há contrastes entre fator global e facetas específicas, a leitura clínica deve privilegiar essa heterogeneidade em vez de reduzir o resultado a uma única característica geral.",
-        "As possíveis vulnerabilidades indicadas pela BFP devem ser entendidas como tendências dimensionais de personalidade, sem valor diagnóstico isolado. A interpretação final depende da convergência com entrevista clínica, observação comportamental, história de vida e demais instrumentos utilizados no processo avaliativo.",
+        f"A integração dos fatores sugere {joined}, articulando aspectos emocionais, interpessoais, motivacionais e de abertura à experiência.",
+        f"Como recursos do perfil, destacam-se {resources_text}. Contrastes entre fator global e facetas devem ser considerados sem reduzir o perfil a uma única característica.",
+        "As vulnerabilidades descritas são dimensionais e sem valor diagnóstico isolado, exigindo integração com entrevista, observação e demais instrumentos.",
     ]
 
 

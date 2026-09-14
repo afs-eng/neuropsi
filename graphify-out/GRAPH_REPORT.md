@@ -1,11 +1,11 @@
 # Graph Report - neuropsi  (2026-09-14)
 
 ## Corpus Check
-- 743 files · ~933,670 words
+- 743 files · ~933,690 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 7140 nodes · 13141 edges · 218 communities detected
+- 7140 nodes · 13140 edges · 218 communities detected
 - Extraction: 72% EXTRACTED · 28% INFERRED · 0% AMBIGUOUS · INFERRED: 3732 edges (avg confidence: 0.72)
 - Token cost: 0 input · 0 output
 
@@ -257,7 +257,7 @@
 
 ### Community 0 - "Community 0"
 Cohesion: 0.01
-Nodes (347): gerar_grafico_bpa(), gerar_grafico_bpa_bytes(), _render_bpa_chart(), _calcular_idade(), calculate_factor_score(), compute_srs2_scores(), convert_response(), get_factor_name() (+339 more)
+Nodes (382): gerar_grafico_bpa(), gerar_grafico_bpa_bytes(), _render_bpa_chart(), _calcular_idade(), calculate_factor_score(), compute_srs2_scores(), convert_response(), get_factor_name() (+374 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.02
@@ -269,11 +269,11 @@ Nodes (277): convert_a1_to_csv(), convert_composite_scores(), convert_psychometr
 
 ### Community 3 - "Community 3"
 Cohesion: 0.02
-Nodes (180): check(), ensure_available(), _timeout(), AILogService, log_generation_end(), log_generation_error(), log_generation_start(), build_anamnesis_snapshot() (+172 more)
+Nodes (168): Migration, seed_templates_v2(), AbstractUser, UserAdmin, BearerAuth, BaseUserAdmin, get_default_templates(), create_admin() (+160 more)
 
 ### Community 4 - "Community 4"
 Cohesion: 0.02
-Nodes (164): Migration, seed_templates_v2(), AbstractUser, UserAdmin, BearerAuth, BaseUserAdmin, get_default_templates(), create_admin() (+156 more)
+Nodes (144): check(), ensure_available(), _timeout(), AILogService, log_generation_end(), log_generation_error(), log_generation_start(), build_anamnesis_snapshot() (+136 more)
 
 ### Community 5 - "Community 5"
 Cohesion: 0.01
@@ -353,7 +353,7 @@ Nodes (94): 1. Objetivo do mapeamento, 2.1 Título e abertura institucional, 2.2
 
 ### Community 24 - "Community 24"
 Cohesion: 0.05
-Nodes (87): affectedCheckboxes(), checker(), clearAcross(), hide(), ready(), reset(), show(), showClear() (+79 more)
+Nodes (77): $(), addPopupIndex(), dismissAddRelatedObjectPopup(), dismissChangeRelatedObjectPopup(), dismissChildPopups(), dismissDeleteRelatedObjectPopup(), dismissRelatedLookupPopup(), removePopupIndex() (+69 more)
 
 ### Community 25 - "Community 25"
 Cohesion: 0.03
@@ -596,12 +596,12 @@ Cohesion: 0.12
 Nodes (15): code:block1 (P1: O desempenho de {nome} revelou funcionamento mnésico ver), code:block2 (P1: ...predominantemente preservado, com pontos específicos ), code:block3 (P1: ...com oscilações no funcionamento mnésico verbal. Aquis), code:block4 (P1: ...com oscilações.), Comparação com a Implementação Atual, Decisão, Modelo de Estrutura por Perfil, O que a implementação atual já faz bem (+7 more)
 
 ### Community 85 - "Community 85"
-Cohesion: 0.22
-Nodes (3): AIProvider, AIService, get_ai_service()
-
-### Community 86 - "Community 86"
 Cohesion: 0.13
 Nodes (13): Adding a new icon, code:xml (<!--!Font Awesome Free 6.7.2 by @fontawesome - https://fonta), code:xml (<!--!Font Awesome Free X.Y.Z by @fontawesome - https://fonta), code:xml (<!--!Font Awesome Free 6.7.2 by @fontawesome - https://fonta), code:xml (<!--), code:xml (<svg width="13" height="13" xmlns="http://www.w3.org/2000/sv), Contributing SVG Icons, Example SVG Structure (+5 more)
+
+### Community 86 - "Community 86"
+Cohesion: 0.47
+Nodes (10): affectedCheckboxes(), checker(), clearAcross(), hide(), ready(), reset(), show(), showClear() (+2 more)
 
 ### Community 87 - "Community 87"
 Cohesion: 0.17
@@ -645,11 +645,11 @@ Nodes (8): 14. CONCLUSÃO, 16. CONSIDERAÇÕES FINAIS, 17. REFERÊNCIAS BIBLIOGR
 
 ### Community 97 - "Community 97"
 Cohesion: 0.25
-Nodes (4): getPrimaryTechnicalSummary(), getTestWorkflowMeta(), TestReportSummaryCard(), TestWorkflowBadge()
+Nodes (1): loadResult()
 
 ### Community 98 - "Community 98"
 Cohesion: 0.25
-Nodes (1): loadResult()
+Nodes (4): getPrimaryTechnicalSummary(), getTestWorkflowMeta(), TestReportSummaryCard(), TestWorkflowBadge()
 
 ### Community 99 - "Community 99"
 Cohesion: 0.25
@@ -1134,7 +1134,7 @@ Nodes (1): Preview WAIS-III results without saving to database.          This en
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 - **Thin community `Community 90`** (10 nodes): `Migration`, `seed_templates()`, `0001_initial.py`, `0001_initial.py`, `0001_initial.py`, `0001_initial.py`, `0001_initial.py`, `0001_initial.py`, `0001_initial.py`, `0001_initial.py`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 98`** (8 nodes): `page.tsx`, `page.tsx`, `classificationStyle()`, `displayClassification()`, `formatValue()`, `loadResult()`, `PercentileBars()`, `scaleLabel()`
+- **Thin community `Community 97`** (8 nodes): `page.tsx`, `page.tsx`, `classificationStyle()`, `displayClassification()`, `formatValue()`, `loadResult()`, `PercentileBars()`, `scaleLabel()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 - **Thin community `Community 101`** (7 nodes): `env_bool()`, `env_list()`, `Base Django settings shared across environments.`, `base.py`, `production.py`, `_append_unique()`, `_hostname_from_url()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
@@ -1362,7 +1362,7 @@ Nodes (1): Preview WAIS-III results without saving to database.          This en
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `GET()` connect `Community 0` to `Community 1`, `Community 2`, `Community 3`, `Community 4`, `Community 10`, `Community 11`, `Community 12`, `Community 13`, `Community 14`, `Community 15`, `Community 18`, `Community 19`, `Community 24`, `Community 37`, `Community 38`, `Community 42`, `Community 47`, `Community 51`, `Community 63`, `Community 67`, `Community 85`, `Community 92`, `Community 103`?**
+- **Why does `GET()` connect `Community 0` to `Community 1`, `Community 2`, `Community 3`, `Community 4`, `Community 10`, `Community 11`, `Community 12`, `Community 13`, `Community 14`, `Community 15`, `Community 18`, `Community 19`, `Community 24`, `Community 37`, `Community 38`, `Community 42`, `Community 47`, `Community 51`, `Community 63`, `Community 67`, `Community 92`, `Community 103`?**
   _High betweenness centrality (0.145) - this node is a cross-community bridge._
 - **Why does `split()` connect `Community 0` to `Community 1`, `Community 2`, `Community 3`, `Community 4`, `Community 10`, `Community 11`, `Community 12`, `Community 13`, `Community 14`, `Community 15`, `Community 18`, `Community 19`, `Community 24`, `Community 37`, `Community 38`, `Community 42`, `Community 46`, `Community 47`, `Community 67`, `Community 101`, `Community 102`?**
   _High betweenness centrality (0.018) - this node is a cross-community bridge._
