@@ -160,6 +160,14 @@ _FACTOR_BRIEF = {
     },
 }
 
+_SYNTHESIS_NOTES = {
+    "nn_rr": "sensibilidade emocional com menor sustentação de metas",
+    "nn_ee": "reatividade emocional com menor exposição interpessoal",
+    "ss_nn": "menor abertura cooperativa com maior reatividade relacional",
+    "rr_low": "menor organização e persistência",
+    "aa_low": "preferência por previsibilidade",
+}
+
 _FACET_BRIEF = {
     "N1": "vulnerabilidade emocional",
     "N2": "instabilidade emocional",
@@ -237,7 +245,7 @@ def _facet_clause(facet: dict) -> str:
     name = facet.get("name") or FACET_DEFINITIONS.get(code, {}).get("name") or code
     classification = facet.get("classification") or "classificação não informada"
     meaning = _FACET_BRIEF.get(code, "componente específico do fator")
-    return f"{name} em {classification}, envolvendo {meaning}"
+    return f"{name} em {classification} ({meaning})"
 
 
 def _relevant_factors(factors: dict) -> list[dict]:
@@ -278,19 +286,17 @@ def _build_intrafactor_analysis(factor_code: str, factor_result: dict, facets: d
 
     highest, high_rank = max(ranked, key=lambda item: item[1])
     lowest, low_rank = min(ranked, key=lambda item: item[1])
-    factor_classification = factor_result.get("classification") or "classificação não informada"
 
     if high_rank - low_rank <= 1:
-        return f"As facetas sustentam a leitura global em {factor_classification}."
+        return ""
 
     return (
-        f"Há contraste interno: {highest.get('name')} aparece em {highest.get('classification')}, "
-        f"enquanto {lowest.get('name')} se situa em {lowest.get('classification')}."
+        f"Há contraste entre {highest.get('name')} ({highest.get('classification')}) "
+        f"e {lowest.get('name')} ({lowest.get('classification')})."
     )
 
 
 def _build_factor_paragraph(factor_code: str, factor_result: dict, facets: dict) -> str:
-    factor_name = factor_result.get("name") or FACTOR_DEFINITIONS[factor_code]["name"]
     classification = factor_result.get("classification") or "classificação não informada"
     level = _domain_level(factor_result)
     factor_meaning = _FACTOR_BRIEF.get(factor_code, {}).get(level) or "padrão a ser integrado aos demais achados"
@@ -301,18 +307,18 @@ def _build_factor_paragraph(factor_code: str, factor_result: dict, facets: dict)
     intrafactor = _build_intrafactor_analysis(factor_code, factor_result, facets)
 
     parts = [
-        f"O resultado em {factor_name} situa-se em {classification}, sugerindo {factor_meaning}.",
+        f"Classificação {classification}, sugerindo {factor_meaning}.",
     ]
     if facet_text:
-        parts.append(f"Destacam-se {facet_text}.")
+        parts.append(f"Destaques: {facet_text}.")
     if intrafactor:
         parts.append(intrafactor)
     if factor_code == "NN":
-        parts.append("Não configura diagnóstico isolado.")
+        parts.append("Não configura diagnóstico.")
     if factor_code == "SS":
         parts.append("Não implica inadequação ética ou comportamento antissocial.")
     if factor_code == "AA":
-        parts.append("Liberalismo não autoriza inferências políticas ou religiosas.")
+        parts.append("Sem inferências políticas ou religiosas.")
     return " ".join(parts)
 
 
@@ -325,25 +331,15 @@ def _build_synthesis_paragraphs(factors: dict, facets: dict) -> list[str]:
     aa = _factor_result(factors, "AA")
 
     if _domain_level(nn) == "elevado" and _domain_level(rr) == "reduzido":
-        notes.append(
-            "maior responsividade emocional associada à redução na orientação para organização, persistência ou autorregulação de metas"
-        )
+        notes.append(_SYNTHESIS_NOTES["nn_rr"])
     if _domain_level(nn) == "elevado" and _domain_level(ee) == "reduzido":
-        notes.append(
-            "maior sensibilidade emocional combinada à redução da exposição interpessoal ou da busca espontânea por contato social"
-        )
+        notes.append(_SYNTHESIS_NOTES["nn_ee"])
     if _domain_level(ss) == "reduzido" and _domain_level(nn) == "elevado":
-        notes.append(
-            "menor abertura cooperativa ou interpessoal combinada à elevação da reatividade emocional em contextos relacionais"
-        )
+        notes.append(_SYNTHESIS_NOTES["ss_nn"])
     if _domain_level(rr) == "reduzido":
-        notes.append(
-            "menor expressão de recursos ligados a planejamento, persistência e manutenção de esforço em objetivos"
-        )
+        notes.append(_SYNTHESIS_NOTES["rr_low"])
     if _domain_level(aa) == "reduzido":
-        notes.append(
-            "maior preferência por previsibilidade e menor busca por variedade intelectual ou comportamental"
-        )
+        notes.append(_SYNTHESIS_NOTES["aa_low"])
 
     extreme_facets = [
         item.get("name") or code
@@ -351,32 +347,20 @@ def _build_synthesis_paragraphs(factors: dict, facets: dict) -> list[str]:
         if _normalize_classification(item.get("classification")) in {"Muito Baixo", "Muito Superior"}
     ]
     if extreme_facets:
-        notes.append(
-            "resultados extremos em " + ", ".join(extreme_facets[:4]) + ", que merecem integração clínica proporcional, sem interpretação diagnóstica isolada"
-        )
+        notes.append("resultados extremos em " + ", ".join(extreme_facets[:3]))
 
     if not notes:
         return [
-            "O perfil sugere funcionamento emocional, interpessoal, motivacional e de abertura à experiência globalmente compatível com a amostra normativa.",
-            "A leitura deve integrar fatores e facetas, pois a BFP descreve tendências dimensionais e não estabelece diagnósticos isoladamente.",
+            "O perfil sugere funcionamento global compatível com a amostra normativa. A leitura deve integrar fatores e facetas, pois a BFP descreve tendências dimensionais e não estabelece diagnósticos isoladamente.",
         ]
 
-    if len(notes) == 1:
-        joined = notes[0]
+    selected_notes = notes[:4]
+    if len(selected_notes) == 1:
+        joined = selected_notes[0]
     else:
-        joined = "; ".join(notes[:-1]) + f"; e {notes[-1]}"
-    resources = []
-    if _domain_level(ee) in {"medio", "elevado"}:
-        resources.append("recursos de comunicação ou envolvimento interpessoal")
-    if _domain_level(rr) in {"medio", "elevado"}:
-        resources.append("capacidade de organização e investimento em objetivos")
-    if _domain_level(ss) in {"medio", "elevado"}:
-        resources.append("disposição para convivência cooperativa")
-    resources_text = ", ".join(resources) if resources else "recursos que devem ser examinados em conjunto com a história clínica e observacional"
-
+        joined = "; ".join(selected_notes[:-1]) + f"; e {selected_notes[-1]}"
     return [
-        f"A integração dos fatores sugere {joined}. Esses achados articulam aspectos emocionais, interpessoais, motivacionais e de abertura à experiência.",
-        f"Como recursos, destacam-se {resources_text}. Vulnerabilidades e contrastes devem ser integrados à entrevista, observação e demais instrumentos, sem valor diagnóstico isolado.",
+        f"A integração sugere {joined}. Vulnerabilidades e contrastes devem ser articulados à entrevista, observação e demais instrumentos, sem valor diagnóstico isolado.",
     ]
 
 
