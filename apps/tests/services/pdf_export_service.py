@@ -234,8 +234,10 @@ class BFPPdfExporter(BaseTestPdfExporter):
         if cleaned:
             return cleaned
         return (
-            "Esta página funciona como devolutiva sintética, com linguagem clara e tecnicamente controlada. "
-            "A BFP descreve tendências de personalidade e deve ser integrada aos demais dados do processo avaliativo."
+            "Este relatório foi elaborado com base nos resultados obtidos pela Bateria Fatorial de Personalidade (BFP). "
+            "A interpretação deve ser integrada pelo profissional responsável, considerando anamnese, observação clínica "
+            "e demais instrumentos utilizados no processo avaliativo. A BFP descreve tendências dimensionais de personalidade "
+            "e não deve ser utilizada isoladamente para fins diagnósticos."
         )
 
     @classmethod

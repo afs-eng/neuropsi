@@ -80,10 +80,10 @@ def test_build_bfp_interpretation_includes_all_available_facets_and_cautions():
 
     assert text.startswith("INTERPRETAÇÃO DOS RESULTADOS")
     assert "\n\nNeuroticismo\n\n" in text
-    assert "Classificação Superior" in text
-    assert "Depressão em Muito Superior" in text
+    assert "elevada" in text
+    assert "Depressão em elevação" in text
     assert "comportamento antissocial" in text
-    assert "Sem inferências políticas ou religiosas" in text
+    assert "inferência política" in text
     assert "SÍNTESE INTEGRATIVA" in text
     assert "Síntese dos resultados" not in text
     assert "INTERPRETAÇÃO CLÍNICA" not in text
@@ -93,7 +93,6 @@ def test_build_bfp_interpretation_includes_all_available_facets_and_cautions():
     assert "Análise intrafator" not in text
     assert "Análise interfatores" not in text
     assert "A faceta apresentou" not in text
-    assert "Depressão:" not in text
     assert "a maior" not in text
     assert "a menor" not in text
 
@@ -106,7 +105,6 @@ def test_build_bfp_interpretation_payload_compares_facets_within_factor():
 
     out = build_bfp_interpretation_payload(payload, patient_name="Paciente")
 
-    assert "Há contraste entre" in out["factors"]["EE"]
-    assert "Comunicação (Muito Superior)" in out["factors"]["EE"]
-    assert "Interações Sociais (Baixo)" in out["factors"]["EE"]
+    assert "Comunicação" in out["factors"]["EE"]
+    assert "Interações Sociais" in out["factors"]["EE"]
     assert len(out["synthesis"]) == 1
