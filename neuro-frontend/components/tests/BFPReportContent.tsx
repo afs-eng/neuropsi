@@ -349,7 +349,7 @@ function ReportPage({ pageNumber, children, compact = false }: { pageNumber: str
       <div className={`absolute left-[16mm] h-px w-[calc(100%-32mm)] bg-slate-400 ${compact ? "bottom-[18mm]" : "bottom-[22mm]"}`} />
       <footer className={`absolute left-[16mm] right-[16mm] grid grid-cols-[135px_1fr_105px] items-center gap-4 text-slate-400 ${compact ? "bottom-[5mm] text-[6px]" : "bottom-[7mm] text-[7px]"}`}>
         <div className="text-sm font-black tracking-[0.12em] text-lime-700">SISTEMA</div>
-        <div>Relatório gerado automaticamente. Os resultados devem ser integrados ao contexto clínico e avaliativo.</div>
+        <div>Relatório de Resultados – BFP | Uso profissional</div>
         <div className="text-right text-[8px]">{pageNumber}</div>
       </footer>
     </section>
