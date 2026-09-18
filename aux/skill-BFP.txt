@@ -1,0 +1,994 @@
+SKILL DEFINITIVA — BFP | NEUROAVALIA
+RELATÓRIO DE RESULTADOS PROFISSIONAL
+VERSÃO FINAL — MÁXIMO ABSOLUTO DE 4 PÁGINAS
+
+======================================================================
+1. OBJETIVO DA SKILL
+======================================================================
+
+Gerar automaticamente o Relatório de Resultados da Bateria Fatorial de
+Personalidade (BFP), mantendo padrão visual profissional, interpretação
+psicológica tecnicamente cautelosa, linguagem clara, individualização do
+perfil e integração entre fatores e facetas.
+
+A IA deverá transformar os resultados quantitativos da BFP em uma
+interpretação qualitativa coerente, sem simplesmente concatenar frases
+pré-programadas.
+
+O relatório deverá ser adequado para revisão pelo psicólogo responsável.
+
+REGRA ABSOLUTA:
+O PDF final deverá possuir NO MÁXIMO 4 PÁGINAS.
+
+NUNCA criar uma quinta página.
+
+======================================================================
+2. PRINCÍPIOS OBRIGATÓRIOS
+======================================================================
+
+A IA deverá:
+
+1. Utilizar exclusivamente dados efetivamente calculados para o avaliado.
+
+2. Nunca inventar:
+- escores;
+- percentis;
+- classificações;
+- sintomas;
+- diagnósticos;
+- comportamentos;
+- informações clínicas;
+- características não sustentadas pelos resultados.
+
+3. Interpretar a BFP como instrumento dimensional de personalidade.
+
+4. Não estabelecer diagnóstico a partir da BFP isoladamente.
+
+5. Utilizar linguagem probabilística e dimensional.
+
+PREFERIR:
+- sugere;
+- indica tendência;
+- evidencia maior expressão;
+- apresenta menor expressão;
+- mostra-se compatível;
+- pode estar associado;
+- observa-se;
+- destaca-se.
+
+EVITAR:
+- comprova;
+- confirma;
+- demonstra que o paciente é;
+- o paciente possui necessariamente;
+- sempre;
+- nunca;
+- certamente.
+
+6. Não transformar nomenclaturas das facetas em rótulos pessoais.
+
+7. Não realizar inferências não sustentadas sobre:
+- diagnóstico psiquiátrico;
+- caráter;
+- moralidade;
+- inteligência;
+- criminalidade;
+- orientação política;
+- religião;
+- sexualidade;
+- ideologia.
+
+======================================================================
+3. FLUXO INTERNO OBRIGATÓRIO — ANTES DO PDF
+======================================================================
+
+É PROIBIDO gerar a página 4 diretamente a partir de frases isoladas de
+templates.
+
+O sistema deverá obrigatoriamente executar estas etapas, NESTA ORDEM:
+
+ETAPA 1 — CALCULAR
+Calcular:
+- escores;
+- percentis;
+- classificações;
+- fatores;
+- facetas.
+
+ETAPA 2 — VALIDAR
+Confirmar que os resultados calculados correspondem:
+- à norma selecionada;
+- ao sexo/tabela normativa aplicável;
+- aos dados inseridos;
+- às classificações configuradas no sistema.
+
+ETAPA 3 — MAPEAR O PERFIL
+Antes de escrever qualquer interpretação, identificar:
+- fator mais elevado;
+- fator mais reduzido;
+- facetas mais elevadas;
+- facetas mais reduzidas;
+- resultados médios;
+- discrepâncias intrafatoriais;
+- convergências intrafatoriais;
+- contrastes entre fatores;
+- possíveis recursos;
+- possíveis vulnerabilidades.
+
+ETAPA 4 — GERAR O TEXTO COMPLETO
+Gerar primeiro, em memória, TODA a interpretação da página 4 como texto
+contínuo.
+
+NÃO diagramar ainda.
+
+ETAPA 5 — REVISÃO CLÍNICO-SEMÂNTICA
+Revisar:
+- coerência psicológica;
+- proporcionalidade interpretativa;
+- relações entre fatores e facetas;
+- possíveis extrapolações;
+- linguagem determinista;
+- possíveis interpretações estigmatizantes.
+
+ETAPA 6 — DEDUPLICAÇÃO
+Executar uma segunda revisão específica para localizar:
+- frases repetidas;
+- ideias semanticamente repetidas;
+- sinônimos usados para repetir a mesma conclusão;
+- duplicações decorrentes da junção de templates.
+
+Quando duas frases comunicarem a mesma ideia:
+MANTER SOMENTE A MAIS CLARA E TECNICAMENTE PRECISA.
+
+ETAPA 7 — REVISÃO GRAMATICAL
+Corrigir:
+- concordância;
+- pontuação;
+- frases truncadas;
+- construções incompletas;
+- excesso de conectivos;
+- repetição de palavras.
+
+ETAPA 8 — REVISÃO DE NATURALIDADE
+Perguntar internamente:
+
+"Este texto parece escrito especificamente para este avaliado?"
+
+Se NÃO:
+reescrever.
+
+ETAPA 9 — CONTROLE DE TAMANHO
+Verificar se o conteúdo cabe adequadamente na página 4.
+
+Se não couber:
+reduzir redundâncias e interpretações de resultados médios.
+
+NÃO retirar achados clinicamente relevantes apenas para caber.
+
+ETAPA 10 — SOMENTE ENTÃO DIAGRAMAR
+Após aprovação das etapas anteriores, inserir o texto no PDF.
+
+======================================================================
+4. ESTRUTURA FIXA DO PDF
+======================================================================
+
+PÁGINA 1
+- BFP;
+- identificação do avaliado;
+- código do avaliado;
+- código do relatório;
+- data da aplicação;
+- profissional;
+- tabela normativa;
+- itens válidos;
+- breve apresentação da BFP;
+- radar dos cinco fatores;
+- resumo dos domínios.
+
+PÁGINA 2
+- radar das facetas;
+- relação das facetas organizadas por fator.
+
+PÁGINA 3
+- tabela completa de resultados normativos;
+- fator/faceta;
+- escore bruto;
+- percentil;
+- classificação.
+
+PÁGINA 4
+- INTERPRETAÇÃO DOS RESULTADOS;
+- Neuroticismo;
+- Extroversão;
+- Socialização;
+- Realização;
+- Abertura à Experiência;
+- SÍNTESE INTEGRATIVA;
+- ressalva técnica final.
+
+NÃO ALTERAR essa arquitetura automaticamente.
+
+======================================================================
+5. PRINCÍPIO DE ECONOMIA TEXTUAL
+======================================================================
+
+Cada informação deverá cumprir uma função.
+
+TABELA:
+mostra os resultados quantitativos.
+
+GRÁFICOS:
+mostram visualmente o perfil.
+
+INTERPRETAÇÃO:
+explica o significado psicológico.
+
+SÍNTESE:
+integra os achados.
+
+PROIBIDO utilizar quatro partes diferentes do relatório para repetir a
+mesma informação.
+
+Não repetir todos os percentis na interpretação.
+
+Não repetir todos os escores brutos.
+
+Não repetir todas as classificações se elas já estiverem visíveis na tabela.
+
+======================================================================
+6. REGRA DE PROPORCIONALIDADE
+======================================================================
+
+A quantidade de texto deverá ser proporcional à relevância do resultado.
+
+FATOR MÉDIO + FACETAS HOMOGÊNEAS:
+1 ou 2 frases.
+
+FATOR MÉDIO + FACETA DISCREPANTE:
+2 ou 3 frases, destacando a discrepância.
+
+FATOR ELEVADO OU REDUZIDO:
+2 a 4 frases, conforme relevância.
+
+FACETA EXTREMA OU MUITO DISCREPANTE:
+poderá receber maior atenção.
+
+EXTREMO NÃO SIGNIFICA PATOLOGIA.
+
+======================================================================
+7. NEUROTICISMO
+======================================================================
+
+Integrar:
+- Vulnerabilidade;
+- Instabilidade Emocional;
+- Passividade/Falta de Energia;
+- Depressão.
+
+Não analisar apenas o fator global.
+
+Se Neuroticismo estiver Médio e houver facetas elevadas ou reduzidas,
+explicitar a heterogeneidade.
+
+VULNERABILIDADE:
+interpretar em termos de sensibilidade à avaliação, insegurança ou
+vulnerabilidade subjetiva, conforme intensidade do resultado.
+
+INSTABILIDADE EMOCIONAL:
+interpretar em termos de maior ou menor tendência à reatividade,
+irritabilidade ou oscilação emocional, respeitando a classificação.
+
+PASSIVIDADE/FALTA DE ENERGIA:
+quando elevada, poderá sugerir:
+- redução da iniciativa;
+- menor energia subjetiva;
+- menor disposição para iniciar atividades;
+- dificuldade subjetiva para sustentar ações.
+
+Não transformar automaticamente em déficit executivo.
+
+DEPRESSÃO:
+quando elevada, poderá sugerir:
+- maior tendência ao desânimo;
+- pessimismo;
+- redução da vitalidade subjetiva.
+
+OBRIGATÓRIO:
+Não interpretar a faceta Depressão como diagnóstico de transtorno
+depressivo.
+
+Quando necessário, esclarecer:
+"Esse resultado corresponde a uma dimensão avaliada pela BFP e não
+configura, isoladamente, diagnóstico de transtorno depressivo."
+
+======================================================================
+8. EXTROVERSÃO
+======================================================================
+
+Integrar:
+- Comunicação;
+- Altivez;
+- Dinamismo;
+- Interações Sociais.
+
+Extroversão elevada NÃO equivale automaticamente a habilidade social
+elevada.
+
+COMUNICAÇÃO:
+expressividade e facilidade de comunicação interpessoal.
+
+ALTIVEZ:
+relacionada à percepção e valorização dos próprios atributos e à
+sensibilidade ao reconhecimento social.
+
+NUNCA traduzir automaticamente Altivez como:
+- arrogância;
+- narcisismo;
+- egocentrismo;
+- superioridade.
+
+DINAMISMO:
+disposição, iniciativa e ritmo de atividade.
+
+INTERAÇÕES SOCIAIS:
+tendência à busca e participação em situações sociais.
+
+Quando houver discrepância entre Altivez e Comunicação:
+interpretar o contraste UMA ÚNICA VEZ.
+
+Exemplo conceitual:
+"Observa-se maior valorização dos próprios atributos sem elevação
+proporcional da facilidade comunicativa."
+
+Não copiar automaticamente.
+Adaptar ao perfil.
+
+======================================================================
+9. SOCIALIZAÇÃO
+======================================================================
+
+Integrar:
+- Amabilidade;
+- Pró-Sociabilidade;
+- Confiança nas Pessoas.
+
+AMABILIDADE:
+cordialidade, consideração e atenção às necessidades interpessoais.
+
+PRÓ-SOCIABILIDADE:
+relação com regras e convenções de convivência.
+
+CONFIANÇA NAS PESSOAS:
+disposição para confiar nas intenções e comportamentos dos outros.
+
+Resultados reduzidos NÃO autorizam inferências sobre:
+- ética;
+- moralidade;
+- honestidade;
+- comportamento criminoso;
+- personalidade antissocial.
+
+Quando Confiança estiver relativamente reduzida:
+poderá ser descrita como maior cautela, reserva ou seletividade
+interpessoal.
+
+======================================================================
+10. REALIZAÇÃO
+======================================================================
+
+Integrar:
+- Competência;
+- Ponderação/Prudência;
+- Empenho/Comprometimento.
+
+COMPETÊNCIA:
+percepção da própria capacidade para atingir objetivos.
+
+PONDERAÇÃO/PRUDÊNCIA:
+tendência a avaliar consequências antes de agir.
+
+EMPENHO/COMPROMETIMENTO:
+persistência, dedicação e envolvimento com objetivos.
+
+Realização NÃO equivale a inteligência.
+
+Resultado reduzido NÃO significa déficit cognitivo.
+
+Quando houver discrepância relevante entre Realização e
+Passividade/Falta de Energia, integrar os dois achados.
+
+Exemplo conceitual:
+"Pode apresentar orientação adequada para objetivos, coexistindo com
+menor energia subjetiva para iniciar ou sustentar determinadas atividades."
+
+Utilizar SOMENTE quando os dados sustentarem essa relação.
+
+======================================================================
+11. ABERTURA À EXPERIÊNCIA
+======================================================================
+
+Integrar:
+- Abertura a Ideias;
+- Liberalismo;
+- Busca por Novidades.
+
+ABERTURA A IDEIAS:
+curiosidade intelectual e receptividade a conceitos e perspectivas.
+
+LIBERALISMO:
+flexibilidade diante de valores, normas, costumes e perspectivas no
+sentido psicológico avaliado pela BFP.
+
+BUSCA POR NOVIDADES:
+interesse por variedade, novas experiências e situações menos rotineiras.
+
+Se as três facetas apresentarem resultados convergentes:
+FAZER UMA SÍNTESE ÚNICA.
+
+Exemplo conceitual:
+"A elevação consistente das facetas sugere curiosidade intelectual,
+flexibilidade diante de diferentes perspectivas e interesse por novas
+experiências."
+
+NÃO explicar as três facetas e depois repetir seus significados.
+
+PROIBIDO inferir a partir de Liberalismo:
+- partido político;
+- posicionamento eleitoral;
+- ideologia;
+- religião.
+
+======================================================================
+12. ANÁLISE DE CONTRASTES
+======================================================================
+
+A IA deverá procurar relações relevantes, por exemplo:
+
+- fator médio com faceta elevada;
+- fator elevado com uma faceta média;
+- Realização preservada + Passividade elevada;
+- Extroversão elevada + Comunicação média/reduzida;
+- Socialização preservada + Confiança reduzida;
+- Neuroticismo médio + Depressão elevada;
+- Abertura elevada de forma homogênea.
+
+Somente mencionar contrastes que realmente existam nos resultados.
+
+Não criar contraste artificial.
+
+Cada contraste deverá ser explicado UMA ÚNICA VEZ.
+
+======================================================================
+13. CONTROLE DE REPETIÇÃO LEXICAL
+======================================================================
+
+Evitar repetição excessiva de:
+
+- "indicando";
+- "sugerindo";
+- "maior";
+- "menor";
+- "apresentou";
+- "classificação";
+- "compatível";
+- "esperado".
+
+Alternar naturalmente entre:
+
+- observa-se;
+- destaca-se;
+- evidencia;
+- sugere;
+- aponta tendência;
+- caracteriza-se;
+- encontra-se;
+- mostra-se.
+
+Sem utilizar linguagem excessivamente rebuscada.
+
+======================================================================
+14. FRASES AUTOMÁTICAS PROIBIDAS
+======================================================================
+
+Evitar frases vazias como:
+
+"As facetas componentes apresentaram resultados coerentes com a
+classificação global."
+
+"Como recursos, destacam-se maior expressão de Extroversão e maior
+expressão de Abertura."
+
+"O perfil está normal."
+
+"O perfil encontra-se dentro da normalidade."
+
+"Os resultados são normais."
+
+"O perfil é compatível com a amostra normativa."
+
+Essas construções somente poderão aparecer quando acrescentarem
+informação concreta, nunca como preenchimento automático.
+
+======================================================================
+15. SÍNTESE INTEGRATIVA — REGRA PRINCIPAL
+======================================================================
+
+A Síntese Integrativa deverá ser escrita SOMENTE DEPOIS de todos os
+cinco fatores terem sido interpretados.
+
+Ela não poderá ser produzida por concatenação das interpretações
+anteriores.
+
+Deverá responder:
+
+"QUAL É A CONFIGURAÇÃO PARTICULAR DESTE PERFIL?"
+
+Integrar prioritariamente:
+
+1. características predominantes;
+2. fatores mais relevantes;
+3. facetas mais relevantes;
+4. convergências;
+5. contrastes;
+6. recursos;
+7. vulnerabilidades;
+8. significado global.
+
+A síntese deverá conter aproximadamente 80 a 130 palavras,
+ajustando-se ao espaço disponível.
+
+NÃO repetir todos os cinco fatores obrigatoriamente.
+
+Mencionar apenas o que for necessário para compreender o perfil.
+
+======================================================================
+16. LÓGICA DA SÍNTESE
+======================================================================
+
+A síntese poderá seguir internamente esta lógica:
+
+ABERTURA:
+"Os resultados indicam perfil caracterizado principalmente por..."
+
+DESENVOLVIMENTO:
+"Destacam-se..."
+"Em relação ao funcionamento emocional..."
+"No âmbito interpessoal..."
+"Em contraste..."
+
+INTEGRAÇÃO:
+"No conjunto..."
+
+RESSALVA:
+"Os achados devem ser integrados..."
+
+NÃO copiar uma fórmula fixa para todos os avaliados.
+
+A estrutura lógica poderá ser semelhante.
+A redação deverá ser individualizada.
+
+======================================================================
+17. RECURSOS E VULNERABILIDADES
+======================================================================
+
+A síntese deverá apresentar equilíbrio.
+
+Quando sustentados pelos resultados, poderão ser descritos como RECURSOS:
+
+- curiosidade intelectual;
+- flexibilidade;
+- sociabilidade;
+- iniciativa;
+- prudência;
+- persistência;
+- cordialidade;
+- comprometimento;
+- abertura a experiências;
+- capacidade de interação.
+
+Quando sustentados pelos resultados, poderão ser descritos como
+VULNERABILIDADES:
+
+- maior reatividade emocional;
+- redução da energia subjetiva;
+- maior sensibilidade à avaliação;
+- cautela interpessoal;
+- menor persistência;
+- maior necessidade de reconhecimento;
+- maior passividade;
+- menor flexibilidade.
+
+NÃO inserir nenhum recurso ou vulnerabilidade que não esteja sustentado
+pelos resultados.
+
+======================================================================
+18. LINGUAGEM PARA O AVALIADO
+======================================================================
+
+O relatório deverá ser tecnicamente correto e compreensível.
+
+Evitar:
+- linguagem estigmatizante;
+- julgamento moral;
+- excesso de jargões;
+- frases deterministas;
+- patologização de traços;
+- conclusões diagnósticas indevidas.
+
+Sempre contextualizar nomenclaturas potencialmente mal compreendidas.
+
+Exemplos:
+
+DEPRESSÃO:
+faceta dimensional da BFP; não equivale automaticamente a transtorno
+depressivo.
+
+ALTIVEZ:
+dimensão relacionada à valorização dos próprios atributos e ao
+reconhecimento social; não equivale automaticamente a arrogância.
+
+LIBERALISMO:
+flexibilidade psicológica diante de valores e perspectivas; não representa
+classificação política.
+
+======================================================================
+19. FORMATAÇÃO
+======================================================================
+
+Manter o design atualmente aprovado do NeuroAvalia.
+
+Não modificar automaticamente:
+- identidade visual;
+- disposição dos gráficos;
+- estrutura das páginas 1–3;
+- padrão da tabela;
+- cabeçalho;
+- logomarca;
+- paginação.
+
+Para a página 4:
+
+- fonte legível;
+- texto justificado;
+- espaçamento visual uniforme;
+- títulos claramente diferenciados;
+- evitar blocos excessivamente densos;
+- evitar espaços vazios exagerados.
+
+NÃO reduzir a fonte a ponto de prejudicar a leitura para manter quatro
+páginas.
+
+Se houver excesso de conteúdo:
+reduzir TEXTO, não legibilidade.
+
+======================================================================
+20. RODAPÉ DEFINITIVO
+======================================================================
+
+Utilizar em UMA ÚNICA LINHA:
+
+BFP • Uso profissional restrito • Resultados sujeitos à interpretação do psicólogo responsável.
+
+Manter:
+
+NEUROAVALIA à esquerda.
+
+Paginação à direita:
+
+1 / 4
+2 / 4
+3 / 4
+4 / 4
+
+Nunca quebrar o texto central do rodapé em duas linhas.
+
+======================================================================
+21. RESSALVA TÉCNICA FINAL
+======================================================================
+
+Ao final da página 4, utilizar:
+
+"Este relatório foi elaborado com base nos resultados obtidos pela Bateria
+Fatorial de Personalidade (BFP). A interpretação deve ser integrada pelo
+profissional responsável, considerando anamnese, observação clínica e demais
+instrumentos utilizados no processo avaliativo. A BFP descreve tendências
+dimensionais de personalidade e não deve ser utilizada isoladamente para
+fins diagnósticos."
+
+Não repetir essa ressalva no corpo da interpretação.
+
+======================================================================
+22. MOTOR DE DEDUPLICAÇÃO — OBRIGATÓRIO
+======================================================================
+
+ANTES DE DIAGRAMAR, comparar:
+
+- cada frase com a frase anterior;
+- cada frase com as demais frases do mesmo fator;
+- cada fator com a Síntese Integrativa.
+
+Identificar repetição SEMÂNTICA, e não apenas repetição literal.
+
+EXEMPLO:
+
+"maior curiosidade intelectual"
+e
+"maior interesse por conceitos e perspectivas de pensamento"
+
+podem representar informação semelhante dependendo do contexto.
+
+Se forem redundantes:
+manter apenas a formulação mais precisa.
+
+EXEMPLO DE ERRO QUE NUNCA PODERÁ APARECER:
+
+"indicando maior percepção do próprio valor e busca de reconhecimento,
+indicando maior percepção do próprio valor..."
+
+Esse tipo de duplicação deverá bloquear a exportação do PDF.
+
+======================================================================
+23. MOTOR DE REVISÃO GRAMATICAL
+======================================================================
+
+Antes da exportação, procurar automaticamente construções como:
+
+"Destaca-se X sugere..."
+"Destacam-se X em elevação..."
+"Entre as facetas, destacam-se X indicando..."
+quando houver erro de concordância ou falta de conectivo.
+
+Reescrever corretamente.
+
+Exemplo:
+
+ERRADO:
+"Destaca-se Passividade/Falta de Energia (Média Superior) sugere..."
+
+CORRETO:
+"Destaca-se Passividade/Falta de Energia, classificada como Média Superior,
+sugerindo..."
+
+OU:
+
+"Destacam-se Passividade/Falta de Energia e Depressão, ambas em faixa
+Média Superior. A primeira sugere..., enquanto a segunda..."
+
+======================================================================
+24. CONTROLE DE QUALIDADE DA SÍNTESE
+======================================================================
+
+Após gerar a síntese, perguntar internamente:
+
+1. Ela apenas repetiu os fatores?
+Se sim → REESCREVER.
+
+2. Ela identifica características particulares do perfil?
+Se não → REESCREVER.
+
+3. Integra recursos e vulnerabilidades quando presentes?
+Se não → REVISAR.
+
+4. Existe pelo menos uma relação entre diferentes achados quando
+clinicamente pertinente?
+Se não → verificar se há contraste relevante.
+
+5. Há informação inventada?
+Se sim → REMOVER.
+
+6. Parece texto genérico que poderia pertencer a qualquer pessoa?
+Se sim → REESCREVER.
+
+======================================================================
+25. CONTROLE DE QUALIDADE DO DOCUMENTO
+======================================================================
+
+Antes de gerar o arquivo definitivo, verificar:
+
+DADOS
+[ ] Nome correto.
+[ ] Idade correta.
+[ ] Sexo correto.
+[ ] Escolaridade correta.
+[ ] Data correta.
+[ ] Profissional correto.
+[ ] CRP correto.
+[ ] Norma correta.
+[ ] Quantidade de itens válidos correta.
+
+RESULTADOS
+[ ] Escores corretos.
+[ ] Percentis corretos.
+[ ] Classificações corretas.
+[ ] Cinco fatores presentes.
+[ ] Todas as facetas presentes na tabela.
+[ ] Gráfico de fatores corresponde à tabela.
+[ ] Gráfico de facetas corresponde à tabela.
+
+INTERPRETAÇÃO
+[ ] Todos os cinco fatores foram considerados.
+[ ] Resultados médios não foram superinterpretados.
+[ ] Resultados extremos não foram patologizados.
+[ ] Facetas discrepantes foram identificadas.
+[ ] Contrastes relevantes foram integrados.
+[ ] Não há diagnóstico indevido.
+[ ] Não há julgamento moral.
+[ ] Não há inferência política/religiosa.
+[ ] Depressão não foi tratada como diagnóstico.
+[ ] Altivez não foi tratada como arrogância/narcisismo.
+
+TEXTO
+[ ] Não há frases duplicadas.
+[ ] Não há ideias repetidas.
+[ ] Não há erros gramaticais.
+[ ] Não há frases truncadas.
+[ ] Não há excesso de "indicando".
+[ ] Não há excesso de "sugerindo".
+[ ] Não há excesso de "maior".
+[ ] Não há linguagem robótica.
+[ ] Síntese é individualizada.
+
+LAYOUT
+[ ] Exatamente 4 páginas ou menos.
+[ ] Nunca 5 páginas.
+[ ] Nenhum texto cortado.
+[ ] Nenhuma tabela cortada.
+[ ] Gráficos legíveis.
+[ ] Rodapé em uma linha.
+[ ] Paginação correta.
+[ ] Página 4 visualmente equilibrada.
+
+======================================================================
+26. SISTEMA DE BLOQUEIO DA EXPORTAÇÃO
+======================================================================
+
+O PDF NÃO DEVERÁ SER EXPORTADO se houver:
+
+- quinta página;
+- texto cortado;
+- frase duplicada;
+- erro evidente de concordância;
+- classificação divergente da tabela;
+- gráfico divergente da tabela;
+- diagnóstico gerado automaticamente pela BFP;
+- síntese vazia ou genérica;
+- rodapé quebrado;
+- conteúdo faltante.
+
+Quando qualquer condição ocorrer:
+
+1. bloquear temporariamente a exportação;
+2. corrigir automaticamente;
+3. executar novamente a auditoria;
+4. somente exportar quando aprovado.
+
+======================================================================
+27. ORDEM TÉCNICA FINAL DE EXECUÇÃO
+======================================================================
+
+A execução deverá seguir EXATAMENTE:
+
+DADOS BRUTOS
+↓
+CORREÇÃO
+↓
+PERCENTIS
+↓
+CLASSIFICAÇÕES
+↓
+VALIDAÇÃO NORMATIVA
+↓
+MAPEAMENTO DO PERFIL
+↓
+IDENTIFICAÇÃO DE DESTAQUES
+↓
+IDENTIFICAÇÃO DE CONTRASTES
+↓
+GERAÇÃO DA INTERPRETAÇÃO EM TEXTO
+↓
+GERAÇÃO DA SÍNTESE INTEGRATIVA
+↓
+REVISÃO CLÍNICO-SEMÂNTICA
+↓
+DEDUPLICAÇÃO
+↓
+REVISÃO GRAMATICAL
+↓
+REVISÃO DE NATURALIDADE
+↓
+CONTROLE DE TAMANHO
+↓
+DIAGRAMAÇÃO
+↓
+AUDITORIA DO PDF
+↓
+EXPORTAÇÃO FINAL
+
+É PROIBIDO pular a etapa de revisão e gerar o PDF imediatamente após a
+concatenação dos resultados.
+
+======================================================================
+28. TESTE FINAL DE HUMANIZAÇÃO
+======================================================================
+
+Antes da exportação, responder internamente:
+
+"Se eu retirasse o nome deste avaliado, essa interpretação poderia ser
+entregue praticamente igual para dezenas de pessoas?"
+
+SE SIM:
+a interpretação está genérica.
+REESCREVER.
+
+"Existem frases que apenas traduzem 'Média' como 'dentro do esperado'
+sem acrescentar informação?"
+
+SE SIM:
+reduzir ou integrar.
+
+"Existe alguma ideia repetida com palavras diferentes?"
+
+SE SIM:
+eliminar.
+
+"Os principais contrastes do perfil estão claros?"
+
+SE NÃO:
+integrar quando houver suporte nos resultados.
+
+"Uma pessoa sem formação em Psicologia conseguiria compreender o sentido
+geral sem interpretar os termos como diagnóstico?"
+
+SE NÃO:
+melhorar a clareza.
+
+======================================================================
+29. REGRA DE OURO DA PÁGINA 4
+======================================================================
+
+A página 4 deverá responder:
+
+"O QUE ESSE CONJUNTO DE RESULTADOS DIZ SOBRE O FUNCIONAMENTO DE
+PERSONALIDADE DESTA PESSOA?"
+
+Ela NÃO deverá responder apenas:
+
+"QUAIS CLASSIFICAÇÕES ESSA PESSOA OBTEVE?"
+
+As classificações já estão na página 3.
+
+======================================================================
+30. PADRÃO FINAL NEUROAVALIA
+======================================================================
+
+O relatório final deverá ser:
+
+TÉCNICO
++
+INDIVIDUALIZADO
++
+INTEGRADO
++
+CONCISO
++
+NÃO ESTIGMATIZANTE
++
+SEM REPETIÇÕES
++
+VISUALMENTE PROFISSIONAL
++
+COM NO MÁXIMO 4 PÁGINAS.
+
+REGRA FINAL:
+
+NUNCA exportar primeiro e revisar depois.
+
+SEMPRE:
+
+GERAR TEXTO
+→ REVISAR
+→ DEDUPLICAR
+→ VALIDAR
+→ DIAGRAMAR
+→ AUDITAR
+→ EXPORTAR.

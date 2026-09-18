@@ -348,8 +348,8 @@ function ReportPage({ pageNumber, children, compact = false }: { pageNumber: str
       </div>
       <div className={`absolute left-[16mm] h-px w-[calc(100%-32mm)] bg-slate-400 ${compact ? "bottom-[18mm]" : "bottom-[22mm]"}`} />
       <footer className={`absolute left-[16mm] right-[16mm] grid grid-cols-[135px_1fr_105px] items-center gap-4 text-slate-400 ${compact ? "bottom-[5mm] text-[6px]" : "bottom-[7mm] text-[7px]"}`}>
-        <div className="text-sm font-black tracking-[0.12em] text-lime-700">SISTEMA</div>
-        <div>Relatório de Resultados – BFP | Uso profissional</div>
+        <div className="text-sm font-black tracking-[0.12em] text-[#00649b]">NEUROAVALIA</div>
+        <div className="whitespace-nowrap text-center">BFP • Uso profissional restrito • Resultados sujeitos à interpretação do psicólogo responsável.</div>
         <div className="text-right text-[8px]">{pageNumber}</div>
       </footer>
     </section>
@@ -420,12 +420,20 @@ export function BFPReportContent({
     .split(/\n\s*\n/)
     .map((paragraph) => paragraph.trim())
     .filter(Boolean);
-  const introInterpretation = interpretationParagraphs[0] || "";
-  const factorInterpretations = BFP_FACTOR_GROUPS.map((factor, index) => ({
-    title: factor.name,
-    text: interpretationParagraphs[index + 1] || "",
-  })).filter((item) => item.text);
-  const finalInterpretation = interpretationParagraphs[BFP_FACTOR_GROUPS.length + 1] || "";
+  const interpretationBody = interpretationParagraphs[0]?.toUpperCase() === "INTERPRETAÇÃO DOS RESULTADOS"
+    ? interpretationParagraphs.slice(1)
+    : interpretationParagraphs;
+  const synthesisIndex = interpretationBody.findIndex((paragraph) => paragraph.toUpperCase() === "SÍNTESE INTEGRATIVA");
+  const factorInterpretations = BFP_FACTOR_GROUPS.map((factor) => {
+    const titleIndex = interpretationBody.findIndex((paragraph) => paragraph === factor.name);
+    return {
+      title: factor.name,
+      text: titleIndex >= 0 ? interpretationBody[titleIndex + 1] || "" : "",
+    };
+  }).filter((item) => item.text && item.text.toUpperCase() !== "SÍNTESE INTEGRATIVA");
+  const finalInterpretation = synthesisIndex >= 0
+    ? interpretationBody.slice(synthesisIndex + 1).find((paragraph) => !paragraph.startsWith("Os resultados descrevem características dimensionais") && !paragraph.startsWith("Este relatório foi elaborado")) || ""
+    : "";
   const groupedRows = getGroupedRows(factors, facets);
   const applicationCode = String(application.id || applicationId || "—");
   const evaluationCode = evaluationId || String(application.evaluation_id || "—");
@@ -537,7 +545,7 @@ export function BFPReportContent({
           <table className="w-full border-collapse text-[12px] leading-[1.15] text-[#12233f]">
             <thead>
               <tr>
-                <th className="border-y border-[#90a3c4] px-2 py-[4px] text-center font-extrabold text-[#102e68]">Faceta/Dimensãoas</th>
+                <th className="border-y border-[#90a3c4] px-2 py-[4px] text-center font-extrabold text-[#102e68]">Faceta/Dimensão</th>
                 <th className="border-y border-[#90a3c4] px-2 py-[4px] text-center font-extrabold text-[#102e68]">Escore Bruto</th>
                 <th className="border-y border-[#90a3c4] px-2 py-[4px] text-center font-extrabold text-[#102e68]">Percentil</th>
                 <th className="border-y border-[#90a3c4] px-2 py-[4px] text-center font-extrabold text-[#102e68]">Classificação</th>
@@ -572,11 +580,9 @@ export function BFPReportContent({
       <ReportPage pageNumber="4 / 4">
         <ReportHeader applicationCode={applicationCode} evaluationCode={evaluationCode} appliedOn={appliedOn} />
         <div className="mb-[18px] rounded-[18px] border border-[#d7dfea] bg-gradient-to-b from-[#fcfdff] to-white px-[22px] pt-5 pb-[22px]">
-          <div className="mb-1 text-[8px] font-extrabold uppercase tracking-[0.24em] text-[#557099]">Interpretação clínica</div>
-          <h2 className="mb-3 font-serif text-[32px] font-bold leading-[1.05] text-[#071a45]">Síntese dos resultados</h2>
+          <h2 className="mb-3 text-[17px] font-extrabold uppercase leading-[1.2] text-[#123a78]">Interpretação dos resultados</h2>
           {interpretation ? (
             <div className="space-y-3 text-[10.2px] leading-[1.58] text-[#24324a]">
-              {introInterpretation ? <p className="m-0 text-justify">{introInterpretation}</p> : null}
               {factorInterpretations.map((item) => (
                 <div key={item.title} className="mb-[11px]">
                   <h4 className="mb-[3px] text-[12.5px] font-extrabold text-[#123a78]">{item.title}</h4>
@@ -584,7 +590,9 @@ export function BFPReportContent({
                 </div>
               ))}
               <hr className="my-3 border-0 border-t border-[#cfd8e6]" />
+              {finalInterpretation ? <h4 className="mb-[3px] text-[12.5px] font-extrabold uppercase text-[#123a78]">Síntese Integrativa</h4> : null}
               {finalInterpretation ? <p className="m-0 text-justify">{finalInterpretation}</p> : null}
+              <p className="m-0 border-t border-[#cfd8e6] pt-3 text-justify text-[9.4px] italic text-slate-600">Este relatório foi elaborado com base nos resultados obtidos pela Bateria Fatorial de Personalidade (BFP). A interpretação deve ser integrada pelo profissional responsável, considerando anamnese, observação clínica e demais instrumentos utilizados no processo avaliativo. A BFP descreve tendências dimensionais de personalidade e não deve ser utilizada isoladamente para fins diagnósticos.</p>
             </div>
           ) : (
             <div className="text-[10.2px] text-[#24324a]">Interpretação ainda não disponível para esta aplicação.</div>

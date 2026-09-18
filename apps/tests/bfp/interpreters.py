@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from .calculators import CLASSIFICATION_ORDER, classify_bfp_domain
 from .config import (
     BFP_CLOSING_TEXT,
@@ -128,95 +130,90 @@ _FACET_MEANINGS = {
 _FACTOR_DETAILED_INTERPRETATION = {
     "NN": {
         "elevado": (
-            "Neuroticismo apresentou classificação elevada, sugerindo maior responsividade emocional, "
+            "O fator Neuroticismo apresentou classificação elevada, sugerindo maior responsividade emocional, "
             "sensibilidade a estressores e maior expressão de afetividade negativa. "
-            "Entre as facetas, destacam-se {facet_highlights}, indicando {facet_meaning}."
+            "{facet_highlights}. Esse padrão sugere {facet_meaning}."
             "{intrafactor}"
             " Esse resultado descreve uma dimensão da personalidade e não configura, isoladamente, diagnóstico de transtorno emocional."
         ),
         "medio": (
-            "Neuroticismo situou-se na faixa {classification}, indicando funcionamento emocional "
-            "compatível com o esperado para a amostra normativa. {facet_observation}"
+            "O fator Neuroticismo situou-se na faixa {classification}, sugerindo funcionamento emocional sem elevação ou redução global relevante. {facet_observation}"
         ),
         "reduzido": (
-            "Neuroticismo apresentou classificação reduzida, sugerindo menor tendência à instabilidade emocional, "
+            "O fator Neuroticismo apresentou classificação reduzida, sugerindo menor tendência à instabilidade emocional, "
             "menor reatividade a situações de estresse e maior estabilidade afetiva. "
-            "Entre as facetas, destacam-se {facet_highlights}, indicando {facet_meaning}."
+            "{facet_highlights}. Esse padrão sugere {facet_meaning}."
             "{intrafactor}"
         ),
     },
     "EE": {
         "elevado": (
-            "Extroversão apresentou classificação elevada, sugerindo maior tendência à sociabilidade, "
+            "O fator Extroversão apresentou classificação elevada, sugerindo maior tendência à sociabilidade, "
             "iniciativa interpessoal, expressividade comunicativa e busca por interação social. "
-            "Entre as facetas, destacam-se {facet_highlights}, indicando {facet_meaning}."
+            "{facet_highlights}. Esse padrão sugere {facet_meaning}."
             "{intrafactor}"
         ),
         "medio": (
-            "Extroversão situou-se na faixa {classification}, indicando repertório social "
-            "compatível com o esperado para a amostra normativa. {facet_observation}"
+            "O fator Extroversão situou-se na faixa {classification}, sugerindo repertório social sem elevação ou redução global relevante. {facet_observation}"
         ),
         "reduzido": (
-            "Extroversão apresentou classificação reduzida, sugerindo tendência a menor busca por interação social, "
+            "O fator Extroversão apresentou classificação reduzida, sugerindo tendência a menor busca por interação social, "
             "maior reserva interpessoal e menor expressividade em contextos sociais. "
-            "Entre as facetas, destacam-se {facet_highlights}, indicando {facet_meaning}."
+            "{facet_highlights}. Esse padrão sugere {facet_meaning}."
             "{intrafactor}"
         ),
     },
     "SS": {
         "elevado": (
-            "Socialização apresentou classificação elevada, sugerindo maior tendência a empatia, cooperação, "
+            "O fator Socialização apresentou classificação elevada, sugerindo maior tendência a empatia, cooperação, "
             "cordialidade e preocupação com o bem-estar de outras pessoas. "
-            "Entre as facetas, destacam-se {facet_highlights}, indicando {facet_meaning}."
+            "{facet_highlights}. Esse padrão sugere {facet_meaning}."
             "{intrafactor}"
         ),
         "medio": (
-            "Socialização situou-se na faixa {classification}, indicando funcionamento interpessoal "
-            "compatível com o esperado para a amostra normativa. {facet_observation}"
+            "O fator Socialização situou-se na faixa {classification}, sugerindo funcionamento interpessoal sem elevação ou redução global relevante. {facet_observation}"
         ),
         "reduzido": (
-            "Socialização apresentou classificação reduzida, sugerindo menor expressão de disposições cooperativas "
+            "O fator Socialização apresentou classificação reduzida, sugerindo menor expressão de disposições cooperativas "
             "ou de abertura interpessoal. "
-            "Entre as facetas, destacam-se {facet_highlights}, indicando {facet_meaning}."
+            "{facet_highlights}. Esse padrão sugere {facet_meaning}."
             "{intrafactor}"
             " Resultados reduzidos em Pró-Sociabilidade não autorizam afirmar comportamento antissocial, desonestidade ou inadequação moral."
         ),
     },
     "RR": {
         "elevado": (
-            "Realização apresentou classificação elevada, sugerindo maior tendência à organização, "
+            "O fator Realização apresentou classificação elevada, sugerindo maior tendência à organização, "
             "persistência, percepção de eficácia e orientação para metas. "
-            "Entre as facetas, destacam-se {facet_highlights}, indicando {facet_meaning}."
+            "{facet_highlights}. Esse padrão sugere {facet_meaning}."
             "{intrafactor}"
             " Não confundir com inteligência."
         ),
         "medio": (
-            "Realização situou-se na faixa {classification}, indicando recursos de organização, "
-            "persistência e responsabilidade compatíveis com o esperado para a amostra normativa. {facet_observation}"
+            "O fator Realização situou-se na faixa {classification}, sugerindo organização, persistência e responsabilidade sem elevação ou redução global relevante. {facet_observation}"
         ),
         "reduzido": (
-            "Realização apresentou classificação reduzida, sugerindo menor expressão de organização, "
+            "O fator Realização apresentou classificação reduzida, sugerindo menor expressão de organização, "
             "persistência, prudência ou percepção de eficácia. "
-            "Entre as facetas, destacam-se {facet_highlights}, indicando {facet_meaning}."
+            "{facet_highlights}. Esse padrão sugere {facet_meaning}."
             "{intrafactor}"
             " Esse padrão pode impactar demandas que exigem disciplina, constância e gerenciamento de tempo."
         ),
     },
     "AA": {
         "elevado": (
-            "Abertura à Experiência apresentou classificação elevada, sugerindo maior curiosidade intelectual, "
+            "O fator Abertura à Experiência apresentou classificação elevada, sugerindo maior curiosidade intelectual, "
             "flexibilidade cognitiva, criatividade e interesse por experiências novas. "
-            "Entre as facetas, destacam-se {facet_highlights}, indicando {facet_meaning}."
+            "{facet_highlights}. Esse padrão sugere {facet_meaning}."
             "{intrafactor}"
         ),
         "medio": (
-            "Abertura à Experiência situou-se na faixa {classification}, indicando equilíbrio entre "
-            "interesse por novidades e preferência por situações familiares. {facet_observation}"
+            "O fator Abertura à Experiência situou-se na faixa {classification}, sugerindo equilíbrio entre interesse por novidades e preferência por situações familiares. {facet_observation}"
         ),
         "reduzido": (
-            "Abertura à Experiência apresentou classificação reduzida, sugerindo menor busca por variedade "
+            "O fator Abertura à Experiência apresentou classificação reduzida, sugerindo menor busca por variedade "
             "ou menor flexibilidade diante de ideias, costumes e experiências novas. "
-            "Entre as facetas, destacam-se {facet_highlights}, indicando {facet_meaning}."
+            "{facet_highlights}. Esse padrão sugere {facet_meaning}."
             "{intrafactor}"
             " Liberalismo não deverá gerar inferências sobre posicionamento político, religioso ou ideológico."
         ),
@@ -226,8 +223,8 @@ _FACTOR_DETAILED_INTERPRETATION = {
 
 _FACET_HIGHLIGHT_TEMPLATES = {
     "N1": {
-        "elevado": "Vulnerabilidade em elevação, indicando maior sensibilidade à aceitação interpessoal e à avaliação dos outros",
-        "reduzido": "Vulnerabilidade reduzida, sugerindo menor dependência da aprovação externa",
+        "elevado": "A faceta Vulnerabilidade em elevação, indicando maior sensibilidade à aceitação interpessoal e à avaliação dos outros",
+        "reduzido": "A faceta Vulnerabilidade reduzida, sugerindo menor dependência da aprovação externa",
         "medio": None,
     },
     "N2": {
@@ -315,6 +312,25 @@ _FACET_HIGHLIGHT_TEMPLATES = {
 
 def _first_name(patient_name: str) -> str:
     return (patient_name or "Paciente").strip().split(" ", 1)[0] or "Paciente"
+
+
+def _dedupe_sentences(text: str) -> str:
+    cleaned = re.sub(r"\s+", " ", (text or "").strip())
+    if not cleaned:
+        return ""
+    sentences = re.findall(r"[^.!?]+[.!?]|[^.!?]+$", cleaned)
+    unique: list[str] = []
+    seen: set[str] = set()
+    for sentence in sentences:
+        sentence = sentence.strip()
+        if not sentence:
+            continue
+        key = re.sub(r"[^a-z0-9áéíóúâêôãõç]+", " ", sentence.lower()).strip()
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(sentence)
+    return " ".join(unique)
 
 
 def _factor_key(factor_code: str) -> str:
@@ -458,7 +474,7 @@ def _build_factor_paragraph(factor_code: str, factor_result: dict, facets: dict)
         meaning = _FACET_MEANINGS.get(code, {}).get(_domain_level(facet))
         if meaning:
             facet_meaning_parts.append(meaning)
-    facet_meaning = "; ".join(facet_meaning_parts) if facet_meaning_parts else "padrão geral compatível com o esperado"
+    facet_meaning = "; ".join(facet_meaning_parts) if facet_meaning_parts else "ausência de discrepância intrafatorial relevante"
 
     intrafactor = _build_intrafactor_analysis(factor_code, facets)
 
@@ -468,21 +484,19 @@ def _build_factor_paragraph(factor_code: str, factor_result: dict, facets: dict)
             code = facet.get("code")
             meaning = _FACET_MEANINGS.get(code, {}).get(_domain_level(facet))
             if meaning and _domain_level(facet) != "medio":
-                facet_observation_parts.append(
-                    f"{facet.get('name')} ({facet.get('classification')}) sugere {meaning}"
-                )
+                facet_observation_parts.append(f"{facet.get('name')}, classificada como {facet.get('classification')}, sugere {meaning}")
         if facet_observation_parts:
-            facet_observation = "Destaca-se " + "; ".join(facet_observation_parts[:2]) + "."
+            facet_observation = "Observa-se heterogeneidade intrafatorial: " + "; ".join(facet_observation_parts[:2]) + "."
         else:
-            facet_observation = "As facetas componentes apresentaram resultados coerentes com a classificação global."
-        return template.format(classification=classification, facet_observation=facet_observation)
+            facet_observation = "Não foram identificadas discrepâncias clinicamente salientes entre as facetas deste fator."
+        return _dedupe_sentences(template.format(classification=classification, facet_observation=facet_observation))
 
-    return template.format(
+    return _dedupe_sentences(template.format(
         classification=classification,
         facet_highlights=facet_highlights,
         facet_meaning=facet_meaning,
         intrafactor=intrafactor,
-    )
+    ))
 
 
 def _build_synthesis_paragraphs(factors: dict, facets: dict, patient_name: str | None = None) -> list[str]:
@@ -510,8 +524,8 @@ def _build_synthesis_paragraphs(factors: dict, facets: dict, patient_name: str |
 
     if not config_parts:
         config_description = (
-            f"Os resultados indicam um perfil globalmente situado em faixas médias, "
-            f"compatível com a amostra normativa nos cinco fatores avaliados."
+            "Os resultados indicam perfil sem elevações ou reduções relevantes nos cinco fatores, "
+            "com interpretação centrada nas nuances das facetas e nos dados clínicos associados."
         )
     else:
         config_description = f"Os resultados indicam um perfil caracterizado por {', '.join(config_parts)} entre os fatores principais."
@@ -556,7 +570,7 @@ def _build_synthesis_paragraphs(factors: dict, facets: dict, patient_name: str |
 
     if resources:
         unique_resources = list(dict.fromkeys(resources))[:3]
-        parts.append("Como recursos, destacam-se " + ", ".join(unique_resources) + ".")
+        parts.append("Sobressaem recursos associados a " + ", ".join(unique_resources) + ".")
 
     if contrasts:
         parts.append("Em termos de contrastes, " + "; ".join(contrasts[:2]) + ".")
@@ -573,11 +587,11 @@ def _build_synthesis_paragraphs(factors: dict, facets: dict, patient_name: str |
         parts.append("Como vulnerabilidades, destacam-se " + ", ".join(unique_vuln) + ".")
 
     parts.append(
-        "Os achados devem ser compreendidos de maneira integrada às informações clínicas e aos demais "
+        "Em análise clínica, os achados devem ser compreendidos de maneira integrada às informações clínicas e aos demais "
         "procedimentos de avaliação, não constituindo, isoladamente, indicadores diagnósticos."
     )
 
-    return [" ".join(parts)]
+    return [_dedupe_sentences(" ".join(parts))]
 
 
 def build_bfp_interpretation_payload(merged_data: dict, patient_name: str | None = None) -> dict:
@@ -602,7 +616,7 @@ def build_bfp_interpretation_payload(merged_data: dict, patient_name: str | None
     for code in FACTOR_DEFINITIONS:
         if code not in factors:
             continue
-        factor_texts[code] = _build_factor_paragraph(code, factors[code], facets)
+        factor_texts[code] = _dedupe_sentences(_build_factor_paragraph(code, factors[code], facets))
 
     facet_texts = {
         code: _interpret_facet(facets[code])
@@ -620,20 +634,17 @@ def build_bfp_interpretation_payload(merged_data: dict, patient_name: str | None
         "clinical_integration": "\n\n".join(synthesis),
         "synthesis": synthesis,
         "closing": (
-            "Os resultados descrevem características dimensionais de personalidade, "
-            "não estabelecem diagnóstico isoladamente e devem ser interpretados em conjunto "
-            "com entrevista clínica, observação comportamental, história de vida e demais "
-            "instrumentos utilizados no processo avaliativo."
+            "Este relatório foi elaborado com base nos resultados obtidos pela Bateria Fatorial de Personalidade (BFP). "
+            "A interpretação deve ser integrada pelo profissional responsável, considerando anamnese, observação clínica e demais "
+            "instrumentos utilizados no processo avaliativo. A BFP fornece indicadores de tendências de personalidade em formato dimensional "
+            "e não deve ser utilizada isoladamente para fins diagnósticos."
         ),
     }
 
 
 def _build_summary(name: str, relevant_factors: list[dict]) -> str:
     if not relevant_factors:
-        return (
-            f"{name} apresentou resultados globalmente situados em faixas médias nos fatores principais do BFP, "
-            "com perfil geral compatível com a amostra normativa nos domínios avaliados."
-        )
+        return f"{name} apresentou perfil sem elevações ou reduções relevantes nos fatores principais do BFP."
 
     parts = []
     for factor in relevant_factors:
@@ -646,7 +657,7 @@ def _build_summary(name: str, relevant_factors: list[dict]) -> str:
     else:
         joined = ", ".join(parts[:-1]) + f" e {parts[-1]}"
 
-    return f"{name} apresentou {joined} entre os fatores principais do BFP. Esses achados descrevem tendências dimensionais de personalidade e devem ser compreendidos em conjunto com as facetas de cada domínio."
+    return _dedupe_sentences(f"{name} apresentou {joined} entre os fatores principais do BFP. Esses achados descrevem tendências dimensionais de personalidade e devem ser compreendidos em conjunto com as facetas de cada domínio.")
 
 
 def build_bfp_interpretation(merged_data: dict, patient_name: str | None = None) -> str:
@@ -663,7 +674,7 @@ def build_bfp_interpretation(merged_data: dict, patient_name: str | None = None)
     paragraphs.append("SÍNTESE INTEGRATIVA")
     paragraphs.extend(payload.get("synthesis") or [payload["clinical_integration"]])
     paragraphs.append(payload["closing"])
-    return "\n\n".join(paragraphs)
+    return "\n\n".join(_dedupe_sentences(paragraph) for paragraph in paragraphs if _dedupe_sentences(paragraph))
 
 
 def get_report_interpretation(merged_data: dict, patient_name: str | None = None) -> str:
