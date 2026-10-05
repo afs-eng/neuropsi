@@ -6,6 +6,9 @@
 - Backend: Render Web Service
 - Banco: PostgreSQL no Render
 
+Manter os serviços existentes: frontend `https://neuropsi-eta.vercel.app` e backend
+`https://neuropsi-ddag.onrender.com`. Não criar novos projetos/domínios para este deploy.
+
 ---
 
 ## Backend no Render
@@ -19,20 +22,22 @@
 ### Build command
 
 ```bash
-pip install -r requirements.txt && python manage.py collectstatic --noinput
+bash infra/render/build.sh
 ```
 
-### Pre-deploy command
-
-```bash
-python manage.py migrate
-```
+O build instala também o Chromium usado pelos PDFs. No plano gratuito, deixar
+**Pre-deploy Command vazio**: as migrações são executadas no script de inicialização.
 
 ### Start command
 
 ```bash
-gunicorn config.wsgi:application --log-file -
+bash infra/render/start.sh
 ```
+
+O script aplica `migrate --noinput` antes de iniciar o Gunicorn na porta `$PORT`.
+Isso inclui a migração `tests.0005_add_thcp_instrument`, cadastrando o THCP
+automaticamente. Falhas na migração impedem a abertura do servidor.
+Não há download de Chromium a cada reinício.
 
 ### Health check
 
@@ -45,11 +50,12 @@ gunicorn config.wsgi:application --log-file -
 - `SECRET_KEY=<gerada>`
 - `DATABASE_URL=<connection string do PostgreSQL do Render>`
 - `DATABASE_SSL_REQUIRE=True`
-- `ALLOWED_HOSTS=<dominio-do-render>`
-- `CSRF_TRUSTED_ORIGINS=https://<dominio-render>,https://<dominio-vercel>`
-- `CORS_ALLOWED_ORIGINS=https://<dominio-vercel>`
-- `FRONTEND_BASE_URL=https://<dominio-vercel>`
-- `BACKEND_PUBLIC_URL=https://<dominio-render>`
+- `ALLOWED_HOSTS=neuropsi-ddag.onrender.com`
+- `CSRF_TRUSTED_ORIGINS=https://neuropsi-ddag.onrender.com,https://neuropsi-eta.vercel.app`
+- `CORS_ALLOWED_ORIGINS=https://neuropsi-eta.vercel.app`
+- `FRONTEND_BASE_URL=https://neuropsi-eta.vercel.app`
+- `BACKEND_PUBLIC_URL=https://neuropsi-ddag.onrender.com`
+- `PLAYWRIGHT_BROWSERS_PATH=/opt/render/project/src/.playwright-browsers`
 - `ALLOW_VERCEL_PREVIEWS=True`
 - `AI_PROVIDER=openai`
 - `OPENAI_API_KEY=<chave-openrouter>`
@@ -78,9 +84,23 @@ gunicorn config.wsgi:application --log-file -
 
 ### Variaveis de ambiente do frontend
 
-- `NEXT_PUBLIC_API_BASE_URL=https://<dominio-render>`
-- `INTERNAL_API_BASE_URL=https://<dominio-render>`
-- `NEXT_PUBLIC_APP_URL=https://<dominio-vercel>`
+- `NEXT_PUBLIC_API_BASE_URL=https://neuropsi-ddag.onrender.com`
+- `INTERNAL_API_BASE_URL=https://neuropsi-ddag.onrender.com`
+- `NEXT_PUBLIC_APP_URL=https://neuropsi-eta.vercel.app`
+
+Essas URLs públicas estão em `neuro-frontend/vercel.json` para build e runtime.
+Não incluir senhas, tokens ou chaves nesse arquivo.
+
+### Aplicar ao projeto existente
+
+1. Subir o código na branch vinculada aos serviços atuais.
+2. Se o Render não estiver gerenciado por Blueprint, ajustar manualmente os comandos
+   acima em **Settings** e conferir as variáveis em **Environment**. Um push isolado
+   não sincroniza `render.yaml` em serviços criados manualmente.
+3. Manter o banco e `SECRET_KEY` atuais. Não recriar banco nem trocar credenciais.
+4. Na Vercel, confirmar Root Directory `neuro-frontend` e branch de produção.
+5. Conferir nos logs do Render a migração THCP e verificar `/healthz/`, login,
+   inclusão do THCP na avaliação, correção e exportação PDF/DOCX.
 
 ### Observacoes
 

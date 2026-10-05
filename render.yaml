@@ -4,9 +4,8 @@ services:
     env: python
     plan: free
     rootDir: .
-    buildCommand: pip install -r requirements.txt && PLAYWRIGHT_BROWSERS_PATH=/opt/render/project/src/.playwright-browsers python -m playwright install chromium && python manage.py collectstatic --noinput
-    preDeployCommand: python manage.py migrate
-    startCommand: PLAYWRIGHT_BROWSERS_PATH=/opt/render/project/src/.playwright-browsers python -m playwright install chromium && python manage.py migrate && gunicorn config.wsgi:application --log-file -
+    buildCommand: bash infra/render/build.sh
+    startCommand: bash infra/render/start.sh
     healthCheckPath: /healthz/
     envVars:
       - key: DJANGO_ENV

@@ -1,3 +1,18 @@
 {
-  "buildCommand": "npm run build"
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "installCommand": "npm ci",
+  "buildCommand": "npm run build",
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_API_BASE_URL": "https://neuropsi-ddag.onrender.com",
+      "INTERNAL_API_BASE_URL": "https://neuropsi-ddag.onrender.com",
+      "NEXT_PUBLIC_APP_URL": "https://neuropsi-eta.vercel.app"
+    }
+  },
+  "env": {
+    "NEXT_PUBLIC_API_BASE_URL": "https://neuropsi-ddag.onrender.com",
+    "INTERNAL_API_BASE_URL": "https://neuropsi-ddag.onrender.com",
+    "NEXT_PUBLIC_APP_URL": "https://neuropsi-eta.vercel.app"
+  }
 }
