@@ -23,3 +23,4 @@ class TestsConfig(AppConfig):
         from apps.tests.cars2_hf import CARS2HFModule  # noqa
         from apps.tests.mchat import MCHATModule  # noqa
         from apps.tests.ssrs import SSRSModule  # noqa
+        from apps.tests.thcp import THCPModule  # noqa

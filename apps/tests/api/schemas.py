@@ -3,6 +3,14 @@ from typing import Any, Optional
 
 from ninja import Schema
 
+from apps.tests.thcp.schemas import THCPRawInput
+
+
+class THCPSubmitIn(THCPRawInput, Schema):
+    evaluation_id: int
+    application_id: Optional[int] = None
+    applied_on: Optional[date] = None
+
 
 class InstrumentOut(Schema):
     id: int

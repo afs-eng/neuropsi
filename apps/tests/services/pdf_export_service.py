@@ -20,6 +20,7 @@ from apps.tests.scared.pdf_service import SCAREDPdfService
 from apps.tests.srs2.pdf_service import SRS2PdfService
 from apps.tests.wais3.pdf_service import WAIS3PdfService
 from apps.tests.wisc4.pdf_service import WISC4PdfService
+from apps.tests.thcp.pdf_service import THCPPdfService
 
 
 def _polar_point(cx: float, cy: float, radius: float, angle: float) -> tuple[float, float]:
@@ -496,8 +497,17 @@ class SCAREDPdfExporter(BaseTestPdfExporter):
         return SCAREDPdfService.generate_pdf_bytes(application)
 
 
+class THCPPdfExporter(BaseTestPdfExporter):
+    instrument_code = "thcp"
+
+    @classmethod
+    def build_pdf_bytes(cls, application) -> bytes:
+        return THCPPdfService.generate_pdf_bytes(application)
+
+
 class TestPdfExportService:
     EXPORTERS: dict[str, type[BaseTestPdfExporter]] = {
+        THCPPdfExporter.instrument_code: THCPPdfExporter,
         BPA2PdfExporter.instrument_code: BPA2PdfExporter,
         ETDAHADPdfExporter.instrument_code: ETDAHADPdfExporter,
         ETDAHPAISPdfExporter.instrument_code: ETDAHPAISPdfExporter,

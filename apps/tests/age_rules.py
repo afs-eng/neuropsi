@@ -1,4 +1,9 @@
 INSTRUMENT_AGE_RULES = {
+    "thcp": {
+        "min_age": 4,
+        "max_age": 7,
+        "message": "O THCP pode ser aplicado apenas entre 4 e 7 anos.",
+    },
     "wisc4": {
         "min_age": 6,
         "max_age": 16,

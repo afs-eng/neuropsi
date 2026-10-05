@@ -3,6 +3,11 @@ from apps.tests.models import Instrument
 
 REQUIRED_INSTRUMENTS = [
     {
+        "code": "thcp",
+        "name": "THCP - Teste de Habilidades e Conhecimento Pré-Alfabetização",
+        "category": "Habilidades pré-alfabetização",
+    },
+    {
         "code": "bfp",
         "name": "BFP - Bateria Fatorial de Personalidade",
         "category": "Personalidade",

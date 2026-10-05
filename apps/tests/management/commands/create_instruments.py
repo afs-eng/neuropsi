@@ -8,6 +8,13 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         instrumentos = [
             {
+                "code": "thcp",
+                "name": "THCP - Teste de Habilidades e Conhecimento Pré-Alfabetização",
+                "category": "Habilidades pré-alfabetização",
+                "version": "1.0",
+                "is_active": True,
+            },
+            {
                 "code": "fdt",
                 "name": "FDT - Five Digits Test",
                 "category": "Funções executivas",

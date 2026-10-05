@@ -292,8 +292,8 @@ class ReportExportService:
             "descricao": "Teste não verbal de inteligência utilizado para avaliar o raciocínio geral, a percepção visual e a organização espacial, minimizando a influência da linguagem.",
         },
         "thcp": {
-            "nome": "Teste de Habilidades Cognitivas Primárias (THCP)",
-            "descricao": "Instrumento utilizado para investigar habilidades cognitivas básicas relacionadas ao desenvolvimento infantil, contribuindo para a análise do perfil cognitivo e do potencial de aprendizagem.",
+            "nome": "Teste de Habilidades e Conhecimento Pré-Alfabetização (THCP)",
+            "descricao": "Avalia habilidades percepto-motoras, linguagem, pensamento quantitativo, memória e atenção concentrada em crianças de 4 a 7 anos, contribuindo para a investigação de habilidades relacionadas à pré-alfabetização.",
         },
         "mmse_2": {
             "nome": "Miniexame do Estado Mental – Segunda Edição (MMSE-2)",
@@ -436,6 +436,7 @@ class ReportExportService:
                 cls._rebuild_qualitative_section(document, sections, context)
                 cls._populate_wasi_tables(document, context)
 
+        cls._insert_thcp_results(document, context)
         cls._ensure_model_table_styles(document)
         cls._normalize_model_header_footer(document)
 
@@ -471,6 +472,42 @@ class ReportExportService:
             return pre_chart_docx_bytes
         docx_bytes = cls._normalize_docx_package(docx_bytes)
         return docx_bytes
+
+    @classmethod
+    def _insert_thcp_results(cls, document: Document, context: dict):
+        from apps.tests.thcp.charts import build_percentile_chart
+        from apps.tests.thcp.interpreters import interpret_thcp_results
+        from apps.tests.thcp.presentation import docx_rows, technical_notes
+
+        tests = cls._find_tests(context, "thcp")
+        if not tests:
+            return
+        conclusion = cls._find_paragraph(document, "14. CONCLUSÃO") or cls._find_paragraph(document, "Conclusão")
+        if conclusion is None:
+            conclusion = next((p for p in document.paragraphs if any(
+                heading in p.text.upper() for heading in cls.REFERENCE_SECTION_HEADINGS
+            )), None)
+        anchor = conclusion.insert_paragraph_before("") if conclusion is not None else document.add_paragraph()
+        for test in tests:
+            data = {**(test.get("computed_payload") or {}), **(test.get("classified_payload") or test.get("structured_results") or {})}
+            if not data.get("results"):
+                continue
+            anchor = cls._insert_paragraph_after(anchor, "Habilidades e Conhecimento Pré-Alfabetização — THCP")
+            cls._format_subtitle_paragraph(anchor)
+            table = cls._insert_table_after(anchor, docx_rows(data), "default")
+            cls._format_table(table, "default")
+            anchor = cls._insert_paragraph_after_table(table, "THCP: classificações do manual e por Z-score apresentadas separadamente.")
+            cls._format_caption_paragraph(anchor)
+            image = build_percentile_chart(data)
+            if image:
+                anchor = cls._insert_paragraph_after(anchor, "")
+                anchor.add_run().add_picture(BytesIO(image), width=cls.IMAGE_WIDTH)
+                anchor.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            text = interpret_thcp_results(data, (context.get("patient") or {}).get("full_name") or "Paciente")
+            anchor = cls._insert_interpretation_block_after(anchor, text)
+            for note in technical_notes(data):
+                anchor = cls._insert_paragraph_after(anchor, note)
+                cls._format_body_paragraph(anchor)
 
     @classmethod
     def _normalize_docx_package(cls, docx_bytes: bytes) -> bytes:
@@ -2631,7 +2668,7 @@ class ReportExportService:
     def _remove_empty_paragraphs(cls, document: Document):
         body = document._body._element
         for paragraph in list(document.paragraphs):
-            if cls._paragraph_contains_chart(paragraph):
+            if cls._paragraph_contains_chart(paragraph) or paragraph._p.xpath(".//w:drawing | .//w:pict"):
                 continue
             if paragraph.text.strip():
                 continue

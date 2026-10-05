@@ -3,6 +3,7 @@ from apps.tests.services import TestReportPayloadService
 
 
 INSTRUMENT_DESCRIPTIONS = {
+    "thcp": "Avalia habilidades percepto-motoras, linguagem, pensamento quantitativo, memória e atenção na pré-alfabetização (4–7 anos).",
     "bfp": "Avalia traços de personalidade nos cinco grandes fatores e suas facetas.",
     "wasi": "Estimativa abreviada de inteligencia verbal, de execucao e global por quatro subtestes.",
     "scared": "Triagem de sintomas de ansiedade em crianças e adolescentes.",

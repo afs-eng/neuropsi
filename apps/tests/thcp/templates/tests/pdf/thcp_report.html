@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>THCP — Resultado</title>
+  <style>
+    @page { size: A4; margin: 16mm; }
+    body { font: 12px/1.5 Arial, sans-serif; color: #172b3a; }
+    header { border-bottom: 3px solid #0e7490; padding-bottom: 12px; }
+    h1 { font-size: 26px; margin: 0; } h2 { font-size: 16px; margin-top: 24px; }
+    .brand { color: #0e7490; font-weight: bold; } .metadata { padding: 12px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 10px; }
+    th, td { padding: 7px 5px; border-bottom: 1px solid #cbd5e1; text-align: left; }
+    th { background: #eef6f8; } tr { break-inside: avoid; }
+    .chart-row { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
+    .label { width: 180px; } .track { flex: 1; height: 12px; background: #e2e8f0; }
+    .bar { height: 12px; background: #0e7490; } .value { width: 60px; text-align: right; }
+    .interpretation { white-space: pre-line; } li { margin: 4px 0; }
+    footer { margin-top: 24px; border-top: 1px solid #cbd5e1; padding-top: 8px; }
+  </style>
+</head>
+<body>
+  <header><div class="brand">Neuroavalia</div><h1>THCP</h1>Teste de Habilidades e Conhecimento Pré-Alfabetização</header>
+  <div class="metadata"><strong>{{ patient_name }}</strong><br>Idade: {{ age }} anos · Aplicação: {{ applied_on|date:"d/m/Y" }} · Norma: {{ norm_label }}</div>
+  <h2>Resultados</h2>
+  <table>
+    <thead><tr><th>Escala</th><th>Bruto</th><th>T-score</th><th>Z</th><th>Ponderado</th><th>Manual / faixa percentil</th><th>Percentil estimado</th><th>Classificação Z</th></tr></thead>
+    <tbody>{% for row in rows %}<tr><td>{{ row.label }}</td><td>{{ row.raw_label }}</td><td>{{ row.t_label }}</td><td>{{ row.z_label }}</td><td>{{ row.weighted_label }}</td><td>{{ row.manual_label }} / {{ row.band_label }}</td><td>{{ row.percentile_label }}</td><td>{{ row.classification_label }}</td></tr>{% endfor %}</tbody>
+  </table>
+  <h2>Perfil de percentis estimados (0–100)</h2>
+  {% for row in rows %}<div class="chart-row"><span class="label">{{ row.label }}</span><div class="track">{% if row.percentile != None %}<div class="bar" style="width: {{ row.percentile|floatformat:'2u' }}%"></div>{% endif %}</div><span class="value">{{ row.percentile_label }}</span></div>{% endfor %}
+  <p>“—” indica métrica pontual indisponível, não desempenho zero.</p>
+  <h2>Interpretação</h2><div class="interpretation">{{ interpretation }}</div>
+  <h2>Notas técnicas</h2><ul>{% for note in notes %}<li>{{ note }}</li>{% endfor %}</ul>
+  <footer>Resultado técnico para revisão pelo profissional responsável.</footer>
+</body>
+</html>

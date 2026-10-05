@@ -18,6 +18,7 @@ class TestScoringService:
             patient_name=application.evaluation.patient.full_name,
             evaluation_id=application.evaluation_id,
             instrument_code=application.instrument.code,
+            patient_age=TestReportPayloadService._patient_age(application),
             raw_scores=application.raw_payload or {},
             reviewed_scores=application.reviewed_payload or {},
         )

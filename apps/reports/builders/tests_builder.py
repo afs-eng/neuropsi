@@ -14,6 +14,7 @@ from apps.tests.wisc4.calculators import _calcular_idade, _carregar_tabela_ncp
 
 
 SECTION_MAP = {
+    "thcp": "escalas_complementares",
     "wisc4": "eficiencia_intelectual",
     "wais3": "eficiencia_intelectual",
     "bpa2": "atencao",
@@ -636,6 +637,16 @@ def _build_wais3_tables(payload: dict, evaluation, applied_on) -> dict:
 def build_result_rows(instrument_code: str, payload: dict) -> list[str]:
     if not payload:
         return []
+    if instrument_code == "thcp":
+        return [
+            _format_result_line(
+                row["label"], f"bruto {row['raw_score']}", f"T-score {row['t_score']}",
+                f"manual {row.get('manual_classification') or 'não disponível'}",
+                f"percentil estimado {row['percentile']}" if row.get("percentile") is not None else "percentil pontual indisponível",
+                f"classificação Z {row.get('classification') or 'indisponível'}",
+            )
+            for row in payload.get("results", [])
+        ]
     if instrument_code == "wisc4":
         return _build_wisc4_rows(payload)
     if instrument_code == "wais3":
