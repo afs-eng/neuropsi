@@ -1,7 +1,7 @@
 # Tela de correção THCP
 
 ## Objetivo
-Aplicar a referência visual de `aux/Dashboard NeuroAvalia para Correção do THCP.png`, com campos por item e totais automáticos, preservando sidebar, limites, normas e cálculos existentes.
+Aplicar o modelo de `aux/THCP · Correção.html`, com campos por item e totais automáticos, preservando sidebar, limites, normas e cálculos existentes.
 
 ## Tarefas
 - [x] Conferir os campos persistidos e a fórmula da atenção no módulo THCP.
@@ -28,3 +28,11 @@ Aplicar a referência visual de `aux/Dashboard NeuroAvalia para Correção do TH
 - Playwright com APIs fictícias: 47 itens reais, totais 91/90/62, resposta ausente explícita, limite de 62 erros, envio/restauração, bloqueio e totais antigos preservados.
 - Sem rolagem horizontal nas larguras 375, 768, 1024 e 1280; capturas desktop/mobile em `/tmp/opencode/thcp-items-*.png`.
 - Graphify continua indisponível (`command not found`); não houve substituição ou remoção de arquivos do grafo.
+
+## Layout baseado no HTML
+- [x] Cabeçalho com título, paciente, total, progresso, orientações e limpeza confirmada apenas dos campos locais.
+- [x] Três colunas: HPM I/II; Linguagem/Memória; PQ/Atenção/Resumo, com adaptação para tablet/celular.
+- [x] Botões de pontuação nos itens HPM I, sem alterar limites e sem somar alternativas como pontos.
+- [x] Revalidar TypeScript, lint, somas, envio, restauração, limpeza e responsividade no navegador.
+- 33 testes THCP aprovados após a troca de layout; nenhuma alteração nas normas, no backend ou no formato dos dados nesta revisão visual.
+- Playwright: botões de pontos em todos os itens HPM I; progresso e resumo; envio/restauração; limpeza confirmada/cancelada sem requisição à API; nenhum erro JavaScript ou overflow horizontal nas quatro larguras testadas.
