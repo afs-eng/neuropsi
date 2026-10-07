@@ -1,5 +1,6 @@
 import json
 import math
+from copy import deepcopy
 from datetime import date
 from io import BytesIO
 from pathlib import Path
@@ -29,6 +30,7 @@ from apps.tests.thcp.classifiers import classify_z_score
 from apps.tests.thcp.config import SCALES
 from apps.tests.thcp.norms import SUBSCALE_NORMS, TOTAL_T_SCORES, lookup_subscale, lookup_total
 from apps.tests.thcp.pdf_service import THCPPdfService
+from apps.tests.thcp.protocol import PROTOCOL, protocol_totals
 
 
 RAW = {"hpm": 22, "linguagem": 11, "pq": 9, "memoria": 7, "atencao_acertos": 26, "atencao_erros": 1, "norm_type": "idade"}
@@ -44,7 +46,82 @@ def corrected(ctx):
     return {**computed, **module.classify(computed)}
 
 
+def detailed_raw():
+    responses = {
+        group: {item["key"]: {"answer": item["options"][0] if item["options"] else None, "score": item["max_score"]} for item in definitions}
+        for group, definitions in PROTOCOL.items()
+    }
+    return {**RAW, **protocol_totals(responses), "item_responses": responses}
+
+
 class THCPModuleTests(SimpleTestCase):
+    def test_detailed_items_keep_existing_scoring_and_norms(self):
+        raw = detailed_raw()
+        self.assertEqual(THCPModule().validate(context(**raw)), [])
+        detailed = corrected(context(**raw))
+        totals_only = corrected(context(**{key: value for key, value in raw.items() if key != "item_responses"}))
+        self.assertEqual(detailed, totals_only)
+        self.assertEqual(detailed["scores"]["hpm"], 30)
+        self.assertEqual(detailed["scores"]["memoria"], 10)
+        self.assertEqual(detailed["scores"]["total"], 88)
+
+    def test_protocol_rejects_incomplete_invalid_and_inconsistent_items(self):
+        cases = []
+        for field, value in [("score", -1), ("score", 2), ("score", True), ("score", 0.5), ("answer", 99), ("answer", None), ("answer", True)]:
+            raw = detailed_raw()
+            raw["item_responses"]["linguagem"]["1"][field] = value
+            cases.append(raw)
+        raw = detailed_raw()
+        raw["item_responses"]["memoria"]["3"]["score"] = 2
+        cases.append(raw)
+        raw = detailed_raw()
+        raw["item_responses"]["memoria"]["4"]["score"] = 4
+        cases.append(raw)
+        raw = detailed_raw()
+        raw["item_responses"]["hpm_i"]["labirinto"]["answer"] = 1
+        cases.append(raw)
+        raw = detailed_raw()
+        raw["hpm"] = 29
+        cases.append(raw)
+        raw = detailed_raw()
+        del raw["item_responses"]["linguagem"]["1"]
+        cases.append(raw)
+        raw = detailed_raw()
+        raw["item_responses"]["pq"]["unexpected"] = {"answer": 1, "score": 1}
+        cases.append(raw)
+        raw = detailed_raw()
+        del raw["item_responses"]["pq"]
+        cases.append(raw)
+        for raw in cases:
+            with self.subTest(raw=raw):
+                self.assertTrue(THCPModule().validate(context(**raw)))
+
+    def test_no_response_is_explicit_zero_not_an_unfilled_item(self):
+        raw = detailed_raw()
+        raw["item_responses"]["linguagem"]["1"] = {"answer": 0, "score": 0}
+        raw["linguagem"] = 11
+        self.assertEqual(THCPModule().validate(context(**raw)), [])
+        raw["item_responses"]["linguagem"]["1"]["score"] = 1
+        raw["linguagem"] = 12
+        self.assertTrue(THCPModule().validate(context(**raw)))
+
+    def test_protocol_options_match_workbook_without_inferred_answer_key(self):
+        workbook = Path(__file__).resolve().parents[2] / "aux" / "CORRECAO.xlsm"
+        if not workbook.exists():
+            self.skipTest("Planilha fonte não disponível")
+        ns = {"s": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
+        with ZipFile(workbook) as source:
+            relations = {row.attrib["Id"]: row.attrib["Target"] for row in ET.fromstring(source.read("xl/_rels/workbook.xml.rels"))}
+            sheet = next(row for row in ET.fromstring(source.read("xl/workbook.xml")).findall("s:sheets/s:sheet", ns) if row.attrib["name"] == "THCP")
+            path = relations[sheet.attrib["{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id"]]
+            xml = ET.fromstring(source.read(path.lstrip("/") if path.startswith("/") else "xl/" + path))
+            cells = {cell.attrib["r"]: cell.find("s:v", ns).text for cell in xml.findall("s:sheetData/s:row/s:c", ns) if cell.find("s:v", ns) is not None}
+        for group, start, columns in [("hpm_ii", 27, "DEFGH"), ("linguagem", 11, ["U", "V", "W", "X"]), ("pq", 27, ["U", "V", "W", "X", "Y", "Z", "AA"]), ("memoria", 41, "DEFGH")]:
+            for offset, item in enumerate(PROTOCOL[group]):
+                options = [int(cells[f"{col}{start + offset}"]) for col in columns if f"{col}{start + offset}" in cells]
+                self.assertEqual(item["options"] or item["score_options"], options)
+        self.assertEqual([len(items) for items in PROTOCOL.values()], [12, 8, 12, 11, 4])
+
     def test_registered_and_computes_all_scales(self):
         module = get_test_module("thcp")
         self.assertIsInstance(module, THCPModule)
@@ -201,6 +278,51 @@ class THCPApiTests(TestCase):
 
     def submit(self, **overrides):
         return self.client.post("/api/tests/thcp/submit", data=json.dumps({"evaluation_id": self.evaluation.pk, **RAW, **overrides}), content_type="application/json", HTTP_AUTHORIZATION=f"Bearer {self.token}")
+
+    def test_protocol_requires_auth_and_exposes_source_options(self):
+        self.assertEqual(self.client.get("/api/tests/thcp/protocol").status_code, 401)
+        response = self.client.get("/api/tests/thcp/protocol", HTTP_AUTHORIZATION=f"Bearer {self.token}")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), PROTOCOL)
+
+    def test_item_responses_are_saved_restored_and_rescored(self):
+        raw = detailed_raw()
+        response = self.submit(**raw)
+        self.assertEqual(response.status_code, 200, response.content)
+        app = TestApplication.objects.get(pk=response.json()["application_id"])
+        self.assertEqual(app.raw_payload["item_responses"], raw["item_responses"])
+        result = self.client.get(f"/api/tests/thcp/result/{app.pk}", HTTP_AUTHORIZATION=f"Bearer {self.token}")
+        self.assertEqual(result.json()["raw_payload"]["item_responses"], raw["item_responses"])
+        previous = deepcopy(app.computed_payload)
+        self.assertTrue(TestScoringService.process(app)["ok"])
+        self.assertEqual(app.computed_payload, previous)
+        raw["item_responses"]["linguagem"]["1"]["score"] = 0
+        raw["linguagem"] = 11
+        response = self.submit(application_id=app.pk, **raw)
+        self.assertEqual(response.status_code, 200, response.content)
+        app.refresh_from_db()
+        self.assertEqual(app.raw_payload["item_responses"]["linguagem"]["1"]["score"], 0)
+        self.assertEqual(app.computed_payload["scores"]["total"], 87)
+
+    def test_legacy_totals_can_be_replaced_with_real_items(self):
+        app_id = self.submit().json()["application_id"]
+        self.assertIsNone(TestApplication.objects.get(pk=app_id).raw_payload.get("item_responses"))
+        response = self.submit(application_id=app_id, **detailed_raw())
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(TestApplication.objects.count(), 1)
+        self.assertEqual(response.json()["raw_payload"]["item_responses"], detailed_raw()["item_responses"])
+
+    def test_inconsistent_items_and_locked_item_edits_are_rejected(self):
+        raw = detailed_raw()
+        response = self.submit(**{**raw, "hpm": 0})
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(TestApplication.objects.count(), 0)
+        app_id = self.submit(**raw).json()["application_id"]
+        TestApplication.objects.filter(pk=app_id).update(status=TestApplication.Status.LOCKED)
+        raw["item_responses"]["linguagem"]["1"]["score"] = 0
+        raw["linguagem"] = 11
+        self.assertEqual(self.submit(application_id=app_id, **raw).status_code, 403)
+        self.assertEqual(TestApplication.objects.get(pk=app_id).raw_payload["linguagem"], 12)
 
     def test_submit_result_and_snapshot(self):
         response = self.submit()

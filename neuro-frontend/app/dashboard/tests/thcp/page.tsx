@@ -7,6 +7,8 @@ import { ArrowLeft, Brain, Calculator, ChevronDown, ChevronRight, Eye, Info, Loa
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { api } from '@/lib/api'
+import { THCPGroupFields, THCPHPMFields } from '@/components/tests/THCPProtocolFields'
+import { restoreTHCPItems, serializeTHCPItems, thcpItemScores, validTHCPItem, type THCPGroup, type THCPItemForm, type THCPProtocol } from '@/lib/thcp-protocol'
 import { THCP_FIELDS, thcpErrorMessage, type THCPApplication, type THCPField, type THCPFormScores, type THCPNorm } from '@/types/tests/thcp'
 
 interface EvaluationInfo {
@@ -79,6 +81,10 @@ function THCPForm() {
   const isEdit = searchParams.get('edit') === 'true'
   const [evaluation, setEvaluation] = useState<EvaluationInfo | null>(null)
   const [scores, setScores] = useState<THCPFormScores>(EMPTY_SCORES)
+  const [protocol, setProtocol] = useState<THCPProtocol | null>(null)
+  const [items, setItems] = useState<THCPItemForm>({})
+  const [entryMode, setEntryMode] = useState<'items' | 'totals'>('items')
+  const [legacyApplication, setLegacyApplication] = useState(false)
   const [norm, setNorm] = useState<THCPNorm>('idade')
   const [appliedOn, setAppliedOn] = useState('')
   const [loading, setLoading] = useState(true)
@@ -93,9 +99,10 @@ function THCPForm() {
       setLoading(true)
       setError('')
       try {
-        const [application, initialEvaluation] = await Promise.all([
+        const [application, initialEvaluation, definitions] = await Promise.all([
           applicationId ? api.get<THCPApplication>(`/api/tests/applications/${applicationId}`) : Promise.resolve(null),
           evaluationId ? api.get<EvaluationInfo>(`/api/evaluations/${evaluationId}`) : Promise.resolve(null),
+          api.get<THCPProtocol>('/api/tests/thcp/protocol'),
         ])
         if (!active) return
         if (application && application.instrument_code !== 'thcp') throw new Error('A aplicação selecionada não é THCP.')
@@ -108,6 +115,11 @@ function THCPForm() {
         if (!active) return
         if (!data) throw new Error('Abra o THCP através de uma avaliação.')
         setEvaluation(data)
+        setProtocol(definitions)
+        setItems(application?.raw_payload.item_responses ? restoreTHCPItems(application.raw_payload.item_responses) : {})
+        setLegacyApplication(Boolean(application && !application.raw_payload.item_responses))
+        setEntryMode(application && !application.raw_payload.item_responses ? 'totals' : 'items')
+        setScores(EMPTY_SCORES)
         setLocked(application?.status === 'locked')
         if (application) {
           const restored = { ...EMPTY_SCORES }
@@ -126,26 +138,39 @@ function THCPForm() {
     return () => { active = false }
   }, [applicationId, evaluationId, isEdit, router])
 
+  const effectiveScores = protocol && entryMode === 'items' ? thcpItemScores(protocol, items, scores) : scores
+
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!evaluation || saving || locked) return
     setError('')
+    if (entryMode === 'items') {
+      if (!protocol) return
+      for (const [group, definitions] of Object.entries(protocol)) {
+        const missing = definitions.find(item => !validTHCPItem(item, items[group as THCPGroup]?.[item.key]))
+        if (missing) {
+          setError(`${group.toUpperCase()}, ${missing.label}: preencha a resposta e a pontuação do item.`)
+          return
+        }
+      }
+    }
     for (const field of THCP_FIELDS) {
-      const score = Number(scores[field.key])
-      if (scores[field.key] === '' || !Number.isInteger(score) || score < 0 || score > field.max) {
+      const score = Number(effectiveScores[field.key])
+      if (effectiveScores[field.key] === '' || !Number.isInteger(score) || score < 0 || score > field.max) {
         setError(`${field.label}: informe um inteiro entre 0 e ${field.max}.`)
         return
       }
     }
     setSaving(true)
     try {
-      const rawScores = Object.fromEntries(THCP_FIELDS.map(field => [field.key, Number(scores[field.key])]))
+      const rawScores = Object.fromEntries(THCP_FIELDS.map(field => [field.key, Number(effectiveScores[field.key])]))
       const result = await api.post<{ application_id: number }>('/api/tests/thcp/submit', {
         evaluation_id: evaluation.id,
         application_id: applicationId ? Number(applicationId) : null,
         applied_on: appliedOn,
         norm_type: norm,
         ...rawScores,
+        item_responses: entryMode === 'items' && protocol ? serializeTHCPItems(protocol, items) : null,
       })
       router.push(`/dashboard/tests/thcp/${result.application_id}/result`)
     } catch (err) {
@@ -157,14 +182,25 @@ function THCPForm() {
 
   if (loading) return <p role="status">Carregando THCP…</p>
 
-  const values = DOMAINS.map(domain => domainScore(scores, domain))
+  const values = DOMAINS.map(domain => domainScore(effectiveScores, domain))
   const total = values.every(value => value !== null) ? values.reduce<number>((sum, value) => sum + (value ?? 0), 0) : null
-  const completed = THCP_FIELDS.filter(field => validScore(scores, field.key) !== null).length
+  const itemCount = protocol ? Object.values(protocol).reduce((sum, definitions) => sum + definitions.length, 0) : 0
+  const completed = entryMode === 'items' && protocol ? Object.entries(protocol).reduce((sum, [group, definitions]) => sum + definitions.filter(item => validTHCPItem(item, items[group as THCPGroup]?.[item.key])).length, 0) : THCP_FIELDS.filter(field => validScore(scores, field.key) !== null).length
   const backHref = evaluation ? `/dashboard/evaluations/${evaluation.id}?tab=overview` : '/dashboard'
 
   function changeScore(key: THCPField, value: string) {
     setScores(current => ({ ...current, [key]: value }))
   }
+
+  function changeItem(group: THCPGroup, key: string, field: 'answer' | 'score', value: string) {
+    setItems(current => {
+      const response = { answer: '', score: '', ...current[group]?.[key], [field]: value }
+      if (field === 'answer' && value === '0') response.score = '0'
+      return { ...current, [group]: { ...current[group], [key]: response } }
+    })
+  }
+
+  const protocolProps = protocol ? { protocol, items, onChange: changeItem } : null
 
   return (
     <div className="mx-auto max-w-7xl space-y-5 px-0 pb-6 sm:px-4 lg:px-6">
@@ -184,7 +220,7 @@ function THCPForm() {
         </div>
       </header>
       <div id="thcp-instructions" hidden={!showInstructions} className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-blue-900">
-        Informe os totais corrigidos no protocolo. Em HPM, some os exercícios I (até 22 pontos) e II (até 8 pontos). A atenção é calculada como acertos − erros, com mínimo zero. Campos vazios não equivalem a zero. As normas e classificações serão aplicadas pelo sistema ao salvar.
+        Registre as respostas e a pontuação de cada item conforme o protocolo do THCP. As alternativas não são pontos: indique também 0 ou 1 ponto nos itens com resposta. Use ∅ para sem resposta (zero pontos). O sistema soma os itens e aplica as normas ao salvar. Campos vazios não equivalem a zero.
       </div>
       {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-800">{error}</p>}
       {locked && <p role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">Esta aplicação está travada e não pode ser editada.</p>}
@@ -207,20 +243,26 @@ function THCPForm() {
               <div className="space-y-2"><label htmlFor="norm-type" className="text-sm font-medium text-slate-700">Tabela normativa</label><select id="norm-type" name="norm_type" className="h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 disabled:cursor-not-allowed disabled:opacity-50" value={norm} onChange={e => setNorm(e.target.value as THCPNorm)}><option value="idade">Idade (4 a 7 anos)</option><option value="geral">Amostra Geral</option></select></div>
             </div>
           </section>
+          {legacyApplication && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            <p>Esta aplicação possui apenas totais salvos. Eles foram preservados; nenhuma resposta por item foi inventada. Para preencher o protocolo completo, selecione “Por item”.</p>
+            <div className="mt-3 flex flex-wrap gap-4"><label className="flex min-h-11 cursor-pointer items-center gap-2"><input type="radio" name="entry-mode" value="totals" checked={entryMode === 'totals'} onChange={() => setEntryMode('totals')} />Totais salvos</label><label className="flex min-h-11 cursor-pointer items-center gap-2"><input type="radio" name="entry-mode" value="items" checked={entryMode === 'items'} onChange={() => setEntryMode('items')} />Por item</label></div>
+          </div>}
+          {entryMode === 'items' && <p className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-xs leading-5 text-blue-900">Selecione a alternativa respondida e os pontos conforme o protocolo. A soma é automática; não há gabarito automático de alternativas na planilha. ∅ = sem resposta. Pontos 0 = erro, 1 = acerto nos itens de até 1 ponto.</p>}
           <DomainPanel domain={DOMAINS[0]} value={values[0]}>
+            {entryMode === 'items' && protocolProps ? <THCPHPMFields {...protocolProps} /> :
             <div className="grid gap-5 md:grid-cols-[1fr_1fr]">
               <div className="space-y-4"><p className="text-sm leading-6 text-slate-600">Informe a soma dos dois exercícios, conforme a correção do protocolo.</p><ScoreInput fieldKey="hpm" scores={scores} onChange={changeScore} /></div>
               <div className="grid content-start gap-3 sm:grid-cols-2 md:border-l md:border-slate-100 md:pl-5">
                 <div className="rounded-lg border border-blue-100 bg-blue-50/60 p-4"><h3 className="text-sm font-semibold text-blue-900">Exercício I</h3><p className="mt-1 text-xs leading-5 text-slate-600">Labirinto, cópia e figura complexa</p><p className="mt-3 text-sm font-medium text-blue-800">Até 22 pontos</p></div>
                 <div className="rounded-lg border border-blue-100 bg-blue-50/60 p-4"><h3 className="text-sm font-semibold text-blue-900">Exercício II</h3><p className="mt-1 text-xs leading-5 text-slate-600">Pontuação corrigida no protocolo</p><p className="mt-3 text-sm font-medium text-blue-800">Até 8 pontos</p></div>
               </div>
-            </div>
+            </div>}
           </DomainPanel>
           <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <DomainPanel domain={DOMAINS[1]} value={values[1]}><ScoreInput fieldKey="linguagem" scores={scores} onChange={changeScore} /></DomainPanel>
-            <DomainPanel domain={DOMAINS[2]} value={values[2]}><ScoreInput fieldKey="pq" scores={scores} onChange={changeScore} /></DomainPanel>
+            <DomainPanel domain={DOMAINS[1]} value={values[1]}>{entryMode === 'items' && protocolProps ? <THCPGroupFields group="linguagem" {...protocolProps} /> : <ScoreInput fieldKey="linguagem" scores={scores} onChange={changeScore} />}</DomainPanel>
+            <DomainPanel domain={DOMAINS[2]} value={values[2]}>{entryMode === 'items' && protocolProps ? <THCPGroupFields group="pq" {...protocolProps} /> : <ScoreInput fieldKey="pq" scores={scores} onChange={changeScore} />}</DomainPanel>
             <div className="space-y-4 md:col-span-2 xl:col-span-1">
-              <DomainPanel domain={DOMAINS[3]} value={values[3]}><ScoreInput fieldKey="memoria" scores={scores} onChange={changeScore} /></DomainPanel>
+              <DomainPanel domain={DOMAINS[3]} value={values[3]}>{entryMode === 'items' && protocolProps ? <THCPGroupFields group="memoria" {...protocolProps} /> : <ScoreInput fieldKey="memoria" scores={scores} onChange={changeScore} />}</DomainPanel>
               <DomainPanel domain={DOMAINS[4]} value={values[4]}>
                 <div className="grid grid-cols-2 gap-3"><ScoreInput fieldKey="atencao_acertos" scores={scores} onChange={changeScore} /><ScoreInput fieldKey="atencao_erros" scores={scores} onChange={changeScore} /></div>
                 <div className="mt-4 flex items-center justify-between gap-3 rounded-lg bg-orange-50 px-4 py-3"><div><p className="text-xs font-medium text-orange-900">Resultado da atenção</p><p className="mt-1 text-xs text-slate-600">Acertos − erros · mínimo zero</p></div><output htmlFor="atencao_acertos atencao_erros" className="text-xl text-slate-900"><ScoreValue value={values[4]} max={DOMAINS[4].max} /></output></div>
@@ -228,7 +270,7 @@ function THCPForm() {
             </div>
           </div>
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
-            <div><p className="text-sm font-semibold text-slate-900">Escore bruto total <span className="ml-2 text-xl"><ScoreValue value={total} max={DOMAINS.reduce((sum, domain) => sum + domain.max, 0)} /></span></p><p className="mt-1 text-xs text-slate-600">{completed} de {THCP_FIELDS.length} campos preenchidos. Campos vazios não equivalem a zero.</p></div>
+            <div><p className="text-sm font-semibold text-slate-900">Escore bruto total <span className="ml-2 text-xl"><ScoreValue value={total} max={DOMAINS.reduce((sum, domain) => sum + domain.max, 0)} /></span></p><p className="mt-1 text-xs text-slate-600">{completed} de {entryMode === 'items' ? itemCount : THCP_FIELDS.length} {entryMode === 'items' ? 'itens' : 'campos'} preenchidos{entryMode === 'items' ? ' · atenção: informe acertos e erros' : ''}. Campos vazios não equivalem a zero.</p></div>
             <Button type="submit" className="min-h-11 gap-2 bg-blue-700 px-5 hover:bg-blue-800"><Save className="h-4 w-4" aria-hidden="true" />{saving ? 'Corrigindo…' : 'Salvar e corrigir THCP'}</Button>
           </div>
         </fieldset>

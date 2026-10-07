@@ -6,6 +6,14 @@ Teste de Habilidades e Conhecimento Pré-Alfabetização, integrado ao registro 
 
 Na avaliação, adicionar **THCP** e preencher:
 
+A tela de correção permite preencher os **47 itens** do protocolo: labirinto, cópia e figura complexa (HPM I), HPM II, Linguagem, Pensamento Quantitativo e Memória. Os totais são somados automaticamente; atenção mantém os dois campos de acertos e erros.
+
+Os campos/opções são transcritos da aba THCP em `protocol.py` e expostos por `GET /api/tests/thcp/protocol`. A planilha não contém gabarito de alternativas: o profissional registra a alternativa e a pontuação do item conforme o protocolo. `answer: 0` significa explicitamente **sem resposta**, com zero pontos. Os itens 3 e 4 de memória aceitam respectivamente `[0, 1, 3]` e `[0, 1, 2, 3, 5]`, como na planilha.
+
+Respostas e pontuações são persistidas em `raw_payload.item_responses`. O backend valida todos os itens e a correspondência entre as somas e os totais antes de salvar, sem alterar normas ou fórmulas. Aplicações antigas sem itens continuam abrindo com seus totais salvos; trocar para preenchimento por item exige completar o protocolo, sem inventar respostas antigas.
+
+Os totais mantêm os mesmos limites:
+
 | Campo | Intervalo |
 |---|---|
 | Habilidades Percepto-Motoras — total dos exercícios I e II | 0–30 |
@@ -37,7 +45,8 @@ A interpretação é determinística, sem chamadas de IA, e precisa da revisão 
 
 ## Integração e deploy
 
-- `POST /api/tests/thcp/submit`: escores acima, `norm_type` (`idade` ou `geral`), `evaluation_id`, `applied_on` opcional e `application_id` opcional para edição.
+- `GET /api/tests/thcp/protocol`: definições dos itens, alternativas e limites de pontos; exige autenticação/permissão de visualizar testes.
+- `POST /api/tests/thcp/submit`: escores acima, `norm_type` (`idade` ou `geral`), `evaluation_id`, `applied_on` opcional e `application_id` opcional para edição. `item_responses` é opcional para preservar compatibilidade com aplicações antigas.
 - `GET /api/tests/thcp/result/{id}`: resultado, interpretação e payload estruturado.
 - `GET /api/tests/applications/{id}/export-pdf`: PDF com tabelas, perfil e notas técnicas, usando o mesmo Chromium/Playwright dos outros testes.
 - Frontend: `/dashboard/tests/thcp` e `/dashboard/tests/thcp/{id}/result`.

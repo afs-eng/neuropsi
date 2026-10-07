@@ -1,4 +1,5 @@
 import type { TestReportPayload } from '@/lib/test-report'
+import type { THCPItemResponses } from '@/lib/thcp-protocol'
 
 export const THCP_FIELDS = [
   { key: 'hpm', label: 'Habilidades Percepto-Motoras', max: 30, hint: 'Total dos exercícios I (até 22) e II (até 8).' },
@@ -36,7 +37,7 @@ export interface THCPApplication {
   applied_on: string | null
   is_validated: boolean
   status: string
-  raw_payload: Partial<Record<THCPField, number>> & { norm_type?: THCPNorm }
+  raw_payload: Partial<Record<THCPField, number>> & { norm_type?: THCPNorm; item_responses?: THCPItemResponses | null }
   computed_payload: { age: number; norm_label: string }
   classified_payload: { results?: THCPResultRow[]; summary?: THCPResultRow; warnings?: string[] }
   interpretation_text: string

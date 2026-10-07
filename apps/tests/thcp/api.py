@@ -14,8 +14,16 @@ from apps.tests.selectors import get_test_application_by_id
 from apps.audit.services import AuditService
 
 from . import THCPModule
+from .protocol import PROTOCOL
 
 router = Router(tags=["tests"])
+
+
+@router.get("/protocol", response={200: dict, 403: MessageOut}, auth=bearer_auth)
+def thcp_protocol(request):
+    if not can_view_tests(request.auth):
+        return 403, {"message": "Você não tem permissão para visualizar testes."}
+    return 200, PROTOCOL
 
 
 @router.post("/submit", response={200: dict, 400: MessageOut, 403: MessageOut, 404: MessageOut}, auth=bearer_auth)
