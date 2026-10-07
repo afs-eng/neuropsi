@@ -8,9 +8,9 @@ Na avaliação, adicionar **THCP** e preencher:
 
 A tela de correção permite preencher os **47 itens** do protocolo: labirinto, cópia e figura complexa (HPM I), HPM II, Linguagem, Pensamento Quantitativo e Memória. Os totais são somados automaticamente; atenção mantém os dois campos de acertos e erros.
 
-Os campos/opções são transcritos da aba THCP em `protocol.py` e expostos por `GET /api/tests/thcp/protocol`. A planilha não contém gabarito de alternativas: o profissional registra a alternativa e a pontuação do item conforme o protocolo. `answer: 0` significa explicitamente **sem resposta**, com zero pontos. Os itens 3 e 4 de memória aceitam respectivamente `[0, 1, 3]` e `[0, 1, 2, 3, 5]`, como na planilha.
+Os campos/referências são transcritos da aba THCP em `protocol.py` e expostos por `GET /api/tests/thcp/protocol`. Os números do protocolo são **fixos e não interativos**; somente a coluna **Nota** recebe a pontuação de cada item. Os destaques visuais confirmados na foto ampliada de Linguagem não participam do cálculo. Nos itens 3 e 4 de Memória, as referências impressas são `[0, 1, 3]` e `[0, 1, 2, 3, 5]`, mas as notas aceitam todos os inteiros de 0 a 3 e de 0 a 5, respectivamente (inclusive 2 e 4 pontos).
 
-Respostas e pontuações são persistidas em `raw_payload.item_responses`. O backend valida todos os itens e a correspondência entre as somas e os totais antes de salvar, sem alterar normas ou fórmulas. Aplicações antigas sem itens continuam abrindo com seus totais salvos; trocar para preenchimento por item exige completar o protocolo, sem inventar respostas antigas.
+As notas são persistidas em `raw_payload.item_responses[group][item].score`; `answer` é opcional e não é exigido para preencher ou salvar. Respostas registradas pelo formulário anterior continuam preservadas nos itens não alterados; ao editar uma nota, a antiga resposta desse item é removida para não manter metadados contraditórios. O backend valida todos os itens e a correspondência entre as somas e os totais antes de salvar, sem alterar normas ou fórmulas. Aplicações antigas sem itens continuam abrindo com seus totais salvos; trocar para preenchimento por item exige completar as notas, sem inventar respostas antigas.
 
 Os totais mantêm os mesmos limites:
 

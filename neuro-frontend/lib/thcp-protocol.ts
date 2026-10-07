@@ -14,7 +14,7 @@ export type THCPItemForm = Partial<Record<THCPGroup, Record<string, { answer: st
 
 export function restoreTHCPItems(responses: THCPItemResponses): THCPItemForm {
   return Object.fromEntries(Object.entries(responses).map(([group, entries]) => [group,
-    Object.fromEntries(Object.entries(entries).map(([key, response]) => [key, { answer: response.answer === null ? '' : String(response.answer), score: String(response.score) }])),
+    Object.fromEntries(Object.entries(entries).map(([key, response]) => [key, { answer: response.answer == null ? '' : String(response.answer), score: String(response.score) }])),
   ]))
 }
 
@@ -22,14 +22,7 @@ export function validTHCPItem(item: THCPItemDefinition, response?: { answer: str
   if (!response || response.score === '') return false
   const score = Number(response.score)
   if (!Number.isInteger(score) || score < 0 || score > item.max_score) return false
-  if (item.score_options && !item.score_options.includes(score)) return false
-  if (item.options.length) {
-    if (response.answer === '') return false
-    const answer = Number(response.answer)
-    if (answer === 0) return score === 0
-    return item.options.includes(answer)
-  }
-  return response.answer === ''
+  return true
 }
 
 export function thcpGroupTotal(protocol: THCPProtocol, items: THCPItemForm, group: THCPGroup): number | null {
@@ -54,7 +47,7 @@ export function serializeTHCPItems(protocol: THCPProtocol, items: THCPItemForm):
   return Object.fromEntries(Object.entries(protocol).map(([group, definitions]) => [group,
     Object.fromEntries(definitions.map(item => {
       const response = items[group as THCPGroup]![item.key]
-      return [item.key, { answer: item.options.length ? Number(response.answer) : null, score: Number(response.score) }]
+      return [item.key, { answer: item.options.length && response.answer !== '' ? Number(response.answer) : null, score: Number(response.score) }]
     })),
   ]))
 }

@@ -54,7 +54,30 @@ def detailed_raw():
     return {**RAW, **protocol_totals(responses), "item_responses": responses}
 
 
+def notes_raw():
+    raw = detailed_raw()
+    for entries in raw["item_responses"].values():
+        for response in entries.values():
+            response["answer"] = None
+    return raw
+
+
 class THCPModuleTests(SimpleTestCase):
+    def test_notes_alone_are_sufficient_and_references_do_not_score(self):
+        raw = notes_raw()
+        self.assertEqual(THCPModule().validate(context(**raw)), [])
+        self.assertEqual(corrected(context(**raw)), corrected(context(**detailed_raw())))
+        del raw["item_responses"]["linguagem"]["1"]["answer"]
+        self.assertEqual(THCPModule().validate(context(**raw)), [])
+
+    def test_memory_notes_accept_intermediate_points_not_shown_in_reference(self):
+        raw = notes_raw()
+        raw["item_responses"]["memoria"]["3"]["score"] = 2
+        raw["item_responses"]["memoria"]["4"]["score"] = 4
+        raw["memoria"] = 8
+        self.assertEqual(THCPModule().validate(context(**raw)), [])
+        self.assertEqual(corrected(context(**raw))["scores"]["memoria"], 8)
+
     def test_detailed_items_keep_existing_scoring_and_norms(self):
         raw = detailed_raw()
         self.assertEqual(THCPModule().validate(context(**raw)), [])
@@ -67,15 +90,15 @@ class THCPModuleTests(SimpleTestCase):
 
     def test_protocol_rejects_incomplete_invalid_and_inconsistent_items(self):
         cases = []
-        for field, value in [("score", -1), ("score", 2), ("score", True), ("score", 0.5), ("answer", 99), ("answer", None), ("answer", True)]:
+        for field, value in [("score", -1), ("score", 2), ("score", True), ("score", 0.5), ("answer", 99), ("answer", True)]:
             raw = detailed_raw()
             raw["item_responses"]["linguagem"]["1"][field] = value
             cases.append(raw)
         raw = detailed_raw()
-        raw["item_responses"]["memoria"]["3"]["score"] = 2
+        raw["item_responses"]["memoria"]["3"]["score"] = 4
         cases.append(raw)
         raw = detailed_raw()
-        raw["item_responses"]["memoria"]["4"]["score"] = 4
+        raw["item_responses"]["memoria"]["4"]["score"] = 6
         cases.append(raw)
         raw = detailed_raw()
         raw["item_responses"]["hpm_i"]["labirinto"]["answer"] = 1
@@ -303,6 +326,19 @@ class THCPApiTests(TestCase):
         app.refresh_from_db()
         self.assertEqual(app.raw_payload["item_responses"]["linguagem"]["1"]["score"], 0)
         self.assertEqual(app.computed_payload["scores"]["total"], 87)
+
+    def test_notes_only_can_be_saved_and_edited_without_answer_selection(self):
+        raw = notes_raw()
+        response = self.submit(**raw)
+        self.assertEqual(response.status_code, 200, response.content)
+        app_id = response.json()["application_id"]
+        self.assertIsNone(response.json()["raw_payload"]["item_responses"]["linguagem"]["1"]["answer"])
+        raw["item_responses"]["linguagem"]["1"]["score"] = 0
+        raw["linguagem"] = 11
+        response = self.submit(application_id=app_id, **raw)
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json()["raw_payload"]["linguagem"], 11)
+        self.assertEqual(TestApplication.objects.count(), 1)
 
     def test_legacy_totals_can_be_replaced_with_real_items(self):
         app_id = self.submit().json()["application_id"]

@@ -36,3 +36,13 @@ Aplicar o modelo de `aux/THCP · Correção.html`, com campos por item e totais 
 - [x] Revalidar TypeScript, lint, somas, envio, restauração, limpeza e responsividade no navegador.
 - 33 testes THCP aprovados após a troca de layout; nenhuma alteração nas normas, no backend ou no formato dos dados nesta revisão visual.
 - Playwright: botões de pontos em todos os itens HPM I; progresso e resumo; envio/restauração; limpeza confirmada/cancelada sem requisição à API; nenhum erro JavaScript ou overflow horizontal nas quatro larguras testadas.
+
+## Correção conforme protocolo impresso
+- [x] Substituir todas as seleções por números fixos de referência e uma coluna Nota com campos numéricos.
+- [x] Transcrever os 12 destaques de Linguagem da foto ampliada, sem usá-los para calcular notas.
+- [x] Tornar a seleção de resposta opcional no backend e aceitar as notas intermediárias de Memória (2/4), sem mudar normas ou escores máximos.
+- [x] Validar notas isoladas, somas, persistência/reedição, ausência de seleção de alternativas e compatibilidade com registros anteriores.
+- [x] Exibir o máximo individual junto a cada campo Nota, com aviso imediato e bloqueio de envio para valores inválidos.
+- 36 testes THCP, TypeScript, ESLint e Ruff aprovados.
+- Playwright: 47 campos Nota, nenhum seletor de alternativas nas tabelas, 12 destaques fixos de Linguagem; limites/avisos testados nos 47 campos; somas 91/90/88/60/61; Memória com notas 2/4; persistência e reedição sem seleção de respostas; aplicações antigas, bloqueio, limpeza confirmada e responsividade preservados.
+- Capturas de conferência em `/tmp/opencode/thcp-notes-desktop.png` e `/tmp/opencode/thcp-notes-mobile.png`. Nenhum dado de produção foi alterado.

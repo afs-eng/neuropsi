@@ -1,53 +1,58 @@
 'use client'
 
-import { type THCPGroup, type THCPItemDefinition, type THCPItemForm, type THCPProtocol } from '@/lib/thcp-protocol'
+import { Fragment } from 'react'
+import { Input } from '@/components/ui/input'
+import { validTHCPItem, type THCPGroup, type THCPItemForm, type THCPProtocol } from '@/lib/thcp-protocol'
 
 interface ProtocolProps {
   protocol: THCPProtocol
   items: THCPItemForm
-  onChange: (group: THCPGroup, key: string, field: 'answer' | 'score', value: string) => void
+  onChange: (group: THCPGroup, key: string, field: 'score', value: string) => void
 }
 
-const GROUP_ACCENTS: Record<THCPGroup, string> = {
-  hpm_i: 'peer-checked:border-indigo-600 peer-checked:bg-indigo-600 peer-focus-visible:ring-indigo-600',
-  hpm_ii: 'peer-checked:border-indigo-600 peer-checked:bg-indigo-600 peer-focus-visible:ring-indigo-600',
-  linguagem: 'peer-checked:border-emerald-700 peer-checked:bg-emerald-700 peer-focus-visible:ring-emerald-700',
-  memoria: 'peer-checked:border-sky-700 peer-checked:bg-sky-700 peer-focus-visible:ring-sky-700',
-  pq: 'peer-checked:border-amber-700 peer-checked:bg-amber-700 peer-focus-visible:ring-amber-700',
+// Destaques visuais transcritos da foto ampliada de Linguagem, sem efeito na nota.
+const LANGUAGE_HIGHLIGHTS: Record<string, number> = {
+  '1': 2, '2': 3, '3': 1, '4': 1, '5': 1, '6': 1,
+  '7': 1, '8': 3, '9': 2, '10': 4, '11': 3, '12': 3,
 }
 
-function Choice({ name, value, selected, label, accent, onChange }: { name: string; value: number; selected: string; label?: string; accent: string; onChange: (value: string) => void }) {
-  return <label className="relative cursor-pointer">
-    <input type="radio" name={name} value={value} checked={selected === String(value)} onChange={e => onChange(e.target.value)} required className="peer sr-only" aria-label={label} />
-    <span className={`flex min-h-11 min-w-11 items-center justify-center rounded-md border border-slate-200 bg-white px-2 text-sm font-medium tabular-nums hover:border-slate-400 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 peer-disabled:cursor-not-allowed peer-disabled:opacity-50 sm:min-h-8 sm:min-w-8 ${accent}`}>{label ? '∅' : value}</span>
-  </label>
+const GROUP_LABELS: Record<THCPGroup, string> = {
+  hpm_i: 'HPM — Exercício I', hpm_ii: 'HPM — Exercício II',
+  linguagem: 'Linguagem', memoria: 'Memória', pq: 'Pensamento Quantitativo',
 }
 
-function ProtocolRow({ group, item, items, onChange }: Omit<ProtocolProps, 'protocol'> & { group: THCPGroup; item: THCPItemDefinition }) {
-  const response = items[group]?.[item.key] || { answer: '', score: '' }
-  const id = `thcp-${group}-${item.key}`
-  const change = (field: 'answer' | 'score', value: string) => onChange(group, item.key, field, value)
-  const accent = GROUP_ACCENTS[group]
-  const scoreOptions = item.score_options || Array.from({ length: item.max_score + 1 }, (_, index) => index)
-  return <fieldset className="min-w-0 border-b border-slate-100 py-2 last:border-0">
-    <legend className="sr-only">{item.label}</legend>
-    <div className={`flex flex-wrap items-center gap-x-3 gap-y-2 ${item.options.length ? '' : 'justify-between'}`}>
-      <span className={`${item.options.length ? 'w-6 shrink-0' : 'min-w-0 flex-1'} text-xs font-medium text-slate-700 sm:text-[13px]`} aria-hidden="true">{item.label}</span>
-      {item.options.length > 0 && <div className="flex flex-wrap gap-1" role="group" aria-label="Alternativa respondida">
-        {item.options.map(option => <Choice key={option} name={`${id}-answer`} value={option} selected={response.answer} accent={accent} onChange={value => change('answer', value)} />)}
-        <Choice name={`${id}-answer`} value={0} selected={response.answer} label="Sem resposta" accent={accent} onChange={value => change('answer', value)} />
-      </div>}
-      <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Pontuação do item">
-        {item.options.length > 0 && <span className="text-[11px] text-slate-500">Pts</span>}
-        {scoreOptions.map(option => <Choice key={option} name={`${id}-score`} value={option} selected={response.score} accent={accent} onChange={value => change('score', value)} />)}
-      </div>
-    </div>
-  </fieldset>
-}
-
-export function THCPGroupFields({ group, ...props }: ProtocolProps & { group: THCPGroup }) {
-  return <div>{props.protocol[group].map((item, index) => <div key={item.key} className="border-b border-slate-100 last:border-0">
-    {group === 'hpm_i' && [0, 1, 8].includes(index) && <h3 className="-mx-3 border-y border-slate-100 bg-slate-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{index === 0 ? 'Labirinto · 0–4 pontos' : index === 1 ? 'Cópia · 0–2 pontos cada' : 'Figura complexa · 0–1 ponto cada'}</h3>}
-    <ProtocolRow group={group} item={item} {...props} />
-  </div>)}</div>
+export function THCPGroupFields({ group, protocol, items, onChange }: ProtocolProps & { group: THCPGroup }) {
+  const hasReferences = protocol[group].some(item => item.options.length || item.score_options)
+  return <table className="w-full table-fixed text-xs">
+    <caption className="sr-only">{GROUP_LABELS[group]} — valores fixos de referência e notas editáveis</caption>
+    <colgroup><col className={hasReferences ? 'w-[12%]' : 'w-[45%]'} /><col /><col className="w-16" /></colgroup>
+    <thead><tr className="border-b border-slate-200 text-[10px] uppercase tracking-wide text-slate-500">
+      <th scope="col" colSpan={hasReferences ? 1 : 2} className="py-2 text-left font-medium">{hasReferences ? 'Item' : 'Descrição'}</th>
+      {hasReferences && <th scope="col" className="py-2 text-left font-medium">Referência fixa</th>}
+      <th scope="col" className="py-2 text-center font-semibold text-slate-700">Nota</th>
+    </tr></thead>
+    <tbody>{protocol[group].map((item, index) => {
+      const response = items[group]?.[item.key] || { answer: '', score: '' }
+      const id = `thcp-${group}-${item.key}-score`
+      const references = item.options.length ? item.options : item.score_options || []
+      const highlight = group === 'linguagem' ? LANGUAGE_HIGHLIGHTS[item.key] : null
+      const invalid = response.score !== '' && !validTHCPItem(item, response)
+      const error = Number(response.score) > item.max_score ? `Máximo ${item.max_score} ${item.max_score === 1 ? 'ponto' : 'pontos'}` : Number(response.score) < 0 ? 'Mínimo 0 pontos' : 'Nota inteira obrigatória'
+      return <Fragment key={item.key}>
+        {group === 'hpm_i' && [0, 1, 8].includes(index) && <tr><th scope="rowgroup" colSpan={3} className="bg-slate-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-slate-500">{index === 0 ? 'Labirinto · 0–4 pontos' : index === 1 ? 'Cópia · 0–2 pontos cada' : 'Figura complexa · 0–1 ponto cada'}</th></tr>}
+        <tr className="border-b border-slate-100 last:border-0">
+          <th scope="row" colSpan={hasReferences ? 1 : 2} className="py-2 pr-1 text-left font-medium text-slate-700">{item.label}</th>
+          {hasReferences && <td className="py-2 pr-2"><div className="inline-flex max-w-full flex-wrap overflow-hidden rounded-sm border border-slate-200 bg-slate-50">
+            {references.map(value => <span key={value} data-reference-value={value} data-reference-highlight={value === highlight ? 'true' : undefined} aria-label={value === highlight ? `${value} — destaque fixo do protocolo` : undefined} className={`flex h-7 min-w-5 items-center justify-center border-r border-slate-200 px-1 text-[11px] tabular-nums last:border-r-0 ${value === highlight ? 'bg-emerald-800 font-bold text-white' : 'text-slate-600'}`}>{value}</span>)}
+          </div></td>}
+          <td className="py-1.5 pl-1">
+            <label htmlFor={id} className="sr-only">Nota — {GROUP_LABELS[group]}, item {item.label}</label>
+            <Input id={id} name={id} data-thcp-note="true" aria-describedby={`${id}-hint${invalid ? ` ${id}-error` : ''}`} aria-invalid={invalid} autoComplete="off" type="number" inputMode="numeric" min={0} max={item.max_score} step={1} required value={response.score} onChange={e => onChange(group, item.key, 'score', e.target.value)} className={`h-11 w-full bg-white px-1 text-center text-sm font-semibold tabular-nums sm:h-9 ${invalid ? 'border-red-400 bg-red-50 text-red-900 focus-visible:ring-red-500' : 'border-slate-300 focus-visible:ring-teal-600'}`} />
+            <span id={`${id}-hint`} className="mt-1 block text-center text-[9px] text-slate-500"><span className="sr-only">Nota inteira, mínimo 0, </span>máx. {item.max_score}<span className="sr-only"> pontos. Campo vazio não equivale a zero.</span></span>
+            {invalid && <span id={`${id}-error`} role="alert" className="mt-1 block text-center text-[9px] font-medium leading-3 text-red-700">{error}</span>}
+          </td>
+        </tr>
+      </Fragment>
+    })}</tbody>
+  </table>
 }

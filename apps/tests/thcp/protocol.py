@@ -1,4 +1,4 @@
-"""Campos transcritos de CORRECAO.xlsm, aba THCP; alternativas não são gabarito."""
+"""Referências fixas de CORRECAO.xlsm, aba THCP; apenas a coluna Nota é editável."""
 
 
 def item(key, label, maximum=1, options=None, score_options=None):

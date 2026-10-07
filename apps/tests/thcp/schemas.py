@@ -36,14 +36,14 @@ class THCPRawInput(BaseModel):
                 raise ValueError(f"{group}: preencha todos os itens do protocolo.")
             for item in definitions:
                 response = entries[item["key"]]
-                if item["options"]:
+                if item["options"] and response.answer is not None:
                     if response.answer not in [0, *item["options"]]:
                         raise ValueError(f"{group}, {item['label']}: selecione uma alternativa válida.")
                     if response.answer == 0 and response.score != 0:
                         raise ValueError(f"{group}, {item['label']}: sem resposta deve ter zero pontos.")
                 elif response.answer is not None:
                     raise ValueError(f"{group}, {item['label']}: informe apenas a pontuação.")
-                if response.score > item["max_score"] or (item["score_options"] is not None and response.score not in item["score_options"]):
+                if response.score > item["max_score"]:
                     raise ValueError(f"{group}, {item['label']}: pontuação inválida.")
         totals = protocol_totals({group: {key: response.model_dump() for key, response in entries.items()} for group, entries in self.item_responses.items()})
         for group, total in totals.items():

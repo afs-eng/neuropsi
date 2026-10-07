@@ -73,7 +73,6 @@ function ProtocolPanel({ group, protocol, items, onChange }: { group: THCPGroup;
   const definitions = protocol[group]
   const completed = definitions.filter(item => validTHCPItem(item, items[group]?.[item.key])).length
   return <DomainPanel id={group} domain={GROUP_PANELS[group].domain} title={GROUP_PANELS[group].title} value={thcpGroupTotal(protocol, items, group)} maximum={definitions.reduce((sum, item) => sum + item.max_score, 0)} progress={`${completed}/${definitions.length}`}>
-    {definitions.some(item => item.options.length) && <p className="mb-1 border-b border-slate-100 pb-2 text-[10px] text-slate-500">Alternativa respondida · pontuação do protocolo (Pts)</p>}
     <THCPGroupFields group={group} protocol={protocol} items={items} onChange={onChange} />
   </DomainPanel>
 }
@@ -166,7 +165,8 @@ function THCPForm() {
       for (const [group, definitions] of Object.entries(protocol)) {
         const missing = definitions.find(item => !validTHCPItem(item, items[group as THCPGroup]?.[item.key]))
         if (missing) {
-          setError(`${group.toUpperCase()}, ${missing.label}: preencha a resposta e a pontuação do item.`)
+          setError(`${GROUP_PANELS[group as THCPGroup].title}, ${missing.label}: informe uma nota inteira entre 0 e ${missing.max_score}.`)
+          document.getElementById(`thcp-${group}-${missing.key}-score`)?.focus()
           return
         }
       }
@@ -212,7 +212,7 @@ function THCPForm() {
   function changeItem(group: THCPGroup, key: string, field: 'answer' | 'score', value: string) {
     setItems(current => {
       const response = { answer: '', score: '', ...current[group]?.[key], [field]: value }
-      if (field === 'answer' && value === '0') response.score = '0'
+      if (field === 'score' && value !== current[group]?.[key]?.score) response.answer = ''
       return { ...current, [group]: { ...current[group], [key]: response } }
     })
   }
@@ -254,7 +254,7 @@ function THCPForm() {
         </div>
       </header>
       <div id="thcp-instructions" hidden={!showInstructions} className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-blue-900">
-        Registre as respostas e a pontuação de cada item conforme o protocolo do THCP. As alternativas não são pontos: indique também 0 ou 1 ponto nos itens com resposta. Use ∅ para sem resposta (zero pontos). O sistema soma os itens e aplica as normas ao salvar. Campos vazios não equivalem a zero.
+        Preencha somente a coluna Nota de cada item conforme o protocolo do THCP. Os números ao lado são referências fixas, sem seleção; os destaques não alteram os cálculos. O sistema soma as notas e aplica as normas ao salvar. Campos vazios não equivalem a zero.
       </div>
       {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-800">{error}</p>}
       {locked && <p role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">Esta aplicação está travada e não pode ser editada.</p>}
@@ -272,7 +272,7 @@ function THCPForm() {
             <p>Esta aplicação possui apenas totais salvos. Eles foram preservados; nenhuma resposta por item foi inventada. Para preencher o protocolo completo, selecione “Por item”.</p>
             <div className="mt-3 flex flex-wrap gap-4"><label className="flex min-h-11 cursor-pointer items-center gap-2"><input type="radio" name="entry-mode" value="totals" checked={entryMode === 'totals'} onChange={() => setEntryMode('totals')} />Totais salvos</label><label className="flex min-h-11 cursor-pointer items-center gap-2"><input type="radio" name="entry-mode" value="items" checked={entryMode === 'items'} onChange={() => setEntryMode('items')} />Por item</label></div>
           </div>}
-          {entryMode === 'items' && <p className="flex items-start gap-2 text-xs leading-5 text-slate-600"><Info className="mt-0.5 h-4 w-4 shrink-0 text-teal-700" aria-hidden="true" /><span>Marque a alternativa respondida e os pontos do protocolo. A soma é automática, sem gabarito de alternativas. ∅ = sem resposta; campos vazios continuam pendentes.</span></p>}
+          {entryMode === 'items' && <p className="flex items-start gap-2 text-xs leading-5 text-slate-600"><Info className="mt-0.5 h-4 w-4 shrink-0 text-teal-700" aria-hidden="true" /><span>Digite os valores somente na coluna <strong>Nota</strong>. Os números de referência são fixos; os destaques são apenas visuais. As somas são automáticas.</span></p>}
           <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
             <div className="min-w-0 space-y-4">
               {entryMode === 'items' && protocolProps ? <><ProtocolPanel group="hpm_i" {...protocolProps} /><ProtocolPanel group="hpm_ii" {...protocolProps} /></> : <DomainPanel domain={DOMAINS[0]} value={values[0]}><div className="py-2"><ScoreInput fieldKey="hpm" scores={scores} onChange={changeScore} /></div></DomainPanel>}
