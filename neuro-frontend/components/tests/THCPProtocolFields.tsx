@@ -23,10 +23,10 @@ const GROUP_LABELS: Record<THCPGroup, string> = {
 
 export function THCPGroupFields({ group, protocol, items, onChange }: ProtocolProps & { group: THCPGroup }) {
   const hasReferences = protocol[group].some(item => item.options.length || item.score_options)
-  return <table className="w-full table-fixed text-xs">
+  return <table className="w-full table-fixed text-sm">
     <caption className="sr-only">{GROUP_LABELS[group]} — valores fixos de referência e notas editáveis</caption>
-    <colgroup><col className={hasReferences ? 'w-[12%]' : 'w-[45%]'} /><col /><col className="w-16" /></colgroup>
-    <thead><tr className="border-b border-slate-200 text-[10px] uppercase tracking-wide text-slate-500">
+    <colgroup><col className={hasReferences ? 'w-[14%]' : 'w-[45%]'} /><col /><col className="w-[4.5rem]" /></colgroup>
+    <thead><tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
       <th scope="col" colSpan={hasReferences ? 1 : 2} className="py-2 text-left font-medium">{hasReferences ? 'Item' : 'Descrição'}</th>
       {hasReferences && <th scope="col" className="py-2 text-left font-medium">Referência fixa</th>}
       <th scope="col" className="py-2 text-center font-semibold text-slate-700">Nota</th>
@@ -43,13 +43,13 @@ export function THCPGroupFields({ group, protocol, items, onChange }: ProtocolPr
         <tr className="border-b border-slate-100 last:border-0">
           <th scope="row" colSpan={hasReferences ? 1 : 2} className="py-2 pr-1 text-left font-medium text-slate-700">{item.label}</th>
           {hasReferences && <td className="py-2 pr-2"><div className="inline-flex max-w-full flex-wrap overflow-hidden rounded-sm border border-slate-200 bg-slate-50">
-            {references.map(value => <span key={value} data-reference-value={value} data-reference-highlight={value === highlight ? 'true' : undefined} aria-label={value === highlight ? `${value} — destaque fixo do protocolo` : undefined} className={`flex h-7 min-w-5 items-center justify-center border-r border-slate-200 px-1 text-[11px] tabular-nums last:border-r-0 ${value === highlight ? 'bg-emerald-800 font-bold text-white' : 'text-slate-600'}`}>{value}</span>)}
+            {references.map(value => <span key={value} data-reference-value={value} data-reference-highlight={value === highlight ? 'true' : undefined} aria-label={value === highlight ? `${value} — destaque fixo do protocolo` : undefined} className={`flex h-9 min-w-7 items-center justify-center border-r border-slate-200 px-1.5 text-base tabular-nums last:border-r-0 ${value === highlight ? 'bg-emerald-800 font-bold text-white' : 'font-medium text-slate-700'}`}>{value}</span>)}
           </div></td>}
           <td className="py-1.5 pl-1">
             <label htmlFor={id} className="sr-only">Nota — {GROUP_LABELS[group]}, item {item.label}</label>
-            <Input id={id} name={id} data-thcp-note="true" aria-describedby={`${id}-hint${invalid ? ` ${id}-error` : ''}`} aria-invalid={invalid} autoComplete="off" type="number" inputMode="numeric" min={0} max={item.max_score} step={1} required value={response.score} onChange={e => onChange(group, item.key, 'score', e.target.value)} className={`h-11 w-full bg-white px-1 text-center text-sm font-semibold tabular-nums sm:h-9 ${invalid ? 'border-red-400 bg-red-50 text-red-900 focus-visible:ring-red-500' : 'border-slate-300 focus-visible:ring-teal-600'}`} />
-            <span id={`${id}-hint`} className="mt-1 block text-center text-[9px] text-slate-500"><span className="sr-only">Nota inteira, mínimo 0, </span>máx. {item.max_score}<span className="sr-only"> pontos. Campo vazio não equivale a zero.</span></span>
-            {invalid && <span id={`${id}-error`} role="alert" className="mt-1 block text-center text-[9px] font-medium leading-3 text-red-700">{error}</span>}
+            <Input id={id} name={id} data-thcp-note="true" aria-describedby={`${id}-hint${invalid ? ` ${id}-error` : ''}`} aria-invalid={invalid} autoComplete="off" type="number" inputMode="numeric" min={0} max={item.max_score} step={1} required value={response.score} onChange={e => onChange(group, item.key, 'score', e.target.value)} className={`h-11 w-full bg-white px-1 text-center text-base font-semibold tabular-nums ${invalid ? 'border-red-400 bg-red-50 text-red-900 focus-visible:ring-red-500' : 'border-slate-300 focus-visible:ring-teal-600'}`} />
+            <span id={`${id}-hint`} className="mt-1 block text-center text-xs text-slate-500"><span className="sr-only">Nota inteira, mínimo 0, </span>máx. {item.max_score}<span className="sr-only"> pontos. Campo vazio não equivale a zero.</span></span>
+            {invalid && <span id={`${id}-error`} role="alert" className="mt-1 block text-center text-xs font-medium leading-4 text-red-700">{error}</span>}
           </td>
         </tr>
       </Fragment>
