@@ -139,9 +139,18 @@ class PatientIdentityService:
         cleaned = str(text or "").strip()
         if not cleaned:
             return ""
-        if cls.foreign_patient_names_in_text(cleaned, patient_name):
+        if cls.foreign_names_for_context(cleaned, context, patient_name):
             return ""
         return cleaned
+
+    @classmethod
+    def foreign_names_for_context(cls, text: str | None, context: dict, patient_name: str | None = None) -> list[str]:
+        searchable = text or ""
+        for test in context.get("validated_tests") or []:
+            respondent = (test.get("raw_payload") or {}).get("respondent_name") or test.get("respondent_name")
+            if isinstance(respondent, str) and respondent.strip():
+                searchable = re.sub(rf"(?<!\w){re.escape(respondent.strip())}(?!\w)", "respondente identificado", searchable, flags=re.IGNORECASE)
+        return cls.foreign_patient_names_in_text(searchable, patient_name or (context.get("patient") or {}).get("full_name"))
 
     @classmethod
     def validate_document_identity(cls, document, report, context: dict) -> None:
@@ -149,8 +158,9 @@ class PatientIdentityService:
         if not patient_name:
             return
 
-        foreign_names = cls.foreign_patient_names_in_text(
+        foreign_names = cls.foreign_names_for_context(
             cls.document_text_before_references(document),
+            context,
             patient_name,
         )
         if foreign_names:

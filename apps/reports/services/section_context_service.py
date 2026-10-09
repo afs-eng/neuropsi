@@ -68,6 +68,7 @@ class SectionContextService:
                     "report_language": "pt-BR",
                     "clinical_style": "tecnico_objetivo",
                     "use_first_name_only": True,
+                    **cls._wais3_model_rules(section_key, context),
                 },
                 "patient": {
                     "first_name": (patient.get("full_name") or "").split(" ", 1)[0],
@@ -87,6 +88,7 @@ class SectionContextService:
                 "report_language": "pt-BR",
                 "clinical_style": "tecnico_objetivo",
                 "use_first_name_only": False,
+                **cls._wais3_model_rules(section_key, context),
             },
             "patient": {
                 "first_name": (patient.get("full_name") or "").split(" ", 1)[0],
@@ -110,6 +112,17 @@ class SectionContextService:
             payload["report_rules"]["use_first_name_only"] = False
 
         return payload
+
+    @staticmethod
+    def _wais3_model_rules(section_key: str, context: dict) -> dict:
+        if not any(test.get("instrument_code") == "wais3" for test in context.get("validated_tests") or []):
+            return {}
+        outline = ["Objetivo e domínios do instrumento", "Resultados por domínio", "Em análise clínica: integração dos achados", "Limites da interpretação e correlação com o contexto clínico"]
+        if section_key == "conclusao":
+            outline = ["Funcionamento intelectual", "Atenção, memória e funções executivas", "Aspectos emocionais e personalidade", "Convergências e discrepâncias entre métodos e respondentes", "Formulação clínica sustentada pelos dados disponíveis", "Limitações e caráter dinâmico da avaliação"]
+        return {"document_model": "wais3_aprovado", "clinical_outline": outline,
+                "preserve_all_respondents": True, "compare_only_compatible_scores": True,
+                "do_not_copy_example_diagnoses": True, "do_not_invent_functional_impairment": True}
 
     @classmethod
     def build_generated_sections_context(cls, report) -> list[dict]:
@@ -183,6 +196,11 @@ class SectionContextService:
             "clinical_interpretation": clinical_interpretation,
             "warnings": item.get("warnings") or [],
         }
+        if item.get("instrument_code") == "srs2":
+            payload["application_id"] = item.get("application_id")
+            payload["form"] = (item.get("classified_payload") or {}).get("form") or (item.get("raw_payload") or {}).get("form")
+            payload["respondent_name"] = (item.get("raw_payload") or {}).get("respondent_name")
+            payload["structured_results"] = structured_results
 
         if not clinical_interpretation:
             payload["summary"] = item.get("summary") or ""

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from apps.tests.wais3.constants import classify_scaled_score
+
 
 class WAIS3StandardizationService:
     SUPPORTED_SECTIONS = {
@@ -19,24 +21,25 @@ class WAIS3StandardizationService:
 
     DOMAIN_INTROS = {
         "funcoes_executivas": (
-            "Interpretação e Observações Clínicas: No WAIS-III, os subtestes Semelhanças, "
-            "Compreensão e Raciocínio Matricial foram considerados para análise sintética das "
-            "funções executivas de {patient}."
+            "Interpretação e Observações Clínicas: A avaliação de componentes das funções executivas de {patient} "
+            "considerou os subtestes Semelhanças, Compreensão e Raciocínio Matricial do WAIS-III, "
+            "relacionados à abstração, formação de conceitos, julgamento e resolução de problemas. "
+            "Esses subtestes não são medidas exclusivas de funções executivas."
         ),
         "linguagem": (
-            "Interpretação e Observações Clínicas: No WAIS-III, os subtestes Semelhanças, "
-            "Vocabulário e Compreensão foram considerados para análise sintética da linguagem "
-            "de {patient}."
+            "Interpretação e Observações Clínicas: A avaliação da linguagem de {patient} considerou os subtestes "
+            "Semelhanças, Vocabulário e Compreensão do WAIS-III, que investigam abstração verbal, repertório lexical, "
+            "formação de conceitos e julgamento prático mediado pela linguagem."
         ),
         "gnosias_praxias": (
-            "Interpretação e Observações Clínicas: No WAIS-III, os subtestes Raciocínio "
-            "Matricial e Cubos foram considerados para análise sintética das habilidades "
-            "visuoperceptivas e construtivas de {patient}."
+            "Interpretação e Observações Clínicas: A avaliação de gnosias e praxias de {patient} considerou os "
+            "subtestes Raciocínio Matricial e Cubos do WAIS-III, relacionados à análise visuoperceptiva, "
+            "raciocínio não verbal, organização visuoespacial e integração visuoconstrutiva."
         ),
         "memoria_aprendizagem": (
-            "Interpretação e Observações Clínicas: No WAIS-III, os subtestes Sequência de "
-            "Números e Letras e Dígitos foram considerados para análise sintética da memória "
-            "operacional e aprendizagem de {patient}."
+            "Interpretação e Observações Clínicas: A avaliação da memória operacional de {patient} considerou "
+            "os subtestes Sequência de Números e Letras e Dígitos do WAIS-III, relacionados à retenção imediata, "
+            "atenção auditiva e manutenção e manipulação mental de informações."
         ),
     }
 
@@ -73,9 +76,9 @@ class WAIS3StandardizationService:
 
     DOMAIN_CLOSINGS = {
         "funcoes_executivas": {
-            "preserved": "Em análise clínica, a síntese dos achados sugere funcionamento executivo relativamente preservado, com recursos adequados para abstração, planejamento, flexibilidade cognitiva e resolução de problemas.",
-            "mixed": "Em análise clínica, a síntese dos achados sugere perfil executivo heterogêneo, com recursos relativamente preservados em alguns componentes e fragilidades em outros, especialmente em tarefas de maior complexidade cognitiva.",
-            "low": "Em análise clínica, a síntese dos achados sugere limitações importantes em abstração, planejamento, flexibilidade cognitiva e resolução de problemas, com potencial impacto sobre o desempenho funcional.",
+            "preserved": "Em análise clínica, os componentes de abstração, julgamento e resolução de problemas avaliados apresentam recursos preservados. A caracterização do controle inibitório, da flexibilidade e do funcionamento executivo cotidiano exige integração com instrumentos específicos e dados funcionais.",
+            "mixed": "Em análise clínica, os componentes avaliados apresentam perfil heterogêneo. As diferenças devem ser integradas a medidas específicas de funções executivas, à observação clínica e às demandas do cotidiano.",
+            "low": "Em análise clínica, observam-se fragilidades nos componentes de abstração, julgamento e resolução de problemas avaliados, sem que esses subtestes, isoladamente, estabeleçam comprometimento executivo global.",
         },
         "linguagem": {
             "preserved": "Em análise clínica, a síntese dos achados sugere linguagem globalmente preservada, com recursos adequados para compreensão verbal, conceituação e comunicação funcional.",
@@ -127,7 +130,7 @@ class WAIS3StandardizationService:
 
     @staticmethod
     def _payload(test: dict) -> dict:
-        return test.get("structured_results") or test.get("classified_payload") or {}
+        return test.get("structured_results") or test.get("classified_payload") or test.get("computed_payload") or {}
 
     @classmethod
     def _build_global_text(cls, test: dict, context: dict) -> str:
@@ -141,7 +144,9 @@ class WAIS3StandardizationService:
         iop = indices.get("organizacao_perceptual") or {}
         imo = indices.get("memoria_operacional") or {}
         ivp = indices.get("velocidade_processamento") or {}
-        gai = indices.get("gai") or {}
+        gai = indices.get("gai") or payload.get("gai_data") or {}
+        if gai.get("pontuacao_composta") is None and gai.get("escore_composto") is not None:
+            gai = {**gai, "pontuacao_composta": gai["escore_composto"]}
         
         qit_score = qit.get("pontuacao_composta")
         if qit_score is None:
@@ -218,10 +223,9 @@ class WAIS3StandardizationService:
                     scores.append(item["escore_ponderado"])
         
         if scores:
-            avg = sum(scores) / len(scores)
-            if avg >= 8:
+            if all(score >= 8 for score in scores):
                 closing_key = "preserved"
-            elif avg >= 5:
+            elif any(score >= 8 for score in scores):
                 closing_key = "mixed"
         
         closing = cls.DOMAIN_CLOSINGS.get(section_key, {}).get(closing_key, "")
@@ -236,7 +240,7 @@ class WAIS3StandardizationService:
                 "Os achados de memória operacional devem ser analisados em conjunto com o desempenho obtido no RAVLT, especialmente quanto à curva de aprendizagem, evocação tardia e reconhecimento."
             )
 
-        detail = "; ".join(sentences) + "." if sentences else "Dados dos subtestes não disponíveis para análise."
+        detail = ".\n\n".join(sentences) + "." if sentences else "Dados dos subtestes não disponíveis para análise."
         parts = [intro, detail] + extras + [closing]
         return "\n\n".join(parts)
 
@@ -261,23 +265,7 @@ class WAIS3StandardizationService:
         cls = item.get("classificacao")
         if cls:
             return cls
-        raw = item.get("escore_ponderado") or item.get("pontuacao_composta")
-        if raw is None:
-            return "não disponível"
-        if raw >= 12:
-            return "Muito Superior"
-        elif raw >= 10:
-            return "Superior"
-        elif raw >= 8:
-            return "Média Superior"
-        elif raw >= 6:
-            return "Média"
-        elif raw >= 4:
-            return "Média Inferior"
-        elif raw >= 2:
-            return "Limítrofe"
-        else:
-            return "Extremamente Baixo"
+        return classify_scaled_score(item.get("escore_ponderado")) or "não disponível"
 
     @staticmethod
     def _level_phrase(item: dict, abilities: str) -> str:
@@ -285,17 +273,10 @@ class WAIS3StandardizationService:
         if raw is None:
             return "dados insuficientes para análise"
         
-        if raw >= 12:
+        if raw >= 14:
             return f"excelentes recursos em {abilities}"
-        elif raw >= 10:
+        elif raw >= 12:
             return f"bons recursos em {abilities}"
         elif raw >= 8:
-            return f"recursos acima da média em {abilities}"
-        elif raw >= 6:
             return f"recursos médios em {abilities}"
-        elif raw >= 4:
-            return f"recursos abaixo da média em {abilities}"
-        elif raw >= 2:
-            return f"limitações em {abilities}"
-        else:
-            return f"comprometimento significativo em {abilities}"
+        return f"fragilidade relativa em {abilities}, a ser integrada aos demais dados clínicos"

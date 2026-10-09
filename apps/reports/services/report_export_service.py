@@ -89,6 +89,7 @@ class ReportExportService:
     TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "templates_assets"
     DEFAULT_TEMPLATE_PATH = TEMPLATE_DIR / "PAPEL-TIMBRADO-MODELO.docx"
     WAIS3_TEMPLATE_PATH = TEMPLATE_DIR / "Modelo-WAIS3.docx"
+    WAIS3_STANDARD_TEMPLATE_PATH = TEMPLATE_DIR / "Modelo-WAIS3-Padrao.docx"
     WISC4_TEMPLATE_PATH = TEMPLATE_DIR / "Modelo-WISC4.docx"
     WASI_TEMPLATE_PATH = TEMPLATE_DIR / "MODELO-WASI.docx"
     TABLE_STYLE_SOURCE_PATH = WISC4_TEMPLATE_PATH
@@ -414,7 +415,12 @@ class ReportExportService:
         }
 
         template_path = cls._select_template_path(report, context)
-        if cls._is_adolescent_context(context, report):
+        uses_wais3_model = cls._primary_report_test_code(context) == "wais3"
+        if uses_wais3_model:
+            from apps.reports.builders.wais3_docx_builder import WAIS3DocxBuilder
+
+            document = WAIS3DocxBuilder(cls, report, context, sections).build()
+        elif cls._is_adolescent_context(context, report):
             document = cls._build_adolescent_document(report, context, sections)
         elif not template_path.exists():
             cls.logger.warning(
@@ -439,7 +445,8 @@ class ReportExportService:
 
         cls._insert_thcp_results(document, context)
         cls._ensure_model_table_styles(document)
-        cls._normalize_model_header_footer(document)
+        if not uses_wais3_model:
+            cls._normalize_model_header_footer(document)
 
         body = document._body._element
         ns_c = "{http://schemas.openxmlformats.org/drawingml/2006/chart}"
@@ -454,7 +461,7 @@ class ReportExportService:
         output = BytesIO()
         document.save(output)
         docx_bytes = output.getvalue()
-        header_footer_template_path = cls._header_footer_template_path(template_path, report, context)
+        header_footer_template_path = cls.WAIS3_STANDARD_TEMPLATE_PATH if uses_wais3_model else cls._header_footer_template_path(template_path, report, context)
         if header_footer_template_path.exists():
             docx_bytes = cls._restore_template_header_footer(docx_bytes, header_footer_template_path)
         docx_bytes = cls._deduplicate_drawing_ids(docx_bytes)
@@ -601,6 +608,17 @@ class ReportExportService:
 
     @classmethod
     def _native_chart_data(cls, key: str, context: dict):
+        if key == "srs2_comparison" or key.startswith("srs2:"):
+            from apps.reports.builders.srs2_profiles import comparable_profiles, profile_chart, profile_label
+
+            tests = cls._find_tests(context, "srs2")
+            if key == "srs2_comparison":
+                return comparable_profiles(tests)
+            index = int(key.split(":", 1)[1])
+            if index < 0 or index >= len(tests):
+                raise ValueError("Aplicação SRS-2 não encontrada para o gráfico.")
+            categories, values = profile_chart(tests[index])
+            return categories, [values], [profile_label(tests[index], index)]
         code = "fdt" if key.startswith("fdt_") else key
         test = cls._find_test(context, code)
         if not test:
@@ -627,7 +645,12 @@ class ReportExportService:
         if key == "etdah_ad":
             return ["F1 - D", "F2 - I", "F3 - AE", "F4 - AAMA", "F5 - H"], [cls._etdah_ad_chart_values(test)], ["Autorrelato"]
         if key == "srs2":
-            return ["Perc.S", "Cog.S", "Com.S", "Mot.S", "PRR", "CIS", "TOTAL"], [cls._srs2_chart_values(test)], ["Escore T"]
+            if cls._primary_report_test_code(context) != "wais3":
+                return ["Perc.S", "Cog.S", "Com.S", "Mot.S", "PRR", "CIS", "TOTAL"], [cls._srs2_chart_values(test)], ["Escore T"]
+            from apps.reports.builders.srs2_profiles import profile_chart
+
+            categories, values = profile_chart(test)
+            return categories, [values], ["Escore T"]
         raise ValueError(f"Instrumento de gráfico não suportado: {key}.")
 
     @classmethod
@@ -660,6 +683,11 @@ class ReportExportService:
                         raise ValueError("Dois gráficos compartilham o mesmo recurso. Exportação bloqueada.")
                     root = ET.fromstring(source.read(target))
                     series_nodes = root.findall(".//c:ser", cls.CHART_NS)
+                    if key == "srs2_comparison" and series_nodes:
+                        while len(series_nodes) < len(values):
+                            extra = deepcopy(series_nodes[0])
+                            series_nodes[0].getparent().append(extra)
+                            series_nodes.append(extra)
                     if len(series_nodes) < len(values):
                         raise ValueError(f"Modelo incompatível com o gráfico {key}.")
                     for index, series in enumerate(series_nodes):
@@ -667,12 +695,21 @@ class ReportExportService:
                             series.getparent().remove(series)
                             continue
                         cls._update_chart_series(root, index, categories, values[index])
+                        for tag in ("idx", "order"):
+                            number = series.find(f"c:{tag}", cls.CHART_NS)
+                            if number is not None:
+                                number.set("val", str(index))
                         title = series.find("c:tx", cls.CHART_NS)
                         if title is not None:
                             series.remove(title)
                         title = ET.Element(qn("c:tx"))
                         ET.SubElement(title, qn("c:v")).text = names[index]
                         series.insert(2, title)
+                    if (key == "srs2" or key.startswith("srs2:")) and cls._primary_report_test_code(context) == "wais3":
+                        from apps.reports.builders.srs2_profiles import profile_label
+
+                        index = int(key.split(":", 1)[1]) if ":" in key else 0
+                        cls._update_chart_title(root, f"SRS-2 — {profile_label(cls._find_tests(context, 'srs2')[index], index)}")
                     scores = [value for series in values for value in series]
                     for scaling in root.findall(".//c:valAx/c:scaling", cls.CHART_NS):
                         upper = scaling.find("c:max", cls.CHART_NS)
@@ -918,8 +955,8 @@ class ReportExportService:
     def _update_chart_title(cls, root, title: str | None):
         if not title:
             return
-        for text_node in root.findall('.//c:title//a:t', cls.CHART_NS):
-            text_node.text = title
+        for index, text_node in enumerate(root.findall('.//c:chart/c:title//a:t', cls.CHART_NS)):
+            text_node.text = title if index == 0 else ""
 
     @classmethod
     def _detach_chart_external_data(cls, root):
@@ -2695,8 +2732,9 @@ class ReportExportService:
         if not patient_name:
             return
 
-        foreign_names = cls._foreign_patient_names_in_text(
+        foreign_names = PatientIdentityService.foreign_names_for_context(
             cls._document_text_before_references(document),
+            context,
             patient_name,
         )
         if not foreign_names:

@@ -711,7 +711,7 @@ class ReportExportChartSanitizationTests(SimpleTestCase):
         with self.assertRaisesMessage(ValueError, "sem resultados validados"):
             ReportExportService._populate_bound_excel_charts(data, context)
 
-    def test_adolescent_bfp_exports_separate_tables_with_scalar_cells(self):
+    def test_adolescent_wais3_bfp_exports_model_table_with_scalar_cells(self):
         context = self._export_context()
         context["validated_tests"].append({"instrument_code": "bfp", "computed_payload": {
             "factors": {code: {"raw_score": 3.5, "percentile": 67, "classification": "Média"} for code in ("NN", "EE", "SS", "RR", "AA")},
@@ -720,7 +720,7 @@ class ReportExportChartSanitizationTests(SimpleTestCase):
         data = self._generate_export(context)
         document = Document(BytesIO(data))
         tables = [table for table in document.tables if any("Faceta/Dimensão" in cell.text for row in table.rows for cell in row.cells)]
-        self.assertEqual(len(tables), 5)
+        self.assertEqual(len(tables), 1)
         for table in tables:
             self.assertEqual(len(table.columns), 4)
             self.assertFalse(any(cell.text.startswith("['") for row in table.rows for cell in row.cells))

@@ -24,4 +24,11 @@ Orientacoes adicionais:
 - nao conclua TEA apenas com base no SRS-2 isoladamente;
 - se os dados forem insuficientes, explicite a limitacao.
 
+Quando report_rules.document_model for "wais3_aprovado":
+- preserve todas as aplicacoes e identifique o formulario e o respondente informado, sem presumir parentesco;
+- havendo autorrelato e heterorrelato, organize os resultados em blocos por respondente e finalize com Analise Integrada;
+- compare apenas dominios identificados em formularios compativeis e com escores T disponiveis; nao use a posicao da linha para alinhar dominios;
+- descreva convergencias e diferencas de intensidade, sem afirmar que um respondente esta correto e o outro errado;
+- nao copie exemplos clinicos, diagnosticos, nomes ou numeros de outros pacientes.
+
 Retorne somente o texto final da secao.
