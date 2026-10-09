@@ -3,6 +3,7 @@ from __future__ import annotations
 from copy import deepcopy
 from io import BytesIO
 import logging
+import math
 import posixpath
 import re
 from pathlib import Path
@@ -458,18 +459,11 @@ class ReportExportService:
             docx_bytes = cls._restore_template_header_footer(docx_bytes, header_footer_template_path)
         docx_bytes = cls._deduplicate_drawing_ids(docx_bytes)
 
-        pre_chart_docx_bytes = docx_bytes
-        if cls._find_test(context, "wisc4"):
-            docx_bytes = cls._populate_wisc4_excel_charts(docx_bytes, context)
-        if cls._find_test(context, "wais3") and not cls._is_adolescent_context(context, report):
-            docx_bytes = cls._populate_wais3_excel_charts(docx_bytes, context)
-        if cls._find_test(context, "wasi"):
-            docx_bytes = cls._populate_wasi_excel_charts(docx_bytes, context)
+        docx_bytes = cls._populate_bound_excel_charts(docx_bytes, context)
         if not cls._docx_package_is_valid(docx_bytes):
-            cls.logger.warning(
-                "DOCX gerado com estrutura invalida apos atualizacao de graficos; retornando versao anterior aos graficos."
+            raise ValueError(
+                "DOCX inválido após atualização dos gráficos. Exportação bloqueada para evitar resultados inconsistentes."
             )
-            return pre_chart_docx_bytes
         docx_bytes = cls._normalize_docx_package(docx_bytes)
         return docx_bytes
 
@@ -597,6 +591,105 @@ class ReportExportService:
         if not template_path.exists():
             return []
         return cls._extract_template_chart_blocks(Document(str(template_path)))
+
+    @classmethod
+    def _bind_chart_block(cls, block, key: str):
+        block = deepcopy(block)
+        for properties in block.iter(qn("wp:docPr")):
+            properties.set("descr", f"neuropsi:test:{key}")
+        return block
+
+    @classmethod
+    def _native_chart_data(cls, key: str, context: dict):
+        code = "fdt" if key.startswith("fdt_") else key
+        test = cls._find_test(context, code)
+        if not test:
+            raise ValueError(f"Gráfico {key} sem resultados validados.")
+        if key in {"wais3", "wisc4", "wasi"}:
+            loader = getattr(cls, f"_{key}_chart_payload")
+            categories, values = loader(test)
+            return categories, [values], [key.upper()]
+        if key == "bpa2":
+            categories, values = cls._bpa_excel_series(test)
+            return categories, values, ["ATENÇÃO CONCENTRADA", "ATENÇÃO DIVIDIDA", "ATENÇÃO ALTERNADA", "ATENÇÃO GERAL"]
+        if key == "ravlt":
+            categories, values = cls._ravlt_chart_payload(test, context)
+            return categories, values, ["Esperado", "Mínimo", "Obtido"]
+        if key in {"fdt_auto", "fdt_control"}:
+            automatic = key == "fdt_auto"
+            categories, values = cls._fdt_chart_payload(test, automatic)
+            metrics = {item.get("codigo") for item in cls._fdt_payload(test).get("metric_results") or []}
+            order = ("contagem", "leitura") if automatic else ("escolha", "alternancia", "inibicao", "flexibilidade")
+            labels = {"contagem": "CONTAGEM", "leitura": "LEITURA", "escolha": "ESCOLHA", "alternancia": "ALTERNÂNCIA", "inibicao": "INIBIÇÃO", "flexibilidade": "FLEXIBILIDADE"}
+            return categories, values, [labels[code] for code in order if code in metrics]
+        if key == "etdah_pais":
+            return ["F1 - R.E.", "F2 - H.I.", "F3 - C.A.", "F4 - At.", "TOTAL"], [cls._etdah_pais_chart_values(test)], ["Pais"]
+        if key == "etdah_ad":
+            return ["F1 - D", "F2 - I", "F3 - AE", "F4 - AAMA", "F5 - H"], [cls._etdah_ad_chart_values(test)], ["Autorrelato"]
+        if key == "srs2":
+            return ["Perc.S", "Cog.S", "Com.S", "Mot.S", "PRR", "CIS", "TOTAL"], [cls._srs2_chart_values(test)], ["Escore T"]
+        raise ValueError(f"Instrumento de gráfico não suportado: {key}.")
+
+    @classmethod
+    def _populate_bound_excel_charts(cls, docx_bytes: bytes, context: dict) -> bytes:
+        replacements = {}
+        with ZipFile(BytesIO(docx_bytes)) as source:
+            document = ET.fromstring(source.read("word/document.xml"))
+            relationships = ET.fromstring(source.read("word/_rels/document.xml.rels"))
+            targets = {rel.get("Id"): cls._resolve_package_target("word/document.xml", rel.get("Target")) for rel in relationships if rel.get("TargetMode") != "External"}
+            for drawing in document.iter(qn("w:drawing")):
+                charts = list(drawing.iter(qn("c:chart")))
+                if not charts:
+                    continue
+                properties = next(drawing.iter(qn("wp:docPr")), None)
+                marker = properties.get("descr", "") if properties is not None else ""
+                if not marker.startswith("neuropsi:test:"):
+                    raise ValueError("Gráfico sem vínculo com um teste validado. Exportação bloqueada.")
+                key = marker.removeprefix("neuropsi:test:")
+                categories, values, names = cls._native_chart_data(key, context)
+                if not categories or not values or len(names) != len(values) or any(
+                    len(series) != len(categories) or any(not math.isfinite(value) for value in series)
+                    for series in values
+                ):
+                    raise ValueError(f"Dados incompletos para o gráfico {key}.")
+                for chart in charts:
+                    target = targets.get(chart.get(qn("r:id")))
+                    if target is None or target not in source.namelist():
+                        raise ValueError(f"Referência inválida para o gráfico {key}.")
+                    if target in replacements:
+                        raise ValueError("Dois gráficos compartilham o mesmo recurso. Exportação bloqueada.")
+                    root = ET.fromstring(source.read(target))
+                    series_nodes = root.findall(".//c:ser", cls.CHART_NS)
+                    if len(series_nodes) < len(values):
+                        raise ValueError(f"Modelo incompatível com o gráfico {key}.")
+                    for index, series in enumerate(series_nodes):
+                        if index >= len(values):
+                            series.getparent().remove(series)
+                            continue
+                        cls._update_chart_series(root, index, categories, values[index])
+                        title = series.find("c:tx", cls.CHART_NS)
+                        if title is not None:
+                            series.remove(title)
+                        title = ET.Element(qn("c:tx"))
+                        ET.SubElement(title, qn("c:v")).text = names[index]
+                        series.insert(2, title)
+                    scores = [value for series in values for value in series]
+                    for scaling in root.findall(".//c:valAx/c:scaling", cls.CHART_NS):
+                        upper = scaling.find("c:max", cls.CHART_NS)
+                        lower = scaling.find("c:min", cls.CHART_NS)
+                        if upper is not None and float(upper.get("val")) < max(scores):
+                            upper.set("val", str(max(scores) * 1.1))
+                        if lower is not None and float(lower.get("val")) > min(scores):
+                            lower.set("val", str(min(0, min(scores))))
+                    replacements[target] = cls._sanitize_chart_xml_bytes(cls._xml_bytes(root))
+            output = BytesIO()
+            with ZipFile(output, "w") as result:
+                for item in source.infolist():
+                    data = replacements.get(item.filename, source.read(item.filename))
+                    if item.filename.startswith("word/charts/_rels/chart") and item.filename.endswith(".rels"):
+                        data = cls._strip_external_chart_relationships(data)
+                    result.writestr(item, data)
+        return cls._prune_unused_chart_parts(output.getvalue())
 
     @classmethod
     def _is_etdah_table_key(cls, table_key: str) -> bool:
@@ -808,18 +901,18 @@ class ReportExportService:
         series = cls._chart_series(root, index)
         if series is None:
             return
-        category_cache = series.find('.//c:cat//c:strCache', cls.CHART_NS)
-        value_cache = series.find('.//c:val//c:numCache', cls.CHART_NS)
-        cls._set_chart_cache_points(category_cache, categories, 'v')
-        cls._set_chart_cache_points(value_cache, values, 'v')
         cls._inline_series_title(series)
-        category_node = series.find('c:cat', cls.CHART_NS)
-        cls._inline_cached_reference(category_node)
-        value_node = series.find('c:val', cls.CHART_NS)
-        if value_node is not None:
-            cls._inline_numeric_values(value_node)
-            cls._update_direct_chart_values(value_node, values)
-        cls._inline_cached_reference(value_node)
+        for label in series.findall("c:dLbls/c:dLbl", cls.CHART_NS):
+            if label.find("c:tx", cls.CHART_NS) is not None:
+                label.getparent().remove(label)
+        for tag, literal, points in (("cat", "strLit", categories), ("val", "numLit", values)):
+            node = series.find(f"c:{tag}", cls.CHART_NS)
+            if node is None:
+                node = ET.SubElement(series, qn(f"c:{tag}"))
+            for child in list(node):
+                node.remove(child)
+            cache = ET.SubElement(node, qn(f"c:{literal}"))
+            cls._set_chart_cache_points(cache, points, "v")
 
     @classmethod
     def _update_chart_title(cls, root, title: str | None):
@@ -912,6 +1005,7 @@ class ReportExportService:
     def _bpa_excel_series(cls, test: dict | None):
         chart_data = (test or {}).get("bpa_chart_data") or {}
         domains = {item.get("label"): item.get("values") or {} for item in chart_data.get("domains") or []}
+        results = {item.get("codigo"): item for item in ((test or {}).get("classified_payload") or {}).get("subtestes") or []}
         categories = ["Escore Máximo", "Escore Médio", "Escore Minímo", "Escore Bruto", "Percentil Obtido"]
         order = [
             "ATENÇÃO CONCENTRADA",
@@ -921,8 +1015,17 @@ class ReportExportService:
         ]
         key_order = ["maximo", "medio", "minimo", "bruto", "percentil"]
         series = []
-        for label in order:
-            values = domains.get(label) or {}
+        if not domains and not results:
+            return [], []
+        if not domains:
+            categories = ["Escore Bruto", "Percentil Obtido"]
+            key_order = ["bruto", "percentil"]
+        for code, label in zip(("ac", "ad", "aa", "ag"), order):
+            values = dict(domains.get(label) or {})
+            item = results.get(code)
+            if item:
+                values["bruto"] = item.get("total") if item.get("total") is not None else item.get("brutos")
+                values["percentil"] = item.get("percentil")
             series.append([cls._to_float(values.get(key, 0)) for key in key_order])
         return categories, series
 
@@ -1849,8 +1952,8 @@ class ReportExportService:
             template_key: str | None = None,
         ):
             nonlocal chart_index
-            if template_key and template_chart_map.get(template_key) is not None:
-                cls._append_body_element_before_sectpr(document, template_chart_map[template_key])
+            if template_key not in {None, "scared_pair", "epq"} and template_chart_map.get(template_key) is not None:
+                cls._append_body_element_before_sectpr(document, cls._bind_chart_block(template_chart_map[template_key], template_key))
                 if show_caption:
                     p = document.add_paragraph()
                     r = p.add_run(cls._chart_caption_text(chart_index, caption))
@@ -2086,7 +2189,7 @@ class ReportExportService:
             cls._append_ravlt_conceptual_paragraph(document)
             append_chart(
                 "RAVLT Resultados",
-                cls._ravlt_chart(ravlt_test),
+                cls._ravlt_chart(ravlt_test, context),
                 template_key="ravlt",
             )
             append_table_with_interpretation(
@@ -2171,7 +2274,6 @@ class ReportExportService:
                 document,
                 "O Screen for Child Anxiety Related Emotional Disorders – SCARED é um instrumento de rastreio destinado à identificação de sintomas ansiosos em crianças e adolescentes, avaliando manifestações relacionadas a pânico, ansiedade generalizada, ansiedade de separação, fobia social e evitação escolar (Birmaher et al., 1999).",
             )
-            inserted_scared_pair = False
             for scared_test in scared_tests:
                 form_label = cls._scared_form_label(scared_test)
                 append_table_with_interpretation(
@@ -2180,13 +2282,10 @@ class ReportExportService:
                     cls._resolve_interpretation_text(None, None, scared_test, context),
                     f"SCARED - Resultados {form_label}",
                 )
-                if not inserted_scared_pair:
-                    append_chart(
-                        cls._scared_form_title(scared_test),
-                        cls._scared_chart(scared_test),
-                        template_key="scared_pair",
-                    )
-                    inserted_scared_pair = True
+                append_chart(
+                    cls._scared_form_title(scared_test),
+                    cls._scared_chart(scared_test),
+                )
 
         if cls._find_test(context, "epq_j"):
             append_section_heading("EPQ-J")
@@ -2254,11 +2353,17 @@ class ReportExportService:
             bfp_test = cls._find_test(context, "bfp")
             append_section_heading("BFP – BATERIA FATORIAL DE PERSONALIDADE")
             cls._append_paragraph(document, cls._bfp_description_text())
-            append_table_with_interpretation(
-                cls._bfp_rows(bfp_test),
-                "bfp",
+            for rows in cls._bfp_rows(bfp_test) or []:
+                append_table_with_interpretation(
+                    rows,
+                    "bfp",
+                    None,
+                    "BFP Resultados dos fatores",
+                )
+            append_chart("BFP Perfil das facetas", cls._bfp_chart(bfp_test))
+            cls._append_interpretation_block(
+                document,
                 section_or_test_interpretation("bfp", "aspectos_emocionais_comportamentais", bfp_test),
-                "BFP Resultados dos fatores",
             )
         closing_title = "Conclusão"
         closing_text = sections.get("conclusao") or ""
@@ -3039,13 +3144,13 @@ class ReportExportService:
             template_key: str | None = None,
         ):
             nonlocal anchor, chart_index
-            if template_key and template_chart_map.get(template_key) is not None:
+            if template_key not in {None, "scared_pair", "epq"} and template_chart_map.get(template_key) is not None:
                 anchor = cls._insert_paragraph_after(anchor, "")
                 anchor.paragraph_format.first_line_indent = Pt(0)
                 anchor.paragraph_format.left_indent = Pt(0)
                 anchor.paragraph_format.right_indent = Pt(0)
                 anchor.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                anchor._p.addnext(deepcopy(template_chart_map[template_key]))
+                anchor._p.addnext(cls._bind_chart_block(template_chart_map[template_key], template_key))
                 anchor = Paragraph(anchor._p.getnext(), anchor._parent)
                 if show_caption:
                     anchor = cls._insert_paragraph_after(
@@ -3206,7 +3311,7 @@ class ReportExportService:
                     )
                 add_chart(
                     "RAVLT Resultados",
-                    cls._ravlt_chart(tests.get("ravlt")),
+                    cls._ravlt_chart(tests.get("ravlt"), context),
                     template_key="ravlt",
                 )
 
@@ -3282,7 +3387,6 @@ class ReportExportService:
             scared_tests = cls._find_tests(context, "scared")
             if scared_tests:
                 add_numbered_section("SCARED")
-                inserted_scared_pair = False
                 for scared_test in scared_tests:
                     form_label = cls._scared_form_label(scared_test)
                     add_table(
@@ -3296,13 +3400,10 @@ class ReportExportService:
                             cls._resolve_interpretation_text(None, None, scared_test, context)
                         ),
                     )
-                    if not inserted_scared_pair:
-                        add_chart(
-                            cls._scared_form_title(scared_test),
-                            cls._scared_chart(scared_test),
-                            template_key="scared_pair",
-                        )
-                        inserted_scared_pair = True
+                    add_chart(
+                        cls._scared_form_title(scared_test),
+                        cls._scared_chart(scared_test),
+                    )
 
             if tests.get("epq_j"):
                 add_numbered_section("EPQ-J")
@@ -3428,7 +3529,7 @@ class ReportExportService:
                 anchor = cls._insert_ravlt_conceptual_paragraph_after(anchor)
                 add_chart(
                     "RAVLT Resultados",
-                    cls._ravlt_chart(tests.get("ravlt")),
+                    cls._ravlt_chart(tests.get("ravlt"), context),
                     template_key="ravlt",
                 )
                 add_table(
@@ -3566,7 +3667,6 @@ class ReportExportService:
             scared_tests = cls._find_tests(context, "scared")
             if scared_tests:
                 add_title("SCARED")
-                inserted_scared_pair = False
                 for scared_test in scared_tests:
                     form_label = cls._scared_form_label(scared_test)
                     add_table(
@@ -3580,13 +3680,10 @@ class ReportExportService:
                             cls._resolve_interpretation_text(None, None, scared_test)
                         ),
                     )
-                    if not inserted_scared_pair:
-                        add_chart(
-                            cls._scared_form_title(scared_test),
-                            cls._scared_chart(scared_test),
-                            template_key="scared_pair",
-                        )
-                        inserted_scared_pair = True
+                    add_chart(
+                        cls._scared_form_title(scared_test),
+                        cls._scared_chart(scared_test),
+                    )
 
             if tests.get("srs2"):
                 srs2_test = tests.get("srs2")
@@ -3671,7 +3768,7 @@ class ReportExportService:
                     )
                 add_chart(
                     "RAVLT Resultados",
-                    cls._ravlt_chart(tests.get("ravlt")),
+                    cls._ravlt_chart(tests.get("ravlt"), context),
                     template_key="ravlt",
                 )
 
@@ -3821,7 +3918,7 @@ class ReportExportService:
                 anchor = cls._insert_ravlt_conceptual_paragraph_after(anchor)
                 add_chart(
                     "RAVLT Resultados",
-                    cls._ravlt_chart(tests.get("ravlt")),
+                    cls._ravlt_chart(tests.get("ravlt"), context),
                     template_key="ravlt",
                 )
                 add_table(
@@ -7224,16 +7321,27 @@ class ReportExportService:
                         item.get("codigo"),
                         item.get("subteste") or item.get("codigo") or "-",
                     ),
-                    cls._num(item.get("total") or item.get("brutos")),
+                    cls._num(item.get("total") if item.get("total") is not None else item.get("brutos")),
                     cls._num(item.get("percentil")),
                     item.get("classificacao") or "-",
                 ]
             )
         return rows if len(rows) > 1 else None
 
-    @staticmethod
-    def _bpa_chart_bytes(test: dict | None):
-        chart_data = (test or {}).get("bpa_chart_data") or {}
+    @classmethod
+    def _bpa_chart_bytes(cls, test: dict | None):
+        categories, series = cls._bpa_excel_series(test)
+        if not categories or not series:
+            return None
+        labels = ["ATENÇÃO CONCENTRADA", "ATENÇÃO DIVIDIDA", "ATENÇÃO ALTERNADA", "ATENÇÃO GERAL"]
+        if len(categories) == 2:
+            return cls._build_chart_png("bar", "BPA-2 Percentis", ["AC", "AD", "AA", "AG"], [points[-1] for points in series], "Percentil")
+        chart_data = {
+            "domains": [
+                {"label": label, "values": dict(zip(("maximo", "medio", "minimo", "bruto", "percentil"), points))}
+                for label, points in zip(labels, series)
+            ],
+        }
         return gerar_grafico_bpa_bytes(chart_data)
 
     @classmethod
@@ -7739,14 +7847,15 @@ class ReportExportService:
         )
 
     @classmethod
-    def _ravlt_chart(cls, test: dict | None):
-        payload = (test or {}).get("classified_payload") or {}
-        chart = payload.get("chart") or {}
-        labels = chart.get("labels") or []
-        series = chart.get("series") or []
+    def _ravlt_chart(cls, test: dict | None, context: dict | None = None):
+        labels, values = cls._ravlt_chart_payload(test, context)
+        series = [
+            {"label": name, "values": points, "color": color}
+            for name, points, color in zip(("Esperado", "Mínimo", "Obtido"), values, ("#8FBC6B", "#D6A85C", "#70AD47"))
+        ]
         if not labels or not series:
             return None
-        y_axis = chart.get("y_axis") or {}
+        y_axis = {"min": 0, "max": max([21, *(point for points in values for point in points)])}
 
         regular_font = cls._chart_font()
 
@@ -7773,7 +7882,7 @@ class ReportExportService:
         title_font = regular_font.copy()
         title_font.set_size(24)
         title_kwargs["fontproperties"] = title_font
-        ax.set_title(chart.get("title") or "RAVLT", **title_kwargs)
+        ax.set_title("RAVLT", **title_kwargs)
 
         ax.set_ylim(float(y_axis.get("min") or 0), float(y_axis.get("max") or 21))
         ax.set_yticks(y_axis.get("ticks") or [0, 5, 10, 15, 20])
@@ -7825,13 +7934,12 @@ class ReportExportService:
 
     @classmethod
     def _fdt_chart(cls, test: dict | None, automatic: bool):
-        payload = cls._fdt_payload(test)
-        charts = payload.get("charts") or {}
-        chart_key = "automaticos" if automatic else "controlados"
-        chart = charts.get(chart_key) or {}
-
-        categories = chart.get("categories") or []
-        series = chart.get("series") or []
+        key = "fdt_auto" if automatic else "fdt_control"
+        categories, series_values, names = cls._native_chart_data(key, {"validated_tests": [{**(test or {}), "instrument_code": "fdt"}]})
+        series = [
+            {"label": name, "values": points, "color": color}
+            for name, points, color in zip(names, series_values, ("#4472C4", "#ED7D31", "#A5A5A5", "#FFC000"))
+        ]
         if not categories or not series:
             return None
 
@@ -7873,10 +7981,10 @@ class ReportExportService:
         title_font = regular_font.copy()
         title_font.set_size(12)
         title_kwargs["fontproperties"] = title_font
-        ax.set_title(chart.get("title") or "FDT", **title_kwargs)
+        ax.set_title("FDT Processos Automáticos" if automatic else "FDT Processos Controlados", **title_kwargs)
 
-        ax.set_xlim(0, 82)
-        ax.set_xticks(np.arange(0, 81, 10))
+        axis_max = max([82, *(point for points in series_values for point in points)]) * 1.05
+        ax.set_xlim(0, axis_max)
         ax.set_yticks(y)
         ax.set_yticklabels(categories)
         ax.invert_yaxis()

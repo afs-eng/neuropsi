@@ -5,6 +5,7 @@ from io import BytesIO
 from zipfile import ZipFile
 from datetime import date
 from unittest.mock import patch
+from types import SimpleNamespace
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import parse_xml
@@ -584,6 +585,146 @@ class WAIS3ExportTableTests(SimpleTestCase):
 
 
 class ReportExportChartSanitizationTests(SimpleTestCase):
+    def _export_context(self, primary="wais3", age=17):
+        wais = {
+            "instrument_code": "wais3",
+            "structured_results": {
+                "indices": {key: {"pontuacao_composta": score, "classificacao": "Superior"} for key, score in zip(
+                    ("compreensao_verbal", "organizacao_perceptual", "memoria_operacional", "velocidade_processamento", "qi_verbal", "qi_execucao", "qi_total"),
+                    (121, 123, 148, 139, 132, 108, 122),
+                )},
+                "gai_data": {"escore_composto": 128, "classificacao": "Superior"},
+            },
+        }
+        intellectual = {
+            "wais3": wais,
+            "wasi": {"instrument_code": "wasi", "computed_payload": {"composites": {key: {"qi": score} for key, score in zip(("qi_verbal", "qi_execucao", "qit_4"), (115, 123, 122))}}},
+            "wisc4": {"instrument_code": "wisc4", "structured_results": {"indices": [{"indice": key, "escore_composto": score} for key, score in zip(("icv", "iop", "imt", "ivp"), (121, 123, 148, 139))], "qit_data": {"escore_composto": 122}}},
+        }[primary]
+        tests = [intellectual,
+            {"instrument_code": "bpa2", "classified_payload": {"subtestes": [{"codigo": code, "total": raw, "percentil": percentile} for code, raw, percentile in zip(("ac", "ad", "aa", "ag"), (75, 79, 88, 242), (40, 60, 50, 50))]}},
+            {"instrument_code": "ravlt", "computed_payload": {"ravlt_obtido": dict(zip(("A1", "A2", "A3", "A4", "A5", "B1", "A6", "A7", "R", "ALT", "RET", "I.P.", "I.R."), (7, 7, 9, 13, 14, 7, 14, 14, 15, 15, 1, 1, 1)))}},
+            {"instrument_code": "fdt", "computed_payload": {"metric_results": [{"codigo": code, "valor": value, "media": mean, "percentil_num": percentile} for code, value, mean, percentile in zip(("leitura", "contagem", "escolha", "alternancia", "inibicao", "flexibilidade"), (23.49, 24.86, 41, 49.21, 17.51, 25.72), (20.4, 23.8, 34, 44.8, 13.6, 24.4), (5, 50, 5, 50, 5, 50))]}},
+            {"instrument_code": "etdah_ad", "classified_payload": {"results": {key: {"percentil": value} for key, value in zip(("D", "I", "AE", "AAMA", "H"), (80, 65, 91.8, 75, 30))}}},
+            {"instrument_code": "srs2", "classified_payload": {"resultados": [{"tscore": value} for value in (50, 54, 61, 47, 61, 58, 58)]}},
+        ]
+        birth_date = f"{date.today().year - age}-01-01"
+        return {"patient": {"full_name": "Paciente de Teste", "sex": "M", "birth_date": birth_date}, "evaluation": {}, "validated_tests": tests}
+
+    def _generate_export(self, context):
+        report = SimpleNamespace(sections=SimpleNamespace(all=lambda: []), patient=None)
+        with patch("apps.reports.services.report_export_service.ReportContextService.sync_report_context", return_value=context):
+            return ReportExportService.generate_docx_bytes(report)
+
+    def test_export_updates_every_native_chart_for_all_primary_models_and_ages(self):
+        service = ReportExportService
+        for primary, age in (("wais3", 17), ("wais3", 32), ("wisc4", 12), ("wasi", 17), ("wasi", 32)):
+            with self.subTest(primary=primary, age=age):
+                context = self._export_context(primary, age)
+                data = self._generate_export(context)
+                self.assertTrue(service._docx_package_is_valid(data))
+                keys = [primary, "bpa2", "ravlt", "fdt_auto", "fdt_control", "etdah_ad", "srs2"]
+                targets = service._document_chart_targets(data)
+                self.assertEqual(len(targets), len(keys))
+                with ZipFile(BytesIO(data)) as package:
+                    for key, target in zip(keys, targets):
+                        root = ET.fromstring(package.read(target))
+                        categories, values, names = service._native_chart_data(key, context)
+                        series = root.findall(".//c:ser", service.CHART_NS)
+                        self.assertEqual(len(series), len(values))
+                        for index, node in enumerate(series):
+                            self.assertEqual([point.text for point in node.findall("c:cat//c:pt/c:v", service.CHART_NS)], categories)
+                            self.assertEqual([float(point.text) for point in node.findall("c:val//c:pt/c:v", service.CHART_NS)], values[index])
+                            self.assertEqual(node.find("c:tx/c:v", service.CHART_NS).text, names[index])
+                        self.assertIsNone(root.find(".//c:externalData", service.CHART_NS))
+
+    def test_optional_tests_do_not_shift_native_chart_binding(self):
+        context = self._export_context()
+        context["validated_tests"] = [test for test in context["validated_tests"] if test["instrument_code"] in {"wais3", "srs2"}]
+        data = self._generate_export(context)
+        targets = ReportExportService._document_chart_targets(data)
+        self.assertEqual(len(targets), 2)
+        with ZipFile(BytesIO(data)) as package:
+            root = ET.fromstring(package.read(targets[1]))
+            self.assertEqual([float(point.text) for point in root.findall(".//c:val//c:pt/c:v", ReportExportService.CHART_NS)], [50, 54, 61, 47, 61, 58, 58])
+
+    def test_unbound_template_charts_are_rejected_instead_of_exporting_sample_results(self):
+        with self.assertRaisesMessage(ValueError, "sem vínculo"):
+            ReportExportService._populate_bound_excel_charts(ReportExportService.WAIS3_TEMPLATE_PATH.read_bytes(), self._export_context())
+
+    def test_export_keeps_parent_and_self_reports_without_shifting_other_charts(self):
+        context = self._export_context("wisc4", 12)
+        context["validated_tests"].append({"instrument_code": "etdah_pais", "classified_payload": {"results": {
+            key: {"percentil": value} for key, value in zip(("fator_1", "fator_2", "fator_3", "fator_4", "escore_geral"), (91.3, 95, 87.5, 95, 95))
+        }}})
+        for form, score in (("parent", 16), ("child", 32)):
+            context["validated_tests"].append({"instrument_code": "scared", "classified_payload": {"form_type": form, "analise_geral": [{"fator": "total", "escore_bruto": score, "percentual": score, "nota_corte": 25, "classificacao": "Não clínico"}]}})
+        data = self._generate_export(context)
+        document = Document(BytesIO(data))
+        captions = [paragraph.text for paragraph in document.paragraphs if paragraph.text.startswith("Gráfico")]
+        self.assertEqual(sum("SCARED" in caption for caption in captions), 2)
+        targets = ReportExportService._document_chart_targets(data)
+        self.assertEqual(len(targets), 8)
+        with ZipFile(BytesIO(data)) as package:
+            root = ET.fromstring(package.read(targets[-1]))
+            self.assertEqual([float(point.text) for point in root.findall(".//c:val//c:pt/c:v", ReportExportService.CHART_NS)], [50, 54, 61, 47, 61, 58, 58])
+
+    def test_native_fdt_series_names_match_their_table_results(self):
+        data = self._generate_export(self._export_context())
+        targets = ReportExportService._document_chart_targets(data)
+        with ZipFile(BytesIO(data)) as package:
+            root = ET.fromstring(package.read(targets[3]))
+            results = {
+                series.find("c:tx/c:v", ReportExportService.CHART_NS).text:
+                [float(point.text) for point in series.findall("c:val//c:pt/c:v", ReportExportService.CHART_NS)]
+                for series in root.findall(".//c:ser", ReportExportService.CHART_NS)
+            }
+        self.assertEqual(results["LEITURA"][:2], [20.4, 23.49])
+        self.assertEqual(results["CONTAGEM"][:2], [23.8, 24.86])
+
+    def test_bpa_graph_uses_table_scores_instead_of_stale_chart_metadata(self):
+        test = self._export_context()["validated_tests"][1]
+        test["bpa_chart_data"] = {"domains": [{"label": label, "values": {"bruto": 999, "percentil": 1, "maximo": 120}} for label in ("ATENÇÃO CONCENTRADA", "ATENÇÃO DIVIDIDA", "ATENÇÃO ALTERNADA", "ATENÇÃO GERAL")]}
+        _, values = ReportExportService._bpa_excel_series(test)
+        self.assertEqual([points[-2:] for points in values], [[75, 40], [79, 60], [88, 50], [242, 50]])
+
+    def test_invalid_updated_package_blocks_export_without_returning_old_charts(self):
+        with patch.object(ReportExportService, "_docx_package_is_valid", return_value=False):
+            with self.assertRaisesMessage(ValueError, "Exportação bloqueada"):
+                self._generate_export(self._export_context())
+
+    def test_native_chart_axis_does_not_clip_high_fdt_times(self):
+        context = self._export_context()
+        fdt = next(test for test in context["validated_tests"] if test["instrument_code"] == "fdt")
+        fdt["computed_payload"]["metric_results"][0]["valor"] = 150
+        data = self._generate_export(context)
+        target = ReportExportService._document_chart_targets(data)[3]
+        with ZipFile(BytesIO(data)) as package:
+            root = ET.fromstring(package.read(target))
+        for upper in root.findall(".//c:valAx/c:scaling/c:max", ReportExportService.CHART_NS):
+            self.assertGreaterEqual(float(upper.get("val")), 150)
+
+    def test_bound_chart_without_its_validated_results_is_rejected(self):
+        context = self._export_context()
+        data = self._generate_export(context)
+        context["validated_tests"] = []
+        with self.assertRaisesMessage(ValueError, "sem resultados validados"):
+            ReportExportService._populate_bound_excel_charts(data, context)
+
+    def test_adolescent_bfp_exports_separate_tables_with_scalar_cells(self):
+        context = self._export_context()
+        context["validated_tests"].append({"instrument_code": "bfp", "computed_payload": {
+            "factors": {code: {"raw_score": 3.5, "percentile": 67, "classification": "Média"} for code in ("NN", "EE", "SS", "RR", "AA")},
+            "facets": {"N1": {"raw_score": 3.33, "percentile": 52.8, "classification": "Média"}},
+        }})
+        data = self._generate_export(context)
+        document = Document(BytesIO(data))
+        tables = [table for table in document.tables if any("Faceta/Dimensão" in cell.text for row in table.rows for cell in row.cells)]
+        self.assertEqual(len(tables), 5)
+        for table in tables:
+            self.assertEqual(len(table.columns), 4)
+            self.assertFalse(any(cell.text.startswith("['") for row in table.rows for cell in row.cells))
+
     def test_etdah_table_title_distinguishes_ad_from_pais(self):
         self.assertEqual(ReportExportService._table_title_text("etdah_ad"), "E-TDAH-AD")
         self.assertEqual(ReportExportService._table_title_text("etdah_pais"), "E-TDAH-PAIS")
