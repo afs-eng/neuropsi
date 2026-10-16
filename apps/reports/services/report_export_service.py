@@ -90,9 +90,9 @@ class ReportExportService:
     DEFAULT_TEMPLATE_PATH = TEMPLATE_DIR / "PAPEL-TIMBRADO-MODELO.docx"
     WAIS3_TEMPLATE_PATH = TEMPLATE_DIR / "Modelo-WAIS3.docx"
     WAIS3_STANDARD_TEMPLATE_PATH = TEMPLATE_DIR / "Modelo-WAIS3-Padrao.docx"
-    WISC4_TEMPLATE_PATH = TEMPLATE_DIR / "Modelo-WISC4.docx"
+    WISC4_TEMPLATE_PATH = TEMPLATE_DIR / "Laudo-modelo-wisc.docx"
     WASI_TEMPLATE_PATH = TEMPLATE_DIR / "MODELO-WASI.docx"
-    TABLE_STYLE_SOURCE_PATH = WISC4_TEMPLATE_PATH
+    TABLE_STYLE_SOURCE_PATH = TEMPLATE_DIR / "Modelo-WISC4.docx"
     FONT_NAME = WASI_LAYOUT_SPEC["font_family"]
     BODY_SIZE = Pt(12)
     TABLE_SIZE = Pt(WASI_LAYOUT_SPEC["table_size_pt"])
@@ -415,12 +415,13 @@ class ReportExportService:
         }
 
         template_path = cls._select_template_path(report, context)
-        uses_wais3_model = cls._primary_report_test_code(context) == "wais3"
+        primary_test_code = cls._primary_report_test_code(context)
+        uses_wais3_model = primary_test_code == "wais3"
         if uses_wais3_model:
             from apps.reports.builders.wais3_docx_builder import WAIS3DocxBuilder
 
             document = WAIS3DocxBuilder(cls, report, context, sections).build()
-        elif cls._is_adolescent_context(context, report):
+        elif primary_test_code == "wisc4" or cls._is_adolescent_context(context, report):
             document = cls._build_adolescent_document(report, context, sections)
         elif not template_path.exists():
             cls.logger.warning(
@@ -445,7 +446,7 @@ class ReportExportService:
 
         cls._insert_thcp_results(document, context)
         cls._ensure_model_table_styles(document)
-        if not uses_wais3_model:
+        if primary_test_code not in {"wais3", "wisc4"}:
             cls._normalize_model_header_footer(document)
 
         body = document._body._element
@@ -523,6 +524,8 @@ class ReportExportService:
 
     @classmethod
     def _header_footer_template_path(cls, template_path: Path, report, context: dict) -> Path:
+        if cls._primary_report_test_code(context) == "wisc4" and template_path.exists():
+            return template_path
         if cls._is_adolescent_context(context, report):
             return cls.DEFAULT_TEMPLATE_PATH
         if cls._primary_report_test_code(context) == "wais3" and template_path.exists():
@@ -533,13 +536,13 @@ class ReportExportService:
     def _select_template_path(cls, report: Report, context: dict | None = None):
         available_codes = set(cls._available_test_codes(context or {}))
 
+        if "wisc4" in available_codes and cls.WISC4_TEMPLATE_PATH.exists():
+            return cls.WISC4_TEMPLATE_PATH
         if "wasi" in available_codes and cls.WASI_TEMPLATE_PATH.exists():
             return cls.WASI_TEMPLATE_PATH
 
         primary_test_code = cls._primary_report_test_code(context or {}) if context else None
 
-        if primary_test_code == "wisc4" and cls.WISC4_TEMPLATE_PATH.exists():
-            return cls.WISC4_TEMPLATE_PATH
         if primary_test_code == "wais3" and cls.WAIS3_TEMPLATE_PATH.exists():
             return cls.WAIS3_TEMPLATE_PATH
 
@@ -1913,6 +1916,7 @@ class ReportExportService:
         document = (
             Document(str(template_path)) if template_path.exists() else Document()
         )
+        model_tables = list(document.tables) if wisc_test else []
         template_chart_blocks = cls._extract_template_chart_blocks(document)
         cls._ensure_model_table_styles(document)
         cls._clear_document_body(document)
@@ -1948,6 +1952,32 @@ class ReportExportService:
                 "etdah_ad": wasi_template_blocks[5] if len(wasi_template_blocks) > 5 else None,
                 "srs2": wasi_template_blocks[8] if len(wasi_template_blocks) > 8 else None,
             }
+        elif primary_test == "wisc4":
+            template_chart_map = {
+                "wisc4": template_chart_blocks[0] if len(template_chart_blocks) > 0 else None,
+                "bpa2": template_chart_blocks[1] if len(template_chart_blocks) > 1 else None,
+                "ravlt": template_chart_blocks[2] if len(template_chart_blocks) > 2 else None,
+                "fdt_auto": template_chart_blocks[3] if len(template_chart_blocks) > 3 else None,
+                "fdt_control": template_chart_blocks[4] if len(template_chart_blocks) > 4 else None,
+                "etdah_pais": template_chart_blocks[5] if len(template_chart_blocks) > 5 else None,
+                "scared_pair": template_chart_blocks[6] if len(template_chart_blocks) > 6 else None,
+                "srs2": template_chart_blocks[8] if len(template_chart_blocks) > 8 else None,
+            }
+            if cls._find_test(context, "etdah_ad") and template_chart_map["etdah_pais"] is not None:
+                from docx.opc.part import Part
+
+                block = deepcopy(template_chart_map["etdah_pais"])
+                for chart in block.iter(qn("c:chart")):
+                    source = document.part.related_parts[chart.get(qn("r:id"))]
+                    package = document.part.package
+                    root = ET.fromstring(source.blob)
+                    cls._update_chart_title(root, "E-TDAH-AD")
+                    part = Part(package.next_partname("/word/charts/chart%d.xml"), source.content_type, cls._xml_bytes(root), package)
+                    for rel in source.rels.values():
+                        if not rel.is_external:
+                            part.rels.add_relationship(rel.reltype, rel.target_part, rel.rId)
+                    chart.set(qn("r:id"), document.part.relate_to(part, "http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart"))
+                template_chart_map["etdah_ad"] = block
         else:
             template_chart_map = {
                 "wisc4": template_chart_blocks[0] if len(template_chart_blocks) > 0 else None,
@@ -1977,6 +2007,33 @@ class ReportExportService:
                 caption=cls._table_caption_text(table_index, caption),
             )
             if rows:
+                if model_tables:
+                    model_index = {
+                        "wisc": 3 if "Memória" in caption else 0,
+                        "wisc_linguagem": 1,
+                        "wisc_gnosias": 2,
+                        "wisc_bpa": 4,
+                        "wisc_ravlt": 5,
+                        "wisc_fdt": 6,
+                        "wisc_etdah_pais": 7,
+                        "wisc_scared_self": 8,
+                        "wisc_scared_parent": 9,
+                        "wisc_epq": 10,
+                        "wisc_srs2": 11,
+                    }.get(table_key)
+                    if model_index is not None and model_index < len(model_tables):
+                        table = document.tables[-1]
+                        model = model_tables[model_index]
+                        if len(table.columns) == len(model.columns):
+                            table._tbl.replace(table._tbl.tblPr, deepcopy(model._tbl.tblPr))
+                            table._tbl.replace(table._tbl.tblGrid, deepcopy(model._tbl.tblGrid))
+                            widths = [column.width for column in model.columns]
+                            for row in table.rows:
+                                column_index = 0
+                                for cell in row._tr.tc_lst:
+                                    span = cell.grid_span
+                                    cell.width = sum(widths[column_index:column_index + span])
+                                    column_index += span
                 table_index += 1
 
         def append_chart(

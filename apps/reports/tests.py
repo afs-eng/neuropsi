@@ -1025,9 +1025,85 @@ class ReportExportChartSanitizationTests(SimpleTestCase):
     def test_wisc4_template_is_organized_under_templates_assets(self):
         self.assertEqual(
             ReportExportService.WISC4_TEMPLATE_PATH,
-            ReportExportService.TEMPLATE_DIR / "Modelo-WISC4.docx",
+            ReportExportService.TEMPLATE_DIR / "Laudo-modelo-wisc.docx",
         )
         self.assertTrue(ReportExportService.WISC4_TEMPLATE_PATH.exists())
+
+    def test_wisc4_template_wins_over_other_intellectual_tests(self):
+        for other in ("wasi", "wais3"):
+            with self.subTest(other=other):
+                context = {"validated_tests": [{"instrument_code": other}, {"instrument_code": "wisc4"}]}
+                self.assertEqual(
+                    ReportExportService._select_template_path(self._report_stub(), context),
+                    ReportExportService.WISC4_TEMPLATE_PATH,
+                )
+
+    def test_wisc4_exports_keep_model_header_footer_for_all_ages(self):
+        service = ReportExportService
+        with ZipFile(service.WISC4_TEMPLATE_PATH) as template:
+            header_footer = {
+                name: template.read(name)
+                for name in template.namelist()
+                if name.startswith(("word/header", "word/footer")) and name.endswith(".xml")
+            }
+        self.assertTrue(header_footer)
+        for age in (8, 12, 17, 20):
+            with self.subTest(age=age):
+                context = self._export_context("wisc4", age)
+                context["validated_tests"] = context["validated_tests"][:1]
+                context["validated_tests"][0]["structured_results"]["subtestes"] = [
+                    {"codigo": code, "subteste": name, "escore_bruto": 12, "classificacao": "Média"}
+                    for code, name in (
+                        ("SM", "Semelhanças"), ("CN", "Conceitos Figurativos"),
+                        ("CO", "Compreensão"), ("VC", "Vocabulário"),
+                        ("RM", "Raciocínio Matricial"), ("CB", "Cubos"),
+                        ("SNL", "Sequência de Números e Letras"), ("DG", "Dígitos"),
+                    )
+                ]
+                context["validated_tests"][0]["classified_payload"] = {
+                    "subtestes": context["validated_tests"][0]["structured_results"]["subtestes"],
+                }
+                data = self._generate_export(context)
+                self.assertTrue(service._docx_package_is_valid(data))
+                with ZipFile(BytesIO(data)) as exported:
+                    for name, content in header_footer.items():
+                        actual = ET.fromstring(exported.read(name))
+                        expected = ET.fromstring(content)
+                        # A exportação renumera IDs de desenhos para evitar duplicação.
+                        for root in (actual, expected):
+                            for node in root.iter("{http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing}docPr"):
+                                node.attrib.pop("id", None)
+                        self.assertEqual(
+                            ET.tostring(actual),
+                            ET.tostring(expected),
+                        )
+                document = Document(BytesIO(data))
+                model = Document(str(service.WISC4_TEMPLATE_PATH))
+                self.assertEqual(len(document.tables), 4)
+                for table, source_table in zip(document.tables, model.tables[:4]):
+                    self.assertEqual(
+                        [column.width for column in table.columns],
+                        [column.width for column in source_table.columns],
+                    )
+                text = "\n".join(p.text for p in document.paragraphs)
+                self.assertIn("Paciente de Teste", text)
+                self.assertNotIn("Ana Júlia", text)
+                self.assertNotIn("QIT = 90", text)
+                self.assertNotIn("BPA-2 Bateria", text)
+                self.assertIn("Função Executiva", text)
+                self.assertEqual(len(service._document_chart_targets(data)), 1)
+
+    def test_wisc4_srs2_uses_own_chart_in_new_template(self):
+        context = self._export_context("wisc4", 12)
+        context["validated_tests"] = [test for test in context["validated_tests"] if test["instrument_code"] in {"wisc4", "srs2"}]
+        data = self._generate_export(context)
+        targets = ReportExportService._document_chart_targets(data)
+        self.assertEqual(len(targets), 2)
+        with ZipFile(BytesIO(data)) as package:
+            root = ET.fromstring(package.read(targets[-1]))
+            title = " ".join(node.text or "" for node in root.findall(".//c:title//a:t", ReportExportService.CHART_NS))
+            self.assertIn("SRS-2", title)
+            self.assertEqual([float(node.text) for node in root.findall(".//c:val//c:pt/c:v", ReportExportService.CHART_NS)], [50, 54, 61, 47, 61, 58, 58])
 
     def test_adult_reports_restore_header_footer_from_papel_timbrado(self):
         class Patient:
