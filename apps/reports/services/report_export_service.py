@@ -421,7 +421,11 @@ class ReportExportService:
             from apps.reports.builders.wais3_docx_builder import WAIS3DocxBuilder
 
             document = WAIS3DocxBuilder(cls, report, context, sections).build()
-        elif primary_test_code == "wisc4" or cls._is_adolescent_context(context, report):
+        elif primary_test_code == "wisc4":
+            from apps.reports.builders.wisc4_docx_builder import WISC4DocxBuilder
+
+            document = WISC4DocxBuilder(cls, report, context, sections).build()
+        elif cls._is_adolescent_context(context, report):
             document = cls._build_adolescent_document(report, context, sections)
         elif not template_path.exists():
             cls.logger.warning(
@@ -445,14 +449,20 @@ class ReportExportService:
                 cls._populate_wasi_tables(document, context)
 
         cls._insert_thcp_results(document, context)
-        cls._ensure_model_table_styles(document)
+        if primary_test_code != "wisc4":
+            cls._ensure_model_table_styles(document)
         if primary_test_code not in {"wais3", "wisc4"}:
             cls._normalize_model_header_footer(document)
 
         body = document._body._element
         ns_c = "{http://schemas.openxmlformats.org/drawingml/2006/chart}"
         charts_in_doc = [e for e in body.iter() if e.tag == f"{ns_c}chart"]
-        cls._sanitize_generated_document(document, report, context)
+        if primary_test_code == "wisc4":
+            # O builder substitui os textos de exemplo sem destruir espaçamento,
+            # runs formatados, campos SEQ ou parágrafos vazios do modelo.
+            cls._replace_foreign_patient_names(document, context)
+        else:
+            cls._sanitize_generated_document(document, report, context)
         if charts_in_doc:
             cls._remove_invalid_content_after_references(document)
 
@@ -468,12 +478,54 @@ class ReportExportService:
         docx_bytes = cls._deduplicate_drawing_ids(docx_bytes)
 
         docx_bytes = cls._populate_bound_excel_charts(docx_bytes, context)
+        if primary_test_code == "wisc4":
+            docx_bytes = cls._remove_chart_workbooks(docx_bytes)
         if not cls._docx_package_is_valid(docx_bytes):
             raise ValueError(
                 "DOCX inválido após atualização dos gráficos. Exportação bloqueada para evitar resultados inconsistentes."
             )
         docx_bytes = cls._normalize_docx_package(docx_bytes)
+        if primary_test_code == "wisc4":
+            # Restaurar por último: não reserializar desenhos do papel timbrado.
+            docx_bytes = cls._restore_template_header_footer(docx_bytes, cls.WISC4_TEMPLATE_PATH)
         return docx_bytes
+
+    @classmethod
+    def _remove_chart_workbooks(cls, docx_bytes: bytes) -> bytes:
+        """Os gráficos já têm dados inline; não levar planilhas de exemplo no ZIP."""
+        with ZipFile(BytesIO(docx_bytes)) as source:
+            replacements = {}
+            workbooks = set()
+            for name in source.namelist():
+                if not name.startswith("word/charts/_rels/") or not name.endswith(".rels"):
+                    continue
+                root = ET.fromstring(source.read(name))
+                chart_part = "word/charts/" + PurePosixPath(name).name.removesuffix(".rels")
+                for rel in list(root):
+                    if (rel.get("Type") or "").endswith("/package") and rel.get("TargetMode") != "External":
+                        workbooks.add(cls._resolve_package_target(chart_part, rel.get("Target")))
+                        root.remove(rel)
+                replacements[name] = cls._xml_bytes(root)
+            referenced = set()
+            for name in source.namelist():
+                if not name.endswith(".rels"):
+                    continue
+                part = name.replace("/_rels/", "/").removesuffix(".rels")
+                for rel in ET.fromstring(replacements.get(name, source.read(name))):
+                    if rel.get("TargetMode") != "External" and rel.get("Target"):
+                        referenced.add(cls._resolve_package_target(part, rel.get("Target")))
+            removed = workbooks - referenced
+            types = ET.fromstring(source.read("[Content_Types].xml"))
+            for node in list(types):
+                if (node.get("PartName") or "").lstrip("/") in removed:
+                    types.remove(node)
+            replacements["[Content_Types].xml"] = cls._xml_bytes(types)
+            output = BytesIO()
+            with ZipFile(output, "w") as result:
+                for item in source.infolist():
+                    if item.filename not in removed:
+                        result.writestr(item, replacements.get(item.filename, source.read(item.filename)))
+            return output.getvalue()
 
     @classmethod
     def _insert_thcp_results(cls, document: Document, context: dict):
@@ -611,6 +663,10 @@ class ReportExportService:
 
     @classmethod
     def _native_chart_data(cls, key: str, context: dict):
+        if key.startswith(("scared:", "epq_j:")):
+            from apps.reports.builders.wisc4_native_charts import native_scale_data
+
+            return native_scale_data(cls, key, context)
         if key == "srs2_comparison" or key.startswith("srs2:"):
             from apps.reports.builders.srs2_profiles import comparable_profiles, profile_chart, profile_label
 

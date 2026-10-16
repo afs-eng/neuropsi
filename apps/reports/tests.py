@@ -585,6 +585,138 @@ class WAIS3ExportTableTests(SimpleTestCase):
 
 
 class ReportExportChartSanitizationTests(SimpleTestCase):
+    def _complete_wisc_context(self):
+        context = self._export_context("wisc4", 12)
+        context["validated_tests"] = [test for test in context["validated_tests"] if test["instrument_code"] != "etdah_ad"]
+        wisc = context["validated_tests"][0]
+        wisc["structured_results"]["subtestes"] = [
+            {"codigo": code, "subteste": name, "escore_bruto": 12, "classificacao": "Média"}
+            for code, name in (("SM", "Semelhanças"), ("CN", "Conceitos Figurativos"), ("CO", "Compreensão"), ("RM", "Raciocínio Matricial"), ("VC", "Vocabulário"), ("CB", "Cubos"), ("SNL", "Sequência de Números e Letras"), ("DG", "Dígitos"))
+        ]
+        wisc["classified_payload"] = wisc["structured_results"]
+        context["validated_tests"].append({"instrument_code": "etdah_pais", "classified_payload": {"results": {
+            key: {"percentil": value, "escore_bruto": value, "classificacao": "Média"}
+            for key, value in zip(("fator_1", "fator_2", "fator_3", "fator_4", "escore_geral"), (40, 50, 60, 70, 55))
+        }}})
+        for form in ("child", "parent"):
+            context["validated_tests"].append({"instrument_code": "scared", "classified_payload": {"form_type": form, "analise_geral": [
+                {"fator": factor, "escore_bruto": score, "percentil": 40 + score, "percentual": 20 + score, "media": 5, "nota_corte": cutoff, "classificacao": "Não clínico"}
+                for factor, score, cutoff in (("panico_sintomas_somaticos", 3, 7), ("ansiedade_generalizada", 4, 9), ("ansiedade_separacao", 2, 5), ("fobia_social", 3, 8), ("evitacao_escolar", 1, 3), ("total", 13, 25))
+            ]}})
+        context["validated_tests"].append({"instrument_code": "epq_j", "classified_payload": {"fatores": {
+            key: {"escore": value, "percentil": percentile, "classificacao": "Média"}
+            for key, value, percentile in zip(("P", "E", "N", "S"), (3, 9, 11, 8), (35, 55, 65, 45))
+        }}})
+        return context
+
+    def test_wisc4_native_tables_preserve_full_model_formatting(self):
+        model = Document(str(ReportExportService.WISC4_TEMPLATE_PATH))
+        data = self._generate_export(self._complete_wisc_context())
+        exported = Document(BytesIO(data))
+        self.assertEqual(len(exported.tables), len(model.tables))
+        for index, (table, original) in enumerate(zip(exported.tables, model.tables)):
+            with self.subTest(table=index):
+                self.assertEqual(ET.tostring(table._tbl.tblPr), ET.tostring(original._tbl.tblPr))
+                self.assertEqual(ET.tostring(table._tbl.tblGrid), ET.tostring(original._tbl.tblGrid))
+                self.assertEqual(len(table.rows), len(original.rows))
+                for row, source_row in zip(table.rows, original.rows):
+                    self.assertEqual(ET.tostring(row._tr.trPr) if row._tr.trPr is not None else None, ET.tostring(source_row._tr.trPr) if source_row._tr.trPr is not None else None)
+                    for cell, source_cell in zip(row.cells, source_row.cells):
+                        self.assertEqual(ET.tostring(cell._tc.tcPr), ET.tostring(source_cell._tc.tcPr))
+                        self.assertEqual(ET.tostring(cell.paragraphs[0]._p.pPr), ET.tostring(source_cell.paragraphs[0]._p.pPr))
+        # Não copiar resultados clínicos do paciente de exemplo.
+        text = "\n".join(paragraph.text for paragraph in exported.paragraphs)
+        self.assertNotIn("Ana Júlia", text)
+        self.assertNotIn("Ediney", text)
+        self.assertEqual(exported.tables[0].rows[1].cells[4].text, "12")
+        self.assertEqual(exported.tables[3].rows[1].cells[0].text, model.tables[3].rows[1].cells[0].text)
+        self.assertEqual(exported.tables[4].rows[1].cells[1].text, "75")
+        self.assertIn("23,49", " ".join(cell.text for row in exported.tables[6].rows for cell in row.cells))
+
+    def test_wisc4_paper_and_styles_are_preserved_from_model(self):
+        data = self._generate_export(self._complete_wisc_context())
+        with ZipFile(ReportExportService.WISC4_TEMPLATE_PATH) as model, ZipFile(BytesIO(data)) as exported:
+            for name in model.namelist():
+                if name.startswith(("word/header", "word/footer", "word/media/")):
+                    self.assertEqual(exported.read(name), model.read(name), name)
+            for name in ("word/styles.xml", "word/theme/theme1.xml", "word/settings.xml"):
+                self.assertEqual(ET.tostring(ET.fromstring(exported.read(name))), ET.tostring(ET.fromstring(model.read(name))), name)
+
+    def test_wisc4_uses_native_scared_and_epq_charts_with_model_geometry(self):
+        context = self._complete_wisc_context()
+        data = self._generate_export(context)
+        exported = Document(BytesIO(data))
+        model = Document(str(ReportExportService.WISC4_TEMPLATE_PATH))
+        drawings = [drawing for drawing in exported._body._element.iter("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}drawing") if list(drawing.iter("{http://schemas.openxmlformats.org/drawingml/2006/chart}chart"))]
+        originals = [drawing for drawing in model._body._element.iter("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}drawing") if list(drawing.iter("{http://schemas.openxmlformats.org/drawingml/2006/chart}chart"))]
+        self.assertEqual(len(drawings), 11)
+        self.assertEqual(len(drawings), len(originals))
+        for drawing, original in zip(drawings, originals):
+            for tag in ("extent", "effectExtent"):
+                path = f".//{{http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing}}{tag}"
+                self.assertEqual([node.attrib for node in drawing.iterfind(path)], [node.attrib for node in original.iterfind(path)])
+        targets = ReportExportService._document_chart_targets(data)
+        keys = ("wisc4", "bpa2", "ravlt", "fdt_auto", "fdt_control", "etdah_pais", "scared:0", "scared:1", "epq_j:raw", "epq_j:percentile", "srs2")
+        with ZipFile(BytesIO(data)) as package:
+            for key, target in zip(keys, targets):
+                root = ET.fromstring(package.read(target))
+                _, values, _ = ReportExportService._native_chart_data(key, context)
+                series = root.findall(".//c:ser", ReportExportService.CHART_NS)
+                self.assertEqual(len(series), len(values), key)
+                for node, expected in zip(series, values):
+                    self.assertEqual([float(value.text) for value in node.findall("c:val//c:pt/c:v", ReportExportService.CHART_NS)], expected, key)
+
+    def test_wisc4_keeps_chart_colors_markers_fonts_and_plot_layout(self):
+        data = self._generate_export(self._complete_wisc_context())
+        targets = ReportExportService._document_chart_targets(data)
+        with ZipFile(BytesIO(data)) as exported, ZipFile(ReportExportService.WISC4_TEMPLATE_PATH) as model:
+            for index, target in enumerate(targets, 1):
+                actual = ET.fromstring(exported.read(target))
+                expected = ET.fromstring(model.read(f"word/charts/chart{index}.xml"))
+                for tag in ("spPr", "txPr", "marker", "dPt", "dLbls", "layout", "legend"):
+                    path = f".//c:{tag}"
+                    self.assertEqual(
+                        [ET.tostring(node) for node in actual.findall(path, ReportExportService.CHART_NS)],
+                        [ET.tostring(node) for node in expected.findall(path, ReportExportService.CHART_NS)],
+                        f"chart{index}: {tag}",
+                    )
+
+    def test_wisc4_preserves_additional_bai_results_without_sample_data(self):
+        context = self._export_context("wisc4", 12)
+        context["validated_tests"].append({"instrument_code": "bai", "classified_payload": {"escore_total": 12, "classificacao": {"interpretation": "Sintomas leves"}}})
+        data = self._generate_export(context)
+        text = "\n".join(paragraph.text for paragraph in Document(BytesIO(data)).paragraphs)
+        self.assertIn("BAI", text)
+        self.assertNotIn("Ana Júlia", text)
+
+    def test_wisc4_parent_only_scared_does_not_export_child_sample_results(self):
+        context = self._complete_wisc_context()
+        context["validated_tests"] = [test for test in context["validated_tests"] if test["instrument_code"] != "epq_j" and not (test["instrument_code"] == "scared" and test["classified_payload"]["form_type"] == "child")]
+        data = self._generate_export(context)
+        document = Document(BytesIO(data))
+        self.assertEqual(len(document.tables), 10)
+        self.assertEqual(len(ReportExportService._document_chart_targets(data)), 8)
+        titles = [table.rows[0].cells[0].text for table in document.tables]
+        self.assertIn("SCARED - MÃE", titles)
+        self.assertNotIn("SCARED - AUTORRELATO", titles)
+        captions = [p.text for p in document.paragraphs if p.text.strip().startswith("Gráfico") and "SCARED" in p.text]
+        self.assertEqual(len(captions), 1)
+        self.assertNotIn("autorrelato", captions[0].lower())
+
+    def test_inline_charts_do_not_keep_sample_workbooks(self):
+        source = BytesIO()
+        with ZipFile(source, "w") as package:
+            package.writestr("[Content_Types].xml", '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Override PartName="/word/embeddings/example.xlsx" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"/></Types>')
+            package.writestr("word/charts/_rels/chart1.xml.rels", '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/package" Target="../embeddings/example.xlsx"/><Relationship Id="rId2" Type="http://schemas.microsoft.com/office/2011/relationships/chartStyle" Target="style1.xml"/></Relationships>')
+            package.writestr("word/embeddings/example.xlsx", b"sample data")
+            package.writestr("word/charts/style1.xml", b"chart style")
+        data = ReportExportService._remove_chart_workbooks(source.getvalue())
+        with ZipFile(BytesIO(data)) as package:
+            self.assertNotIn("word/embeddings/example.xlsx", package.namelist())
+            self.assertEqual(package.read("word/charts/style1.xml"), b"chart style")
+            root = ET.fromstring(package.read("word/charts/_rels/chart1.xml.rels"))
+            self.assertEqual([rel.get("Id") for rel in root], ["rId2"])
+
     def _export_context(self, primary="wais3", age=17):
         wais = {
             "instrument_code": "wais3",
@@ -662,9 +794,9 @@ class ReportExportChartSanitizationTests(SimpleTestCase):
         data = self._generate_export(context)
         document = Document(BytesIO(data))
         captions = [paragraph.text for paragraph in document.paragraphs if paragraph.text.startswith("Gráfico")]
-        self.assertEqual(sum("SCARED" in caption for caption in captions), 2)
+        self.assertEqual(sum("SCARED" in caption for caption in captions), 1)
         targets = ReportExportService._document_chart_targets(data)
-        self.assertEqual(len(targets), 8)
+        self.assertEqual(len(targets), 10)
         with ZipFile(BytesIO(data)) as package:
             root = ET.fromstring(package.read(targets[-1]))
             self.assertEqual([float(point.text) for point in root.findall(".//c:val//c:pt/c:v", ReportExportService.CHART_NS)], [50, 54, 61, 47, 61, 58, 58])
