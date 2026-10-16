@@ -56,3 +56,8 @@ tmp/
 # .qwen/
 .vercel
 .env*
+
+# Clinical database backups
+*.dump
+*.partial
+backups/

@@ -1,0 +1,19 @@
+services:
+  recovery-db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: neuro_recovery
+      POSTGRES_USER: neuro_recovery
+      POSTGRES_PASSWORD: ${RECOVERY_DB_PASSWORD:?Execute backup.py setup primeiro}
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - recovery_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U neuro_recovery -d neuro_recovery"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+volumes:
+  recovery_data:
