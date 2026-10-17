@@ -57,7 +57,8 @@ class WAIS3ApprovedModelTests(SimpleTestCase):
         self.assertLess(texts.index("Gnosias e Praxias"), texts.index("Função Executiva"))
         self.assertLess(texts.index("Função Executiva"), texts.index("Memória e Aprendizagem"))
         self.assertIn("Interessado: O paciente", texts)
-        self.assertIn("Neuropsicóloga - CRP 09/6017", texts)
+        self.assertIn("Profissional não informado", texts)
+        self.assertNotIn("Neuropsicóloga - CRP 09/6017", texts)
         self.assertNotIn("Eric", "\n".join(texts))
         self.assertTrue(any(section.header._element.xpath(".//w:drawing") for section in document.sections))
 

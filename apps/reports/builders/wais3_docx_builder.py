@@ -122,7 +122,9 @@ class WAIS3DocxBuilder:
         subtitle.runs[0].font.size = Pt(9)
         self.heading("IDENTIFICAÇÃO")
         self.heading("1.1. Identificação do laudo:", 2)
-        self.identity("Autora", service.FIXED_AUTHOR)
+        from apps.reports.services.professional_identity_service import ProfessionalIdentityService
+
+        self.identity("Autora", ProfessionalIdentityService.author_label(self.report))
         interested = getattr(self.report, "interested_party", "") or ("Familiares" if service._is_adolescent_context(self.context, self.report) else "O paciente" if patient.get("sex") != "F" else "A paciente")
         self.identity("Interessado", interested)
         self.identity("Finalidade", service.FIXED_PURPOSE)
@@ -155,7 +157,7 @@ class WAIS3DocxBuilder:
         self.text(self.sections.get("consideracoes_finais") or self.FINAL_CONSIDERATIONS)
         signature_date = evaluation.get("end_date") or date.today().isoformat()
         self.text(f"Goiânia, {service._format_date_display(str(signature_date))}")
-        for line in ("Jacqueline O. Caires", "Neuropsicóloga - CRP 09/6017", "Analista do Comportamento", "Especialista em Saúde Mental"):
+        for line in (ProfessionalIdentityService.author_label(self.report),):
             paragraph = self.document.add_paragraph(line)
             paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
         self.text("Importante ressaltar que este documento:")

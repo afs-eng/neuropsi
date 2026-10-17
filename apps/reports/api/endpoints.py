@@ -172,6 +172,21 @@ def request_user_model():
     return get_user_model()
 
 
+@router.get(
+    "/{report_id}/specialist-plan",
+    response={200: dict, 404: MessageOut},
+    auth=bearer_auth,
+)
+def specialist_plan(request, report_id: int):
+    from apps.reports.services.specialist_planning_service import SpecialistPlanningService
+
+    report = Report.objects.filter(pk=report_id, author=request.auth).first()
+    if report is None:
+        return 404, {"message": "Laudo inexistente."}
+    # Planejar não sincroniza nem modifica o snapshot clínico existente.
+    return SpecialistPlanningService.build_plan(report.context_payload or {})
+
+
 @router.get("/", response=list[ReportOut], auth=bearer_auth)
 def list_reports_endpoint(
     request, evaluation_id: int | None = None, patient_id: int | None = None

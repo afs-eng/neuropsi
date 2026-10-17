@@ -9,6 +9,7 @@ import re
 from pathlib import Path
 from pathlib import PurePosixPath
 from zipfile import ZipFile
+from apps.reports.services.professional_identity_service import ProfessionalIdentityService
 
 import matplotlib
 from lxml import etree as ET
@@ -138,7 +139,6 @@ class ReportExportService:
     EMPTY_INTERPRETATION_MESSAGES = {
         "Nenhum instrumento específico deste domínio apresentou interpretação clínica consolidada.",
     }
-    FIXED_AUTHOR = "Jacqueline Oliveira Caires (CRP 09/6017)"
     FIXED_INTERESTED_PARTY = "Familiares"
     FIXED_PURPOSE = "Averiguação das capacidades cognitivas para auxílio diagnóstico"
     PRIMARY_REPORT_TEST_CODES = ("wisc4", "wais3", "wasi")
@@ -375,7 +375,7 @@ class ReportExportService:
         content = str(report.final_text or report.edited_text or "")
         created_at = report.created_at.strftime("%d/%m/%Y") if report.created_at else ""
         patient_name = report.patient.full_name if report.patient else ""
-        author_name = ReportExportService.FIXED_AUTHOR
+        author_name = ProfessionalIdentityService.author_label(report)
         interested_party = ReportExportService.FIXED_INTERESTED_PARTY
         purpose = ReportExportService.FIXED_PURPOSE
 
@@ -406,6 +406,9 @@ class ReportExportService:
     def generate_docx_bytes(cls, report: Report) -> bytes:
         context = ReportContextService.sync_report_context(report)
         context = dict(context) if isinstance(context, dict) else {}
+        context["professional"] = {
+            "full_name": ProfessionalIdentityService.author_label(report).split(" (CRP", 1)[0]
+        }
         sections = {
             section.key: cls._sanitize_section_text_for_patient(
                 str(section.content_edited or section.content_generated or ""),
@@ -1830,7 +1833,7 @@ class ReportExportService:
         cls._apply_base_styles(document)
 
         patient = context.get("patient") or {}
-        author_name = cls.FIXED_AUTHOR
+        author_name = ProfessionalIdentityService.author_label(report)
         interested_party = (
             getattr(report, "interested_party", None)
             or patient.get("responsible_name")
@@ -1979,7 +1982,7 @@ class ReportExportService:
         cls._apply_base_styles(document)
         patient = context.get("patient") or {}
         evaluation = context.get("evaluation") or {}
-        author_name = cls.FIXED_AUTHOR
+        author_name = ProfessionalIdentityService.author_label(report)
         interested_party = cls.FIXED_INTERESTED_PARTY
         table_index = 1
         chart_index = 1
@@ -2992,7 +2995,7 @@ class ReportExportService:
         cls._remove_nodes_between(start, end)
 
         patient = (context or {}).get("patient") or {}
-        author_name = cls.FIXED_AUTHOR
+        author_name = ProfessionalIdentityService.author_label(report)
         interested_party = cls.FIXED_INTERESTED_PARTY
         purpose = cls.FIXED_PURPOSE
 

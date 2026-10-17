@@ -3,6 +3,7 @@ import re
 from apps.reports.models import Report
 from apps.reports.builders.references_builder import build_references_text
 from apps.reports.services.patient_identity_service import PatientIdentityService
+from apps.reports.services.professional_identity_service import ProfessionalIdentityService
 from apps.reports.services.report_ai_service import ReportAIService
 from apps.reports.services.report_context_service import ReportContextService
 from apps.reports.services.ptbr_text_service import PtBrTextService
@@ -16,7 +17,6 @@ from apps.reports.services.section_registry import (
 
 
 class ReportGenerationService:
-    FIXED_AUTHOR = "Jacqueline Oliveira Caires (CRP 09/6017)"
     FIXED_PURPOSE = "Averiguação das capacidades cognitivas para auxílio diagnóstico"
     PROCEDURE_CATALOG = {
         "anamnese": "Entrevista clínica inicial destinada ao levantamento da história do desenvolvimento, queixas atuais, antecedentes médicos, escolares, familiares, emocionais e comportamentais, com o objetivo de contextualizar os dados obtidos nos demais instrumentos.",
@@ -96,6 +96,9 @@ class ReportGenerationService:
     @classmethod
     def generate_full_report(cls, report: Report, user=None):
         context = cls.construct_clinical_context(report.evaluation)
+        context["professional"] = {
+            "full_name": ProfessionalIdentityService.author_label(report).split(" (CRP", 1)[0]
+        }
         from apps.reports.services.report_pipeline_service import ReportPipelineService
 
         ReportPipelineService.generate_full_report(report, context, user=user)
@@ -914,7 +917,7 @@ class ReportGenerationService:
         patient = context["patient"]
         evaluation = context["evaluation"]
         is_adolescent = cls._is_adolescent_case(context)
-        professional = cls.FIXED_AUTHOR
+        professional = ProfessionalIdentityService.author_label(report)
 
         if key == "identificacao":
             interested_party = report.interested_party or patient["full_name"]

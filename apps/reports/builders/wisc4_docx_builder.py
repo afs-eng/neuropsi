@@ -10,6 +10,7 @@ from docx.oxml.ns import qn
 from docx.table import _Cell, _Row
 from docx.text.paragraph import Paragraph
 from lxml import etree
+from apps.reports.services.professional_identity_service import ProfessionalIdentityService
 
 
 class WISC4DocxBuilder:
@@ -144,7 +145,7 @@ class WISC4DocxBuilder:
         patient = self.context.get("patient") or {}
         evaluation = self.context.get("evaluation") or {}
         for index, label, value in (
-            (5, "Autora", service.FIXED_AUTHOR),
+            (5, "Autora", ProfessionalIdentityService.author_label(self.report)),
             (6, "Interessado", getattr(self.report, "interested_party", "") or service.FIXED_INTERESTED_PARTY),
             (7, "Finalidade", service.FIXED_PURPOSE),
             (9, "Nome", patient.get("full_name") or "Não informado"),
@@ -181,6 +182,7 @@ class WISC4DocxBuilder:
         self._replace(176, 185, self.sections.get("conclusao") or self.sections.get("hipotese_diagnostica") or "Sem conteúdo disponível para esta seção.")
         self._replace(187, 194, self.sections.get("sugestoes_conduta") or self.sections.get("conduta_encaminhamentos") or "Sem conteúdo disponível para esta seção.")
         self._text(self.paragraphs[200], f"Goiânia, {service._format_date_display(str(evaluation.get('end_date') or date.today().isoformat()))}.")
+        self._replace(202, 206, ProfessionalIdentityService.author_label(self.report))
         self._replace(214, 225, "\n".join(service._references_list(self.context)))
         self._bind_charts()
         self._renumber_captions()

@@ -4,6 +4,39 @@ from apps.evaluations.models import Evaluation
 from apps.patients.models import Patient
 
 
+class ReportTemplate(models.Model):
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="report_templates"
+    )
+    name = models.CharField(max_length=255)
+    instrument_code = models.CharField(max_length=50, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name", "id"]
+
+
+class ReportTemplateVersion(models.Model):
+    template = models.ForeignKey(
+        ReportTemplate, on_delete=models.CASCADE, related_name="versions"
+    )
+    version_number = models.PositiveIntegerField()
+    # Armazenamento privado: não publica DOCX clínico no MEDIA_URL.
+    document = models.BinaryField(editable=False)
+    sha256 = models.CharField(max_length=64)
+    original_filename = models.CharField(max_length=255)
+    validation_payload = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-version_number"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["template", "version_number"], name="unique_report_template_version"
+            )
+        ]
+
+
 class ReportQuerySet(models.QuerySet):
     def with_details(self):
         return self.select_related("evaluation", "patient", "author").prefetch_related(

@@ -146,6 +146,12 @@ class PatientIdentityService:
     @classmethod
     def foreign_names_for_context(cls, text: str | None, context: dict, patient_name: str | None = None) -> list[str]:
         searchable = text or ""
+        professional = (context.get("professional") or {}).get("full_name")
+        if isinstance(professional, str) and professional.strip():
+            searchable = re.sub(
+                rf"(?<!\w){re.escape(professional.strip())}(?!\w)",
+                "profissional responsável", searchable, flags=re.IGNORECASE,
+            )
         for test in context.get("validated_tests") or []:
             respondent = (test.get("raw_payload") or {}).get("respondent_name") or test.get("respondent_name")
             if isinstance(respondent, str) and respondent.strip():

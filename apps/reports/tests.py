@@ -2192,7 +2192,7 @@ class ReportExportChartSanitizationTests(SimpleTestCase):
         texts = [p.text.strip() for p in document.paragraphs if p.text.strip()]
 
         self.assertEqual(texts[1], "1.1. Identificação do laudo:")
-        self.assertEqual(texts[2], "Autora: Jacqueline Oliveira Caires (CRP 09/6017)")
+        self.assertEqual(texts[2], "Autora: Profissional não informado")
         self.assertEqual(texts[3], "Interessado: Familiares")
         self.assertEqual(texts[4], "Finalidade: Averiguação das capacidades cognitivas para auxílio diagnóstico")
         self.assertEqual(texts[5], "1.2. Identificação do paciente:")
