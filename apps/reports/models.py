@@ -151,3 +151,37 @@ class ReportVersion(models.Model):
         ordering = ["-version_number"]
         verbose_name = "Versão de laudo"
         verbose_name_plural = "Versões de laudo"
+
+
+class SpecialistRun(models.Model):
+    class Status(models.TextChoices):
+        QUEUED = "queued", "Na fila"
+        RUNNING = "running", "Em processamento"
+        NEEDS_REVIEW = "needs_review", "Aguardando revisão profissional"
+        FAILED = "failed", "Falhou"
+        STALE = "stale", "Resultados alterados"
+
+    report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name="specialist_runs")
+    application = models.ForeignKey("tests.TestApplication", on_delete=models.CASCADE)
+    requested_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    instrument_code = models.CharField(max_length=50)
+    specialist_version = models.CharField(max_length=50)
+    source_sha256 = models.CharField(max_length=64)
+    input_payload = models.JSONField(default=dict)
+    model_name = models.CharField(max_length=255)
+    provider_base_url = models.URLField(max_length=500)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.QUEUED)
+    output_payload = models.JSONField(default=dict)
+    usage_payload = models.JSONField(default=dict)
+    error_code = models.CharField(max_length=50, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["created_at", "id"]
+        indexes = [models.Index(fields=["status", "created_at"], name="specialist_queue_idx")]
+        constraints = [models.UniqueConstraint(
+            fields=["report", "application", "source_sha256", "specialist_version", "model_name", "provider_base_url"],
+            name="unique_specialist_source_run",
+        )]

@@ -8,6 +8,7 @@ dj-database-url>=2.2.0
 gunicorn>=23.0.0
 psycopg[binary]>=3.2.3
 pydantic[email]>=2.10.0
+pydantic-ai-slim[openai]==2.57.0
 python-dateutil>=2.9.0.post0
 python-dotenv>=1.2.2
 resend>=2.27.0

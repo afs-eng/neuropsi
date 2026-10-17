@@ -13,6 +13,7 @@ from apps.anamnesis.api.router import (
 from apps.tests.api.router import router as tests_router
 from apps.reports.api.router import router as reports_router
 from apps.reports.api.template_endpoints import router as report_templates_router
+from apps.reports.api.specialist_endpoints import router as report_specialists_router
 
 from apps.api.system import router as system_router
 
@@ -33,4 +34,5 @@ api.add_router("/anamnesis", anamnesis_router)
 api.add_router("/tests", tests_router)
 api.add_router("/reports", reports_router)
 api.add_router("/report-templates", report_templates_router)
+api.add_router("/reports", report_specialists_router)
 api.add_router("/public/anamnesis", public_anamnesis_router)

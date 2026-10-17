@@ -45,6 +45,11 @@ contratos de resposta com evidências, validação por instrumento, persistênci
 execuções, fila/worker, integração clínica e aprovação humana por snapshot.
 Nenhum provedor/modelo novo foi contratado ou ativado nesta etapa.
 
+Atualização: a execução experimental dos especialistas e a fila persistente agora
+estão implementadas, desabilitadas por padrão. Consulte `SPECIALIST_AGENTS.md`
+para homologação, endpoints, migração `0006` e worker. Isso não libera templates
+arbitrários nem altera automaticamente o conteúdo dos laudos existentes.
+
 ## Verificação e publicação
 
 ```bash
