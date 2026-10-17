@@ -1,6 +1,12 @@
 class ProfessionalIdentityService:
     @staticmethod
     def author_label(report) -> str:
+        from apps.reports.models import ReportStatus
+
+        if getattr(report, "status", None) in {ReportStatus.FINALIZED, ReportStatus.SENT}:
+            frozen = (getattr(report, "ai_metadata", None) or {}).get("finalization", {}).get("professional_label")
+            if frozen:
+                return frozen
         evaluation = getattr(report, "evaluation", None)
         author = getattr(evaluation, "examiner", None) or getattr(report, "author", None)
         if author is None:

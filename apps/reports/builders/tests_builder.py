@@ -731,6 +731,9 @@ def build_validated_tests_snapshot(evaluation) -> list[dict]:
         snapshots.append(
             {
                 "id": item.id,
+                "application_id": item.id,
+                "respondent_name": str((item.raw_payload or {}).get("respondent_name") or ""),
+                "informant": str((item.raw_payload or {}).get("informant") or (item.raw_payload or {}).get("respondent_type") or ""),
                 "instrument": item.instrument.name,
                 "instrument_code": item.instrument.code,
                 "instrument_name": item.instrument.name,

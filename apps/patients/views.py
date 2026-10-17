@@ -1,12 +1,15 @@
 from django.shortcuts import get_object_or_404, redirect
 from django.http import JsonResponse
+from apps.common.clinical_views import clinical_view
+from apps.common.clinical_access import owned_patients, owned_evaluations, owned_evaluation_children
 from apps.patients.models import Patient
 from apps.evaluations.models import Evaluation
 
 
+@clinical_view
 def dashboard_view(request):
-    patients_qs = Patient.objects.all()[:5]
-    evaluations_qs = Evaluation.objects.select_related("patient").order_by(
+    patients_qs = owned_patients(Patient.objects.all(), request.user)[:5]
+    evaluations_qs = owned_evaluations(Evaluation.objects.select_related("patient"), request.user).order_by(
         "-created_at"
     )[:5]
 
@@ -24,8 +27,8 @@ def dashboard_view(request):
     ]
 
     context = {
-        "total_patients": Patient.objects.count(),
-        "active_evaluations": Evaluation.objects.filter(
+        "total_patients": owned_patients(Patient.objects.all(), request.user).count(),
+        "active_evaluations": owned_evaluations(Evaluation.objects.all(), request.user).filter(
             status__in=["draft", "collecting_data"]
         ).count(),
         "tests_applied": 0,
@@ -36,8 +39,9 @@ def dashboard_view(request):
     return JsonResponse(context)
 
 
+@clinical_view
 def patient_list_view(request):
-    patients = Patient.objects.all()
+    patients = owned_patients(Patient.objects.all(), request.user)
     data = [
         {
             "id": p.id,
@@ -49,12 +53,13 @@ def patient_list_view(request):
     return JsonResponse({"patients": data})
 
 
+@clinical_view
 def patient_detail_view(request, pk):
-    patient = get_object_or_404(Patient, pk=pk)
+    patient = get_object_or_404(owned_patients(Patient.objects.all(), request.user), pk=pk)
     from apps.tests.models.applications import TestApplication
 
     test_applications = (
-        TestApplication.objects.filter(evaluation__patient=patient)
+        owned_evaluation_children(TestApplication.objects.all(), request.user).filter(evaluation__patient=patient)
         .select_related("instrument", "evaluation")
         .order_by("-applied_on", "-created_at")
     )
@@ -77,9 +82,11 @@ def patient_detail_view(request, pk):
     return JsonResponse({"patient": patient_data, "test_applications": apps_data})
 
 
+@clinical_view
 def patient_create_view(request):
     if request.method == "POST":
         patient = Patient.objects.create(
+            created_by=request.user,
             full_name=request.POST.get("full_name"),
             birth_date=request.POST.get("birth_date") or None,
             sex=request.POST.get("sex", ""),
@@ -97,8 +104,9 @@ def patient_create_view(request):
     return JsonResponse({"error": "method not allowed"}, status=405)
 
 
+@clinical_view
 def patient_edit_view(request, pk):
-    patient = get_object_or_404(Patient, pk=pk)
+    patient = get_object_or_404(owned_patients(Patient.objects.all(), request.user), pk=pk)
     if request.method == "POST":
         patient.full_name = request.POST.get("full_name", patient.full_name)
         patient.birth_date = request.POST.get("birth_date") or None

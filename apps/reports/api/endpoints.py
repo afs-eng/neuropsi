@@ -2,13 +2,17 @@ import logging
 import threading
 
 from ninja import Router
+from ninja.errors import HttpError
 from django.http import HttpResponse
-from django.db import close_old_connections
+from django.db import close_old_connections, transaction
 from django.utils.text import slugify
 
 from apps.ai.services.ai_healthcheck_service import AIHealthcheckService
 from apps.accounts.models import UserRole
 from apps.api.auth import bearer_auth
+from apps.common.clinical_access import owned_evaluations, owned_reports
+from apps.reports.services.report_approval_service import ReportApprovalService
+from apps.reports.services.clinical_consistency_audit_service import ClinicalConsistencyAuditService
 from apps.evaluations.models import Evaluation
 from apps.reports.models import Report, ReportSection, ReportStatus
 from apps.reports.selectors import (
@@ -22,7 +26,6 @@ from apps.reports.services.report_context_service import ReportContextService
 from apps.reports.services.report_generation_service import ReportGenerationService
 from apps.reports.services.report_section_service import ReportSectionService
 from apps.reports.services.section_regeneration_service import SectionRegenerationService
-from apps.reports.services.report_review_service import ReportReviewService
 from apps.reports.services.report_validation_service import ReportValidationService
 from apps.reports.services.report_version_service import ReportVersionService
 
@@ -103,6 +106,14 @@ def serialize_report(report, include_sections=False, include_versions=False) -> 
         if report.generated_at
         else None,
     }
+    if report.status in {ReportStatus.FINALIZED, ReportStatus.SENT}:
+        from apps.reports.services.professional_identity_service import ProfessionalIdentityService
+
+        context = report.context_payload or {}
+        data["patient_name"] = (context.get("patient") or {}).get("full_name") or data["patient_name"]
+        data["evaluation_code"] = (context.get("evaluation") or {}).get("code") or data["evaluation_code"]
+        data["evaluation_title"] = (context.get("evaluation") or {}).get("title", data["evaluation_title"])
+        data["author_name"] = ProfessionalIdentityService.author_label(report)
     if include_sections:
         data["sections"] = [serialize_section(s) for s in report.sections.all()]
     if include_versions:
@@ -110,11 +121,28 @@ def serialize_report(report, include_sections=False, include_versions=False) -> 
     return data
 
 
-def _get_report_or_404(report_id: int):
-    report = get_report_by_id(report_id)
+def _get_report_or_404(report_id: int, user, *, editable=False, lock=False):
+    report = (
+        owned_reports(Report.objects.select_for_update(), user).filter(pk=report_id).first()
+        if lock else get_report_by_id(report_id, user=user)
+    )
     if not report:
         return None, (404, {"message": "Laudo inexistente."})
+    if editable and report.status in {ReportStatus.FINALIZED, ReportStatus.SENT}:
+        raise HttpError(403, "Laudo aprovado não pode ser alterado. Crie uma nova revisão.")
     return report, None
+
+
+def _reserve_report_generation(report_id, user):
+    with transaction.atomic():
+        report, error = _get_report_or_404(report_id, user, editable=True, lock=True)
+        if error:
+            return report, error
+        if report.status == ReportStatus.GENERATING:
+            raise HttpError(403, "O laudo já está em geração.")
+        report.status = ReportStatus.GENERATING
+        report.save(update_fields=["status", "updated_at"])
+        return report, None
 
 
 def _generate_report_async(report_id: int, user_id: int | None):
@@ -180,7 +208,7 @@ def request_user_model():
 def specialist_plan(request, report_id: int):
     from apps.reports.services.specialist_planning_service import SpecialistPlanningService
 
-    report = Report.objects.filter(pk=report_id, author=request.auth).first()
+    report = owned_reports(Report.objects.all(), request.auth).filter(pk=report_id).first()
     if report is None:
         return 404, {"message": "Laudo inexistente."}
     # Planejar não sincroniza nem modifica o snapshot clínico existente.
@@ -192,11 +220,11 @@ def list_reports_endpoint(
     request, evaluation_id: int | None = None, patient_id: int | None = None
 ):
     if evaluation_id:
-        reports = get_reports_by_evaluation(evaluation_id)
+        reports = get_reports_by_evaluation(evaluation_id, user=request.auth)
     elif patient_id:
-        reports = get_reports_by_patient(patient_id)
+        reports = get_reports_by_patient(patient_id, user=request.auth)
     else:
-        reports = list_reports()
+        reports = list_reports(user=request.auth)
     return [serialize_report(item) for item in reports]
 
 
@@ -204,7 +232,7 @@ def list_reports_endpoint(
     "/by-evaluation/{evaluation_id}", response=list[ReportOut], auth=bearer_auth
 )
 def get_reports_by_evaluation_endpoint(request, evaluation_id: int):
-    return [serialize_report(item) for item in get_reports_by_evaluation(evaluation_id)]
+    return [serialize_report(item) for item in get_reports_by_evaluation(evaluation_id, user=request.auth)]
 
 
 @router.post(
@@ -215,7 +243,7 @@ def create_report(request, payload: ReportCreateIn):
         return 403, {"message": "Permissão negada."}
 
     evaluation = (
-        Evaluation.objects.select_related("patient")
+        owned_evaluations(Evaluation.objects.select_related("patient"), request.auth)
         .filter(id=payload.evaluation_id)
         .first()
     )
@@ -237,7 +265,7 @@ def create_report(request, payload: ReportCreateIn):
 
 def _generate_report_for_evaluation(evaluation_id: int, user):
     evaluation = (
-        Evaluation.objects.select_related("patient").filter(id=evaluation_id).first()
+        owned_evaluations(Evaluation.objects.select_related("patient"), user).filter(id=evaluation_id).first()
     )
     if not evaluation:
         return None, (400, {"message": "Avaliação não encontrada."})
@@ -266,7 +294,7 @@ def _generate_report_for_evaluation(evaluation_id: int, user):
 
 def _generate_test_report_for_evaluation(evaluation_id: int, user):
     evaluation = (
-        Evaluation.objects.select_related("patient").filter(id=evaluation_id).first()
+        owned_evaluations(Evaluation.objects.select_related("patient"), user).filter(id=evaluation_id).first()
     )
     if not evaluation:
         return None, (400, {"message": "Avaliação não encontrada."})
@@ -337,13 +365,14 @@ def build_report(request, report_id: int):
     if not can_edit_reports(request.auth):
         return 403, {"message": "Permissão negada."}
 
-    report, error = _get_report_or_404(report_id)
+    report, error = _reserve_report_generation(report_id, request.auth)
     if error:
         return error
 
     try:
         ReportGenerationService.generate_full_report(report, user=request.auth)
     except ValueError as exc:
+        Report.objects.filter(pk=report.pk, status=ReportStatus.GENERATING).update(status=ReportStatus.IN_REVIEW)
         return 400, {"message": str(exc)}
     report.refresh_from_db()
     return 200, serialize_report(report, include_sections=True, include_versions=True)
@@ -366,7 +395,7 @@ def regenerate_report(request, report_id: int):
 def regenerate_test_sections(request, report_id: int):
     if not can_edit_reports(request.auth):
         return 403, {"message": "Permissão negada."}
-    report, error = _get_report_or_404(report_id)
+    report, error = _reserve_report_generation(report_id, request.auth)
     if error:
         return error
     try:
@@ -394,7 +423,7 @@ def regenerate_test_sections(request, report_id: int):
 def regenerate_section(request, report_id: int, section_key: str):
     if not can_edit_reports(request.auth):
         return 403, {"message": "Permissão negada."}
-    report, error = _get_report_or_404(report_id)
+    report, error = _reserve_report_generation(report_id, request.auth)
     if error:
         return error
     try:
@@ -403,6 +432,8 @@ def regenerate_section(request, report_id: int, section_key: str):
         )
     except ValueError as exc:
         return 400, {"message": str(exc)}
+    finally:
+        Report.objects.filter(pk=report.pk, status=ReportStatus.GENERATING).update(status=ReportStatus.IN_REVIEW)
     if not section:
         return 404, {"message": "Seção inexistente ou bloqueada."}
     return 200, serialize_section(section)
@@ -410,36 +441,66 @@ def regenerate_section(request, report_id: int, section_key: str):
 
 @router.post(
     "/{report_id}/finalize",
-    response={200: ReportOut, 403: MessageOut, 404: MessageOut},
+    response={200: ReportOut, 400: MessageOut, 403: MessageOut, 404: MessageOut},
     auth=bearer_auth,
 )
 def finalize_report(request, report_id: int):
+    try:
+        report = ReportApprovalService.finalize(report_id=report_id, user=request.auth)
+    except PermissionError as exc:
+        return 403, {"message": str(exc)}
+    except Report.DoesNotExist:
+        return 404, {"message": "Laudo não encontrado."}
+    except ValueError as exc:
+        return 400, {"message": str(exc)}
+    return 200, serialize_report(report, include_sections=True, include_versions=True)
+
+
+@router.post(
+    "/{report_id}/revisions",
+    response={201: ReportDetailOut, 400: MessageOut, 403: MessageOut, 404: MessageOut},
+    auth=bearer_auth,
+)
+def create_report_revision(request, report_id: int):
+    try:
+        report = ReportApprovalService.create_revision(report_id=report_id, user=request.auth)
+    except Report.DoesNotExist:
+        return 404, {"message": "Laudo não encontrado."}
+    except PermissionError as exc:
+        return 403, {"message": str(exc)}
+    except ValueError as exc:
+        return 400, {"message": str(exc)}
+    return 201, serialize_report(report, include_sections=True, include_versions=True)
+
+
+@router.post(
+    "/{report_id}/audit",
+    response={200: dict, 400: MessageOut, 403: MessageOut, 404: MessageOut},
+    auth=bearer_auth,
+)
+def audit_report(request, report_id: int):
     if not can_edit_reports(request.auth):
         return 403, {"message": "Permissão negada."}
-
-    report, error = _get_report_or_404(report_id)
+    report, error = _get_report_or_404(report_id, request.auth)
     if error:
         return error
-
-    full_text = []
-    for section in report.sections.all():
-        text = section.content_edited or section.content_generated
-        full_text.append(f"## {section.title}\n{text}")
-
-    report.final_text = "\n\n".join(full_text)
-    report.status = ReportStatus.FINALIZED
-    review = ReportReviewService.review(report)
-    report.ai_metadata = {
-        **(report.ai_metadata or {}),
-        "review": review,
-        "finalization": {
-            "status": review.get("status"),
-            "warnings": review.get("warnings") or [],
-        },
-    }
-    report.save(update_fields=["final_text", "status", "ai_metadata", "updated_at"])
-    ReportVersionService.create_version(report, user=request.auth)
-    return 200, serialize_report(report, include_sections=True, include_versions=True)
+    if report.status not in {ReportStatus.DRAFT, ReportStatus.IN_REVIEW}:
+        return 400, {"message": "A auditoria exige um laudo em revisão."}
+    ReportContextService.sync_report_context(report)
+    source_sha256 = ReportApprovalService.fingerprint(report)
+    try:
+        result = ClinicalConsistencyAuditService.audit_report(report, report.context_payload or {})
+    except Exception:
+        result = {**ClinicalConsistencyAuditService._invalid_result(), "source_sha256": source_sha256}
+    with transaction.atomic():
+        report = owned_reports(Report.objects.select_for_update(), request.auth).filter(pk=report_id).first()
+        if not report:
+            return 404, {"message": "Laudo não encontrado."}
+        if report.status not in {ReportStatus.DRAFT, ReportStatus.IN_REVIEW} or result.get("source_sha256") != ReportApprovalService.fingerprint(report):
+            return 400, {"message": "O laudo mudou durante a análise. Execute a auditoria novamente."}
+        report.ai_metadata = {**(report.ai_metadata or {}), "audit": result}
+        report.save(update_fields=["ai_metadata", "updated_at"])
+    return 200, result
 
 
 @router.post(
@@ -448,7 +509,7 @@ def finalize_report(request, report_id: int):
     auth=bearer_auth,
 )
 def export_report_html(request, report_id: int):
-    report, error = _get_report_or_404(report_id)
+    report, error = _get_report_or_404(report_id, request.auth)
     if error:
         return error
     return 200, {"html": ReportExportService.generate_html(report)}
@@ -460,7 +521,7 @@ def export_report_html(request, report_id: int):
     auth=bearer_auth,
 )
 def export_report_docx(request, report_id: int):
-    report, error = _get_report_or_404(report_id)
+    report, error = _get_report_or_404(report_id, request.auth)
     if error:
         return error
     try:
@@ -468,13 +529,14 @@ def export_report_docx(request, report_id: int):
     except Exception as exc:
         logger.exception("Erro ao exportar DOCX do laudo %s", report_id)
         return 500, {"message": f"Erro ao exportar DOCX: {exc}"}
-    patient_name = report.patient.full_name if report.patient else f"report-{report.id}"
+    patient_name = (report.context_payload.get("patient") or {}).get("full_name") or (report.patient.full_name if report.patient else f"report-{report.id}")
     filename = f"Laudo-{slugify(patient_name)}.docx"
     response = HttpResponse(
         payload,
         content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     )
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    response["Cache-Control"] = "private, no-store"
     return response
 
 
@@ -482,7 +544,7 @@ def export_report_docx(request, report_id: int):
     "/{report_id}", response={200: ReportDetailOut, 404: MessageOut}, auth=bearer_auth
 )
 def get_report(request, report_id: int):
-    report, error = _get_report_or_404(report_id)
+    report, error = _get_report_or_404(report_id, request.auth)
     if error:
         return error
     ReportContextService.sync_report_context(report)
@@ -494,11 +556,12 @@ def get_report(request, report_id: int):
     response={200: ReportOut, 403: MessageOut, 404: MessageOut},
     auth=bearer_auth,
 )
+@transaction.atomic
 def update_report(request, report_id: int, payload: ReportUpdateIn):
     if not can_edit_reports(request.auth):
         return 403, {"message": "Permissão negada."}
 
-    report, error = _get_report_or_404(report_id)
+    report, error = _get_report_or_404(report_id, request.auth, editable=True, lock=True)
     if error:
         return error
 
@@ -509,9 +572,11 @@ def update_report(request, report_id: int, payload: ReportUpdateIn):
     if payload.purpose is not None:
         report.purpose = payload.purpose
     if payload.status is not None:
+        if payload.status != report.status and payload.status in {ReportStatus.FINALIZED, ReportStatus.SENT}:
+            return 403, {"message": "Use o fluxo de aprovação clínica para finalizar o laudo."}
         report.status = payload.status
     if payload.final_text is not None:
-        report.final_text = payload.final_text
+        return 403, {"message": "Texto final só pode ser definido pela aprovação clínica."}
     report.save()
     ReportVersionService.create_version(report, user=request.auth)
     return 200, serialize_report(report)
@@ -526,7 +591,7 @@ def delete_report(request, report_id: int):
     if not can_edit_reports(request.auth):
         return 403, {"message": "Permissão negada."}
 
-    report, error = _get_report_or_404(report_id)
+    report, error = _get_report_or_404(report_id, request.auth, editable=True)
     if error:
         return error
 
@@ -539,15 +604,23 @@ def delete_report(request, report_id: int):
     response={200: ReportSectionOut, 403: MessageOut, 404: MessageOut},
     auth=bearer_auth,
 )
+@transaction.atomic
 def update_section(request, section_id: int, payload: ReportSectionUpdateIn):
     if not can_edit_reports(request.auth):
         return 403, {"message": "Permissão negada."}
 
     section = (
-        ReportSection.objects.select_related("report").filter(id=section_id).first()
+        ReportSection.objects.select_related("report").filter(
+            id=section_id, report__in=owned_reports(Report.objects.all(), request.auth)
+        ).first()
     )
     if not section:
         return 404, {"message": "Seção inexistente."}
+    section.report = Report.objects.select_for_update().get(pk=section.report_id)
+    if section.report.status in {ReportStatus.FINALIZED, ReportStatus.SENT}:
+        return 403, {"message": "Laudo aprovado não pode ser alterado."}
+    if section.report.status == ReportStatus.GENERATING:
+        return 403, {"message": "Aguarde a geração antes de editar as seções."}
     if section.is_locked:
         return 403, {"message": "Seção bloqueada para edição."}
 
@@ -569,7 +642,7 @@ def update_section(request, section_id: int, payload: ReportSectionUpdateIn):
 def update_section_by_key(
     request, report_id: int, section_key: str, payload: ReportSectionUpdateIn
 ):
-    report, error = _get_report_or_404(report_id)
+    report, error = _get_report_or_404(report_id, request.auth)
     if error:
         return error
     section = report.sections.filter(key=section_key).first()

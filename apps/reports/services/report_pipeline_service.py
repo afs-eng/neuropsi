@@ -11,7 +11,7 @@ from apps.reports.services.report_generation_service import ReportGenerationServ
 from apps.reports.services.report_review_service import ReportReviewService
 from apps.reports.services.report_section_service import ReportSectionService
 from apps.reports.services.report_version_service import ReportVersionService
-from .section_registry import get_section_config
+from .section_registry import get_section_config, list_section_configs
 from .section_workflow_service import SectionWorkflowService
 
 
@@ -104,7 +104,9 @@ class ReportPipelineService:
         generated_set: set[str] = set()
 
         active_titles = {}
-        for index, section_key in enumerate(section_keys, start=1):
+        presentation_order = [key for key, _ in list_section_configs() if key in section_keys]
+        presentation_positions = {key: index for index, key in enumerate(presentation_order)}
+        for index, section_key in enumerate(presentation_order, start=1):
             config = get_section_config(section_key)
             clean_title = config["title"].split(". ", 1)[1] if ". " in config["title"] else config["title"]
             active_titles[section_key] = f"{index}. {clean_title}"
@@ -112,7 +114,7 @@ class ReportPipelineService:
         report.sections.exclude(key__in=section_keys).delete()
 
         for order, section_key in enumerate(section_keys):
-            if not SectionWorkflowService.can_generate(section_key, generated_set):
+            if not SectionWorkflowService.can_generate(section_key, generated_set, set(section_keys)):
                 failed_sections.append(
                     {
                         "section_key": section_key,
@@ -132,7 +134,7 @@ class ReportPipelineService:
                     report,
                     section_key,
                     active_titles[section_key],
-                    order,
+                    presentation_positions[section_key],
                     result,
                 )
                 generated_sections.append(section_key)

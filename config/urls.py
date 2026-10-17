@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseNotFound
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
@@ -28,4 +28,8 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
+    # Documentos clínicos só podem ser baixados pela API autenticada.
+    urlpatterns += [
+        path(f"{settings.MEDIA_URL.lstrip('/')}documents/<path:path>", lambda request, path: HttpResponseNotFound()),
+    ]
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

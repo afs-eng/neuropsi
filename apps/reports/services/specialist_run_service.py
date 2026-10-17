@@ -42,7 +42,9 @@ class SpecialistRunService:
             raise PermissionError("Somente profissionais autorizados podem solicitar interpretações.")
         model, base_url = cls.configuration()
         with transaction.atomic():
-            report = Report.objects.select_for_update().get(pk=report_id, author=user)
+            from apps.common.clinical_access import owned_reports
+
+            report = owned_reports(Report.objects.select_for_update(), user).get(pk=report_id)
             if report.status in {ReportStatus.FINALIZED, ReportStatus.SENT}:
                 raise ValueError("Laudo finalizado: abra uma nova revisão antes de solicitar especialistas.")
             applications = TestApplication.objects.with_details().filter(
@@ -81,6 +83,8 @@ class SpecialistRunService:
             and run.report.evaluation_id == app.evaluation_id
             and run.report.patient_id == app.evaluation.patient_id
             and run.report.author_id == run.requested_by_id
+            and app.evaluation.patient.created_by_id == run.requested_by_id
+            and app.evaluation.examiner_id in (None, run.requested_by_id)
             and run.specialist_version == cls.VERSION
             and run.source_sha256 == SpecialistInputService.fingerprint(app)
         )

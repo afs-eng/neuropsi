@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { PageContainer, PageHeader } from "@/components/ui/page";
 import { WiscChart } from "@/components/charts/WiscChart";
-import { resolveApiUrl } from "@/lib/api";
+import { api, resolveApiUrl } from "@/lib/api";
 import { reportService } from "@/services/reportService";
 import { ArrowLeft, Calendar, CheckCircle2, Download, FileText, Loader2, RotateCcw, Save, User } from "lucide-react";
 
@@ -117,7 +117,10 @@ function getCompletedTests(report: any) {
   const seen = new Set<string>();
 
   return tests
-    .map((item: any) => ({
+    .map((item: any, index: number) => ({
+      applicationId: item.application_id ?? item.id ?? null,
+      applicationKey: String(item.application_id ?? item.id ?? `legacy-${index}`),
+      respondent: String(item.respondent_name || item.respondent || item.informant || ""),
       code: item.instrument_code || "",
       name: item.instrument_name || item.instrument || item.instrument_code || "Teste",
       appliedOn: item.applied_on || null,
@@ -132,7 +135,7 @@ function getCompletedTests(report: any) {
       warnings: item.warnings || [],
     }))
     .filter((item: any) => {
-      const key = `${item.code}:${item.name}`;
+      const key = item.applicationKey;
       if (!item.code && !item.name) return false;
       if (seen.has(key)) return false;
       seen.add(key);
@@ -239,6 +242,7 @@ export default function ReportDetailPage() {
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const reportId = params.id;
+  const router = useRouter();
   const autobuildTriggeredRef = useRef(false);
   const [report, setReport] = useState<any>(null);
   const [activeSectionId, setActiveSectionId] = useState<number | null>(null);
@@ -457,9 +461,50 @@ export default function ReportDetailPage() {
     }
   }
 
+  async function handleAudit() {
+    if (!report) return;
+    if (activeSection && editedText !== String(activeSection.edited_text || activeSection.generated_text || "")) {
+      setError("Salve as alterações antes de executar a auditoria.");
+      return;
+    }
+    if (!window.confirm("Auditar os textos salvos com o provedor de IA configurado? Essa operação pode gerar cobrança.")) return;
+    setSaving(true);
+    setError("");
+    setNotice("");
+    try {
+      const result = await api.post<{ status: string; alerts: { issue: string }[] }>(`/api/reports/${report.id}/audit`, {});
+      setNotice(result.status === "ok" ? "Auditoria concluída sem alertas. Revise o laudo antes de aprovar." : `Pendências da auditoria: ${(result.alerts || []).map((alert) => alert.issue).join("; ")}`);
+      await loadReport();
+    } catch (err: any) {
+      setError(err?.message || "Não foi possível auditar o laudo.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleCreateRevision() {
+    if (!report || !window.confirm("Criar uma nova revisão, preservando o laudo aprovado original?")) return;
+    setSaving(true);
+    setError("");
+    try {
+      const revision = await api.post<{ id: number }>(`/api/reports/${report.id}/revisions`, {});
+      router.push(`/dashboard/reports/${revision.id}`);
+    } catch (err: any) {
+      setError(err?.message || "Não foi possível criar uma nova revisão.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function handleFinalize() {
     if (!report) return;
+    if (activeSection && editedText !== String(activeSection.edited_text || activeSection.generated_text || "")) {
+      setError("Salve e audite as alterações antes de aprovar o laudo.");
+      return;
+    }
+    if (!window.confirm("Confirmo a revisão clínica e aprovo os textos salvos sob minha responsabilidade profissional.")) return;
     setSaving(true);
+    setError("");
     setNotice("");
     try {
       const updated = await reportService.finalize(report.id);
@@ -548,7 +593,7 @@ export default function ReportDetailPage() {
     );
   }
 
-  const isFinalized = report.status === "finalized";
+  const isFinalized = report.status === "finalized" || report.status === "sent";
   const isTestsOnlyReport = report.ai_metadata?.generation_scope === "tests_only";
   const generationMetadata = activeSection?.generation_metadata || {};
   const warnings = activeSection?.warnings_payload || [];
@@ -558,7 +603,7 @@ export default function ReportDetailPage() {
   const generationSource = getGenerationSource(generationMetadata.provider, generationMetadata.model);
   const textStatus = getTextStatus(hasManualEdits, generationSource);
   const generationDetails = getGenerationDetails(generationMetadata);
-  const visibleSelectedTests = completedTests.filter((test: any) => selectedTests.includes(`${test.code}:${test.name}`));
+  const visibleSelectedTests = completedTests.filter((test: any) => selectedTests.includes(test.applicationKey));
 
   return (
     <PageContainer>
@@ -667,7 +712,7 @@ export default function ReportDetailPage() {
             <h3 className="mb-2 text-sm font-semibold text-slate-900">Testes concluidos</h3>
             <div className="space-y-2">
               {completedTests.length > 0 ? completedTests.map((test: any) => {
-                const key = `${test.code}:${test.name}`;
+                const key = test.applicationKey;
                 const isSelected = selectedTests.includes(key);
 
                 return (
@@ -678,6 +723,7 @@ export default function ReportDetailPage() {
                     className={`w-full rounded-xl border px-3 py-2 text-xs transition text-left ${isSelected ? "border-indigo-600 bg-indigo-600 text-white" : "border-slate-100 bg-slate-50 text-slate-600 hover:bg-white"}`}
                   >
                     <div className="font-medium text-slate-800">{test.name}</div>
+                    {test.respondent && <div className="text-xs text-slate-500">Informante: {test.respondent}</div>}
                     <div className="mt-1 uppercase tracking-wide text-slate-400">{test.code || "sem-codigo"}</div>
                   </button>
                 );
@@ -713,6 +759,11 @@ export default function ReportDetailPage() {
               </p>
             </div>
             <div className="flex gap-2">
+              {isFinalized && (
+                <Button variant="outline" disabled={saving} onClick={handleCreateRevision}>
+                  Nova revisão
+                </Button>
+              )}
               {!isFinalized && (
                 <>
                   <Button variant="outline" className="gap-2" disabled={saving || completedTests.length === 0} onClick={handleRegenerateTests}>
@@ -729,8 +780,11 @@ export default function ReportDetailPage() {
                   </Button>
                 </>
               )}
+              <Button variant="outline" disabled={saving || isFinalized || isTestsOnlyReport} onClick={handleAudit}>
+                Auditar textos salvos
+              </Button>
               <Button variant="outline" disabled={saving || isFinalized || isTestsOnlyReport} onClick={handleFinalize}>
-                Finalizar
+                Aprovar laudo
               </Button>
             </div>
           </div>
@@ -815,10 +869,11 @@ export default function ReportDetailPage() {
                       const wiscChartData = test.code === "wisc4" ? getWiscChartData(test) : [];
 
                       return (
-                        <div key={`${test.code}-${test.name}`} className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+                        <div key={test.applicationKey} className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
                           <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                             <div>
                               <div className="text-sm font-semibold text-slate-900">{test.name}</div>
+                              {test.respondent && <div className="text-xs text-slate-500">Informante: {test.respondent}</div>}
                               <div className="mt-1 text-xs uppercase tracking-wide text-slate-400">{test.code || "sem-codigo"}{test.domain ? ` · ${test.domain}` : ""}</div>
                             </div>
                             <div className="text-xs text-slate-500">Aplicado em {formatShortDate(test.appliedOn)}</div>

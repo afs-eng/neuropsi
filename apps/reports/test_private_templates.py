@@ -41,11 +41,14 @@ class PrivateTemplateTests(TestCase):
         )
 
     def test_versions_preserve_original_bytes_and_are_not_exportable(self):
-        first = self.add_version()
-        second = self.add_version()
+        data = docx_bytes()
+        with patch("apps.reports.test_private_templates.docx_bytes", return_value=data):
+            first = self.add_version()
+            second = self.add_version()
         first.refresh_from_db()
         self.assertEqual((first.version_number, second.version_number), (1, 2))
         self.assertEqual(bytes(first.document), bytes(second.document))
+        self.assertEqual(bytes(first.document), data)
         self.assertEqual(first.validation_payload["status"], "draft")
         self.assertFalse(first.validation_payload["export_enabled"])
 

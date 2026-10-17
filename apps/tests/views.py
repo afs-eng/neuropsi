@@ -1,6 +1,9 @@
 from datetime import date
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
+from apps.common.clinical_views import clinical_view
+from django.http import Http404
+from apps.common.clinical_access import owned_patients, owned_evaluations, owned_evaluation_children
 from apps.patients.models import Patient
 from apps.evaluations.models import Evaluation
 from apps.tests.models.instruments import Instrument
@@ -11,17 +14,17 @@ from apps.tests.bpa2.interpreters import get_report_interpretation, get_synthesi
 from apps.common.utils import get_param as _get_param
 
 
-def _get_application(application_id):
+def _get_application(application_id, user):
     return get_object_or_404(
-        TestApplication.objects.select_related(
+        owned_evaluation_children(TestApplication.objects.select_related(
             "evaluation", "evaluation__patient", "instrument"
-        ),
+        ), user),
         pk=application_id,
     )
 
 
 def _get_existing_application(patient, instrument_code):
-    existing_eval = Evaluation.objects.filter(
+    existing_eval = owned_evaluations(Evaluation.objects.all(), patient.created_by).filter(
         patient=patient,
         test_applications__instrument__code=instrument_code,
         test_applications__is_validated=True,
@@ -54,6 +57,8 @@ def _process_and_save_test(
     evaluation_date,
     extra_classify_kwargs=None,
 ):
+    if evaluation and evaluation.patient_id != patient.pk:
+        raise Http404("Paciente não corresponde à avaliação.")
     module = get_test_module(instrument_code)
     reviewed_scores = {}
     if hasattr(patient, "birth_date") and patient.birth_date:
@@ -82,6 +87,7 @@ def _process_and_save_test(
     if not evaluation:
         evaluation, _ = Evaluation.objects.get_or_create(
             patient=patient,
+            examiner=patient.created_by,
             status="collecting_data",
             defaults={"referral_reason": "Avaliação neuropsicológica"},
         )
@@ -104,17 +110,22 @@ def _process_and_save_test(
     return application, classified, interpretation
 
 
+@clinical_view
 def test_list_view(request):
     return JsonResponse({"ok": True})
 
 
+@clinical_view
 def apply_test_for_patient(request, patient_id):
-    patient = get_object_or_404(Patient, pk=patient_id)
+    patient = get_object_or_404(owned_patients(Patient.objects.all(), request.user), pk=patient_id)
     return JsonResponse({"patient_id": patient.id, "full_name": patient.full_name})
 
 
+@clinical_view
 def add_test_to_evaluation(request, evaluation_id, instrument_code):
-    evaluation = get_object_or_404(Evaluation, pk=evaluation_id)
+    if request.method != "POST":
+        return JsonResponse({"message": "Use POST para adicionar testes."}, status=405)
+    evaluation = get_object_or_404(owned_evaluations(Evaluation.objects.all(), request.user), pk=evaluation_id)
     instrument = get_object_or_404(Instrument, code=instrument_code, is_active=True)
 
     app, _ = TestApplication.objects.get_or_create(
@@ -133,8 +144,9 @@ def add_test_to_evaluation(request, evaluation_id, instrument_code):
     )
 
 
+@clinical_view
 def test_result_view(request, application_id):
-    application = _get_application(application_id)
+    application = _get_application(application_id, request.user)
     classified = application.classified_payload or {}
     data = {
         "patient_id": application.evaluation.patient.id,
@@ -153,19 +165,19 @@ def test_result_view(request, application_id):
 def _item_form_view(
     request, application_id, instrument_code, item_count, form_template
 ):
-    patients = Patient.objects.all()
+    patients = owned_patients(Patient.objects.all(), request.user)
     application = None
     evaluation = None
 
     if application_id:
-        application = _get_application(application_id)
+        application = _get_application(application_id, request.user)
         evaluation = application.evaluation
         patients = Patient.objects.filter(pk=evaluation.patient.pk)
 
     if request.method == "POST":
         patient_id = _get_param(request, "patient")
         evaluation_date = _get_param(request, "evaluation_date")
-        patient = get_object_or_404(Patient, pk=patient_id)
+        patient = get_object_or_404(owned_patients(Patient.objects.all(), request.user), pk=patient_id)
 
         existing_app, existing_eval = _get_existing_application(
             patient, instrument_code
@@ -237,25 +249,28 @@ def _item_form_view(
     )
 
 
+@clinical_view
 def ebadep_a_form_view(request, application_id=None):
     return _item_form_view(
         request, application_id, "ebadep_a", 45, "tests/ebadep_a_form.html"
     )
 
 
+@clinical_view
 def ebaped_ij_form_view(request, application_id=None):
     return _item_form_view(
         request, application_id, "ebadep_ij", 27, "tests/ebaped_ij_form.html"
     )
 
 
+@clinical_view
 def bpa2_form_view(request, application_id=None):
-    patients = Patient.objects.all()
+    patients = owned_patients(Patient.objects.all(), request.user)
     application = None
     evaluation = None
 
     if application_id:
-        application = _get_application(application_id)
+        application = _get_application(application_id, request.user)
         evaluation = application.evaluation
         patients = Patient.objects.filter(pk=evaluation.patient.pk)
 
@@ -263,7 +278,7 @@ def bpa2_form_view(request, application_id=None):
         patient_id = _get_param(request, "patient")
         evaluation_date = _get_param(request, "evaluation_date")
         norm_type = _get_param(request, "norm_type", "idade")
-        patient = get_object_or_404(Patient, pk=patient_id)
+        patient = get_object_or_404(owned_patients(Patient.objects.all(), request.user), pk=patient_id)
 
         existing_app, existing_eval = _get_existing_application(patient, "bpa2")
         if existing_app and not application:
@@ -343,20 +358,21 @@ def bpa2_form_view(request, application_id=None):
     )
 
 
+@clinical_view
 def wisc4_form_view(request, application_id=None):
-    patients = Patient.objects.all()
+    patients = owned_patients(Patient.objects.all(), request.user)
     application = None
     evaluation = None
 
     if application_id:
-        application = _get_application(application_id)
+        application = _get_application(application_id, request.user)
         evaluation = application.evaluation
         patients = Patient.objects.filter(pk=evaluation.patient.pk)
 
     if request.method == "POST":
         patient_id = _get_param(request, "patient")
         evaluation_date = _get_param(request, "evaluation_date")
-        patient = get_object_or_404(Patient, pk=patient_id)
+        patient = get_object_or_404(owned_patients(Patient.objects.all(), request.user), pk=patient_id)
 
         existing_app, existing_eval = _get_existing_application(patient, "wisc4")
         if existing_app and not application:
@@ -444,20 +460,21 @@ def wisc4_form_view(request, application_id=None):
     )
 
 
+@clinical_view
 def wais3_form_view(request, application_id=None):
-    patients = Patient.objects.all()
+    patients = owned_patients(Patient.objects.all(), request.user)
     application = None
     evaluation = None
 
     if application_id:
-        application = _get_application(application_id)
+        application = _get_application(application_id, request.user)
         evaluation = application.evaluation
         patients = Patient.objects.filter(pk=evaluation.patient.pk)
 
     if request.method == "POST":
         patient_id = _get_param(request, "patient")
         evaluation_date = _get_param(request, "evaluation_date")
-        patient = get_object_or_404(Patient, pk=patient_id)
+        patient = get_object_or_404(owned_patients(Patient.objects.all(), request.user), pk=patient_id)
 
         existing_app, existing_eval = _get_existing_application(patient, "wais3")
         if existing_app and not application:
@@ -545,8 +562,9 @@ def wais3_form_view(request, application_id=None):
     )
 
 
+@clinical_view
 def bpa2_report_view(request, application_id):
-    application = _get_application(application_id)
+    application = _get_application(application_id, request.user)
     patient = application.evaluation.patient
     classified = application.classified_payload or {}
 
@@ -602,8 +620,9 @@ def bpa2_report_view(request, application_id):
     )
 
 
+@clinical_view
 def ebaped_ij_report_view(request, application_id):
-    application = _get_application(application_id)
+    application = _get_application(application_id, request.user)
     examiner = application.evaluation.examiner
     return JsonResponse(
         {
@@ -621,8 +640,9 @@ def ebaped_ij_report_view(request, application_id):
     )
 
 
+@clinical_view
 def ebadep_a_report_view(request, application_id):
-    application = _get_application(application_id)
+    application = _get_application(application_id, request.user)
     examiner = application.evaluation.examiner
     return JsonResponse(
         {

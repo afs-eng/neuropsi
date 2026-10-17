@@ -219,8 +219,10 @@ class SectionRegenerationService:
     ) -> dict:
         context = context or build_report_snapshot(report.evaluation)
         report.context_payload = context
-        regeneration_order = [section_key, *cls._collect_dependents(section_key)]
         existing_keys = {item.key for item in report.sections.all()}
+        regeneration_order = SectionWorkflowService.order_sections([
+            key for key in [section_key, *cls._collect_dependents(section_key)] if key in existing_keys
+        ])
         generated_set = existing_keys - set(regeneration_order)
         regenerated_keys: list[str] = []
         failed_sections: list[dict] = []
@@ -235,7 +237,7 @@ class SectionRegenerationService:
                     }
                 )
                 continue
-            if not SectionWorkflowService.can_generate(item_key, generated_set):
+            if not SectionWorkflowService.can_generate(item_key, generated_set, existing_keys):
                 failed_sections.append(
                     {
                         "section_key": item_key,

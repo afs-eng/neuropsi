@@ -3,6 +3,7 @@ from typing import Optional
 from django.db.models import QuerySet
 
 from apps.tests.models import Instrument, TestApplication, TestInterpretationTemplate
+from apps.common.clinical_access import owned_evaluation_children
 
 
 def get_instruments() -> QuerySet[Instrument]:
@@ -56,22 +57,19 @@ def get_instrument_by_code(code: str) -> Optional[Instrument]:
     return Instrument.objects.filter(code=code).first()
 
 
-def get_test_applications() -> QuerySet[TestApplication]:
-    return TestApplication.objects.with_details().all().order_by("-created_at")
+def get_test_applications(user=None) -> QuerySet[TestApplication]:
+    queryset = TestApplication.objects.with_details().all().order_by("-created_at")
+    return owned_evaluation_children(queryset, user) if user is not None else queryset
 
 
-def get_test_application_by_id(application_id: int) -> Optional[TestApplication]:
-    return TestApplication.objects.with_details().filter(id=application_id).first()
+def get_test_application_by_id(application_id: int, user=None) -> Optional[TestApplication]:
+    return get_test_applications(user=user).filter(id=application_id).first()
 
 
 def get_test_applications_by_evaluation(
-    evaluation_id: int,
+    evaluation_id: int, user=None,
 ) -> QuerySet[TestApplication]:
-    return (
-        TestApplication.objects.with_details()
-        .filter(evaluation_id=evaluation_id)
-        .order_by("-created_at")
-    )
+    return get_test_applications(user=user).filter(evaluation_id=evaluation_id)
 
 
 def get_validated_test_applications_by_evaluation(

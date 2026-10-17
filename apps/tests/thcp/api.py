@@ -2,6 +2,7 @@ from django.db import transaction
 from ninja import Router
 
 from apps.api.auth import bearer_auth
+from apps.common.clinical_access import owned_evaluations
 from apps.evaluations.models import Evaluation
 from apps.tests.api.age_utils import calcAge, get_reference_date
 from apps.tests.api.catalog import ensure_required_instruments
@@ -30,7 +31,7 @@ def thcp_protocol(request):
 def thcp_submit(request, payload: THCPSubmitIn) -> tuple[int, dict]:
     if not can_edit_tests(request.auth):
         return 403, {"message": "Você não tem permissão para submeter testes."}
-    evaluation = Evaluation.objects.select_related("patient").filter(pk=payload.evaluation_id).first()
+    evaluation = owned_evaluations(Evaluation.objects.select_related("patient"), request.auth).filter(pk=payload.evaluation_id).first()
     if not evaluation:
         return 404, {"message": "Avaliação não encontrada."}
     patient = evaluation.patient
@@ -83,7 +84,7 @@ def thcp_submit(request, payload: THCPSubmitIn) -> tuple[int, dict]:
 def thcp_result(request, application_id: int) -> tuple[int, dict]:
     if not can_view_tests(request.auth):
         return 403, {"message": "Você não tem permissão para visualizar testes."}
-    application = get_test_application_by_id(application_id)
+    application = get_test_application_by_id(application_id, user=request.auth)
     if not application or application.instrument.code != "thcp":
         return 404, {"message": "Aplicação THCP não encontrada."}
     return 200, {"application_id": application.pk, **serialize_test_application(application)}

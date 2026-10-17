@@ -4,6 +4,7 @@ from django.http import HttpResponse
 from django.utils.text import slugify
 
 from apps.api.auth import bearer_auth
+from apps.common.clinical_access import owned_evaluations
 from apps.evaluations.models import Evaluation
 from apps.tests.models import Instrument
 from apps.tests.api.age_utils import (
@@ -182,9 +183,9 @@ def list_test_applications(
         )
 
     applications = (
-        get_test_applications_by_evaluation(evaluation_id)
+        get_test_applications_by_evaluation(evaluation_id, user=request.auth)
         if evaluation_id
-        else get_test_applications()
+        else get_test_applications(user=request.auth)
     )
     
     if instrument_code:
@@ -204,7 +205,7 @@ def get_test_application_endpoint(request, application_id: int) -> tuple[int, di
             403, "Você não tem permissão para visualizar aplicações de teste."
         )
 
-    application = get_test_application_by_id(application_id)
+    application = get_test_application_by_id(application_id, user=request.auth)
     if not application:
         return 404, {"message": "Aplicação de teste não encontrada."}
 
@@ -229,7 +230,7 @@ def create_test_application_endpoint(
             "message": "Você não tem permissão para criar aplicações de teste."
         }
 
-    evaluation = Evaluation.objects.filter(id=payload.evaluation_id).first()
+    evaluation = owned_evaluations(Evaluation.objects.all(), request.auth).filter(id=payload.evaluation_id).first()
     if not evaluation:
         return 404, {"message": "Avaliação não encontrada."}
 
@@ -275,14 +276,14 @@ def update_test_application_endpoint(
             "message": "Você não tem permissão para editar aplicações de teste."
         }
 
-    application = get_test_application_by_id(application_id)
+    application = get_test_application_by_id(application_id, user=request.auth)
     if not application:
         return 404, {"message": "Aplicação de teste não encontrada."}
 
     data = payload.dict(exclude_unset=True)
 
     if "evaluation_id" in data:
-        evaluation = Evaluation.objects.filter(id=data["evaluation_id"]).first()
+        evaluation = owned_evaluations(Evaluation.objects.all(), request.auth).filter(id=data["evaluation_id"]).first()
         if not evaluation:
             return 404, {"message": "Avaliação não encontrada."}
         data["evaluation"] = evaluation
@@ -322,7 +323,7 @@ def delete_test_application_endpoint(request, application_id: int) -> tuple[int,
             "message": "Você não tem permissão para remover aplicações de teste."
         }
 
-    application = get_test_application_by_id(application_id)
+    application = get_test_application_by_id(application_id, user=request.auth)
     if not application:
         return 404, {"message": "Aplicação de teste não encontrada."}
 
@@ -355,7 +356,7 @@ def process_test_application_endpoint(request, application_id: int) -> tuple[int
             "message": "Você não tem permissão para processar aplicações de teste."
         }
 
-    application = get_test_application_by_id(application_id)
+    application = get_test_application_by_id(application_id, user=request.auth)
     if not application:
         return 404, {"message": "Aplicação de teste não encontrada."}
 
@@ -391,7 +392,7 @@ def ebadep_a_submit(request, payload: EBADEPASubmitIn) -> tuple[int, dict]:
     if not can_edit_tests(request.auth):
         return 403, {"message": "Você não tem permissão para submeter testes."}
 
-    evaluation = Evaluation.objects.filter(id=payload.evaluation_id).first()
+    evaluation = owned_evaluations(Evaluation.objects.all(), request.auth).filter(id=payload.evaluation_id).first()
     if not evaluation:
         return 404, {"message": "Avaliação não encontrada."}
 
@@ -457,7 +458,7 @@ def ebadep_a_submit(request, payload: EBADEPASubmitIn) -> tuple[int, dict]:
     auth=bearer_auth,
 )
 def ebadep_a_result(request, application_id: int) -> tuple[int, dict]:
-    application = get_test_application_by_id(application_id)
+    application = get_test_application_by_id(application_id, user=request.auth)
     if not application:
         return 404, {"message": "Aplicação de teste não encontrada."}
 
@@ -505,7 +506,7 @@ def ebadep_ij_submit(request, payload: EBADEPIJSubmitIn) -> tuple[int, dict]:
     if not can_edit_tests(request.auth):
         return 403, {"message": "Você não tem permissão para submeter testes."}
 
-    evaluation = Evaluation.objects.filter(id=payload.evaluation_id).first()
+    evaluation = owned_evaluations(Evaluation.objects.all(), request.auth).filter(id=payload.evaluation_id).first()
     if not evaluation:
         return 404, {"message": "Avaliação não encontrada."}
 
@@ -573,7 +574,7 @@ def ebadep_ij_submit(request, payload: EBADEPIJSubmitIn) -> tuple[int, dict]:
     auth=bearer_auth,
 )
 def ebadep_ij_result(request, application_id: int) -> tuple[int, dict]:
-    application = get_test_application_by_id(application_id)
+    application = get_test_application_by_id(application_id, user=request.auth)
     if not application:
         return 404, {"message": "Aplicação de teste não encontrada."}
     if application.instrument.code not in {"ebadep_ij", "ebaped_ij"}:
@@ -614,7 +615,7 @@ def fdt_submit(request, payload: FDTSubmitIn) -> tuple[int, dict]:
     if not can_edit_tests(request.auth):
         return 403, {"message": "Você não tem permissão para submeter testes."}
 
-    evaluation = Evaluation.objects.filter(id=payload.evaluation_id).first()
+    evaluation = owned_evaluations(Evaluation.objects.all(), request.auth).filter(id=payload.evaluation_id).first()
     if not evaluation:
         return 404, {"message": "Avaliação não encontrada."}
 
@@ -688,7 +689,7 @@ def export_test_application_pdf(request, application_id: int, report_type: str =
     if not can_view_tests(request.auth):
         return 403, {"message": "Você não tem permissão para visualizar testes."}
 
-    application = get_test_application_by_id(application_id)
+    application = get_test_application_by_id(application_id, user=request.auth)
     if not application:
         return 404, {"message": "Aplicação de teste não encontrada."}
 
@@ -737,7 +738,7 @@ def bpa2_submit(request, payload: BPA2SubmitIn) -> tuple[int, dict]:
     if not can_edit_tests(request.auth):
         return 403, {"message": "Você não tem permissão para submeter testes."}
 
-    evaluation = Evaluation.objects.filter(id=payload.evaluation_id).first()
+    evaluation = owned_evaluations(Evaluation.objects.all(), request.auth).filter(id=payload.evaluation_id).first()
     if not evaluation:
         return 404, {"message": "Avaliação não encontrada."}
 
@@ -837,7 +838,7 @@ def bpa2_submit(request, payload: BPA2SubmitIn) -> tuple[int, dict]:
     auth=bearer_auth,
 )
 def bpa2_result(request, application_id: int) -> tuple[int, dict]:
-    application = get_test_application_by_id(application_id)
+    application = get_test_application_by_id(application_id, user=request.auth)
     if not application:
         return 404, {"message": "Aplicação de teste não encontrada."}
     if application.instrument.code != "bpa2":
@@ -878,7 +879,7 @@ def wisc4_submit(request, payload: WISC4SubmitIn) -> tuple[int, dict]:
     if not can_edit_tests(request.auth):
         return 403, {"message": "Você não tem permissão para submeter testes."}
 
-    evaluation = Evaluation.objects.filter(id=payload.evaluation_id).first()
+    evaluation = owned_evaluations(Evaluation.objects.all(), request.auth).filter(id=payload.evaluation_id).first()
     if not evaluation:
         return 404, {"message": "Avaliação não encontrada."}
 
@@ -1002,7 +1003,7 @@ def wais3_preview(request, payload: WAIS3SubmitIn) -> tuple[int, dict]:
     """
     from apps.evaluations.models import Evaluation
     
-    evaluation = Evaluation.objects.filter(id=payload.evaluation_id).first()
+    evaluation = owned_evaluations(Evaluation.objects.all(), request.auth).filter(id=payload.evaluation_id).first()
     if not evaluation:
         return 400, {"message": "Avaliação não encontrada."}
     
@@ -1068,7 +1069,7 @@ def wais3_submit(request, payload: WAIS3SubmitIn) -> tuple[int, dict]:
     if not can_edit_tests(request.auth):
         return 403, {"message": "Você não tem permissão para submeter testes."}
 
-    evaluation = Evaluation.objects.filter(id=payload.evaluation_id).first()
+    evaluation = owned_evaluations(Evaluation.objects.all(), request.auth).filter(id=payload.evaluation_id).first()
     if not evaluation:
         return 404, {"message": "Avaliação não encontrada."}
 
@@ -1141,7 +1142,7 @@ def wais3_submit(request, payload: WAIS3SubmitIn) -> tuple[int, dict]:
     auth=bearer_auth,
 )
 def get_application_result(request, application_id: int) -> tuple[int, dict]:
-    application = get_test_application_by_id(application_id)
+    application = get_test_application_by_id(application_id, user=request.auth)
     if not application:
         return 404, {"message": "Aplicação de teste não encontrada."}
 
@@ -1183,7 +1184,7 @@ def bfp_submit(request, payload: BFPSubmitIn) -> tuple[int, dict]:
     if not can_edit_tests(request.auth):
         return 403, {"message": "Você não tem permissão para submeter testes."}
 
-    evaluation = Evaluation.objects.filter(id=payload.evaluation_id).first()
+    evaluation = owned_evaluations(Evaluation.objects.all(), request.auth).filter(id=payload.evaluation_id).first()
     if not evaluation:
         return 404, {"message": "Avaliação não encontrada."}
 
@@ -1248,7 +1249,7 @@ def wasi_submit(request, payload: WASISubmitIn) -> tuple[int, dict]:
     if not can_edit_tests(request.auth):
         return 403, {"message": "Você não tem permissão para submeter testes."}
 
-    evaluation = Evaluation.objects.filter(id=payload.evaluation_id).first()
+    evaluation = owned_evaluations(Evaluation.objects.all(), request.auth).filter(id=payload.evaluation_id).first()
     if not evaluation:
         return 404, {"message": "Avaliação não encontrada."}
     if not evaluation.patient or not evaluation.patient.birth_date:
@@ -1323,7 +1324,7 @@ def epq_j_submit(request, payload: EPQJSubmitIn) -> tuple[int, dict]:
     if not can_edit_tests(request.auth):
         return 403, {"message": "Você não tem permissão para submeter testes."}
 
-    evaluation = Evaluation.objects.filter(id=payload.evaluation_id).first()
+    evaluation = owned_evaluations(Evaluation.objects.all(), request.auth).filter(id=payload.evaluation_id).first()
     if not evaluation:
         return 404, {"message": "Avaliação não encontrada."}
 
@@ -1389,7 +1390,7 @@ def etdah_ad_submit(request, payload: ETDAHADSubmitIn) -> tuple[int, dict]:
     if not can_edit_tests(request.auth):
         return 403, {"message": "Você não tem permissão para submeter testes."}
 
-    evaluation = Evaluation.objects.filter(id=payload.evaluation_id).first()
+    evaluation = owned_evaluations(Evaluation.objects.all(), request.auth).filter(id=payload.evaluation_id).first()
     if not evaluation:
         return 404, {"message": "Avaliação não encontrada."}
 
@@ -1460,7 +1461,7 @@ def etdah_ad_submit(request, payload: ETDAHADSubmitIn) -> tuple[int, dict]:
     auth=bearer_auth,
 )
 def etdah_ad_result(request, application_id: int) -> tuple[int, dict]:
-    application = get_test_application_by_id(application_id)
+    application = get_test_application_by_id(application_id, user=request.auth)
     if not application:
         return 404, {"message": "Aplicação de teste não encontrada."}
 
@@ -1506,7 +1507,7 @@ def etdah_pais_submit(request, payload: ETDAHPAISSubmitIn) -> tuple[int, dict]:
     if not can_edit_tests(request.auth):
         return 403, {"message": "Você não tem permissão para submeter testes."}
 
-    evaluation = Evaluation.objects.filter(id=payload.evaluation_id).first()
+    evaluation = owned_evaluations(Evaluation.objects.all(), request.auth).filter(id=payload.evaluation_id).first()
     if not evaluation:
         return 404, {"message": "Avaliação não encontrada."}
 
@@ -1580,7 +1581,7 @@ def etdah_pais_submit(request, payload: ETDAHPAISSubmitIn) -> tuple[int, dict]:
 def etdah_pais_result(request, application_id: int) -> tuple[int, dict]:
     from apps.tests.etdah_pais.interpreters import generate_report
 
-    application = get_test_application_by_id(application_id)
+    application = get_test_application_by_id(application_id, user=request.auth)
     if not application:
         return 404, {"message": "Aplicação de teste não encontrada."}
 
@@ -1643,7 +1644,7 @@ def ravlt_submit(request, payload: RAVLTSubmitIn) -> tuple[int, dict]:
     if not can_edit_tests(request.auth):
         return 403, {"message": "Você não tem permissão para submeter testes."}
 
-    evaluation = Evaluation.objects.filter(id=payload.evaluation_id).first()
+    evaluation = owned_evaluations(Evaluation.objects.all(), request.auth).filter(id=payload.evaluation_id).first()
     if not evaluation:
         return 404, {"message": "Avaliação não encontrada."}
 
@@ -1730,7 +1731,7 @@ def ravlt_submit(request, payload: RAVLTSubmitIn) -> tuple[int, dict]:
     auth=bearer_auth,
 )
 def ravlt_result(request, application_id: int) -> tuple[int, dict]:
-    application = get_test_application_by_id(application_id)
+    application = get_test_application_by_id(application_id, user=request.auth)
     if not application:
         return 404, {"message": "Aplicação de teste não encontrada."}
 
@@ -1798,7 +1799,7 @@ def srs2_submit(request, payload: SRS2SubmitIn) -> tuple[int, dict]:
     if not can_edit_tests(request.auth):
         return 403, {"message": "Você não tem permissão para submeter testes."}
 
-    evaluation = Evaluation.objects.filter(id=payload.evaluation_id).first()
+    evaluation = owned_evaluations(Evaluation.objects.all(), request.auth).filter(id=payload.evaluation_id).first()
     if not evaluation:
         return 404, {"message": "Avaliação não encontrada."}
 
@@ -1872,7 +1873,7 @@ def srs2_submit(request, payload: SRS2SubmitIn) -> tuple[int, dict]:
     auth=bearer_auth,
 )
 def srs2_result(request, application_id: int) -> tuple[int, dict]:
-    application = get_test_application_by_id(application_id)
+    application = get_test_application_by_id(application_id, user=request.auth)
     if not application:
         return 404, {"message": "Aplicação de teste não encontrada."}
 
@@ -1937,7 +1938,7 @@ def scared_submit(request, payload: SCAREDSubmitIn) -> tuple[int, dict]:
     if not can_edit_tests(request.auth):
         return 403, {"message": "Você não tem permissão para submeter testes."}
 
-    evaluation = Evaluation.objects.filter(id=payload.evaluation_id).first()
+    evaluation = owned_evaluations(Evaluation.objects.all(), request.auth).filter(id=payload.evaluation_id).first()
     if not evaluation:
         return 404, {"message": "Avaliação não encontrada."}
 
@@ -2014,7 +2015,7 @@ def scared_submit(request, payload: SCAREDSubmitIn) -> tuple[int, dict]:
     auth=bearer_auth,
 )
 def scared_result(request, application_id: int) -> tuple[int, dict]:
-    application = get_test_application_by_id(application_id)
+    application = get_test_application_by_id(application_id, user=request.auth)
     if not application:
         return 404, {"message": "Aplicação de teste não encontrada."}
 
@@ -2055,7 +2056,7 @@ def bai_submit(request, payload: BAISubmitIn) -> tuple[int, dict]:
     if not can_edit_tests(request.auth):
         return 403, {"message": "Você não tem permissão para submeter testes."}
 
-    evaluation = Evaluation.objects.filter(id=payload.evaluation_id).first()
+    evaluation = owned_evaluations(Evaluation.objects.all(), request.auth).filter(id=payload.evaluation_id).first()
     if not evaluation:
         return 404, {"message": "Avaliação não encontrada."}
 
@@ -2121,7 +2122,7 @@ def bai_submit(request, payload: BAISubmitIn) -> tuple[int, dict]:
     auth=bearer_auth,
 )
 def bai_result(request, application_id: int) -> tuple[int, dict]:
-    application = get_test_application_by_id(application_id)
+    application = get_test_application_by_id(application_id, user=request.auth)
     if not application:
         return 404, {"message": "Aplicação de teste não encontrada."}
 
@@ -2171,7 +2172,7 @@ def cars2_hf_submit(request, payload: CARS2HFSubmitIn) -> tuple[int, dict]:
     if not can_edit_tests(request.auth):
         return 403, {"message": "Você não tem permissão para submeter testes."}
 
-    evaluation = Evaluation.objects.filter(id=payload.evaluation_id).first()
+    evaluation = owned_evaluations(Evaluation.objects.all(), request.auth).filter(id=payload.evaluation_id).first()
     if not evaluation:
         return 404, {"message": "Avaliação não encontrada."}
 
@@ -2237,7 +2238,7 @@ def ssrs_submit(request, payload: SSRSSubmitIn) -> tuple[int, dict]:
     if not can_edit_tests(request.auth):
         return 403, {"message": "Você não tem permissão para submeter testes."}
 
-    evaluation = Evaluation.objects.filter(id=payload.evaluation_id).first()
+    evaluation = owned_evaluations(Evaluation.objects.all(), request.auth).filter(id=payload.evaluation_id).first()
     if not evaluation:
         return 404, {"message": "Avaliação não encontrada."}
 
@@ -2300,7 +2301,7 @@ def mchat_submit(request, payload: MCHATSubmitIn) -> tuple[int, dict]:
     if not can_edit_tests(request.auth):
         return 403, {"message": "Você não tem permissão para submeter testes."}
 
-    evaluation = Evaluation.objects.filter(id=payload.evaluation_id).first()
+    evaluation = owned_evaluations(Evaluation.objects.all(), request.auth).filter(id=payload.evaluation_id).first()
     if not evaluation:
         return 404, {"message": "Avaliação não encontrada."}
 

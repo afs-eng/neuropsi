@@ -4,6 +4,7 @@ from ninja.errors import HttpError
 
 from apps.accounts.models import UserRole
 from apps.api.auth import bearer_auth
+from apps.common.clinical_access import owned_evaluations, owned_patients
 from apps.common.security import rate_limit
 from apps.evaluations.models import Evaluation
 from apps.patients.models import Patient
@@ -205,13 +206,13 @@ def create_invite_endpoint(request, payload: AnamnesisInviteCreateIn):
             "message": "Você não tem permissão para criar convites de anamnese."
         }
     evaluation = (
-        Evaluation.objects.filter(id=payload.evaluation_id)
+        owned_evaluations(Evaluation.objects.all(), request.auth).filter(id=payload.evaluation_id)
         .select_related("patient")
         .first()
     )
     if not evaluation:
         return 404, {"message": "Avaliação não encontrada."}
-    patient = Patient.objects.filter(id=payload.patient_id).first()
+    patient = owned_patients(Patient.objects.all(), request.auth).filter(id=payload.patient_id).first()
     if not patient or patient.id != evaluation.patient_id:
         return 400, {"message": "Paciente inválido para a avaliação informada."}
     template = get_template_by_id(payload.template_id)
@@ -238,7 +239,7 @@ def list_invites_endpoint(request, evaluation_id: int = Query(...)):
         raise HttpError(
             403, "Você não tem permissão para visualizar convites de anamnese."
         )
-    return [serialize_invite(item) for item in get_invites_by_evaluation(evaluation_id)]
+    return [serialize_invite(item) for item in get_invites_by_evaluation(evaluation_id, user=request.auth)]
 
 
 @router.get(
@@ -251,7 +252,7 @@ def get_invite_endpoint(request, invite_id: int):
         raise HttpError(
             403, "Você não tem permissão para visualizar convites de anamnese."
         )
-    invite = get_invite_by_id(invite_id)
+    invite = get_invite_by_id(invite_id, user=request.auth)
     if not invite:
         return 404, {"message": "Convite não encontrado."}
     return 200, serialize_invite(invite)
@@ -265,7 +266,7 @@ def get_invite_endpoint(request, invite_id: int):
 def send_invite_email_endpoint(request, invite_id: int):
     if not can_edit(request.auth):
         raise HttpError(403, "Você não tem permissão para enviar convites.")
-    invite = get_invite_by_id(invite_id)
+    invite = get_invite_by_id(invite_id, user=request.auth)
     if not invite:
         return 404, {"message": "Convite não encontrado."}
     if not invite.recipient_email:
@@ -286,7 +287,7 @@ def send_invite_email_endpoint(request, invite_id: int):
 def send_invite_whatsapp_endpoint(request, invite_id: int):
     if not can_edit(request.auth):
         raise HttpError(403, "Você não tem permissão para enviar convites.")
-    invite = get_invite_by_id(invite_id)
+    invite = get_invite_by_id(invite_id, user=request.auth)
     if not invite:
         return 404, {"message": "Convite não encontrado."}
     if not invite.recipient_phone:
@@ -307,7 +308,7 @@ def send_invite_whatsapp_endpoint(request, invite_id: int):
 def resend_invite_endpoint(request, invite_id: int):
     if not can_edit(request.auth):
         raise HttpError(403, "Você não tem permissão para reenviar convites.")
-    invite = get_invite_by_id(invite_id)
+    invite = get_invite_by_id(invite_id, user=request.auth)
     if not invite:
         return 404, {"message": "Convite não encontrado."}
     send_invite(invite, frontend_base_url())
@@ -322,7 +323,7 @@ def resend_invite_endpoint(request, invite_id: int):
 def cancel_invite_endpoint(request, invite_id: int):
     if not can_edit(request.auth):
         raise HttpError(403, "Você não tem permissão para cancelar convites.")
-    invite = get_invite_by_id(invite_id)
+    invite = get_invite_by_id(invite_id, user=request.auth)
     if not invite:
         return 404, {"message": "Convite não encontrado."}
     return 200, serialize_invite(cancel_invite(invite))
@@ -335,7 +336,7 @@ def list_responses_endpoint(request, evaluation_id: int = Query(...)):
             403, "Você não tem permissão para visualizar respostas de anamnese."
         )
     return [
-        serialize_response(item) for item in get_responses_by_evaluation(evaluation_id)
+        serialize_response(item) for item in get_responses_by_evaluation(evaluation_id, user=request.auth)
     ]
 
 
@@ -349,6 +350,8 @@ def get_current_response_endpoint(request, evaluation_id: int):
         raise HttpError(
             403, "Você não tem permissão para visualizar respostas de anamnese."
         )
+    if not owned_evaluations(Evaluation.objects.all(), request.auth).filter(pk=evaluation_id).exists():
+        return 404, {"message": "Avaliação não encontrada."}
     response = get_current_anamnesis_response_by_evaluation(evaluation_id)
     if not response:
         return 404, {
@@ -371,13 +374,13 @@ def create_response_endpoint(request, payload: AnamnesisResponseCreateIn):
     if not can_edit(request.auth):
         raise HttpError(403, "Você não tem permissão para criar anamneses internas.")
     evaluation = (
-        Evaluation.objects.filter(id=payload.evaluation_id)
+        owned_evaluations(Evaluation.objects.all(), request.auth).filter(id=payload.evaluation_id)
         .select_related("patient")
         .first()
     )
     if not evaluation:
         return 404, {"message": "Avaliação não encontrada."}
-    patient = Patient.objects.filter(id=payload.patient_id).first()
+    patient = owned_patients(Patient.objects.all(), request.auth).filter(id=payload.patient_id).first()
     if not patient or patient.id != evaluation.patient_id:
         return 400, {"message": "Paciente inválido para a avaliação informada."}
     template = get_template_by_id(payload.template_id)
@@ -416,7 +419,7 @@ def get_response_endpoint(request, response_id: int):
         raise HttpError(
             403, "Você não tem permissão para visualizar respostas de anamnese."
         )
-    response = get_response_by_id(response_id)
+    response = get_response_by_id(response_id, user=request.auth)
     if not response:
         return 404, {"message": "Resposta não encontrada."}
     return 200, serialize_response(response)
@@ -432,7 +435,7 @@ def update_response_endpoint(
 ):
     if not can_edit(request.auth):
         raise HttpError(403, "Você não tem permissão para editar anamneses.")
-    response = get_response_by_id(response_id)
+    response = get_response_by_id(response_id, user=request.auth)
     if not response:
         return 404, {"message": "Resposta não encontrada."}
     response = update_response_draft(
@@ -470,7 +473,7 @@ def submit_internal_response_endpoint(
 ):
     if not can_edit(request.auth):
         raise HttpError(403, "Você não tem permissão para enviar anamneses.")
-    response = get_response_by_id(response_id)
+    response = get_response_by_id(response_id, user=request.auth)
     if not response:
         return 404, {"message": "Resposta não encontrada."}
     response = submit_internal_response(
@@ -507,7 +510,7 @@ def review_response_endpoint(
         raise HttpError(
             403, "Você não tem permissão para revisar respostas de anamnese."
         )
-    response = get_response_by_id(response_id)
+    response = get_response_by_id(response_id, user=request.auth)
     if not response:
         return 404, {"message": "Resposta não encontrada."}
     response = review_response(

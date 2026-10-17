@@ -31,7 +31,7 @@ import {
   ,Trash2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { api, resolveApiUrl } from "@/lib/api";
+import { api, resolveApiUrl, getToken } from "@/lib/api";
 import { getEvaluationDeadlineMeta } from "@/lib/evaluation-deadline";
 import { AnamnesisResponseViewer } from "@/components/anamnesis/AnamnesisResponseViewer";
 import { TestWorkflowBadge } from "@/components/tests/TestWorkflowBadge";
@@ -1599,9 +1599,23 @@ export default function EvaluationDetailPage() {
                         </div>
                       </div>
                       <div className="mt-4 flex gap-2">
-                        <a href={resolveApiUrl(doc.file_url)} target="_blank" rel="noreferrer" className="flex-1">
-                          <Button variant="outline" className="w-full text-[10px] font-black uppercase tracking-widest border-slate-100 h-8">Abrir</Button>
-                        </a>
+                        <Button variant="outline" className="flex-1 text-[10px] font-black uppercase tracking-widest border-slate-100 h-8" onClick={async () => {
+                          try {
+                            const response = await fetch(resolveApiUrl(`/api/documents/download/${doc.id}`), {
+                              headers: { Authorization: `Bearer ${getToken() || ""}` },
+                              cache: "no-store",
+                            });
+                            if (!response.ok) throw new Error("Não foi possível baixar o documento.");
+                            const url = URL.createObjectURL(await response.blob());
+                            const link = document.createElement("a");
+                            link.href = url;
+                            link.download = doc.file_name || "documento";
+                            link.click();
+                            setTimeout(() => URL.revokeObjectURL(url), 1000);
+                          } catch {
+                            window.alert("Não foi possível baixar o documento. Verifique seu acesso e tente novamente.");
+                          }
+                        }}>Baixar</Button>
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-300 hover:text-rose-500" onClick={() => handleDeleteDocument(doc.id)}><X className="h-4 w-4" /></Button>
                       </div>
                     </div>

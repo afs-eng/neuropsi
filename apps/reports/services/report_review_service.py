@@ -20,6 +20,8 @@ class ReportReviewService:
 
         missing_sections = []
         for section in sections:
+            if (section.generation_metadata or {}).get("stale"):
+                warnings.append(f"Seção desatualizada: {section.title}.")
             text = (section.content_edited or section.content_generated or "").strip()
             if not text:
                 missing_sections.append(section.key)

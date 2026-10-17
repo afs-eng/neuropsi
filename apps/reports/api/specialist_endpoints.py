@@ -3,6 +3,7 @@ from ninja import Router, Schema
 from pydantic import Field
 
 from apps.api.auth import bearer_auth
+from apps.common.clinical_access import owned_reports
 from apps.reports.models import Report, SpecialistRun
 from apps.reports.services.specialist_run_service import SpecialistRunService
 
@@ -42,7 +43,7 @@ def serialize_run(run):
 @router.post("/{report_id}/specialist-runs", response={202: dict, 400: MessageOut, 403: MessageOut, 404: MessageOut})
 def enqueue_specialists(request, report_id: int, payload: RunRequestIn):
     # Falhar fechado, inclusive para admins de outro proprietário.
-    if not Report.objects.filter(pk=report_id, author=request.auth).exists():
+    if not owned_reports(Report.objects.all(), request.auth).filter(pk=report_id).exists():
         return 404, {"message": "Laudo inexistente."}
     try:
         runs, skipped = SpecialistRunService.enqueue(
@@ -64,7 +65,7 @@ def enqueue_specialists(request, report_id: int, payload: RunRequestIn):
 @router.get("/{report_id}/specialist-runs", response={200: list[dict], 404: MessageOut})
 def list_specialist_runs(request, report_id: int, response: HttpResponse):
     response["Cache-Control"] = "private, no-store"
-    if not Report.objects.filter(pk=report_id, author=request.auth).exists():
+    if not owned_reports(Report.objects.all(), request.auth).filter(pk=report_id).exists():
         return 404, {"message": "Laudo inexistente."}
     runs = SpecialistRun.objects.filter(report_id=report_id, report__author=request.auth).select_related(
         "report", "application__evaluation__patient", "application__instrument",

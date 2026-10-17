@@ -1,13 +1,16 @@
 from django.shortcuts import redirect, get_object_or_404
 from django.http import JsonResponse
+from apps.common.clinical_views import clinical_view
+from apps.common.clinical_access import owned_patients, owned_evaluations
 from apps.patients.models import Patient
 from apps.evaluations.models import Evaluation
 from apps.tests.models.instruments import Instrument
 from apps.tests.models.applications import TestApplication
 
 
+@clinical_view
 def evaluation_list_view(request):
-    evaluations = Evaluation.objects.select_related("patient", "examiner").order_by(
+    evaluations = owned_evaluations(Evaluation.objects.select_related("patient", "examiner"), request.user).order_by(
         "-created_at"
     )
     data = [
@@ -24,18 +27,20 @@ def evaluation_list_view(request):
     return JsonResponse({"evaluations": data})
 
 
+@clinical_view
 def evaluation_create_view(request):
-    patients = Patient.objects.all()
+    patients = owned_patients(Patient.objects.all(), request.user)
 
     if request.method == "POST":
         patient_id = request.POST.get("patient")
         referral_reason = request.POST.get("referral_reason", "")
         evaluation_purpose = request.POST.get("evaluation_purpose", "")
 
-        patient = get_object_or_404(Patient, pk=patient_id)
+        patient = get_object_or_404(owned_patients(Patient.objects.all(), request.user), pk=patient_id)
 
         evaluation = Evaluation.objects.create(
             patient=patient,
+            examiner=request.user,
             referral_reason=referral_reason,
             evaluation_purpose=evaluation_purpose,
             status="collecting_data",
@@ -48,8 +53,9 @@ def evaluation_create_view(request):
     )
 
 
+@clinical_view
 def evaluation_detail_view(request, pk):
-    evaluation = get_object_or_404(Evaluation.objects.select_related("patient"), pk=pk)
+    evaluation = get_object_or_404(owned_evaluations(Evaluation.objects.select_related("patient"), request.user), pk=pk)
     applications = TestApplication.objects.filter(evaluation=evaluation).select_related(
         "instrument"
     )

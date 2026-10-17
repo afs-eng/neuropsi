@@ -371,10 +371,18 @@ class ReportExportService:
 
     @staticmethod
     def generate_html(report: Report):
-        ReportContextService.sync_report_context(report)
+        from apps.reports.models import ReportApprovalSnapshot, ReportStatus
+
+        if getattr(report, "status", None) in {ReportStatus.FINALIZED, ReportStatus.SENT}:
+            snapshot = ReportApprovalSnapshot.objects.filter(report_id=report.pk).first()
+            if snapshot:
+                return snapshot.html
+            if (report.ai_metadata or {}).get("finalization", {}).get("status") == "approved":
+                raise ValueError("Snapshot da aprovação não encontrado.")
+        context = ReportContextService.sync_report_context(report)
         content = str(report.final_text or report.edited_text or "")
         created_at = report.created_at.strftime("%d/%m/%Y") if report.created_at else ""
-        patient_name = report.patient.full_name if report.patient else ""
+        patient_name = (context.get("patient") or {}).get("full_name") or (report.patient.full_name if report.patient else "")
         author_name = ProfessionalIdentityService.author_label(report)
         interested_party = ReportExportService.FIXED_INTERESTED_PARTY
         purpose = ReportExportService.FIXED_PURPOSE
@@ -404,6 +412,18 @@ class ReportExportService:
 
     @classmethod
     def generate_docx_bytes(cls, report: Report) -> bytes:
+        import hashlib
+        from apps.reports.models import ReportApprovalSnapshot, ReportStatus
+
+        if getattr(report, "status", None) in {ReportStatus.FINALIZED, ReportStatus.SENT}:
+            snapshot = ReportApprovalSnapshot.objects.filter(report_id=report.pk).first()
+            if snapshot:
+                document = bytes(snapshot.document)
+                if hashlib.sha256(document).hexdigest() != snapshot.document_sha256:
+                    raise ValueError("A integridade do DOCX aprovado não pôde ser confirmada.")
+                return document
+            if (report.ai_metadata or {}).get("finalization", {}).get("status") == "approved":
+                raise ValueError("Snapshot da aprovação não encontrado.")
         context = ReportContextService.sync_report_context(report)
         context = dict(context) if isinstance(context, dict) else {}
         context["professional"] = {

@@ -295,7 +295,7 @@ class THCPApiTests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(username="thcp-clinico", email="thcp-clinico@example.com", role=UserRole.NEUROPSYCHOLOGIST, password="test-secret")
         self.token = issue_api_token(self.user)
-        self.patient = Patient.objects.create(full_name="Paciente THCP", birth_date=date(2020, 10, 5), sex="F")
+        self.patient = Patient.objects.create(full_name="Paciente THCP", birth_date=date(2020, 10, 5), sex="F", created_by=self.user)
         self.evaluation = Evaluation.objects.create(patient=self.patient, examiner=self.user, start_date=date(2026, 10, 5))
         self.instrument = Instrument.objects.get(code="thcp")
 

@@ -1,5 +1,6 @@
 from ninja import Router, Query
 from ninja.errors import HttpError
+from django.db.models.deletion import ProtectedError
 
 from apps.api.auth import bearer_auth
 from apps.accounts.models import UserRole
@@ -35,9 +36,7 @@ def can_edit_patients(user) -> bool:
 
 
 def can_access_patient(user, patient) -> bool:
-    if user.is_superuser or user.role in ["admin", "reviewer"]:
-        return True
-    return patient.created_by == user
+    return patient.created_by_id == user.pk
 
 
 
@@ -87,7 +86,7 @@ def get_patient_endpoint(request, patient_id: int):
     if not can_view_patients(user):
         raise HttpError(403, "Você não tem permissão para visualizar pacientes.")
 
-    patient = get_patient_by_id(patient_id)
+    patient = get_patient_by_id(patient_id, user=user)
     if not patient:
         return 404, {"message": "Paciente não encontrado."}
 
@@ -127,7 +126,7 @@ def update_patient_endpoint(request, patient_id: int, payload: PatientUpdateIn):
     if not can_edit_patients(user):
         return 403, {"message": "Você não tem permissão para editar pacientes."}
 
-    patient = get_patient_by_id(patient_id)
+    patient = get_patient_by_id(patient_id, user=user)
     if not patient:
         return 404, {"message": "Paciente não encontrado."}
 
@@ -151,13 +150,15 @@ def delete_patient_endpoint(request, patient_id: int) -> tuple[int, dict]:
     if not can_edit_patients(user):
         return 403, {"message": "Você não tem permissão para excluir pacientes."}
 
-    patient = get_patient_by_id(patient_id)
+    patient = get_patient_by_id(patient_id, user=user)
     if not patient:
         return 404, {"message": "Paciente não encontrado."}
 
     if not can_access_patient(user, patient):
         return 403, {"message": "Você não tem permissão para excluir este paciente."}
 
-    delete_patient(patient)
+    try:
+        delete_patient(patient)
+    except ProtectedError:
+        return 403, {"message": "O paciente possui laudo aprovado preservado e não pode ser excluído por este fluxo."}
     return 200, {"message": "Paciente excluído com sucesso."}
-

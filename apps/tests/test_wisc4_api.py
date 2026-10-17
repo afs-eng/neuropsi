@@ -21,6 +21,7 @@ class WISC4SubmitApiTests(TestCase):
         )
         token = issue_api_token(user)
         patient = Patient.objects.create(
+            created_by=user,
             full_name="Paciente WISC",
             birth_date=date(2014, 5, 10),
             sex="F",

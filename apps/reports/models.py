@@ -106,6 +106,19 @@ class Report(models.Model):
         return f"{self.title} - {self.patient.full_name}"
 
 
+class ReportApprovalSnapshot(models.Model):
+    report = models.OneToOneField(Report, on_delete=models.PROTECT, related_name="approval_snapshot")
+    approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    payload = models.JSONField(default=dict)
+    source_sha256 = models.CharField(max_length=64)
+    template_name = models.CharField(max_length=255)
+    template_sha256 = models.CharField(max_length=64)
+    document = models.BinaryField()
+    document_sha256 = models.CharField(max_length=64)
+    html = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
 class ReportSection(models.Model):
     report = models.ForeignKey(
         Report, on_delete=models.CASCADE, related_name="sections", verbose_name="laudo"

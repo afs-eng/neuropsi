@@ -12,6 +12,9 @@ class ClinicalConsistencyAuditService:
 
     @classmethod
     def audit_report(cls, report, context: dict) -> dict:
+        from .report_approval_service import ReportApprovalService
+
+        source_sha256 = ReportApprovalService.fingerprint(report)
         payload = cls._build_audit_payload(report, context)
         result = cls._call_ai(payload)
         normalized = cls._normalize_audit_result(result.get("content") or "")
@@ -23,7 +26,8 @@ class ClinicalConsistencyAuditService:
             "warnings": result.get("warnings") or [],
             "prompt_name": cls.PROMPT_NAME,
         }
-        normalized["status"] = "flagged" if normalized["alerts"] else "ok"
+        normalized["status"] = normalized.get("status") or ("flagged" if normalized["alerts"] else "ok")
+        normalized["source_sha256"] = source_sha256
         return normalized
 
     @classmethod
@@ -47,14 +51,20 @@ class ClinicalConsistencyAuditService:
     @classmethod
     def _normalize_audit_result(cls, content: str) -> dict:
         payload = cls._parse_json(content)
-        alerts = payload.get("alerts") or []
+        if payload.get("status") == "error":
+            return payload
+        alerts = payload.get("alerts")
+        if not isinstance(alerts, list):
+            return cls._invalid_result()
         normalized_alerts = []
         for item in alerts:
             if not isinstance(item, dict):
-                continue
-            severity = str(item.get("severity") or "medium").lower()
+                return cls._invalid_result()
+            severity = str(item.get("severity") or "").lower()
             if severity not in {"high", "medium", "low"}:
-                severity = "medium"
+                return cls._invalid_result()
+            if not isinstance(item.get("issue"), str) or not item["issue"].strip():
+                return cls._invalid_result()
             normalized_alerts.append(
                 {
                     "severity": severity,
@@ -69,34 +79,27 @@ class ClinicalConsistencyAuditService:
     def _parse_json(content: str) -> dict:
         text = str(content or "").strip()
         if not text:
-            return {"alerts": []}
+            return ClinicalConsistencyAuditService._invalid_result()
         try:
             payload = json.loads(text)
-            return payload if isinstance(payload, dict) else {"alerts": []}
+            return payload if isinstance(payload, dict) else ClinicalConsistencyAuditService._invalid_result()
         except json.JSONDecodeError:
             match = re.search(r"\{.*\}", text, re.DOTALL)
             if not match:
-                return {
-                    "alerts": [
-                        {
-                            "severity": "medium",
-                            "section_key": "geral",
-                            "issue": "A auditoria retornou um formato inválido e precisa de revisão manual.",
-                            "suggestion": "Executar novamente a auditoria ou revisar o laudo manualmente.",
-                        }
-                    ]
-                }
+                return ClinicalConsistencyAuditService._invalid_result()
             try:
                 payload = json.loads(match.group(0))
-                return payload if isinstance(payload, dict) else {"alerts": []}
+                return payload if isinstance(payload, dict) else ClinicalConsistencyAuditService._invalid_result()
             except json.JSONDecodeError:
-                return {
-                    "alerts": [
-                        {
-                            "severity": "medium",
-                            "section_key": "geral",
-                            "issue": "A auditoria retornou um JSON inválido e precisa de revisão manual.",
-                            "suggestion": "Executar novamente a auditoria ou revisar o laudo manualmente.",
-                        }
-                    ]
-                }
+                return ClinicalConsistencyAuditService._invalid_result()
+
+    @staticmethod
+    def _invalid_result() -> dict:
+        return {
+            "status": "error",
+            "alerts": [{
+                "severity": "high", "section_key": "geral",
+                "issue": "A auditoria retornou dados vazios ou inválidos.",
+                "suggestion": "Execute novamente a auditoria antes de aprovar o laudo.",
+            }],
+        }

@@ -25,15 +25,31 @@ class SectionWorkflowService:
             if enabled:
                 eligible.append(section_key)
 
-        return eligible
+        return cls.order_sections(eligible)
+
+    @classmethod
+    def order_sections(cls, section_keys: list[str]) -> list[str]:
+        remaining = list(dict.fromkeys(section_keys))
+        eligible = set(remaining)
+        ordered = []
+        while remaining:
+            next_key = next((key for key in remaining if cls.can_generate(key, set(ordered), eligible)), None)
+            if next_key is None:
+                raise ValueError("Há um ciclo nas dependências das seções do laudo.")
+            ordered.append(next_key)
+            remaining.remove(next_key)
+        return ordered
 
     @classmethod
     def get_dependencies(cls, section_key: str) -> list[str]:
         return get_section_dependencies(section_key)
 
     @classmethod
-    def can_generate(cls, section_key: str, generated: set[str]) -> bool:
-        return all(dep in generated for dep in cls.get_dependencies(section_key))
+    def can_generate(cls, section_key: str, generated: set[str], eligible: set[str] | None = None) -> bool:
+        dependencies = set(cls.get_dependencies(section_key))
+        if eligible is not None:
+            dependencies &= eligible
+        return dependencies <= generated
 
     @classmethod
     def get_dependents(cls, section_key: str) -> list[str]:

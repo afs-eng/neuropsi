@@ -1,9 +1,11 @@
 from datetime import date as date_cls
 from ninja import Router, Query
 from ninja.errors import HttpError
+from django.db.models.deletion import ProtectedError
 
 from apps.api.auth import bearer_auth
-from apps.accounts.models import User, UserRole
+from apps.common.clinical_access import owned_patients, owned_evaluations
+from apps.accounts.models import UserRole
 from apps.patients.models import Patient
 from apps.evaluations.models import Evaluation, EvaluationStatus, EvaluationPriority
 from apps.evaluations.selectors import (
@@ -62,9 +64,10 @@ def can_edit_evaluations(user) -> bool:
 
 
 def can_access_evaluation(user, evaluation) -> bool:
-    if user.is_superuser or user.role in ["admin", "reviewer"]:
-        return True
-    return evaluation.examiner == user
+    return (
+        evaluation.patient.created_by_id == user.pk
+        and evaluation.examiner_id in (None, user.pk)
+    )
 
 
 def serialize_evaluation(evaluation, include_details=False):
@@ -218,7 +221,7 @@ def get_evaluation_endpoint(request, evaluation_id: int) -> tuple[int, dict]:
     if not can_view_evaluations(user):
         raise HttpError(403, "Você não tem permissão para visualizar avaliações.")
 
-    evaluation = get_evaluation_by_id(evaluation_id)
+    evaluation = get_evaluation_by_id(evaluation_id, user=user)
     if not evaluation:
         return 404, {"message": "Avaliação não encontrada."}
 
@@ -241,13 +244,13 @@ def create_evaluation_endpoint(
     if not can_edit_evaluations(user):
         return 403, {"message": "Você não tem permissão para criar avaliações."}
 
-    patient = Patient.objects.filter(id=payload.patient_id).first()
+    patient = owned_patients(Patient.objects.all(), user).filter(id=payload.patient_id).first()
     if not patient:
         return 404, {"message": "Paciente não encontrado."}
 
     examiner = user
-    if payload.examiner_id:
-        examiner = User.objects.filter(id=payload.examiner_id, is_active=True).first()
+    if payload.examiner_id and payload.examiner_id != user.pk:
+        return 403, {"message": "Compartilhamento entre profissionais ainda não está habilitado."}
 
     evaluation = create_evaluation(
         patient=patient,
@@ -279,7 +282,7 @@ def update_evaluation_endpoint(
     if not can_edit_evaluations(user):
         return 403, {"message": "Você não tem permissão para editar avaliações."}
 
-    evaluation = get_evaluation_by_id(evaluation_id)
+    evaluation = get_evaluation_by_id(evaluation_id, user=user)
     if not evaluation:
         return 404, {"message": "Avaliação não encontrada."}
 
@@ -289,19 +292,16 @@ def update_evaluation_endpoint(
     data = payload.dict(exclude_unset=True)
 
     if "patient_id" in data:
-        patient = Patient.objects.filter(id=data["patient_id"]).first()
+        patient = owned_patients(Patient.objects.all(), user).filter(id=data["patient_id"]).first()
         if not patient:
             return 404, {"message": "Paciente não encontrado."}
         data["patient"] = patient
         del data["patient_id"]
 
     if "examiner_id" in data:
-        examiner = None
-        if data["examiner_id"]:
-            examiner = User.objects.filter(
-                id=data["examiner_id"], is_active=True
-            ).first()
-        data["examiner"] = examiner
+        if data["examiner_id"] not in (None, user.pk):
+            return 403, {"message": "Compartilhamento entre profissionais ainda não está habilitado."}
+        data["examiner"] = user if data["examiner_id"] else None
         del data["examiner_id"]
 
     evaluation = update_evaluation(evaluation, **data)
@@ -319,14 +319,17 @@ def delete_evaluation_endpoint(request, evaluation_id: int) -> tuple[int, dict]:
     if not can_edit_evaluations(user):
         return 403, {"message": "Você não tem permissão para excluir avaliações."}
 
-    evaluation = get_evaluation_by_id(evaluation_id)
+    evaluation = get_evaluation_by_id(evaluation_id, user=user)
     if not evaluation:
         return 404, {"message": "Avaliação não encontrada."}
 
     if not can_access_evaluation(user, evaluation):
         return 403, {"message": "Você não tem permissão para excluir esta avaliação."}
 
-    delete_evaluation(evaluation)
+    try:
+        delete_evaluation(evaluation)
+    except ProtectedError:
+        return 403, {"message": "A avaliação possui laudo aprovado preservado e não pode ser excluída por este fluxo."}
     return 200, {"message": "Avaliação excluída com sucesso."}
 
 
@@ -342,7 +345,7 @@ def create_progress_entry_endpoint(
         return 403, {"message": "Você não tem permissão para criar evoluções."}
 
     evaluation = (
-        Evaluation.objects.filter(id=payload.evaluation_id)
+        owned_evaluations(Evaluation.objects.all(), request.auth).filter(id=payload.evaluation_id)
         .select_related("patient")
         .first()
     )
@@ -353,11 +356,8 @@ def create_progress_entry_endpoint(
 
     professional = request.auth
     if payload.professional_id:
-        professional = User.objects.filter(
-            id=payload.professional_id, is_active=True
-        ).first()
-        if not professional:
-            return 404, {"message": "Profissional não encontrado."}
+        if payload.professional_id != request.auth.pk:
+            return 403, {"message": "Não é permitido atribuir evolução a outro usuário."}
 
     entry = create_progress_entry(
         evaluation=evaluation,
@@ -385,7 +385,7 @@ def create_progress_entry_endpoint(
 def list_progress_entries_endpoint(request, evaluation_id: int) -> list[dict]:
     if not can_view_evaluations(request.auth):
         raise HttpError(403, "Você não tem permissão para visualizar evoluções.")
-    evaluation = Evaluation.objects.filter(id=evaluation_id).first()
+    evaluation = get_evaluation_by_id(evaluation_id, user=request.auth)
     if not evaluation or not can_access_evaluation(request.auth, evaluation):
         raise HttpError(403, "Você não tem permissão para acessar esta avaliação.")
     return [
@@ -405,20 +405,15 @@ def update_progress_entry_endpoint(
     if not can_edit_evaluations(request.auth):
         return 403, {"message": "Você não tem permissão para editar evoluções."}
 
-    entry = get_progress_entry_by_id(entry_id)
+    entry = get_progress_entry_by_id(entry_id, user=request.auth)
     if not entry:
         return 404, {"message": "Evolução não encontrada."}
 
     data = payload.dict(exclude_unset=True)
     if "professional_id" in data:
-        professional = (
-            request.auth
-            if not data["professional_id"]
-            else User.objects.filter(id=data["professional_id"], is_active=True).first()
-        )
-        if not professional:
-            return 404, {"message": "Profissional não encontrado."}
-        data["professional"] = professional
+        if data["professional_id"] not in (None, request.auth.pk):
+            return 403, {"message": "Não é permitido atribuir evolução a outro usuário."}
+        data["professional"] = request.auth
         del data["professional_id"]
 
     updated = update_progress_entry(entry, **data)
@@ -434,7 +429,7 @@ def delete_progress_entry_endpoint(request, entry_id: int) -> tuple[int, dict]:
     if not can_edit_evaluations(request.auth):
         return 403, {"message": "Você não tem permissão para excluir evoluções."}
 
-    entry = get_progress_entry_by_id(entry_id)
+    entry = get_progress_entry_by_id(entry_id, user=request.auth)
     if not entry:
         return 404, {"message": "Evolução não encontrada."}
 
