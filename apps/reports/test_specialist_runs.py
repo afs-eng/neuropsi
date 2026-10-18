@@ -20,6 +20,7 @@ from apps.reports.api.specialist_endpoints import router
 from apps.reports.models import Report, ReportSection, SpecialistRun
 from apps.reports.services.specialist_agent_service import SpecialistAgentService
 from apps.reports.services.specialist_contracts import SpecialistOutput, validate_evidence
+from apps.reports.services.specialist_errors import SpecialistGenerationError
 from apps.reports.services.specialist_input_service import SpecialistInputService
 from apps.reports.services.specialist_run_service import SpecialistRunService
 from apps.tests.models import Instrument, TestApplication
@@ -320,8 +321,10 @@ class SpecialistRunTests(TestCase):
         run = self.enqueue()
         wrong = {**VALID_OUTPUT, "findings": [{"statement": "Resultado sem suporte suficiente.", "evidence_ids": ["/made_up"]}]}
         model = FunctionModel(lambda messages, info: ModelResponse(parts=[TextPart(json.dumps(wrong))]))
-        with patch("pydantic_ai.models.ALLOW_MODEL_REQUESTS", False), self.assertRaises(ValueError):
+        with patch("pydantic_ai.models.ALLOW_MODEL_REQUESTS", False), self.assertRaises(SpecialistGenerationError) as caught:
             SpecialistAgentService.generate(run, model_override=model)
+        self.assertEqual(caught.exception.code, "output_validation_failed")
+        self.assertEqual(caught.exception.diagnostics["validation_code"], "evidence_not_found")
 
     def test_invalid_model_json_has_bounded_retry_and_never_becomes_text_fallback(self):
         run = self.enqueue()

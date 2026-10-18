@@ -11,6 +11,7 @@ type Run = {
   id: number; application_id: number; instrument_code: string; model: string; provider: string;
   status: string; is_current: boolean; source_sha256: string; output_sha256: string;
   error_code: string; review_is_current: boolean; reviews: Review[];
+  usage?: { finish_reason?: string; validation_code?: string };
   output: { findings?: { section?: string; statement: string; evidence_ids: string[] }[]; limitations?: string[]; review_questions?: string[] };
   evidence: Record<string, unknown>;
 };
@@ -24,6 +25,28 @@ const BPA2_SECTION_TITLES: Record<string, string> = {
   introducao: "Interpretação e Observações Clínicas", ac: "Atenção Concentrada (AC)",
   ad: "Atenção Dividida (AD)", aa: "Atenção Alternada (AA)", ag: "Atenção Geral (AG)",
   analise_clinica: "Análise Clínica",
+};
+
+const GENERATION_ERRORS: Record<string, string> = {
+  generation_failed: "Falha não classificada. Este registro não contém detalhes suficientes para identificar a causa.",
+  output_validation_failed: "A resposta não passou na validação de evidências ou redação.",
+  output_schema_invalid: "O modelo não retornou a estrutura JSON exigida após as tentativas permitidas.",
+  output_truncated: "A resposta foi interrompida pelo limite de saída; nenhum texto parcial foi aceito.",
+  provider_refusal: "O provedor recusou ou filtrou a resposta.",
+  provider_timeout: "O modelo não respondeu dentro do tempo permitido.",
+  provider_connection: "O worker não conseguiu conectar ao servidor do modelo.",
+  provider_rate_limit: "O provedor limitou as requisições.",
+  provider_auth: "O provedor recusou a autenticação.",
+  provider_error: "O servidor do modelo retornou um erro HTTP.",
+  usage_limit_exceeded: "A execução excedeu o limite de requisições ou tokens permitido.",
+};
+
+const VALIDATION_ERRORS: Record<string, string> = {
+  evidence_not_found: "Foi citada uma evidência inexistente.",
+  ungrounded_number: "Um número foi citado sem suporte nas evidências do achado.",
+  bpa2_semantics: "A redação confundiu escore/AG ou mencionou outro instrumento.",
+  bpa2_missing_evidence: "Faltaram evidências obrigatórias de um componente ou da síntese.",
+  bpa2_score_text: "O parágrafo não apresentou corretamente escore em pontos, percentil ou classificação.",
 };
 
 export function SpecialistPilotPanel({ reportId }: { reportId: string | number }) {
@@ -144,6 +167,8 @@ export function SpecialistPilotPanel({ reportId }: { reportId: string | number }
             </summary>
             <p className="mt-2 text-xs text-slate-500">Execução #{run.id} · provedor: {run.provider} · modelo: {run.model}</p>
             {run.error_code && <p className="mt-2 text-sm text-red-700">Motivo técnico: {run.error_code}. Solicitar novamente a mesma execução não dispara uma repetição.</p>}
+            {GENERATION_ERRORS[run.error_code] && <p className="mt-1 text-sm text-red-700">{GENERATION_ERRORS[run.error_code]}</p>}
+            {run.usage?.validation_code && VALIDATION_ERRORS[run.usage.validation_code] && <p className="mt-1 text-sm text-red-700">{VALIDATION_ERRORS[run.usage.validation_code]} Código: {run.usage.validation_code}.</p>}
             {!run.is_current && <p className="mt-2 text-sm text-amber-800">Dados ou versão do especialista alterados: solicite um novo rascunho para revisar a configuração atual. O histórico anterior foi preservado.</p>}
             {(run.output.findings || []).map((finding, index) => (
               <div key={index} className="mt-3 text-sm">

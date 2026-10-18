@@ -16,7 +16,7 @@ curadoria e homologação pela profissional antes de uso clínico em produção.
 
 ## Ativação controlada
 
-### BPA-2: redação estruturada por componentes (versão `pydantic-bpa2-2`)
+### BPA-2: redação estruturada por componentes (versão `pydantic-bpa2-3`)
 
 O especialista usa o modelo escolhido em `SPECIALIST_AI_MODEL` (inclusive o
 `qwen3.5:9b` local), sem fine-tuning ou escolha automática de modelo. As instruções
@@ -53,6 +53,36 @@ reutilizar a antiga. Processar com `--once --report-id ID` e atualizar o painel.
 Se houver jobs antigos ainda na fila, podem ser marcados como desatualizados antes
 do novo job; `--once` processa no máximo um job por chamada. Nenhum resultado é
 inserido automaticamente no texto final ou DOCX, mesmo após aprovação do piloto.
+
+#### Diagnóstico de falhas sem expor dados clínicos
+
+`HTTP 200` confirma a resposta do servidor, não sua validade clínica/estrutural.
+Uma execução pode fazer duas chamadas e falhar porque o modelo não corrigiu o
+contrato. A versão 3 também corrige duas rejeições indevidas: escore citado pelo
+ID classificado em vez do ID calculado, quando os valores são iguais, e a redação
+natural `percentil de X`. Escores divergentes e ausência de evidência do componente
+continuam bloqueados. Nenhum limite de tokens, tempo ou requisições foi aumentado.
+
+Novas falhas persistem apenas contagens de uso e metadados allowlisted em
+`usage_payload`: `finish_reason` e `validation_code`. Não se guardam resposta
+rejeitada, prompts, stack trace ou texto de exceções. A captura de mensagens é
+temporária, em memória, sem ativar tracing. O worker imprime os códigos seguros;
+o painel os traduz para mensagens em português.
+
+Principais códigos: `output_schema_invalid`, `output_validation_failed`,
+`output_truncated`, `provider_refusal`, `provider_timeout`, `provider_connection`,
+`provider_rate_limit`, `provider_auth`, `provider_error`, `usage_limit_exceeded`.
+Falhas internas não classificadas permanecem `generation_failed`. Em validação,
+`validation_code` distingue evidência inexistente, número sem suporte e regras
+de redação/evidência do BPA-2. Uma resposta marcada como truncada ou filtrada não
+é aceita, mesmo que contenha JSON aparentemente válido.
+
+Falhas antigas com `generation_failed` não têm seu motivo recuperável a partir
+dos metadados anteriores. Para testar a correção BPA-2, atualizar backend/frontend
+e worker local, solicitar um novo rascunho da versão 3 em caso sintético e processar
+explicitamente. O job falho anterior não é apagado nem repetido; não há retry
+automático, mutation de status ou migration nova. Só uma nova execução pode
+confirmar o motivo de uma falha reproduzida no ambiente real.
 
 ### Ollama Windows + worker no WSL (piloto local)
 

@@ -5,6 +5,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator, model_validator
 
 from .bpa2_specialist import BPA2_SECTIONS, validate_bpa2_findings
+from .specialist_errors import SpecialistValidationError
 
 ReviewText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=3, max_length=1500)]
 
@@ -54,7 +55,7 @@ def validate_evidence(output: SpecialistOutput, facts: dict, instrument_code: st
         output = BPA2SpecialistOutput.model_validate(output.model_dump())
     for finding in output.findings:
         if any(evidence_id not in facts for evidence_id in finding.evidence_ids):
-            raise ValueError("O especialista citou evidência inexistente.")
+            raise SpecialistValidationError("evidence_not_found", "O especialista citou evidência inexistente.")
         evidence_text = " ".join(str(facts[key]) for key in finding.evidence_ids)
         allowed_numbers = set(re.findall(r"-?\d+(?:[.,]\d+)?", evidence_text.replace(",", ".")))
         statement = finding.statement
@@ -63,6 +64,6 @@ def validate_evidence(output: SpecialistOutput, facts: dict, instrument_code: st
                 statement = re.sub(re.escape(label), "instrumento", statement, flags=re.IGNORECASE)
         stated_numbers = set(re.findall(r"-?\d+(?:[.,]\d+)?", statement.replace(",", ".")))
         if not stated_numbers.issubset(allowed_numbers):
-            raise ValueError("O achado contém número sem suporte nas evidências citadas.")
+            raise SpecialistValidationError("ungrounded_number", "O achado contém número sem suporte nas evidências citadas.")
     if instrument_code == "bpa2":
         validate_bpa2_findings(output, facts)

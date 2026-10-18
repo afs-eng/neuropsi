@@ -1,11 +1,13 @@
 import re
 
+from .specialist_errors import SpecialistValidationError
 
-BPA2_VERSION = "pydantic-bpa2-2"
+
+BPA2_VERSION = "pydantic-bpa2-3"
 BPA2_SECTIONS = ("introducao", "ac", "ad", "aa", "ag", "analise_clinica")
 
 BPA2_INSTRUCTIONS = """
-BPA-2 — modelo de redação por componentes, versão 2.
+BPA-2 — modelo de redação por componentes, versão 3.
 Siga a organização abaixo, não uma conclusão fixa. Redija em português técnico,
 com parágrafos coesos e proporcionais aos resultados, sem listas de números soltos.
 Retorne exatamente seis findings, nesta ordem, usando o campo section:
@@ -37,6 +39,9 @@ significa, isoladamente, atenção preservada. Não recalcule escores nem normas
 Copie a classificação fornecida, sem reclassificar. Cite em evidence_ids os
 identificadores de TODOS os escores/percentis/classificações usados em cada
 componente. Se um desses dados estiver ausente, informe a lacuna, sem inventá-lo.
+Para escores, são aceitos os IDs calculado ou classificado equivalentes indicados
+em score_evidence_alternatives; basta citar um deles. Prefira a forma explícita
+'X pontos, percentil Y, classificação Z', sem trocar os valores entre si.
 Na síntese, cite os percentis/classificações disponíveis de todas as modalidades
 discutidas. Não use classificações automáticas de pontos fortes como conclusão
 absoluta: destaque relativo não é desempenho superior à média normativa.
@@ -68,6 +73,7 @@ diretrizes do payload'. A saída é rascunho, não laudo final ou diagnóstico.
 def bpa2_reading_guide(facts: dict) -> dict:
     """Mapeia fatos existentes; não recalcula nem cria escores/normas."""
     components = {}
+    score_alternatives = {}
     for code in ("ac", "ad", "aa", "ag"):
         rows = [key.rsplit("/", 1)[0] for key, value in facts.items()
                 if re.fullmatch(r"/classified_payload/subtestes/\d+/codigo", key) and value == code]
@@ -86,28 +92,33 @@ def bpa2_reading_guide(facts: dict) -> dict:
         }.items():
             refs[label] = next((key for key in candidates if key in facts), None)
         components[code] = refs
+        score_alternatives[code] = [key for key in (computed_score, classified_score) if key in facts]
     return {
         "total_significa": "escore calculado em pontos; não é quantidade de itens",
         "ag_significa": "medida agregada de AC, AD e AA; não é subteste independente",
         "component_evidence_ids": components,
+        "score_evidence_alternatives": score_alternatives,
     }
 
 
 def validate_bpa2_findings(output, facts: dict) -> None:
-    guide = bpa2_reading_guide(facts)["component_evidence_ids"]
+    reading_guide = bpa2_reading_guide(facts)
+    guide = reading_guide["component_evidence_ids"]
     for finding in output.findings:
         statement = finding.statement.casefold()
         if re.search(r"\b\d+\s+itens\b|\bsubteste\s+(?:de\s+)?atenção geral\b|\b(?:wais|wisc)\b", statement):
-            raise ValueError("BPA-2: redação confunde escore/AG ou inclui outro instrumento.")
+            raise SpecialistValidationError("bpa2_semantics", "BPA-2: redação confunde escore/AG ou inclui outro instrumento.")
         codes = (finding.section,) if finding.section in guide else (
             ("ac", "ad", "aa", "ag") if finding.section == "analise_clinica" else ()
         )
         for code in codes:
             refs = guide[code]
             labels = ("percentil", "classificacao") if finding.section == "analise_clinica" else tuple(refs)
-            required = {refs[label] for label in labels if refs[label] is not None}
-            if not required.issubset(finding.evidence_ids):
-                raise ValueError("BPA-2: faltam evidências específicas do componente ou da síntese.")
+            required = {refs[label] for label in labels if label != "escore_pontos" and refs[label] is not None}
+            score_ids = reading_guide["score_evidence_alternatives"][code]
+            score_missing = finding.section in guide and score_ids and not set(score_ids).intersection(finding.evidence_ids)
+            if not required.issubset(finding.evidence_ids) or score_missing:
+                raise SpecialistValidationError("bpa2_missing_evidence", "BPA-2: faltam evidências específicas do componente ou da síntese.")
             if finding.section in guide:
                 for label in ("escore_pontos", "percentil", "classificacao"):
                     key = refs[label]
@@ -117,8 +128,8 @@ def validate_bpa2_findings(output, facts: dict) -> None:
                     if label == "escore_pontos":
                         pattern = rf"(?<![\d.,]){value}\s+pontos\b"
                     elif label == "percentil":
-                        pattern = rf"\bpercentil\s+{value}(?!\d|[.,]\d)"
+                        pattern = rf"\bpercentil\s+(?:de\s+)?{value}(?!\d|[.,]\d)"
                     else:
                         pattern = rf"(?<!\w){value}(?!\w|\s+(?:inferior|superior)\b)"
                     if not re.search(pattern, statement):
-                        raise ValueError("BPA-2: componente não apresenta escore em pontos, percentil ou classificação fornecidos.")
+                        raise SpecialistValidationError("bpa2_score_text", "BPA-2: componente não apresenta escore em pontos, percentil ou classificação fornecidos.")

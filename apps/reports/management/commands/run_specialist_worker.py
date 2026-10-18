@@ -6,6 +6,7 @@ from django.db import DatabaseError
 from apps.reports.models import SpecialistRun
 
 from apps.reports.services.specialist_run_service import SpecialistRunService
+from apps.reports.services.specialist_errors import VALIDATION_CODES
 
 
 class Command(BaseCommand):
@@ -41,7 +42,11 @@ class Command(BaseCommand):
                 close_old_connections()
                 run = SpecialistRunService.process_next(report_id=options["report_id"])
                 if run is not None:
-                    self.stdout.write(f"specialist_run={run.pk} status={run.status}")
+                    details = f" error_code={run.error_code}" if run.error_code else ""
+                    validation_code = (run.usage_payload or {}).get("validation_code")
+                    if validation_code in VALIDATION_CODES:
+                        details += f" validation_code={validation_code}"
+                    self.stdout.write(f"specialist_run={run.pk} status={run.status}{details}")
                 if options["once"]:
                     return
                 if run is None:

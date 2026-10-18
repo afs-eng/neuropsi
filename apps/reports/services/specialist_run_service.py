@@ -12,6 +12,9 @@ from apps.tests.models import TestApplication
 from .specialist_agent_service import SpecialistAgentService
 from .bpa2_specialist import BPA2_VERSION
 from .specialist_contracts import specialist_output_model, validate_evidence
+from .specialist_errors import (
+    SpecialistGenerationError, SpecialistValidationError, generation_error_code, safe_diagnostics,
+)
 from .specialist_input_service import SpecialistInputService
 from .specialist_instructions import INSTRUMENT_INSTRUCTIONS
 
@@ -173,9 +176,14 @@ class SpecialistRunService:
                 validate_evidence(parsed, run.input_payload["facts"], run.instrument_code)
                 output = parsed.model_dump()
                 status = SpecialistRun.Status.NEEDS_REVIEW if cls.is_current(cls._load(run_id)) else SpecialistRun.Status.STALE
-        except Exception:
+        except SpecialistGenerationError as exc:
+            error = exc.code
+            usage = exc.diagnostics
+            output = {}
+        except Exception as exc:
             # Exceções do SDK podem conter dados clínicos ou credenciais: não persistir/logar o texto.
-            error = "generation_failed"
+            error = generation_error_code(exc)
+            usage = safe_diagnostics(validation_code=exc.code if isinstance(exc, SpecialistValidationError) else None)
             output = {}
         SpecialistRun.objects.filter(pk=run_id, status=SpecialistRun.Status.RUNNING).update(
             status=status, output_payload=output, usage_payload=usage,

@@ -98,7 +98,7 @@ class SpecialistOllamaTests(TestCase):
         with self.mock_client(unavailable):
             result = SpecialistRunService.process_next(report_id=self.report.pk)
         self.assertEqual(result.status, "failed")
-        self.assertEqual(result.error_code, "generation_failed")
+        self.assertEqual(result.error_code, "provider_connection")
         self.assertEqual(calls, ["http://127.0.0.1:11434/v1/chat/completions"])
         self.assertEqual(result.output_payload, {})
 

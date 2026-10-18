@@ -100,6 +100,23 @@ class BPA2ContractTests(SimpleTestCase):
         with self.assertRaises(ValueError):
             validate_evidence(BPA2SpecialistOutput.model_validate(data), facts, "bpa2")
 
+    def test_equivalent_classified_score_evidence_is_accepted(self):
+        facts = synthetic_facts()
+        data = synthetic_output(facts)
+        for index, code in enumerate(CODES):
+            finding = data["findings"][index + 1]
+            finding["evidence_ids"] = [
+                f"/classified_payload/subtestes/{index}/total" if key == f"/computed_payload/{code}/total" else key
+                for key in finding["evidence_ids"]
+            ]
+        validate_evidence(BPA2SpecialistOutput.model_validate(data), facts, "bpa2")
+
+    def test_natural_percentile_wording_is_accepted_without_changing_values(self):
+        facts = synthetic_facts()
+        data = synthetic_output(facts)
+        data["findings"][1]["statement"] = data["findings"][1]["statement"].replace("percentil 10", "percentil de 10")
+        validate_evidence(BPA2SpecialistOutput.model_validate(data), facts, "bpa2")
+
     def test_synthesis_cannot_hide_ac_and_ag_evidence(self):
         facts = synthetic_facts()
         data = synthetic_output(facts)

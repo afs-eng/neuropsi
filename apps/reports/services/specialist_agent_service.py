@@ -4,14 +4,22 @@ from contextlib import AsyncExitStack
 
 from django.conf import settings
 from openai import AsyncOpenAI, DefaultAsyncHttpxClient
-from pydantic_ai import Agent, ModelRetry, NativeOutput, PromptedOutput
+from pydantic_ai import Agent, ModelRetry, NativeOutput, PromptedOutput, capture_run_messages
+from pydantic_ai.messages import ModelResponse
 from pydantic_ai.models.openai import OpenAIChatModel, OpenAIChatModelSettings
 from pydantic_ai.providers.ollama import OllamaProvider
 from pydantic_ai.providers.openai import OpenAIProvider
-from pydantic_ai.usage import UsageLimits
+from pydantic_ai.usage import RunUsage, UsageLimits
 
 from .specialist_contracts import specialist_output_model, validate_evidence
+from .specialist_errors import SpecialistGenerationError, SpecialistValidationError, generation_error_code
 from .specialist_instructions import BASE_INSTRUCTIONS, INSTRUMENT_INSTRUCTIONS
+
+
+def _last_finish_reason(messages, request_count):
+    responses = [message for message in messages if isinstance(message, ModelResponse)]
+    # Apenas respostas desta execução; falhas de transporte são tratadas à parte.
+    return responses[-1].finish_reason if responses and len(responses) == request_count else None
 
 
 class SpecialistAgentService:
@@ -64,20 +72,55 @@ class SpecialistAgentService:
                 # Não encaminhar dados clínicos a plataformas de tracing.
                 model_settings=model_settings,
             )
+            usage = RunUsage()
+            last_validation_code = None
+            last_validation_request = None
             if run.instrument_code == "bpa2":
                 @agent.output_validator
                 def validate_bpa2_output(output):
+                    nonlocal last_validation_code, last_validation_request
+                    last_validation_code = None
+                    last_validation_request = usage.requests
                     try:
                         validate_evidence(output, run.input_payload["facts"], run.instrument_code)
                     except ValueError as exc:
+                        if isinstance(exc, SpecialistValidationError):
+                            last_validation_code = exc.code
                         raise ModelRetry(str(exc)) from None
                     return output
-            async with asyncio.timeout(settings.SPECIALIST_AI_TIMEOUT * 2 + 30):
-                result = await agent.run(
-                    json.dumps(run.input_payload, ensure_ascii=False),
-                    usage_limits=UsageLimits(request_limit=2, output_tokens_limit=4000),
-                )
-        validate_evidence(result.output, run.input_payload["facts"], run.instrument_code)
+            with capture_run_messages() as messages:
+                try:
+                    async with asyncio.timeout(settings.SPECIALIST_AI_TIMEOUT * 2 + 30):
+                        result = await agent.run(
+                            json.dumps(run.input_payload, ensure_ascii=False),
+                            usage_limits=UsageLimits(request_limit=2, output_tokens_limit=4000),
+                            usage=usage,
+                        )
+                    finish_reason = _last_finish_reason(messages, usage.requests)
+                    if finish_reason in {"length", "content_filter"}:
+                        raise SpecialistGenerationError(
+                            "output_truncated" if finish_reason == "length" else "provider_refusal",
+                            usage=usage, finish_reason=finish_reason,
+                        )
+                    validate_evidence(result.output, run.input_payload["facts"], run.instrument_code)
+                except SpecialistGenerationError:
+                    raise
+                except Exception as exc:
+                    finish_reason = _last_finish_reason(messages, usage.requests)
+                    validation_code = exc.code if isinstance(exc, SpecialistValidationError) else (
+                        last_validation_code if last_validation_request == usage.requests else None
+                    )
+                    code = generation_error_code(exc, finish_reason=finish_reason, validation_code=validation_code)
+                    if code in {
+                        "provider_timeout", "provider_connection", "provider_auth", "provider_rate_limit",
+                        "provider_error", "usage_limit_exceeded",
+                    }:
+                        finish_reason = None
+                    if code != "output_validation_failed":
+                        validation_code = None
+                    raise SpecialistGenerationError(
+                        code, usage=usage, finish_reason=finish_reason, validation_code=validation_code,
+                    ) from None
         usage = result.usage
         return result.output.model_dump(), {
             "input_tokens": usage.input_tokens,
