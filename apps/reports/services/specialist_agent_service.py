@@ -4,13 +4,13 @@ from contextlib import AsyncExitStack
 
 from django.conf import settings
 from openai import AsyncOpenAI, DefaultAsyncHttpxClient
-from pydantic_ai import Agent, NativeOutput, PromptedOutput
+from pydantic_ai import Agent, ModelRetry, NativeOutput, PromptedOutput
 from pydantic_ai.models.openai import OpenAIChatModel, OpenAIChatModelSettings
 from pydantic_ai.providers.ollama import OllamaProvider
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.usage import UsageLimits
 
-from .specialist_contracts import SpecialistOutput, validate_evidence
+from .specialist_contracts import specialist_output_model, validate_evidence
 from .specialist_instructions import BASE_INSTRUCTIONS, INSTRUMENT_INSTRUCTIONS
 
 
@@ -32,6 +32,7 @@ class SpecialistAgentService:
         ):
             raise ValueError("Configuração do provedor mudou; execução bloqueada.")
         local = run.provider_name == "ollama"
+        output_model = specialist_output_model(run.instrument_code)
         model_settings = OpenAIChatModelSettings(
             temperature=0.1, max_tokens=settings.SPECIALIST_AI_MAX_TOKENS,
         )
@@ -58,11 +59,19 @@ class SpecialistAgentService:
                 model,
                 name=f"specialist_{run.instrument_code}",
                 instructions=f"{BASE_INSTRUCTIONS}\n{instructions}",
-                output_type=NativeOutput(SpecialistOutput) if local else PromptedOutput(SpecialistOutput),
+                output_type=NativeOutput(output_model) if local else PromptedOutput(output_model),
                 retries=1,
                 # Não encaminhar dados clínicos a plataformas de tracing.
                 model_settings=model_settings,
             )
+            if run.instrument_code == "bpa2":
+                @agent.output_validator
+                def validate_bpa2_output(output):
+                    try:
+                        validate_evidence(output, run.input_payload["facts"], run.instrument_code)
+                    except ValueError as exc:
+                        raise ModelRetry(str(exc)) from None
+                    return output
             async with asyncio.timeout(settings.SPECIALIST_AI_TIMEOUT * 2 + 30):
                 result = await agent.run(
                     json.dumps(run.input_payload, ensure_ascii=False),

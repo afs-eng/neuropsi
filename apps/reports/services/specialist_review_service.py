@@ -6,7 +6,7 @@ from django.db import transaction
 from apps.common.clinical_access import owned_reports
 from apps.reports.models import Report, ReportStatus, SpecialistReview, SpecialistRun
 from apps.reports.services.report_approval_service import ReportApprovalService
-from apps.reports.services.specialist_contracts import SpecialistOutput, validate_evidence
+from apps.reports.services.specialist_contracts import specialist_output_model, validate_evidence
 from apps.reports.services.specialist_run_service import SpecialistRunService
 
 
@@ -39,7 +39,7 @@ class SpecialistReviewService:
                 raise ValueError("O rascunho mudou. Atualize o painel antes de revisar.")
             if decision == SpecialistReview.Decision.APPROVED:
                 try:
-                    output = SpecialistOutput.model_validate(run.output_payload)
+                    output = specialist_output_model(run.instrument_code).model_validate(run.output_payload)
                     validate_evidence(output, run.input_payload.get("facts", {}), run.instrument_code)
                 except ValueError:
                     raise ValueError("O rascunho não passou na validação de evidências.") from None

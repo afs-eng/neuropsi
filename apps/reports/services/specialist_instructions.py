@@ -1,3 +1,6 @@
+from .bpa2_specialist import BPA2_INSTRUCTIONS
+
+
 BASE_INSTRUCTIONS = """
 Você auxilia uma psicóloga na redação de rascunhos técnicos em português do Brasil.
 Sua função é interpretar somente o instrumento e a aplicação recebidos.
@@ -21,7 +24,7 @@ INSTRUMENT_INSTRUCTIONS = {
     "wisc4": "WISC-IV: diferencie QI total, índices fatoriais e subtestes. Não infira discrepâncias significativas sem análise fornecida. Memória operacional não equivale a aprendizagem verbal episódica. Subtestes não bastam para afirmar preservação ou prejuízo executivo global.",
     "wais3": "WAIS-III: diferencie quocientes intelectuais, índices fatoriais e subtestes. Não atribua significância a discrepâncias sem análise fornecida, nem generalize índices para diagnósticos.",
     "wasi": "WASI: distinga QI verbal, de execução e QI total de duas ou quatro provas. Não misture estimativas diferentes nem extrapole esta avaliação abreviada para domínios não investigados.",
-    "bpa2": "BPA-2: diferencie atenção concentrada, dividida, alternada e geral. Use os percentis e classificações fornecidos, sem concluir TDAH a partir do desempenho atencional.",
+    "bpa2": BPA2_INSTRUCTIONS,
     "ravlt": "RAVLT: diferencie aquisição, evocação imediata/tardia, reconhecimento e interferências. Não equipare baixa evocação a falha de armazenamento sem evidências convergentes e métricas fornecidas.",
     "fdt": "FDT: distinga leitura/contagem, escolha/alternância e índices derivados de inibição/flexibilidade; diferencie tempos de erros. Não declare funcionamento executivo global preservado se houver fragilidades nos indicadores apresentados.",
     "etdah_pais": "E-TDAH-PAIS: é relato de responsáveis, não diagnóstico. Não misture informantes, dimensões ou direção de classificação. Sem indicação explícita do sentido do escore, não suponha que maior valor seja pior.",

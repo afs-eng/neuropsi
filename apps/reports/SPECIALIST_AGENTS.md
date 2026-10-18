@@ -16,6 +16,44 @@ curadoria e homologação pela profissional antes de uso clínico em produção.
 
 ## Ativação controlada
 
+### BPA-2: redação estruturada por componentes (versão `pydantic-bpa2-2`)
+
+O especialista usa o modelo escolhido em `SPECIALIST_AI_MODEL` (inclusive o
+`qwen3.5:9b` local), sem fine-tuning ou escolha automática de modelo. As instruções
+foram configuradas para o formato de introdução, AC, AD, AA, AG e análise clínica.
+O painel apresenta os títulos e preserva as evidências de cada parágrafo.
+
+- O guia de leitura mapeia os escores calculados, percentis e classificações para
+  os fatos originais; não recalcula normas. `total` significa escore em pontos,
+  nunca quantidade de itens. AG é medida agregada, não subteste independente.
+- Há exemplos sintéticos contrastantes: todas as medidas na Média e perfil com
+  AC Inferior/AG Média Inferior. Os exemplos orientam estilo, não fornecem fatos.
+- O contrato exige os seis blocos na ordem, com evidências dos campos disponíveis
+  em cada modalidade e das classificações/percentis na síntese. Campos ausentes
+  permanecem ausentes. Escores calculados e classificados divergentes bloqueiam
+  a preparação da entrada, sem escolher silenciosamente um deles.
+- São validados números, apresentação do escore em pontos/percentil/classificação,
+  evidências e alguns erros conhecidos (quantidades de itens, AG como subteste,
+  menção a WAIS/WISC). Não é uma validação semântica clínica completa: uma frase
+  pode continuar inadequada mesmo com fatos citados. Revisão profissional e
+  homologação com casos diversos continuam obrigatórias.
+- Recomenda-se linguagem restrita às tarefas/normas, sem declarar preservação
+  global, ausência de dificuldades cotidianas, significância estatística de
+  diferenças ou diagnóstico. Integração com outros instrumentos fica fora deste
+  agente. Não se incluem nomes do paciente nem se copiam nomes de exemplos.
+- Falhas de validação na saída permitem uma correção dentro do limite existente
+  de duas requisições; não há aumento automático de tokens/tempo ou fallback.
+
+Para retestar: publicar backend/frontend e atualizar também o código do worker
+local. Não há migration nova. Manter o mesmo modelo/endpoint configurado nos dois.
+As execuções BPA-2 anteriores ficam preservadas, mas desatualizadas por versão;
+as demais especialidades mantêm sua versão. No laudo sintético, selecionar BPA-2
+e solicitar novamente: isso cria uma nova execução com as instruções novas, sem
+reutilizar a antiga. Processar com `--once --report-id ID` e atualizar o painel.
+Se houver jobs antigos ainda na fila, podem ser marcados como desatualizados antes
+do novo job; `--once` processa no máximo um job por chamada. Nenhum resultado é
+inserido automaticamente no texto final ou DOCX, mesmo após aprovação do piloto.
+
 ### Ollama Windows + worker no WSL (piloto local)
 
 Ollama é uma opção dos **especialistas**, independente de `AI_PROVIDER` usado pela

@@ -11,13 +11,19 @@ type Run = {
   id: number; application_id: number; instrument_code: string; model: string; provider: string;
   status: string; is_current: boolean; source_sha256: string; output_sha256: string;
   error_code: string; review_is_current: boolean; reviews: Review[];
-  output: { findings?: { statement: string; evidence_ids: string[] }[]; limitations?: string[]; review_questions?: string[] };
+  output: { findings?: { section?: string; statement: string; evidence_ids: string[] }[]; limitations?: string[]; review_questions?: string[] };
   evidence: Record<string, unknown>;
 };
 
 const STATUS: Record<string, string> = {
   queued: "Na fila — aguarda worker", running: "Em análise", needs_review: "Aguardando revisão",
-  failed: "Falhou — sem repetição automática", stale: "Dados alterados — rascunho desatualizado",
+  failed: "Falhou — sem repetição automática", stale: "Dados ou versão alterados — rascunho desatualizado",
+};
+
+const BPA2_SECTION_TITLES: Record<string, string> = {
+  introducao: "Interpretação e Observações Clínicas", ac: "Atenção Concentrada (AC)",
+  ad: "Atenção Dividida (AD)", aa: "Atenção Alternada (AA)", ag: "Atenção Geral (AG)",
+  analise_clinica: "Análise Clínica",
 };
 
 export function SpecialistPilotPanel({ reportId }: { reportId: string | number }) {
@@ -138,9 +144,10 @@ export function SpecialistPilotPanel({ reportId }: { reportId: string | number }
             </summary>
             <p className="mt-2 text-xs text-slate-500">Execução #{run.id} · provedor: {run.provider} · modelo: {run.model}</p>
             {run.error_code && <p className="mt-2 text-sm text-red-700">Motivo técnico: {run.error_code}. Solicitar novamente a mesma execução não dispara uma repetição.</p>}
-            {!run.is_current && <p className="mt-2 text-sm text-amber-800">Dados alterados: decisões anteriores não são válidas para os resultados atuais.</p>}
+            {!run.is_current && <p className="mt-2 text-sm text-amber-800">Dados ou versão do especialista alterados: solicite um novo rascunho para revisar a configuração atual. O histórico anterior foi preservado.</p>}
             {(run.output.findings || []).map((finding, index) => (
               <div key={index} className="mt-3 text-sm">
+                {run.instrument_code === "bpa2" && finding.section && BPA2_SECTION_TITLES[finding.section] && <h3 className="mb-1 font-semibold">{BPA2_SECTION_TITLES[finding.section]}</h3>}
                 <p>{finding.statement}</p>
                 <details className="mt-1 text-xs text-slate-600">
                   <summary className="cursor-pointer">Consultar evidências citadas</summary>

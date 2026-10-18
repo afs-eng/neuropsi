@@ -2,6 +2,8 @@ import hashlib
 import json
 from datetime import date
 
+from .bpa2_specialist import bpa2_reading_guide
+
 
 class SpecialistInputService:
     VERSION = "1"
@@ -81,6 +83,8 @@ class SpecialistInputService:
             if months >= 0:
                 facts["/application/age_months"] = months
         payload = {"instrument_code": application.instrument.code, "facts": facts}
+        if application.instrument.code == "bpa2":
+            payload["reading_guide"] = bpa2_reading_guide(facts)
         if len(json.dumps(payload, ensure_ascii=False).encode()) > 60000:
             raise ValueError("Resultados excedem o tamanho permitido para o especialista.")
         return payload

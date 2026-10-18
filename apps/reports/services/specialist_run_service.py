@@ -10,7 +10,8 @@ from apps.reports.models import Report, ReportStatus, SpecialistRun
 from apps.tests.models import TestApplication
 
 from .specialist_agent_service import SpecialistAgentService
-from .specialist_contracts import SpecialistOutput, validate_evidence
+from .bpa2_specialist import BPA2_VERSION
+from .specialist_contracts import specialist_output_model, validate_evidence
 from .specialist_input_service import SpecialistInputService
 from .specialist_instructions import INSTRUMENT_INSTRUCTIONS
 
@@ -18,6 +19,10 @@ from .specialist_instructions import INSTRUMENT_INSTRUCTIONS
 class SpecialistRunService:
     VERSION = "pydantic-specialist-1"
     CLINICAL_ROLES = {UserRole.ADMIN, UserRole.NEUROPSYCHOLOGIST}
+
+    @classmethod
+    def version_for(cls, instrument_code: str) -> str:
+        return BPA2_VERSION if instrument_code == "bpa2" else cls.VERSION
 
     @staticmethod
     def provider_name() -> str:
@@ -86,7 +91,7 @@ class SpecialistRunService:
                 run, _ = SpecialistRun.objects.get_or_create(
                     report=report, application=application,
                     source_sha256=SpecialistInputService.fingerprint(application),
-                    specialist_version=cls.VERSION, model_name=model, provider_base_url=base_url,
+                    specialist_version=cls.version_for(code), model_name=model, provider_base_url=base_url,
                     provider_name=cls.provider_name(),
                     defaults={"requested_by": user, "instrument_code": code, "input_payload": payload},
                 )
@@ -103,7 +108,7 @@ class SpecialistRunService:
             and run.report.author_id == run.requested_by_id
             and app.evaluation.patient.created_by_id == run.requested_by_id
             and app.evaluation.examiner_id in (None, run.requested_by_id)
-            and run.specialist_version == cls.VERSION
+            and run.specialist_version == cls.version_for(run.instrument_code)
             and run.source_sha256 == SpecialistInputService.fingerprint(app)
         )
 
@@ -164,7 +169,7 @@ class SpecialistRunService:
                 status = SpecialistRun.Status.STALE
             else:
                 output, usage = (generator or SpecialistAgentService.generate)(run)
-                parsed = SpecialistOutput.model_validate(output)
+                parsed = specialist_output_model(run.instrument_code).model_validate(output)
                 validate_evidence(parsed, run.input_payload["facts"], run.instrument_code)
                 output = parsed.model_dump()
                 status = SpecialistRun.Status.NEEDS_REVIEW if cls.is_current(cls._load(run_id)) else SpecialistRun.Status.STALE
