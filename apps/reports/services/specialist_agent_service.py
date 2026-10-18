@@ -40,9 +40,10 @@ class SpecialistAgentService:
         ):
             raise ValueError("Configuração do provedor mudou; execução bloqueada.")
         local = run.provider_name == "ollama"
+        max_output_tokens = settings.SPECIALIST_OLLAMA_MAX_TOKENS if local else settings.SPECIALIST_AI_MAX_TOKENS
         output_model = specialist_output_model(run.instrument_code)
         model_settings = OpenAIChatModelSettings(
-            temperature=0.1, max_tokens=settings.SPECIALIST_AI_MAX_TOKENS,
+            temperature=0.1, max_tokens=max_output_tokens,
         )
         if local:
             model_settings["openai_reasoning_effort"] = "none"
@@ -93,7 +94,7 @@ class SpecialistAgentService:
                     async with asyncio.timeout(settings.SPECIALIST_AI_TIMEOUT * 2 + 30):
                         result = await agent.run(
                             json.dumps(run.input_payload, ensure_ascii=False),
-                            usage_limits=UsageLimits(request_limit=2, output_tokens_limit=4000),
+                            usage_limits=UsageLimits(request_limit=2, output_tokens_limit=max_output_tokens * 2),
                             usage=usage,
                         )
                     finish_reason = _last_finish_reason(messages, usage.requests)

@@ -24,8 +24,11 @@ class SpecialistRunService:
     CLINICAL_ROLES = {UserRole.ADMIN, UserRole.NEUROPSYCHOLOGIST}
 
     @classmethod
-    def version_for(cls, instrument_code: str) -> str:
-        return BPA2_VERSION if instrument_code == "bpa2" else cls.VERSION
+    def version_for(cls, instrument_code: str, provider_name: str | None = None) -> str:
+        version = BPA2_VERSION if instrument_code == "bpa2" else cls.VERSION
+        if (provider_name or cls.provider_name()) == "ollama":
+            return f"{version}-ollama-4k"
+        return version
 
     @staticmethod
     def provider_name() -> str:
@@ -104,6 +107,14 @@ class SpecialistRunService:
     @classmethod
     def is_current(cls, run) -> bool:
         app = run.application
+        version_current = run.specialist_version == cls.version_for(run.instrument_code, run.provider_name)
+        # Aumento de orçamento não invalida texto já validado da mesma versão clínica.
+        # Jobs antigos pendentes/falhos não são reativados nem executados com outro orçamento.
+        compatible_review = (
+            run.provider_name == "ollama"
+            and run.status == SpecialistRun.Status.NEEDS_REVIEW
+            and run.specialist_version == cls.version_for(run.instrument_code, "openai")
+        )
         return (
             app.is_validated
             and run.report.evaluation_id == app.evaluation_id
@@ -111,7 +122,7 @@ class SpecialistRunService:
             and run.report.author_id == run.requested_by_id
             and app.evaluation.patient.created_by_id == run.requested_by_id
             and app.evaluation.examiner_id in (None, run.requested_by_id)
-            and run.specialist_version == cls.version_for(run.instrument_code)
+            and (version_current or compatible_review)
             and run.source_sha256 == SpecialistInputService.fingerprint(app)
         )
 

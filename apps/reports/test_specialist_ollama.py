@@ -71,6 +71,7 @@ class SpecialistOllamaTests(TestCase):
             self.assertEqual(request.headers["authorization"], "Bearer ollama-local")
             self.assertNotIn("must-not-leave-process", str(request.headers))
             self.assertEqual(body["reasoning_effort"], "none")
+            self.assertEqual(body.get("max_tokens", body.get("max_completion_tokens")), 4000)
             self.assertEqual(body["response_format"]["type"], "json_schema")
             self.assertNotIn(self.patient.full_name, request.content.decode())
             self.assertEqual(body["model"], "qwen3:8b")

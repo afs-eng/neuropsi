@@ -16,6 +16,33 @@ curadoria e homologação pela profissional antes de uso clínico em produção.
 
 ## Ativação controlada
 
+### Orçamento local Ollama: 4.000 tokens por resposta
+
+`SPECIALIST_OLLAMA_MAX_TOKENS=4000` é definido nas configurações do projeto e
+usado somente quando o provedor persistido da execução é `ollama`. A saída total
+permitida nas duas requisições é 8.000 tokens. OpenAI/OpenRouter continua em
+2.000/resposta e 4.000 acumulados. Não se altera o fluxo legado, o tempo limite,
+o número de requisições, as validações ou a rejeição de conteúdo truncado.
+Essa configuração não é uma variável aplicada ao servidor Ollama Windows;
+o cliente envia o limite de saída a cada requisição pela API compatível.
+
+A versão de execução Ollama recebe o sufixo `-ollama-4k`, mantendo a versão
+clínica anterior. Isso permite uma nova solicitação explícita com o novo orçamento,
+sem reativar ou apagar a execução #7. Solicitações repetidas da mesma política
+continuam deduplicadas. Saídas antigas em `needs_review`, da mesma versão clínica,
+permanecem revisáveis; alterar somente o orçamento não invalida seu conteúdo.
+Jobs antigos pendentes não passam silenciosamente a executar com outro orçamento.
+
+Para usar: publicar o backend e atualizar/reiniciar o worker local, solicitar um
+novo rascunho no painel e processar o laudo sintético. Sem migration nova ou
+alteração de credenciais. Não é necessário mudar os arquivos de ambiente para
+esse limite fixo. Nenhuma inferência real é iniciada pela atualização.
+
+**Saída não é contexto:** 4.000 tokens de saída não aumentam a janela de contexto
+do servidor Ollama. A janela precisa comportar entrada, instruções e saída;
+contexto insuficiente ainda pode impedir a geração completa. Conferir a janela
+no Ollama Windows durante os testes; ela não foi alterada automaticamente.
+
 ### BPA-2: redação estruturada por componentes (versão `pydantic-bpa2-3`)
 
 O especialista usa o modelo escolhido em `SPECIALIST_AI_MODEL` (inclusive o
@@ -61,7 +88,8 @@ Uma execução pode fazer duas chamadas e falhar porque o modelo não corrigiu o
 contrato. A versão 3 também corrige duas rejeições indevidas: escore citado pelo
 ID classificado em vez do ID calculado, quando os valores são iguais, e a redação
 natural `percentil de X`. Escores divergentes e ausência de evidência do componente
-continuam bloqueados. Nenhum limite de tokens, tempo ou requisições foi aumentado.
+continuam bloqueados. A correção de evidências da versão 3 não alterou limites;
+o aumento posterior autorizado somente para Ollama está descrito abaixo.
 
 Novas falhas persistem apenas contagens de uso e metadados allowlisted em
 `usage_payload`: `finish_reason` e `validation_code`. Não se guardam resposta
@@ -118,7 +146,8 @@ JSON nativo (`NativeOutput`). Solicita `reasoning_effort=none` (equivalente a
 `think=false` para o Qwen3 nesta API). O teste anterior em `/api/chat` não comprova
 sozinho essa rota: ainda é necessário testar o contrato completo de especialista
 no Ollama real. Evidências e números continuam validados deterministicamente;
-até duas requisições, mesmos limites de tempo/tokens, nenhuma alternativa externa.
+até duas requisições, limites de tempo preservados e nenhuma alternativa externa.
+Os limites de saída por provedor estão descritos abaixo.
 Conexões locais ignoram proxies de ambiente e não seguem redirecionamentos.
 
 A URL Ollama fica restrita a loopback com `/v1`; a chave externa não é usada.
@@ -162,8 +191,10 @@ falha fechada. Não ativar um modelo apenas por ser gratuito. Avaliar também as
 políticas de retenção, subprocessadores e tratamento dos dados sensíveis.
 
 Cada execução tem timeout HTTP de 120 segundos, limite global de 270 segundos,
-até duas requisições de modelo (uma tentativa de correção de formato), 2.000 tokens
-de saída por requisição e 4.000 no conjunto. O SDK não repete erros HTTP
+até duas requisições de modelo (uma tentativa de correção de formato).
+OpenAI/OpenRouter mantém 2.000 tokens de saída por requisição e 4.000 no conjunto.
+Ollama local usa 4.000 por requisição e 8.000 no conjunto, conforme autorização
+explícita do usuário. O SDK não repete erros HTTP
 automaticamente. Isso **não é um teto financeiro em reais/dólares**: os custos
 dependem do provedor e dos tokens de entrada; monitorar o orçamento no provedor.
 
