@@ -5,10 +5,10 @@ import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 
 type Application = { id: number; instrument_code: string; instrument_name: string; respondent: string; enabled: boolean; supported: boolean };
-type Configuration = { configured: boolean; configuration_message: string; model: string; can_request: boolean; can_review: boolean; applications: Application[] };
+type Configuration = { configured: boolean; configuration_message: string; model: string; provider: string; can_request: boolean; can_review: boolean; applications: Application[] };
 type Review = { id: number; decision: string; notes: string; created_at: string };
 type Run = {
-  id: number; application_id: number; instrument_code: string; model: string;
+  id: number; application_id: number; instrument_code: string; model: string; provider: string;
   status: string; is_current: boolean; source_sha256: string; output_sha256: string;
   error_code: string; review_is_current: boolean; reviews: Review[];
   output: { findings?: { statement: string; evidence_ids: string[] }[]; limitations?: string[]; review_questions?: string[] };
@@ -58,7 +58,10 @@ export function SpecialistPilotPanel({ reportId }: { reportId: string | number }
 
   async function enqueue() {
     if (!configuration?.can_request || selected.length === 0) return;
-    if (!window.confirm(`Enviar resultados das ${selected.length} aplicações selecionadas ao modelo ${configuration.model}? São dados sensíveis. O provedor pode cobrar; o worker fará até duas requisições por execução. Nenhum texto do laudo será substituído.`)) return;
+    const destination = configuration.provider === "ollama"
+      ? "O worker usará o Ollama local configurado. Confira que o modelo é local e que os recursos de nuvem do Ollama estão desativados."
+      : "Os dados serão enviados ao provedor externo, que pode cobrar.";
+    if (!window.confirm(`Enviar resultados das ${selected.length} aplicações selecionadas ao modelo ${configuration.model}? São dados sensíveis. ${destination} O worker fará até duas requisições por execução. Nenhum texto do laudo será substituído.`)) return;
     setBusy(true);
     setError("");
     setNotice("");
@@ -104,7 +107,7 @@ export function SpecialistPilotPanel({ reportId }: { reportId: string | number }
       {notice && <p role="status" className="mt-3 text-sm text-slate-700">{notice}</p>}
       {configuration && (
         <>
-          <p className="mt-3 text-sm font-medium">Modelo: {configuration.model || "não selecionado"}. {configuration.configured ? "Configuração disponível; isso não comprova homologação clínica." : configuration.configuration_message}</p>
+          <p className="mt-3 text-sm font-medium">Provedor: {configuration.provider}. Modelo: {configuration.model || "não selecionado"}. {configuration.configured ? "Configuração disponível; isso não comprova homologação clínica." : configuration.configuration_message}</p>
           <fieldset disabled={busy || loading || !configuration.can_request} className="mt-4 space-y-2">
             <legend className="mb-2 text-sm font-semibold">Aplicações validadas disponíveis</legend>
             {configuration.applications.length === 0 && <p className="text-sm text-slate-500">Nenhuma aplicação validada nesta avaliação.</p>}
@@ -125,7 +128,7 @@ export function SpecialistPilotPanel({ reportId }: { reportId: string | number }
               {run.instrument_code.toUpperCase()} — aplicação #{run.application_id} — {STATUS[run.status] || run.status}
               {run.review_is_current && run.reviews[0] ? ` · ${run.reviews[0].decision === "approved" ? "Aprovado para o piloto (não integrado)" : "Rejeitado"}` : ""}
             </summary>
-            <p className="mt-2 text-xs text-slate-500">Execução #{run.id} · modelo: {run.model}</p>
+            <p className="mt-2 text-xs text-slate-500">Execução #{run.id} · provedor: {run.provider} · modelo: {run.model}</p>
             {run.error_code && <p className="mt-2 text-sm text-red-700">Motivo técnico: {run.error_code}. Solicitar novamente a mesma execução não dispara uma repetição.</p>}
             {!run.is_current && <p className="mt-2 text-sm text-amber-800">Dados alterados: decisões anteriores não são válidas para os resultados atuais.</p>}
             {(run.output.findings || []).map((finding, index) => (

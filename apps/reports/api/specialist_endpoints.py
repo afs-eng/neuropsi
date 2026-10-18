@@ -52,6 +52,7 @@ def serialize_run(run):
         "specialist_version": run.specialist_version,
         "source_sha256": run.source_sha256,
         "model": run.model_name,
+        "provider": run.provider_name,
         "status": run.status if current else SpecialistRun.Status.STALE,
         "is_current": current,
         "requires_professional_review": not (review_current and latest.decision == SpecialistReview.Decision.APPROVED),
@@ -120,6 +121,7 @@ def specialist_status(request, report_id: int, response: HttpResponse):
     return {
         "experimental": True, "configured": configured, "configuration_message": reason,
         "model": settings.SPECIALIST_AI_MODEL, "legacy_unchanged": True,
+        "provider": SpecialistRunService.provider_name(),
         "can_request": configured and editable and request.auth.role in SpecialistRunService.CLINICAL_ROLES and any(app.instrument.code in allowlist for app in applications),
         "can_review": editable and ReportApprovalService.can_approve(request.auth),
         "worker_status": "not_monitored", "automatic_integration": False,

@@ -183,6 +183,7 @@ class SpecialistRun(models.Model):
     input_payload = models.JSONField(default=dict)
     model_name = models.CharField(max_length=255)
     provider_base_url = models.URLField(max_length=500)
+    provider_name = models.CharField(max_length=20, default="openai")
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.QUEUED)
     output_payload = models.JSONField(default=dict)
     usage_payload = models.JSONField(default=dict)
@@ -195,7 +196,7 @@ class SpecialistRun(models.Model):
         ordering = ["created_at", "id"]
         indexes = [models.Index(fields=["status", "created_at"], name="specialist_queue_idx")]
         constraints = [models.UniqueConstraint(
-            fields=["report", "application", "source_sha256", "specialist_version", "model_name", "provider_base_url"],
+            fields=["report", "application", "source_sha256", "specialist_version", "model_name", "provider_base_url", "provider_name"],
             name="unique_specialist_source_run",
         )]
 

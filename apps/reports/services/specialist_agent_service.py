@@ -3,9 +3,10 @@ import json
 from contextlib import AsyncExitStack
 
 from django.conf import settings
-from openai import AsyncOpenAI
-from pydantic_ai import Agent, PromptedOutput
-from pydantic_ai.models.openai import OpenAIChatModel
+from openai import AsyncOpenAI, DefaultAsyncHttpxClient
+from pydantic_ai import Agent, NativeOutput, PromptedOutput
+from pydantic_ai.models.openai import OpenAIChatModel, OpenAIChatModelSettings
+from pydantic_ai.providers.ollama import OllamaProvider
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.usage import UsageLimits
 
@@ -23,24 +24,44 @@ class SpecialistAgentService:
         instructions = INSTRUMENT_INSTRUCTIONS.get(run.instrument_code)
         if not instructions:
             raise ValueError("Instrumento ainda não configurado para execução.")
+        from .specialist_run_service import SpecialistRunService
+
+        configured_model, configured_url = SpecialistRunService.configuration()
+        if (run.provider_name, run.model_name, run.provider_base_url) != (
+            SpecialistRunService.provider_name(), configured_model, configured_url,
+        ):
+            raise ValueError("Configuração do provedor mudou; execução bloqueada.")
+        local = run.provider_name == "ollama"
+        model_settings = OpenAIChatModelSettings(
+            temperature=0.1, max_tokens=settings.SPECIALIST_AI_MAX_TOKENS,
+        )
+        if local:
+            model_settings["openai_reasoning_effort"] = "none"
         async with AsyncExitStack() as stack:
             model = model_override
             if model is None:
+                client_options = {}
+                if local:
+                    client_options["http_client"] = DefaultAsyncHttpxClient(
+                        trust_env=False, follow_redirects=False,
+                    )
                 client = await stack.enter_async_context(AsyncOpenAI(
-                    api_key=settings.OPENAI_API_KEY,
+                    api_key="ollama-local" if local else settings.OPENAI_API_KEY,
                     base_url=run.provider_base_url,
                     timeout=settings.SPECIALIST_AI_TIMEOUT,
                     max_retries=0,
+                    **client_options,
                 ))
-                model = OpenAIChatModel(run.model_name, provider=OpenAIProvider(openai_client=client))
+                provider = OllamaProvider(openai_client=client) if local else OpenAIProvider(openai_client=client)
+                model = OpenAIChatModel(run.model_name, provider=provider)
             agent = Agent(
                 model,
                 name=f"specialist_{run.instrument_code}",
                 instructions=f"{BASE_INSTRUCTIONS}\n{instructions}",
-                output_type=PromptedOutput(SpecialistOutput),
+                output_type=NativeOutput(SpecialistOutput) if local else PromptedOutput(SpecialistOutput),
                 retries=1,
                 # Não encaminhar dados clínicos a plataformas de tracing.
-                model_settings={"temperature": 0.1, "max_tokens": settings.SPECIALIST_AI_MAX_TOKENS},
+                model_settings=model_settings,
             )
             async with asyncio.timeout(settings.SPECIALIST_AI_TIMEOUT * 2 + 30):
                 result = await agent.run(

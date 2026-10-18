@@ -16,6 +16,67 @@ curadoria e homologação pela profissional antes de uso clínico em produção.
 
 ## Ativação controlada
 
+### Ollama Windows + worker no WSL (piloto local)
+
+Ollama é uma opção dos **especialistas**, independente de `AI_PROVIDER` usado pela
+geração legada/auditoria. Não é necessário instalar Ollama ou ROCm no Ubuntu quando
+o servidor já roda no Windows e o WSL em rede espelhada acessa `127.0.0.1:11434`.
+
+Configurar **no backend que enfileira e no worker**:
+
+```dotenv
+SPECIALIST_AI_PROVIDER=ollama
+SPECIALIST_AI_MODEL=qwen3:8b
+SPECIALIST_OLLAMA_BASE_URL=http://127.0.0.1:11434/v1
+SPECIALIST_AI_INSTRUMENTS=wisc4
+```
+
+Manter `SPECIALIST_AI_ENABLED=false` até preparar os testes sintéticos. Exemplo
+local: `infra/local/specialists-ollama.env.example`. Não trocar `AI_PROVIDER` ou
+as chaves OpenRouter para configurar apenas os especialistas. Quando
+`SPECIALIST_AI_PROVIDER` está vazio, o comportamento anterior via `AI_PROVIDER`
+é mantido. Execuções existentes recebem `provider_name=openai` na migration
+`reports.0009_specialist_provider`; não são reclassificadas silenciosamente.
+
+**No Render, `127.0.0.1` é o próprio Render, não seu Windows.** O backend apenas
+registra o destino na fila; somente o worker no seu WSL deve processar os jobs
+Ollama. Ambos devem usar o mesmo banco. Não iniciar um worker Ollama no Render,
+não expor a porta 11434 à internet, não abrir túnel público e não ativar dois
+workers com configurações diferentes na mesma fila: um worker incompatível
+marca o job como falha `configuration_changed`, sem enviá-lo ao outro provedor.
+
+A implementação usa `/v1/chat/completions`, `OllamaProvider` do PydanticAI e schema
+JSON nativo (`NativeOutput`). Solicita `reasoning_effort=none` (equivalente a
+`think=false` para o Qwen3 nesta API). O teste anterior em `/api/chat` não comprova
+sozinho essa rota: ainda é necessário testar o contrato completo de especialista
+no Ollama real. Evidências e números continuam validados deterministicamente;
+até duas requisições, mesmos limites de tempo/tokens, nenhuma alternativa externa.
+Conexões locais ignoram proxies de ambiente e não seguem redirecionamentos.
+
+A URL Ollama fica restrita a loopback com `/v1`; a chave externa não é usada.
+Nomes contendo `cloud` ou namespace remoto são recusados, mas aliases locais
+podem ocultar modelos remotos: **desative também recursos de nuvem no Ollama
+Windows** (`OLLAMA_NO_CLOUD=1`, reiniciando o aplicativo) e confira a origem do
+modelo. O código Django não consegue garantir sozinho o comportamento interno
+de um servidor Ollama administrado fora dele. Use o modelo local baixado.
+
+O teste técnico de JSON e GPU não é homologação clínica. O contexto observado
+de 4096 tokens também não comprova capacidade para uma aplicação completa:
+valide o tamanho de entrada, saída e ausência de truncamento com casos
+sintéticos; ajuste o contexto no Ollama antes de homologar entradas maiores.
+
+Depois de publicar/aplicar `0009` e preencher o arquivo local, a checagem de
+configuração/banco (sem chamada de modelo) continua sendo:
+
+```bash
+NEUROPSI_ENV_FILE=.env.specialists.local .venv/bin/python manage.py run_specialist_worker --check --report-id 123
+```
+
+Não executa inferência e não comprova que o modelo está acessível. O comando
+`--once --report-id 123` realiza uma execução real e deve ser usado inicialmente
+somente com um laudo sintético autorizado. O piloto não foi ativado por esta
+alteração e nenhum dado clínico foi enviado ao Ollama durante os testes offline.
+
 Padrão: `SPECIALIST_AI_ENABLED=false`. Publicar a mudança não inicia chamadas
 nem muda o pipeline atual. Para homologação, configure no backend **e no worker**:
 

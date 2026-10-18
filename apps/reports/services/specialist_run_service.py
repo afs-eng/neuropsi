@@ -19,19 +19,34 @@ class SpecialistRunService:
     VERSION = "pydantic-specialist-1"
     CLINICAL_ROLES = {UserRole.ADMIN, UserRole.NEUROPSYCHOLOGIST}
 
+    @staticmethod
+    def provider_name() -> str:
+        return settings.SPECIALIST_AI_PROVIDER or settings.AI_PROVIDER
+
     @classmethod
     def configuration(cls) -> tuple[str, str]:
         if not settings.SPECIALIST_AI_ENABLED:
             raise ValueError("Especialistas desabilitados neste ambiente.")
-        if settings.AI_PROVIDER != "openai" or not settings.OPENAI_API_KEY:
+        provider = cls.provider_name()
+        if provider not in {"openai", "ollama"}:
+            raise ValueError("Provedor dos especialistas inválido: use openai ou ollama.")
+        if provider == "openai" and not settings.OPENAI_API_KEY:
             raise ValueError("Configure o provedor OpenAI/OpenRouter dos especialistas.")
         model = settings.SPECIALIST_AI_MODEL.strip()
         if not model or len(model) > 255:
             raise ValueError("Configure SPECIALIST_AI_MODEL explicitamente.")
-        base_url = (settings.OPENAI_BASE_URL or "https://api.openai.com/v1").rstrip("/")
+        base_url = (
+            settings.SPECIALIST_OLLAMA_BASE_URL if provider == "ollama"
+            else (settings.OPENAI_BASE_URL or "https://api.openai.com/v1")
+        ).rstrip("/")
         parsed = urlsplit(base_url)
-        if parsed.scheme not in {"https", "http"} or not parsed.hostname or parsed.username or parsed.query or parsed.fragment or len(base_url) > 500:
+        if parsed.scheme not in {"https", "http"} or not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment or len(base_url) > 500:
             raise ValueError("URL do provedor inválida.")
+        if provider == "ollama":
+            if parsed.hostname not in {"localhost", "127.0.0.1", "::1"} or parsed.path != "/v1":
+                raise ValueError("Ollama dos especialistas exige endpoint loopback com caminho /v1.")
+            if "cloud" in model.lower() or "/" in model:
+                raise ValueError("Use um modelo local explícito, sem cloud ou namespace remoto.")
         if parsed.scheme == "http" and parsed.hostname not in {"localhost", "127.0.0.1", "::1"}:
             raise ValueError("Use HTTPS para transmitir resultados ao provedor.")
         return model, base_url
@@ -70,6 +85,7 @@ class SpecialistRunService:
                     report=report, application=application,
                     source_sha256=SpecialistInputService.fingerprint(application),
                     specialist_version=cls.VERSION, model_name=model, provider_base_url=base_url,
+                    provider_name=cls.provider_name(),
                     defaults={"requested_by": user, "instrument_code": code, "input_payload": payload},
                 )
                 runs.append(run)
@@ -140,7 +156,7 @@ class SpecialistRunService:
                 error = "report_closed"
             elif run.instrument_code not in settings.SPECIALIST_AI_INSTRUMENTS:
                 error = "instrument_disabled"
-            elif model != run.model_name or base_url != run.provider_base_url:
+            elif model != run.model_name or base_url != run.provider_base_url or cls.provider_name() != run.provider_name:
                 error = "configuration_changed"
             elif not cls.is_current(run):
                 status = SpecialistRun.Status.STALE
