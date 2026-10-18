@@ -492,6 +492,7 @@ def audit_report(request, report_id: int):
         result = ClinicalConsistencyAuditService.audit_report(report, report.context_payload or {})
     except Exception:
         result = {**ClinicalConsistencyAuditService._invalid_result(), "source_sha256": source_sha256}
+        ClinicalConsistencyAuditService._log_failure(result)
     with transaction.atomic():
         report = owned_reports(Report.objects.select_for_update(), request.auth).filter(pk=report_id).first()
         if not report:

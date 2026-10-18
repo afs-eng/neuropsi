@@ -198,3 +198,20 @@ class SpecialistRun(models.Model):
             fields=["report", "application", "source_sha256", "specialist_version", "model_name", "provider_base_url"],
             name="unique_specialist_source_run",
         )]
+
+
+class SpecialistReview(models.Model):
+    class Decision(models.TextChoices):
+        APPROVED = "approved", "Aprovado para o piloto"
+        REJECTED = "rejected", "Rejeitado"
+
+    run = models.ForeignKey(SpecialistRun, on_delete=models.CASCADE, related_name="reviews")
+    reviewed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    decision = models.CharField(max_length=20, choices=Decision.choices)
+    notes = models.TextField(blank=True)
+    source_sha256 = models.CharField(max_length=64)
+    output_sha256 = models.CharField(max_length=64)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]

@@ -5,7 +5,7 @@
 - [x] Corrigir dependências e falhas abertas da auditoria, mantendo a ordem visual dos capítulos.
 - [x] Preservar dados, textos, identidade e exportações nas novas aprovações; criar revisões separadas.
 - [x] Exibir aplicações/informantes separadamente, sem deduplicar pelo nome do instrumento.
-- [ ] Conectar interface/revisão dos especialistas sem perder edições humanas.
+- [x] Conectar interface/revisão experimental dos especialistas sem perder edições humanas (sem integração automática ao texto).
 - [ ] Homologar modelo/worker e referências (depende de operação e avaliação clínica).
 - [ ] Integrar síntese e versões homologadas dos modelos privados ao DOCX.
 

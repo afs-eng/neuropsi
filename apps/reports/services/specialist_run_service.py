@@ -90,12 +90,15 @@ class SpecialistRunService:
         )
 
     @classmethod
-    def recover_interrupted(cls) -> int:
+    def recover_interrupted(cls, report_id=None) -> int:
         # Sem repetição automática: o provedor pode já ter cobrado a chamada.
-        return SpecialistRun.objects.filter(
+        runs = SpecialistRun.objects.filter(
             status=SpecialistRun.Status.RUNNING,
             started_at__lt=timezone.now() - timedelta(minutes=10),
-        ).update(status=SpecialistRun.Status.FAILED, error_code="worker_interrupted", finished_at=timezone.now())
+        )
+        if report_id is not None:
+            runs = runs.filter(report_id=report_id)
+        return runs.update(status=SpecialistRun.Status.FAILED, error_code="worker_interrupted", finished_at=timezone.now())
 
     @staticmethod
     def _load(run_id):
@@ -104,9 +107,12 @@ class SpecialistRunService:
         ).get(pk=run_id)
 
     @staticmethod
-    def _claim():
+    def _claim(report_id=None):
         # Compare-and-swap: só um worker pode alterar queued -> running.
-        for run_id in SpecialistRun.objects.filter(status=SpecialistRun.Status.QUEUED).values_list("pk", flat=True)[:50]:
+        runs = SpecialistRun.objects.filter(status=SpecialistRun.Status.QUEUED)
+        if report_id is not None:
+            runs = runs.filter(report_id=report_id)
+        for run_id in runs.values_list("pk", flat=True)[:50]:
             if SpecialistRun.objects.filter(pk=run_id, status=SpecialistRun.Status.QUEUED).update(
                 status=SpecialistRun.Status.RUNNING, started_at=timezone.now(), error_code="",
             ):
@@ -114,10 +120,10 @@ class SpecialistRunService:
         return None
 
     @classmethod
-    def process_next(cls, *, generator=None):
+    def process_next(cls, *, generator=None, report_id=None):
         cls.configuration()
-        cls.recover_interrupted()
-        run_id = cls._claim()
+        cls.recover_interrupted(report_id=report_id)
+        run_id = cls._claim(report_id=report_id)
         if run_id is None:
             return None
         try:

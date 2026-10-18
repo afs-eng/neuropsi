@@ -22,10 +22,16 @@ Retorne somente JSON valido no formato:
 {
   "alerts": [
     {
-      "severity": "high|medium|low",
+      "severity": "high",
       "section_key": "nome_da_secao",
       "issue": "descricao objetiva",
       "suggestion": "ajuste breve sugerido"
     }
   ]
 }
+
+As chaves do JSON e os valores de severity devem permanecer exatamente em ingles.
+Use somente "high", "medium" ou "low" em severity; nunca traduza esses valores e nunca use "high|medium|low" como valor literal.
+Escreva issue e suggestion em portugues, de forma breve e objetiva.
+Se a auditoria completa nao encontrar inconsistencias, retorne exatamente {"alerts": []}.
+Nao inclua Markdown, blocos de codigo, introducao ou raciocinio fora do JSON.

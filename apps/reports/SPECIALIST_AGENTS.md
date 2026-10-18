@@ -40,6 +40,66 @@ dependem do provedor e dos tokens de entrada; monitorar o orçamento no provedor
 
 ## Worker
 
+### Piloto local com Render Free
+
+O painel **Especialistas de IA — piloto experimental**, na página do laudo, é
+separado dos botões de geração legada. Ele permite escolher aplicações, solicitar
+rascunhos, atualizar o status manualmente, consultar evidências e registrar uma
+decisão profissional. Não afirma que o worker está ligado e não faz polling nem
+chamadas de IA automaticamente ao abrir a página.
+
+1. Publicar backend/frontend e aplicar as migrações até `reports.0008` (o startup
+   do Render já chama `migrate --noinput`). Nenhum worker pago é necessário para
+   preparar o piloto; nenhum processo foi iniciado automaticamente.
+2. Escolher explicitamente um modelo para homologação. Não foi escolhido um
+   modelo automaticamente nem foram alteradas credenciais. Ser gratuito não
+   implica qualidade clínica ou política de privacidade adequada. Usar primeiro
+   casos sintéticos/anonimizados e autorizados.
+3. Copiar `infra/local/specialists.env.example` para `.env.specialists.local`
+   (ignorado pelo Git), preencher os valores e só então ativar o piloto. O backend
+   Render e o worker precisam do mesmo modelo, endpoint e lista de instrumentos.
+   O backend também precisa de `SPECIALIST_AI_ENABLED=true`; o arquivo local não
+   modifica variáveis do Render. `SECRET_KEY` do worker pode ser uma chave local
+   aleatória própria; não precisa copiar a chave de assinatura do backend.
+4. **Banco compartilhado:** para processar solicitações feitas no site publicado,
+   preencher `DATABASE_URL` com a URL externa do MESMO PostgreSQL do backend e
+   `DATABASE_SSL_REQUIRE=true`. Uma cópia SQLite local não recebe a fila do site.
+   Permitir conexão do computador nas regras de rede do banco, se necessário.
+   Credenciais dão acesso a dados sensíveis: não publicar, não enviar em prints
+   e preferir uma conta de banco com privilégios mínimos apropriados.
+5. Conferir configuração/banco sem executar agentes, substituindo `123` pelo ID
+   real de um laudo de teste:
+
+   ```bash
+   NEUROPSI_ENV_FILE=.env.specialists.local .venv/bin/python manage.py run_specialist_worker --check --report-id 123
+   ```
+
+   Variáveis já exportadas no terminal têm precedência sobre o arquivo. A checagem
+   não reclama jobs, não altera seus estados, não valida a qualidade do modelo e
+   não chama o provedor.
+6. Solicitar as aplicações selecionadas no painel. Para processar **no máximo um
+   job desse laudo**, deliberadamente (pode consumir quota/créditos):
+
+   ```bash
+   NEUROPSI_ENV_FILE=.env.specialists.local .venv/bin/python manage.py run_specialist_worker --once --report-id 123
+   ```
+
+   Para acompanhar continuamente somente esse laudo, remover `--once`. Encerrar
+   com Ctrl+C. Não usar `nohup`, cron ou serviço em background sem decisão explícita.
+   O filtro também limita a recuperação de execuções interrompidas ao laudo.
+7. Atualizar o painel, revisar achados, limitações e evidências. Aprovar/rejeitar
+   exige profissional responsável com CRP; rejeitar exige motivo. O histórico
+   registra autor, instante e hashes dos dados/saída. Dados corrigidos ou conteúdo
+   diferente invalidam a decisão para o rascunho atual. É possível registrar uma
+   nova decisão sem apagar a anterior.
+
+**Aprovar um rascunho do piloto não aprova o laudo.** Não há cópia automática para
+seções, interpretações de testes, conclusão ou DOCX. A revisão experimental não
+substitui homologação clínica. O histórico acompanha a execução: excluir uma
+aplicação remove seus rascunhos e as respectivas revisões; não é um registro
+clínico definitivo independente da aplicação. Laudos aprovados e seus snapshots
+continuam protegidos pelo fluxo separado de aprovação.
+
 Após instalar dependências e aplicar a migração `reports.0006`:
 
 ```bash
@@ -76,7 +136,15 @@ ou admin, aplicações validadas da mesma avaliação e laudo não finalizado/en
 - `GET /api/reports/{report_id}/specialist-runs`
   - Até 100 execuções mais recentes, com resultados, evidências, uso e estado.
   - `is_current=false` / `status=stale` se os dados tiverem mudado posteriormente.
-  - `requires_professional_review=true` sempre.
+  - `requires_professional_review=false` apenas quando a última decisão do piloto
+    está aprovada e vinculada aos hashes atuais; isso não aprova o laudo.
+- `GET /api/reports/{report_id}/specialist-status`
+  - Configuração, modelo explícito, aplicações elegíveis e permissões do autor.
+  - Não consulta o provedor nem comprova que o worker está online.
+- `POST /api/reports/{report_id}/specialist-runs/{run_id}/reviews`
+  - JSON com `decision` (`approved`/`rejected`), `notes`, `source_sha256` e
+    `output_sha256` obtidos na consulta. A decisão fica vinculada ao conteúdo
+    efetivamente revisado. Notas de rejeição são obrigatórias; máximo 2.000 caracteres.
 
 Os especialistas usam os resultados atuais das aplicações no banco, não uma
 interpretação antiga nem o snapshot salvo potencialmente desatualizado do laudo.
@@ -97,8 +165,9 @@ não prova validade clínica nem detecta todas as contradições ou classificaç
 incorretas: a revisão profissional continua obrigatória. Não enviar traces
 clínicos a Logfire/LangSmith; esta integração não habilita esses serviços.
 
-Fluxo: `queued → running → needs_review | failed | stale`. Não existe aprovação
-automática nem estado aprovado nesta etapa. Nenhum resultado é copiado ao
+Fluxo: `queued → running → needs_review | failed | stale`. As decisões profissionais
+são registros separados em `SpecialistReview`, sem alterar o estado de execução.
+Não existe aprovação automática. Nenhum resultado é copiado ao
 `TestApplication.interpretation_text`, às seções do laudo ou ao DOCX.
 
 Solicitações idênticas reutilizam a execução existente, inclusive quando falhou;
@@ -115,7 +184,7 @@ já ter processado/cobrado a solicitação. Execução reclamada por outro worke
 ## Validação e próximos passos
 
 ```bash
-python manage.py test apps.reports.test_specialist_runs apps.reports.test_private_templates apps.reports.tests apps.reports.test_wais3_docx_model
+python manage.py test apps.reports.test_specialist_pilot apps.reports.test_specialist_runs apps.reports.test_private_templates apps.reports.tests apps.reports.test_wais3_docx_model
 ```
 
 Os testes usam `FunctionModel` e provedores bloqueados: nenhum caso clínico real é
@@ -126,6 +195,6 @@ PostgreSQL e a operação no Render ainda precisam de verificação no ambiente 
 homologação. A exclusão de uma aplicação remove seus rascunhos de especialistas,
 preservando a compatibilidade com as rotas de exclusão anteriores.
 
-Ainda faltam: interface dos agentes, revisão/aprovação vinculada ao snapshot,
-retry explícito auditável, integração clínica e liberação do conteúdo aprovado
-para DOCX. O fluxo de exportação anterior não foi alterado nesta entrega.
+Ainda faltam: retry explícito auditável, homologação clínica/modelo, monitoramento
+operacional do worker e integração clínica dos rascunhos aprovados ao snapshot
+final/DOCX. O piloto não substitui o fluxo legado e não modifica a exportação.

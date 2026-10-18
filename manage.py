@@ -6,7 +6,9 @@ import sys
 from pathlib import Path
 
 # Load .env file if present (before Django settings are read)
-_env_file = Path(__file__).resolve().parent / ".env"
+_env_file = Path(os.getenv("NEUROPSI_ENV_FILE") or Path(__file__).resolve().parent / ".env")
+if os.getenv("NEUROPSI_ENV_FILE") and not _env_file.is_file():
+    raise SystemExit("NEUROPSI_ENV_FILE aponta para um arquivo inexistente.")
 if _env_file.is_file():
     try:
         from dotenv import load_dotenv

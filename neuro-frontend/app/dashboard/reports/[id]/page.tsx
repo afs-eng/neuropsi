@@ -8,6 +8,7 @@ import { PageContainer, PageHeader } from "@/components/ui/page";
 import { WiscChart } from "@/components/charts/WiscChart";
 import { api, resolveApiUrl } from "@/lib/api";
 import { reportService } from "@/services/reportService";
+import { SpecialistPilotPanel } from "@/components/reports/SpecialistPilotPanel";
 import { ArrowLeft, Calendar, CheckCircle2, Download, FileText, Loader2, RotateCcw, Save, User } from "lucide-react";
 
 const WISC_SUBSCALE_KEYS = new Set([
@@ -660,6 +661,8 @@ export default function ReportDetailPage() {
           </div>
         </div>
       )}
+
+      <SpecialistPilotPanel key={String(report.id)} reportId={report.id} />
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
         <aside className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">

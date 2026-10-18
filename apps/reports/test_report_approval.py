@@ -86,6 +86,17 @@ class ReportApprovalTests(TestCase):
         self.assertEqual(response.json()["source_sha256"], ReportApprovalService.fingerprint(self.report))
         self.assertEqual(self.finalize().status_code, 200)
 
+    def test_provider_failure_is_recorded_and_does_not_reuse_previous_clean_audit(self):
+        self.valid_audit()
+        with patch.object(ClinicalConsistencyAuditService, "_call_ai", side_effect=ValueError("HTTP 429")):
+            response = TestClient(router).post(f"/{self.report.pk}/audit", headers=self.owner_headers)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "error")
+        self.assertEqual(response.json()["error_code"], "provider_rate_limit")
+        self.report.refresh_from_db()
+        self.assertEqual(self.report.ai_metadata["audit"]["error_code"], "provider_rate_limit")
+        self.assertEqual(self.finalize().status_code, 400)
+
     def test_changed_clinical_results_require_a_new_audit(self):
         self.valid_audit()
         self.patient.schooling = "Escolaridade corrigida"
