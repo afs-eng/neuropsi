@@ -51,6 +51,8 @@ class SpecialistPilotTests(TestCase):
             self.assertEqual(response["Cache-Control"], "private, no-store")
             self.assertEqual(response.json()["worker_status"], "not_monitored")
             self.assertTrue(response.json()["can_request"])
+            self.assertEqual(response.json()["request_block_code"], "")
+            self.assertEqual(response.json()["request_block_reason"], "")
             self.assertTrue(response.json()["legacy_unchanged"])
             self.assertNotIn("not-real", response.content.decode())
             generate.assert_not_called()
@@ -69,6 +71,53 @@ class SpecialistPilotTests(TestCase):
         response = self.client.get(f"/{self.report.pk}/specialist-status", headers=self.headers)
         self.assertFalse(response.json()["configured"])
         self.assertFalse(response.json()["can_request"])
+        self.assertEqual(response.json()["request_block_code"], "not_configured")
+        self.assertTrue(response.json()["request_block_reason"])
+
+    def test_status_explains_report_block_even_with_configured_enabled_instruments(self):
+        for status in ["generating", "finalized", "sent"]:
+            with self.subTest(status=status):
+                self.report.status = status
+                self.report.save(update_fields=["status"])
+                data = self.client.get(f"/{self.report.pk}/specialist-status", headers=self.headers).json()
+                self.assertTrue(data["configured"])
+                self.assertTrue(data["applications"][0]["enabled"])
+                self.assertFalse(data["can_request"])
+                self.assertEqual(data["request_block_code"], "report_not_editable")
+                self.assertEqual(data["report_status"], status)
+                self.assertTrue(data["request_block_reason"])
+                result = self.client.post(f"/{self.report.pk}/specialist-runs", headers=self.headers, json={"application_ids": [self.application.pk]})
+                self.assertEqual(result.status_code, 400)
+        self.assertFalse(SpecialistRun.objects.exists())
+
+    def test_status_explains_role_block_without_bypassing_permissions(self):
+        self.owner.role = "assistant"
+        self.owner.save(update_fields=["role"])
+        data = self.client.get(f"/{self.report.pk}/specialist-status", headers=self.headers).json()
+        self.assertTrue(data["configured"])
+        self.assertTrue(data["applications"][0]["enabled"])
+        self.assertFalse(data["can_request"])
+        self.assertEqual(data["request_block_code"], "role_not_allowed")
+        result = self.client.post(f"/{self.report.pk}/specialist-runs", headers=self.headers, json={"application_ids": [self.application.pk]})
+        self.assertEqual(result.status_code, 403)
+        self.assertFalse(SpecialistRun.objects.exists())
+
+    @override_settings(SPECIALIST_AI_INSTRUMENTS=["ravlt"])
+    def test_status_explains_missing_eligible_instruments(self):
+        data = self.client.get(f"/{self.report.pk}/specialist-status", headers=self.headers).json()
+        self.assertFalse(data["can_request"])
+        self.assertEqual(data["request_block_code"], "no_eligible_applications")
+
+    def test_editable_reports_allow_selection_and_enqueue(self):
+        for status in ["draft", "in_review"]:
+            with self.subTest(status=status):
+                self.report.status = status
+                self.report.save(update_fields=["status"])
+                data = self.client.get(f"/{self.report.pk}/specialist-status", headers=self.headers).json()
+                self.assertTrue(data["can_request"])
+                self.assertEqual(data["request_block_reason"], "")
+                result = self.client.post(f"/{self.report.pk}/specialist-runs", headers=self.headers, json={"application_ids": [self.application.pk]})
+                self.assertEqual(result.status_code, 202)
 
     @override_settings(SPECIALIST_AI_MODEL="")
     def test_missing_explicit_model_cannot_activate_pilot(self):

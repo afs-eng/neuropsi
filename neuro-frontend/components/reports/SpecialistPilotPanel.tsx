@@ -5,7 +5,7 @@ import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 
 type Application = { id: number; instrument_code: string; instrument_name: string; respondent: string; enabled: boolean; supported: boolean };
-type Configuration = { configured: boolean; configuration_message: string; model: string; provider: string; can_request: boolean; can_review: boolean; applications: Application[] };
+type Configuration = { configured: boolean; configuration_message: string; model: string; provider: string; can_request: boolean; request_block_reason?: string; report_status?: string; can_review: boolean; applications: Application[] };
 type Review = { id: number; decision: string; notes: string; created_at: string };
 type Run = {
   id: number; application_id: number; instrument_code: string; model: string; provider: string;
@@ -108,17 +108,25 @@ export function SpecialistPilotPanel({ reportId }: { reportId: string | number }
       {configuration && (
         <>
           <p className="mt-3 text-sm font-medium">Provedor: {configuration.provider}. Modelo: {configuration.model || "não selecionado"}. {configuration.configured ? "Configuração disponível; isso não comprova homologação clínica." : configuration.configuration_message}</p>
-          <fieldset disabled={busy || loading || !configuration.can_request} className="mt-4 space-y-2">
+          {!configuration.can_request && (
+            <p id="specialist-request-block" role="status" className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+              <strong>Seleção e solicitação bloqueadas: </strong>
+              {configuration.request_block_reason || "A API não autorizou a solicitação para este laudo ou perfil. Confira o status do laudo e a permissão da conta responsável."}
+              {configuration.report_status && <span className="mt-1 block">Status do laudo: {({ draft: "Rascunho", in_review: "Em revisão", generating: "Em geração", finalized: "Finalizado", sent: "Enviado" } as Record<string, string>)[configuration.report_status] || configuration.report_status}.</span>}
+            </p>
+          )}
+          <fieldset aria-describedby={!configuration.can_request ? "specialist-request-block" : "specialist-selection-help"} disabled={busy || loading || !configuration.can_request} className="mt-4 space-y-2">
             <legend className="mb-2 text-sm font-semibold">Aplicações validadas disponíveis</legend>
             {configuration.applications.length === 0 && <p className="text-sm text-slate-500">Nenhuma aplicação validada nesta avaliação.</p>}
             {configuration.applications.map((app) => (
-              <label key={app.id} className="flex items-start gap-2 text-sm text-slate-700">
-                <input type="checkbox" disabled={!app.enabled} checked={selected.includes(app.id)} onChange={() => setSelected((current) => current.includes(app.id) ? current.filter((id) => id !== app.id) : [...current, app.id])} />
+              <label key={app.id} className={`flex min-h-8 items-start gap-2 text-sm text-slate-700 ${configuration.can_request && app.enabled ? "cursor-pointer" : "cursor-not-allowed"}`}>
+                <input type="checkbox" className="mt-0.5 h-4 w-4 shrink-0 accent-teal-700" disabled={!app.enabled} checked={selected.includes(app.id)} onChange={() => setSelected((current) => current.includes(app.id) ? current.filter((id) => id !== app.id) : [...current, app.id])} />
                 <span>{app.instrument_name} — aplicação #{app.id}{app.respondent ? ` — informante: ${app.respondent}` : ""}{!app.supported ? " (especialista ainda não implementado)" : !app.enabled ? " (não habilitado neste ambiente)" : ""}</span>
               </label>
             ))}
           </fieldset>
-          <Button variant="outline" className="mt-3" disabled={busy || loading || !configuration.can_request || selected.length === 0} onClick={enqueue}>Solicitar rascunhos selecionados</Button>
+          {configuration.can_request && <p id="specialist-selection-help" role="status" className="mt-2 text-sm text-slate-600">{selected.length === 0 ? "Marque ao menos uma aplicação habilitada para liberar a solicitação." : `${selected.length} aplicação(ões) selecionada(s).`}</p>}
+          <Button variant="outline" className="mt-3" disabled={busy || loading || !configuration.can_request || selected.length === 0} onClick={enqueue}>{busy ? "Processando solicitação…" : "Solicitar rascunhos selecionados"}</Button>
         </>
       )}
       <div className="mt-5 space-y-3">

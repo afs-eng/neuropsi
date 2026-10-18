@@ -118,11 +118,31 @@ def specialist_status(request, report_id: int, response: HttpResponse):
     applications = list(TestApplication.objects.filter(evaluation_id=report.evaluation_id, is_validated=True).select_related("instrument").order_by("id"))
     allowlist = set(settings.SPECIALIST_AI_INSTRUMENTS) & set(INSTRUMENT_INSTRUCTIONS)
     editable = report.status in {ReportStatus.DRAFT, ReportStatus.IN_REVIEW}
+    request_block_code, request_block_reason = "", ""
+    if not configured:
+        request_block_code, request_block_reason = "not_configured", reason
+    elif not editable:
+        if report.status in {ReportStatus.FINALIZED, ReportStatus.SENT}:
+            request_block_reason = "Este laudo está finalizado ou enviado. Crie uma nova revisão para solicitar especialistas."
+        elif report.status == ReportStatus.GENERATING:
+            request_block_reason = "Este laudo está em geração. Aguarde a conclusão e atualize o status antes de solicitar especialistas."
+        else:
+            request_block_reason = "O laudo precisa estar em rascunho ou em revisão para solicitar especialistas."
+        request_block_code = "report_not_editable"
+    elif request.auth.role not in SpecialistRunService.CLINICAL_ROLES:
+        request_block_code = "role_not_allowed"
+        request_block_reason = "Sua conta não tem permissão para solicitar especialistas. É necessário o perfil de neuropsicólogo ou administrador responsável pelo laudo."
+    elif not any(app.instrument.code in allowlist for app in applications):
+        request_block_code = "no_eligible_applications"
+        request_block_reason = "Não há aplicações validadas com especialista implementado e habilitado neste ambiente."
     return {
         "experimental": True, "configured": configured, "configuration_message": reason,
         "model": settings.SPECIALIST_AI_MODEL, "legacy_unchanged": True,
         "provider": SpecialistRunService.provider_name(),
-        "can_request": configured and editable and request.auth.role in SpecialistRunService.CLINICAL_ROLES and any(app.instrument.code in allowlist for app in applications),
+        "can_request": not request_block_code,
+        "request_block_code": request_block_code,
+        "request_block_reason": request_block_reason,
+        "report_status": report.status,
         "can_review": editable and ReportApprovalService.can_approve(request.auth),
         "worker_status": "not_monitored", "automatic_integration": False,
         "applications": [{

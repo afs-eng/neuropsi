@@ -62,6 +62,8 @@ class SpecialistRunService:
             report = owned_reports(Report.objects.select_for_update(), user).get(pk=report_id)
             if report.status in {ReportStatus.FINALIZED, ReportStatus.SENT}:
                 raise ValueError("Laudo finalizado: abra uma nova revisão antes de solicitar especialistas.")
+            if report.status not in {ReportStatus.DRAFT, ReportStatus.IN_REVIEW}:
+                raise ValueError("Aguarde a conclusão da geração do laudo antes de solicitar especialistas.")
             applications = TestApplication.objects.with_details().filter(
                 evaluation_id=report.evaluation_id, is_validated=True,
             )
