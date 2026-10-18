@@ -200,6 +200,36 @@ dependem do provedor e dos tokens de entrada; monitorar o orçamento no provedor
 
 ## Worker
 
+### Acompanhamento no painel
+
+Após solicitar rascunhos, o painel exibe o acompanhamento da solicitação, com
+espera na fila, geração/validação, conclusão para revisão ou falha. O tempo de
+espera usa `created_at`; o tempo de análise usa `started_at`; execuções encerradas
+usam `finished_at`, sem continuar contando. Ao reabrir a página, são exibidas as
+últimas execuções por aplicação, com os timestamps persistidos.
+
+A barra individual é indeterminada: não representa percentual ou estimativa de
+término. Para múltiplas execuções, a barra agregada conta execuções encerradas,
+incluindo falhas/desatualizadas, e não aprovação clínica. Os detalhes e as notas
+de revisão continuam separados e não são sobrescritos pela consulta automática.
+
+Enquanto houver pendências, a aba visível consulta status a cada 5 segundos após
+a consulta anterior terminar; ao voltar à aba, consulta novamente. São apenas
+GETs autenticados, não novas inferências, retries de jobs ou chamadas ao Ollama.
+Erros de consulta preservam o último estado e mostram aviso; não comprovam falha
+da IA. Consulta acima de 20 segundos é interrompida e pode ser refeita.
+
+Não há heartbeat do worker nem progresso de tokens: `running` significa que o
+worker iniciou a execução, não que continua saudável. Esperas acima de um minuto
+e análises acima de cinco minutos pedem conferência do terminal, sem declarar
+timeout ou reiniciar a execução. Falhas permanecem visíveis fora dos detalhes.
+
+Verificação frontend (na pasta `neuro-frontend`):
+`node --test components/reports/specialistProgress.test.cjs`,
+`npx tsc --noEmit --incremental false` e lint dos componentes alterados.
+Os testes cobrem lógica de polling e renderização estática; não substituem
+verificação em navegador com worker/banco reais.
+
 ### Worker contínuo por conta, sem trocar o ID de laudo
 
 Após atualizar o código local, é possível acompanhar todas as solicitações de

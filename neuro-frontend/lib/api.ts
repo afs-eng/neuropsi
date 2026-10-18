@@ -121,7 +121,7 @@ async function fetchAPI<T>(
 }
 
 export const api = {
-  get: <T>(url: string) => fetchAPI<T>(url),
+  get: <T>(url: string, options?: Pick<RequestInit, 'signal'>) => fetchAPI<T>(url, options),
   post: <T>(url: string, data: unknown) =>
     fetchAPI<T>(url, { method: 'POST', body: data instanceof FormData ? data : JSON.stringify(data) }),
   put: <T>(url: string, data: unknown) =>

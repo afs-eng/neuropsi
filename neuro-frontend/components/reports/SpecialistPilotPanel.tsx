@@ -3,11 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { SpecialistProgressPanel } from "./SpecialistProgressPanel";
+import { shouldPollSpecialists, startSpecialistPolling, type SpecialistProgressRun } from "./specialistProgress";
 
 type Application = { id: number; instrument_code: string; instrument_name: string; respondent: string; enabled: boolean; supported: boolean };
 type Configuration = { configured: boolean; configuration_message: string; model: string; provider: string; can_request: boolean; request_block_reason?: string; report_status?: string; can_review: boolean; applications: Application[] };
 type Review = { id: number; decision: string; notes: string; created_at: string };
-type Run = {
+type Run = SpecialistProgressRun & {
   id: number; application_id: number; instrument_code: string; model: string; provider: string;
   status: string; is_current: boolean; source_sha256: string; output_sha256: string;
   error_code: string; review_is_current: boolean; reviews: Review[];
@@ -50,6 +52,10 @@ const VALIDATION_ERRORS: Record<string, string> = {
 };
 
 export function SpecialistPilotPanel({ reportId }: { reportId: string | number }) {
+  return <SpecialistPilotContent key={String(reportId)} reportId={reportId} />;
+}
+
+function SpecialistPilotContent({ reportId }: { reportId: string | number }) {
   const [configuration, setConfiguration] = useState<Configuration | null>(null);
   const [runs, setRuns] = useState<Run[]>([]);
   const [selected, setSelected] = useState<number[]>([]);
@@ -58,49 +64,77 @@ export function SpecialistPilotPanel({ reportId }: { reportId: string | number }
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [requestedIds, setRequestedIds] = useState<number[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
+  const [refreshError, setRefreshError] = useState("");
   const generation = useRef(0);
+  const controller = useRef<AbortController | null>(null);
 
-  const reload = useCallback(async () => {
+  const reload = useCallback(async (silent = false) => {
     const request = ++generation.current;
-    setLoading(true);
-    setError("");
+    controller.current?.abort();
+    const abort = new AbortController();
+    controller.current = abort;
+    const timeout = window.setTimeout(() => abort.abort(), 20000);
+    if (!silent) setLoading(true);
     try {
       const [config, results] = await Promise.all([
-        api.get<Configuration>(`/api/reports/${reportId}/specialist-status`),
-        api.get<Run[]>(`/api/reports/${reportId}/specialist-runs`),
+        api.get<Configuration>(`/api/reports/${reportId}/specialist-status`, { signal: abort.signal }),
+        api.get<Run[]>(`/api/reports/${reportId}/specialist-runs`, { signal: abort.signal }),
       ]);
       if (generation.current !== request) return;
       setConfiguration(config);
       setRuns(results);
+      setLastUpdatedAt(Date.now());
+      setRefreshError("");
       setSelected((current) => current.filter((id) => config.applications.some((app) => app.id === id && app.enabled)));
     } catch (err: unknown) {
-      if (generation.current === request) setError((err as { message?: string })?.message || "Não foi possível carregar o piloto.");
+      if (generation.current === request) setRefreshError(abort.signal.aborted ? "A consulta demorou demais. Tente atualizar o status." : (err as { message?: string })?.message || "Não foi possível consultar o sistema.");
     } finally {
+      window.clearTimeout(timeout);
       if (generation.current === request) setLoading(false);
     }
   }, [reportId]);
 
   useEffect(() => {
     void reload();
-    return () => { generation.current += 1; };
+    return () => { generation.current += 1; controller.current?.abort(); };
   }, [reload]);
 
+  const polling = shouldPollSpecialists(runs, requestedIds);
+  useEffect(() => {
+    if (!polling) return;
+    const refresh = async () => {
+      if (document.visibilityState === "visible") await reload(true);
+    };
+    const stop = startSpecialistPolling(refresh, (callback, delay) => {
+      const timer = window.setTimeout(() => void callback(), delay);
+      return () => window.clearTimeout(timer);
+    });
+    const onVisible = () => { void refresh(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { stop(); document.removeEventListener("visibilitychange", onVisible); };
+  }, [polling, reload]);
+
   async function enqueue() {
-    if (!configuration?.can_request || selected.length === 0) return;
+    if (busy || !configuration?.can_request || selected.length === 0) return;
     const destination = configuration.provider === "ollama"
       ? "O worker usará o Ollama local configurado. Confira que o modelo é local e que os recursos de nuvem do Ollama estão desativados."
       : "Os dados serão enviados ao provedor externo, que pode cobrar.";
     if (!window.confirm(`Enviar resultados das ${selected.length} aplicações selecionadas ao modelo ${configuration.model}? São dados sensíveis. ${destination} O worker fará até duas requisições por execução. Nenhum texto do laudo será substituído.`)) return;
     setBusy(true);
+    setSubmitting(true);
     setError("");
     setNotice("");
     try {
       const result = await api.post<{ run_ids: number[]; skipped: { application_id: number }[] }>(`/api/reports/${reportId}/specialist-runs`, { application_ids: selected });
+      setRequestedIds(result.run_ids);
       setNotice(`${result.run_ids.length} execuções solicitadas ou reutilizadas. ${result.skipped.length} aplicações ignoradas. A fila só avança com o worker ligado; falhas não são repetidas automaticamente.`);
       await reload();
     } catch (err: unknown) {
       setError((err as { message?: string })?.message || "Não foi possível solicitar os rascunhos.");
-    } finally { setBusy(false); }
+    } finally { setBusy(false); setSubmitting(false); }
   }
 
   async function review(run: Run, decision: "approved" | "rejected") {
@@ -155,12 +189,13 @@ export function SpecialistPilotPanel({ reportId }: { reportId: string | number }
             ))}
           </fieldset>
           {configuration.can_request && <p id="specialist-selection-help" role="status" className="mt-2 text-sm text-slate-600">{selected.length === 0 ? "Marque ao menos uma aplicação habilitada para liberar a solicitação." : `${selected.length} aplicação(ões) selecionada(s).`}</p>}
-          <Button variant="outline" className="mt-3" disabled={busy || loading || !configuration.can_request || selected.length === 0} onClick={enqueue}>{busy ? "Processando solicitação…" : "Solicitar rascunhos selecionados"}</Button>
+          <Button variant="outline" className="mt-3" disabled={busy || loading || !configuration.can_request || selected.length === 0} onClick={enqueue}>{submitting ? "Registrando solicitação…" : "Solicitar rascunhos selecionados"}</Button>
         </>
       )}
+      <SpecialistProgressPanel runs={runs} requestedIds={requestedIds} submitting={submitting} lastUpdatedAt={lastUpdatedAt} refreshError={refreshError} errorMessages={GENERATION_ERRORS} />
       <div className="mt-5 space-y-3">
         {runs.map((run) => (
-          <details key={run.id} className="rounded-xl border border-slate-200 p-3">
+          <details id={`specialist-run-${run.id}`} key={run.id} className="scroll-mt-6 rounded-xl border border-slate-200 p-3">
             <summary className="cursor-pointer text-sm font-medium">
               {run.instrument_code.toUpperCase()} — aplicação #{run.application_id} — {STATUS[run.status] || run.status}
               {run.review_is_current && run.reviews[0] ? ` · ${run.reviews[0].decision === "approved" ? "Aprovado para o piloto (não integrado)" : "Rejeitado"}` : ""}
@@ -192,7 +227,7 @@ export function SpecialistPilotPanel({ reportId }: { reportId: string | number }
             {run.reviews.length > 0 && <details className="mt-3 text-xs text-slate-600"><summary className="cursor-pointer">Histórico de decisões</summary><ul>{run.reviews.map((item) => <li key={item.id} className="mt-1">{item.decision === "approved" ? "Aprovado para o piloto" : "Rejeitado"} · {new Date(item.created_at).toLocaleString("pt-BR")} · {item.notes || "Sem notas"}</li>)}</ul></details>}
           </details>
         ))}
-        {!loading && runs.length === 0 && <p className="text-sm text-slate-500">Nenhuma execução de especialista solicitada neste laudo.</p>}
+        {!loading && lastUpdatedAt !== null && runs.length === 0 && <p className="text-sm text-slate-500">Nenhuma execução de especialista solicitada neste laudo.</p>}
       </div>
     </section>
   );
