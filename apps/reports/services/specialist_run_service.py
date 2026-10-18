@@ -127,7 +127,7 @@ class SpecialistRunService:
         )
 
     @classmethod
-    def recover_interrupted(cls, report_id=None) -> int:
+    def recover_interrupted(cls, report_id=None, requested_by_id=None) -> int:
         # Sem repetição automática: o provedor pode já ter cobrado a chamada.
         runs = SpecialistRun.objects.filter(
             status=SpecialistRun.Status.RUNNING,
@@ -135,6 +135,8 @@ class SpecialistRunService:
         )
         if report_id is not None:
             runs = runs.filter(report_id=report_id)
+        if requested_by_id is not None:
+            runs = runs.filter(requested_by_id=requested_by_id)
         return runs.update(status=SpecialistRun.Status.FAILED, error_code="worker_interrupted", finished_at=timezone.now())
 
     @staticmethod
@@ -144,11 +146,13 @@ class SpecialistRunService:
         ).get(pk=run_id)
 
     @staticmethod
-    def _claim(report_id=None):
+    def _claim(report_id=None, requested_by_id=None):
         # Compare-and-swap: só um worker pode alterar queued -> running.
         runs = SpecialistRun.objects.filter(status=SpecialistRun.Status.QUEUED)
         if report_id is not None:
             runs = runs.filter(report_id=report_id)
+        if requested_by_id is not None:
+            runs = runs.filter(requested_by_id=requested_by_id)
         for run_id in runs.values_list("pk", flat=True)[:50]:
             if SpecialistRun.objects.filter(pk=run_id, status=SpecialistRun.Status.QUEUED).update(
                 status=SpecialistRun.Status.RUNNING, started_at=timezone.now(), error_code="",
@@ -157,10 +161,10 @@ class SpecialistRunService:
         return None
 
     @classmethod
-    def process_next(cls, *, generator=None, report_id=None):
+    def process_next(cls, *, generator=None, report_id=None, requested_by_id=None):
         cls.configuration()
-        cls.recover_interrupted(report_id=report_id)
-        run_id = cls._claim(report_id=report_id)
+        cls.recover_interrupted(report_id=report_id, requested_by_id=requested_by_id)
+        run_id = cls._claim(report_id=report_id, requested_by_id=requested_by_id)
         if run_id is None:
             return None
         try:

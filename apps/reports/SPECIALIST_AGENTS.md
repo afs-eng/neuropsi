@@ -200,6 +200,48 @@ dependem do provedor e dos tokens de entrada; monitorar o orçamento no provedor
 
 ## Worker
 
+### Worker contínuo por conta, sem trocar o ID de laudo
+
+Após atualizar o código local, é possível acompanhar todas as solicitações de
+uma única conta. Substituir `SEU_USUARIO` pelo username exato da conta que solicita
+os rascunhos no frontend (não pelo nome exibido, nem pela conta administrativa se
+ela for diferente). Primeiro, checar banco/configuração sem inferência:
+
+```bash
+env -u DATABASE_URL -u SPECIALIST_AI_ENABLED NEUROPSI_ENV_FILE=.env.specialists.local .venv/bin/python manage.py run_specialist_worker --username SEU_USUARIO --check
+```
+
+Depois, iniciar continuamente, sem `--once` nem `--report-id`:
+
+```bash
+env -u DATABASE_URL -u SPECIALIST_AI_ENABLED NEUROPSI_ENV_FILE=.env.specialists.local .venv/bin/python manage.py run_specialist_worker --username SEU_USUARIO
+```
+
+O worker consulta a fila dessa conta em todos os laudos, inclusive laudos novos:
+não é preciso mudar o comando quando o ID passa de 9 para 10, por exemplo.
+Solicitar os rascunhos continua sendo uma ação explícita no painel de especialistas;
+abrir um laudo com `autobuild=1` não enfileira especialistas por si só. O fluxo
+legado de gerar laudo/anamnese continua separado. Nenhum job falho é repetido.
+
+`--username` filtra o `requested_by` na consulta, claim e recuperação de execuções
+interrompidas. Jobs de outras contas não são processados nem têm seu estado
+alterado por esse worker. Os controles existentes de autoria, paciente, avaliação,
+validação, modelo/provedor e fontes atuais continuam obrigatórios por execução.
+A conta selecionada deve existir, estar ativa e ter perfil clínico autorizado.
+Se combinar `--username` e `--report-id`, ambos os filtros são aplicados.
+
+O terminal informa que o worker está ativo e avisa quando está esperando novos
+jobs. A espera não é repetida a cada consulta, para evitar ruído. Ctrl+C encerra.
+Essa opção não instala serviço nem inicialização automática: depois de reiniciar
+o computador, iniciar novamente Ollama/worker, até configurar um serviço separado
+com autorização explícita. Não houve chamada real nem início automático nesta entrega.
+
+**Banco compartilhado:** remover apenas `--report-id` sem informar `--username`
+mantém o comportamento antigo de acompanhar a fila de TODAS as contas, com aviso
+explícito no terminal. Não usar essa modalidade no computador pessoal conectado
+à instalação multiusuária. A conta do banco ainda precisa de privilégios mínimos:
+o filtro do worker não substitui a proteção das credenciais do PostgreSQL.
+
 ### Piloto local com Render Free
 
 O painel **Especialistas de IA — piloto experimental**, na página do laudo, é
