@@ -35,6 +35,7 @@ import { api, resolveApiUrl, getToken } from "@/lib/api";
 import { getEvaluationDeadlineMeta } from "@/lib/evaluation-deadline";
 import { AnamnesisResponseViewer } from "@/components/anamnesis/AnamnesisResponseViewer";
 import { TestWorkflowBadge } from "@/components/tests/TestWorkflowBadge";
+import { ReportPreparationPanel } from "@/components/reports/ReportPreparationPanel";
 
 interface Instrument {
   id: number;
@@ -1132,6 +1133,8 @@ export default function EvaluationDetailPage() {
           </button>
         ))}
       </div>
+
+          <ReportPreparationPanel key={evaluation.id} evaluationId={evaluation.id} />
 
           {pageNotice && (
             <div className={`mb-6 rounded-2xl px-4 py-3 text-sm ${pageNotice.type === "success" ? "border border-emerald-200 bg-emerald-50 text-emerald-800" : "border border-rose-200 bg-rose-50 text-rose-800"}`}>

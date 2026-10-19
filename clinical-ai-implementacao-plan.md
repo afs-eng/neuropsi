@@ -3,6 +3,14 @@
 Diagnóstico: `clinical-ai-fase0-diagnostico.md`. Status: **proposto, aguardando
 aprovação**. A autorização desta sessão abrangeu apenas reconhecimento/testes.
 
+Atualização de escopo: posteriormente foram aprovadas as decisões de produto de
+um botão por avaliação, revisão consolidada antes da síntese e worker local com
+inicialização automática a configurar. Ver `arquitetura-laudo-automatizado.md` e
+`laudo-automatizado-plan.md`. São especificações, não instalação/implementação já
+executadas. As regras clínicas e critérios de homologação deste plano continuam
+obrigatórios; o formato editorial BPA-2 foi tratado separadamente em
+`bpa2-modelo-redacao-plan.md`.
+
 ## Entrega 1 — Consolidar BPA-2 (Fase 1)
 
 - Arquivos existentes: `apps/reports/test_bpa2_specialist.py`,

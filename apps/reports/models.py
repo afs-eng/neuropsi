@@ -201,6 +201,39 @@ class SpecialistRun(models.Model):
         )]
 
 
+class ReportPreparation(models.Model):
+    class Status(models.TextChoices):
+        PREPARED = "prepared", "Fontes registradas"
+        BLOCKED = "blocked", "Pendências identificadas"
+
+    evaluation = models.ForeignKey(Evaluation, on_delete=models.CASCADE, related_name="report_preparations")
+    report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name="preparations")
+    requested_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    workflow_version = models.CharField(max_length=50)
+    source_sha256 = models.CharField(max_length=64)
+    manifest = models.JSONField(default=dict)
+    blockers = models.JSONField(default=list)
+    status = models.CharField(max_length=20, choices=Status.choices)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        constraints = [models.UniqueConstraint(
+            fields=["report", "workflow_version", "source_sha256"], name="unique_report_preparation_source",
+        )]
+
+
+class ReportPreparationStep(models.Model):
+    preparation = models.ForeignKey(ReportPreparation, on_delete=models.CASCADE, related_name="steps")
+    key = models.CharField(max_length=50)
+    order = models.PositiveSmallIntegerField()
+    status = models.CharField(max_length=20, choices=[("completed", "Concluída"), ("unavailable", "Não disponível nesta entrega")])
+
+    class Meta:
+        ordering = ["order", "id"]
+        constraints = [models.UniqueConstraint(fields=["preparation", "key"], name="unique_preparation_step")]
+
+
 class SpecialistReview(models.Model):
     class Decision(models.TextChoices):
         APPROVED = "approved", "Aprovado para o piloto"

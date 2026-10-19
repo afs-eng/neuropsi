@@ -14,6 +14,7 @@ from apps.tests.api.router import router as tests_router
 from apps.reports.api.router import router as reports_router
 from apps.reports.api.template_endpoints import router as report_templates_router
 from apps.reports.api.specialist_endpoints import router as report_specialists_router
+from apps.reports.api.preparation_endpoints import router as report_preparations_router
 
 from apps.api.system import router as system_router
 
@@ -25,6 +26,7 @@ api = NinjaAPI(
 )
 
 api.add_router("/system", system_router)
+api.add_router("/report-preparations", report_preparations_router)
 api.add_router("/accounts", accounts_router)
 api.add_router("/ai", ai_router)
 api.add_router("/patients", patients_router)
