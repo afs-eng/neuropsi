@@ -11,10 +11,11 @@ from pydantic_ai.providers.ollama import OllamaProvider
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.usage import RunUsage, UsageLimits
 
-from .specialist_contracts import bpa2_generation_model, specialist_output_model, validate_evidence
+from .specialist_contracts import bpa2_generation_model, self_report_generation_model, specialist_output_model, validate_evidence
 from .bpa2_specialist import validate_bpa2_editorial_layout
 from .specialist_errors import SpecialistGenerationError, SpecialistValidationError, generation_error_code
 from .specialist_instructions import BASE_INSTRUCTIONS, INSTRUMENT_INSTRUCTIONS
+from .self_report_specialists import SELF_REPORT_VERSIONS
 
 
 def _last_finish_reason(messages, request_count):
@@ -45,6 +46,8 @@ class SpecialistAgentService:
         output_model = specialist_output_model(run.instrument_code)
         if local and run.instrument_code == "bpa2":
             output_model = bpa2_generation_model(run.input_payload["facts"])
+        elif local and run.instrument_code in SELF_REPORT_VERSIONS:
+            output_model = self_report_generation_model(run.instrument_code, run.input_payload["facts"])
         model_settings = OpenAIChatModelSettings(
             temperature=0.1, max_tokens=max_output_tokens,
         )
@@ -80,21 +83,22 @@ class SpecialistAgentService:
             last_validation_code = None
             last_validation_section = None
             last_validation_request = None
-            if run.instrument_code == "bpa2":
+            if run.instrument_code == "bpa2" or run.instrument_code in SELF_REPORT_VERSIONS:
                 @agent.output_validator
-                def validate_bpa2_output(output):
+                def validate_specialist_output(output):
                     nonlocal last_validation_code, last_validation_request, last_validation_section
                     last_validation_code = None
                     last_validation_section = None
                     last_validation_request = usage.requests
                     try:
                         validate_evidence(output, run.input_payload["facts"], run.instrument_code)
-                        validate_bpa2_editorial_layout(output)
+                        if run.instrument_code == "bpa2":
+                            validate_bpa2_editorial_layout(output)
                     except ValueError as exc:
                         if isinstance(exc, SpecialistValidationError):
                             last_validation_code = exc.code
                             last_validation_section = exc.section
-                            if exc.code == "evidence_not_found":
+                            if exc.code == "evidence_not_found" and run.instrument_code == "bpa2":
                                 raise ModelRetry(
                                     "evidence_ids deve conter apenas chaves EXATAS de facts. "
                                     "Não use nomes de componentes, caminhos do reading_guide nem valores. "

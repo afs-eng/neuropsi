@@ -3,6 +3,7 @@ import json
 from datetime import date
 
 from .bpa2_specialist import bpa2_reading_guide
+from .self_report_specialists import SELF_REPORT_VERSIONS, self_report_reading_guide, self_report_sources
 
 
 class SpecialistInputService:
@@ -70,8 +71,12 @@ class SpecialistInputService:
                 if len(facts) > cls.MAX_FACTS:
                     raise ValueError("Resultados excedem o limite de fatos por aplicação.")
 
-        for key in ("computed_payload", "classified_payload"):
-            visit(getattr(application, key) or {}, f"/{key}")
+        sources = (application.computed_payload or {}, application.classified_payload or {})
+        code = getattr(getattr(application, "instrument", None), "code", "")
+        if code in SELF_REPORT_VERSIONS:
+            sources = self_report_sources(code, *sources)
+        for key, source in zip(("computed_payload", "classified_payload"), sources):
+            visit(source, f"/{key}")
         if not facts:
             raise ValueError("Aplicação sem resultados calculados/classificados utilizáveis.")
         visit({key: raw[key] for key in cls.FORM_KEYS if key in raw}, "/application")
@@ -85,6 +90,8 @@ class SpecialistInputService:
         payload = {"instrument_code": application.instrument.code, "facts": facts}
         if application.instrument.code == "bpa2":
             payload["reading_guide"] = bpa2_reading_guide(facts)
+        elif code in SELF_REPORT_VERSIONS:
+            payload["reading_guide"] = self_report_reading_guide(code, facts)
         if len(json.dumps(payload, ensure_ascii=False).encode()) > 60000:
             raise ValueError("Resultados excedem o tamanho permitido para o especialista.")
         return payload

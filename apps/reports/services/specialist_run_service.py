@@ -17,6 +17,7 @@ from .specialist_errors import (
 )
 from .specialist_input_service import SpecialistInputService
 from .specialist_instructions import INSTRUMENT_INSTRUCTIONS
+from .self_report_specialists import SELF_REPORT_VERSIONS
 
 
 class SpecialistRunService:
@@ -25,7 +26,7 @@ class SpecialistRunService:
 
     @classmethod
     def version_for(cls, instrument_code: str, provider_name: str | None = None) -> str:
-        version = BPA2_VERSION if instrument_code == "bpa2" else cls.VERSION
+        version = BPA2_VERSION if instrument_code == "bpa2" else SELF_REPORT_VERSIONS.get(instrument_code, cls.VERSION)
         if (provider_name or cls.provider_name()) == "ollama":
             return f"{version}-ollama-4k"
         return version

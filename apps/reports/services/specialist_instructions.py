@@ -1,4 +1,5 @@
 from .bpa2_specialist import BPA2_INSTRUCTIONS
+from .self_report_specialists import BFP_INSTRUCTIONS, ETDAH_AD_INSTRUCTIONS
 
 
 BASE_INSTRUCTIONS = """
@@ -30,4 +31,6 @@ INSTRUMENT_INSTRUCTIONS = {
     "etdah_pais": "E-TDAH-PAIS: é relato de responsáveis, não diagnóstico. Não misture informantes, dimensões ou direção de classificação. Sem indicação explícita do sentido do escore, não suponha que maior valor seja pior.",
     "scared": "SCARED: diferencie versão de responsáveis e autorrelato; não suponha a versão quando ausente. Descreva rastreio de sintomas ansiosos, não diagnóstico. Não invente pontos de corte nem misture aplicações de informantes diferentes.",
     "srs2": "SRS-2: diferencie formulário, respondente e escalas T. Não use escore bruto como escore T; não conclua autismo com base isolada nesta escala. Não suponha formulário ausente.",
+    "bfp": BFP_INSTRUCTIONS,
+    "etdah_ad": ETDAH_AD_INSTRUCTIONS,
 }

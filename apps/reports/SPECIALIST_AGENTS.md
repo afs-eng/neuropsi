@@ -7,12 +7,68 @@ evidências por achado, validações e fila persistente no PostgreSQL/Django.
 Sem CrewAI, LangGraph, Redis ou Celery adicionais nesta etapa. Não há memória
 compartilhada entre agentes: cada execução cria um agente/contexto novos.
 
-Escopos iniciais: WISC-IV, WAIS-III, WASI, BPA-2, RAVLT, FDT, E-TDAH-PAIS,
-SCARED e SRS-2. O catálogo declarativo contém outros instrumentos, mas eles são
+Escopos implementados: WISC-IV, WAIS-III, WASI, BPA-2, RAVLT, FDT, E-TDAH-PAIS,
+SCARED, SRS-2, BFP e E-TDAH-AD. O catálogo declarativo contém outros instrumentos, mas eles são
 explicitamente ignorados para execução até terem contratos/instruções próprios.
 O registro **não certifica especialização clínica**. Os escopos atuais são
 conservadores; manuais licenciados e referências autorizadas ainda precisam de
 curadoria e homologação pela profissional antes de uso clínico em produção.
+
+### BFP e E-TDAH-AD — especialistas de autorrelato
+
+Implementados em `services/self_report_specialists.py`, com instruções adaptadas
+de `aux/neuro_skills/bfp/SKILL.md` e `aux/neuro_skills/etdah_ad/SKILL.md`.
+O material de `aux` não é carregado dinamicamente em produção: as instruções,
+contratos e versões ficam no código revisável. Os nove especialistas anteriores,
+inclusive a redação com percentis do BPA-2, permanecem com suas versões anteriores.
+
+- Versões clínicas próprias: `pydantic-bfp-1` e `pydantic-etdah-ad-1`; no Ollama,
+  recebem o sufixo existente `-ollama-4k`. Sem mudança de orçamento ou modelo.
+- A entrada inclui somente resultados de dimensões conhecidas e metadados
+  permitidos. Exclui respostas individuais, chaves de inversão, escalas de resposta,
+  textos de interpretação antigos e identificação pessoal. Não altera motores
+  normativos, classificações, aplicação, laudo, seções ou DOCX.
+- BFP usa cinco fatores e até 17 facetas. E-TDAH-AD usa os cinco fatores do módulo
+  atual; agregado só é considerado quando efetivamente fornecido. Escores zero
+  são preservados. Divergências entre classificações/escores duplicados bloqueiam
+  a preparação, sem escolher silenciosamente uma fonte.
+- `reading_guide.dimensions` aponta para os IDs exatos de classificação/escore e
+  conserva referências dos dados percentílicos. `missing_data` explicita dimensões
+  ausentes, classificações/escores faltantes e limites de contexto/validade/manual.
+- Saída adaptada ao contrato do painel: **2–5 findings**, com `statement`,
+  `scale_codes` e `evidence_ids`; `limitations` contém limites e `review_questions`
+  contém pendências para revisão profissional. Não é um diagnóstico automático.
+  Dados ausentes não podem ser preenchidos como zero ou resultado normal.
+- A narrativa é qualitativa, **sem percentis/centis/percentuais**, inclusive nas
+  limitações/perguntas. Percentis continuam nas evidências/tabelas; nada é apagado
+  da aplicação original. Cada dimensão disponível precisa ser abordada, com
+  referência à sua classificação (ou escore quando não classificada).
+- No Ollama, o schema nativo enumera somente fatos e dimensões da aplicação atual,
+  sem cache entre pacientes. O validador também checa provedores que ignorem o
+  schema. Falhas podem receber uma correção dentro das duas chamadas já permitidas;
+  falhas terminais não são repetidas automaticamente nem viram texto de fallback.
+- E-TDAH-AD não recebe direção clínica validada por fator/manual no payload atual.
+  A IA deve relatar a classificação sem convertê-la em desempenho melhor/pior ou
+  frequência/intensidade de sintomas. Essa ausência fica registrada como pendência.
+- As validações cobrem evidências, cobertura de dimensões, faixas mencionadas,
+  números, formato e alguns padrões conhecidos de diagnóstico/extrapolação.
+  **Não são validação semântica clínica completa:** não demonstram que toda
+  interpretação está correta, nem verificam integralmente a associação de cada
+  frase a cada dimensão em parágrafos agrupados. Exigem homologação contextual
+  e revisão profissional; hipóteses, significância e prejuízo não são certificados.
+
+**Ativação:** depois de publicar e revisar a configuração, acrescentar `bfp` e
+`etdah_ad` à allowlist `SPECIALIST_AI_INSTRUMENTS` tanto no backend quanto no worker,
+preservando os códigos já habilitados. Não é necessário novo modelo, migration
+ou endpoint. Os dois aparecem como suportados no painel; somente a allowlist
+explícita permite solicitação. Nenhuma flag/allowlist do ambiente foi alterada
+nesta entrega, nem houve inferência real, deploy ou acesso ao banco clínico.
+
+**Testes:** `test_self_report_specialists.py` usa casos sintéticos, módulos
+determinísticos reais, FunctionModel e transporte Ollama simulado (MockTransport).
+Inclui fila, isolamento de aplicações/contas, revisão, fontes alteradas, dados
+ausentes, bloqueios de aprovação e preservação de texto humano. O modelo real
+ainda precisa de avaliação autorizada; sucesso técnico não é homologação clínica.
 
 ## Ativação controlada
 

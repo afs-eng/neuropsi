@@ -51,6 +51,12 @@ const VALIDATION_ERRORS: Record<string, string> = {
   bpa2_missing_evidence: "Faltaram evidências obrigatórias de um componente ou da síntese.",
   bpa2_score_text: "O parágrafo não apresentou corretamente escore em pontos, percentil ou classificação.",
   bpa2_redaction_format: "A análise clínica não apresentou os três parágrafos exigidos pelo modelo de redação.",
+  self_report_percentile_text: "BFP e E-TDAH-AD exigem narrativa sem percentis; esses dados permanecem nas evidências.",
+  self_report_dimension: "A resposta omitiu dimensões disponíveis ou citou dimensões ausentes/duplicadas.",
+  self_report_missing_evidence: "Faltaram referências de classificação ou escore das dimensões abordadas.",
+  self_report_classification: "A redação omitiu ou alterou classificações fornecidas pelo sistema.",
+  self_report_missing_data: "A resposta não registrou as pendências dos dados recebidos.",
+  self_report_clinical_scope: "A resposta atribuiu diagnóstico ou extrapolou a direção clínica disponível para a escala.",
 };
 
 export function SpecialistPilotPanel({ reportId }: { reportId: string | number }) {

@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints, create_mod
 
 from .bpa2_specialist import BPA2_SECTIONS, validate_bpa2_findings
 from .specialist_errors import SpecialistValidationError
+from .self_report_specialists import SELF_REPORT_VERSIONS, self_report_reading_guide, validate_self_report_findings
 
 ReviewText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=3, max_length=1500)]
 
@@ -46,7 +47,17 @@ class BPA2SpecialistOutput(SpecialistOutput):
         return self
 
 
+class SelfReportFinding(SupportedFinding):
+    scale_codes: list[str] = Field(min_length=1, max_length=22)
+
+
+class SelfReportSpecialistOutput(SpecialistOutput):
+    findings: list[SelfReportFinding] = Field(min_length=2, max_length=5)
+
+
 def specialist_output_model(instrument_code: str):
+    if instrument_code in SELF_REPORT_VERSIONS:
+        return SelfReportSpecialistOutput
     return BPA2SpecialistOutput if instrument_code == "bpa2" else SpecialistOutput
 
 
@@ -76,6 +87,26 @@ def bpa2_generation_model(facts: dict):
     )
 
 
+def self_report_generation_model(instrument_code: str, facts: dict):
+    dimensions = self_report_reading_guide(instrument_code, facts)["dimensions"]
+    finding = create_model(
+        "SelfReportGroundedFinding", __base__=SelfReportFinding,
+        evidence_ids=(list[str], Field(
+            min_length=1, max_length=30,
+            description="Copie apenas IDs exatos de facts, incluindo as classificações das dimensões abordadas.",
+            json_schema_extra={"items": {"type": "string", "enum": sorted(facts)}},
+        )),
+        scale_codes=(list[str], Field(
+            min_length=1, max_length=len(dimensions),
+            json_schema_extra={"items": {"type": "string", "enum": sorted(dimensions)}},
+        )),
+    )
+    return create_model(
+        "SelfReportGroundedOutput", __base__=SelfReportSpecialistOutput,
+        findings=(list[finding], Field(min_length=2, max_length=5)),
+    )
+
+
 def validate_evidence(output: SpecialistOutput, facts: dict, instrument_code: str = "") -> None:
     if instrument_code == "bpa2":
         output = BPA2SpecialistOutput.model_validate(output.model_dump())
@@ -93,3 +124,5 @@ def validate_evidence(output: SpecialistOutput, facts: dict, instrument_code: st
             raise SpecialistValidationError("ungrounded_number", "O achado contém número sem suporte nas evidências citadas.")
     if instrument_code == "bpa2":
         validate_bpa2_findings(output, facts)
+    elif instrument_code in SELF_REPORT_VERSIONS:
+        validate_self_report_findings(SelfReportSpecialistOutput.model_validate(output.model_dump()), facts, instrument_code)
