@@ -3,11 +3,13 @@ import re
 from .specialist_errors import SpecialistValidationError
 
 
-BPA2_VERSION = "pydantic-bpa2-3"
+BPA2_VERSION = "pydantic-bpa2-4"
+# Mudança de grounding, sem mudar regras clínicas: rascunhos já válidos continuam revisáveis.
+BPA2_COMPATIBLE_REVIEW_VERSIONS = {"pydantic-bpa2-3", "pydantic-bpa2-3-ollama-4k"}
 BPA2_SECTIONS = ("introducao", "ac", "ad", "aa", "ag", "analise_clinica")
 
 BPA2_INSTRUCTIONS = """
-BPA-2 — modelo de redação por componentes, versão 3.
+BPA-2 — modelo de redação por componentes, versão 4.
 Siga a organização abaixo, não uma conclusão fixa. Redija em português técnico,
 com parágrafos coesos e proporcionais aos resultados, sem listas de números soltos.
 Retorne exatamente seis findings, nesta ordem, usando o campo section:
@@ -39,6 +41,11 @@ significa, isoladamente, atenção preservada. Não recalcule escores nem normas
 Copie a classificação fornecida, sem reclassificar. Cite em evidence_ids os
 identificadores de TODOS os escores/percentis/classificações usados em cada
 componente. Se um desses dados estiver ausente, informe a lacuna, sem inventá-lo.
+Cada evidence_id deve ser uma chave EXATA do objeto facts, incluindo a barra
+inicial e o índice numérico do resultado classificado. reading_guide é somente
+um mapa: copie os IDs indicados nos seus valores, não o caminho do próprio mapa.
+Não use 'ac', 'percentil', valores numéricos, notação com pontos, nem caminhos
+abreviados como IDs. Não acrescente /facts ao início das chaves.
 Para escores, são aceitos os IDs calculado ou classificado equivalentes indicados
 em score_evidence_alternatives; basta citar um deles. Prefira a forma explícita
 'X pontos, percentil Y, classificação Z', sem trocar os valores entre si.

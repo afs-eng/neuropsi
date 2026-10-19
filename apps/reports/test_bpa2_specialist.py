@@ -12,7 +12,7 @@ from apps.reports import test_specialist_runs
 from apps.reports.models import SpecialistReview, SpecialistRun
 from apps.reports.services.bpa2_specialist import BPA2_INSTRUCTIONS, BPA2_VERSION, bpa2_reading_guide
 from apps.reports.services.specialist_agent_service import SpecialistAgentService
-from apps.reports.services.specialist_contracts import BPA2SpecialistOutput, validate_evidence
+from apps.reports.services.specialist_contracts import BPA2SpecialistOutput, bpa2_generation_model, validate_evidence
 from apps.reports.services.specialist_input_service import SpecialistInputService
 from apps.reports.services.specialist_review_service import SpecialistReviewService
 from apps.reports.services.specialist_run_service import SpecialistRunService
@@ -60,6 +60,35 @@ def synthetic_output(facts):
 
 
 class BPA2ContractTests(SimpleTestCase):
+    def test_generation_schema_enumerates_only_current_application_fact_ids(self):
+        facts = synthetic_facts()
+        schema = bpa2_generation_model(facts).model_json_schema()
+        field = schema["$defs"]["BPA2GroundedFinding"]["properties"]["evidence_ids"]
+        self.assertEqual(field["items"]["enum"], sorted(facts))
+        self.assertEqual(field["minItems"], 1)
+        self.assertEqual(field["maxItems"], 30)
+        self.assertNotIn("62", field["items"]["enum"])
+        self.assertEqual(schema["properties"]["findings"]["minItems"], 6)
+        self.assertEqual(schema["properties"]["findings"]["maxItems"], 6)
+
+    def test_generation_schema_does_not_reuse_ids_between_applications(self):
+        first = bpa2_generation_model({"/application/form": "first"})
+        second = bpa2_generation_model({"/computed_payload/ac/total": 1})
+        def ids(model):
+            return model.model_json_schema()["$defs"]["BPA2GroundedFinding"]["properties"]["evidence_ids"]["items"]["enum"]
+        self.assertEqual(ids(first), ["/application/form"])
+        self.assertEqual(ids(second), ["/computed_payload/ac/total"])
+        with self.assertRaises(ValueError):
+            bpa2_generation_model({})
+
+    def test_schema_ignoring_provider_cannot_bypass_evidence_checks(self):
+        facts = synthetic_facts()
+        data = synthetic_output(facts)
+        data["findings"][1]["evidence_ids"].append("/reading_guide/ac/total")
+        parsed = bpa2_generation_model(facts).model_validate(data)
+        with self.assertRaisesRegex(ValueError, "evidência inexistente"):
+            validate_evidence(parsed, facts, "bpa2")
+
     def test_both_synthetic_profiles_have_ordered_sections_and_supported_scores(self):
         for profile in (MIXED, AVERAGE):
             with self.subTest(profile=profile):
@@ -198,6 +227,42 @@ class BPA2SpecialistWorkflowTests(TestCase):
         self.assertEqual(old.output_payload, {"previous": "retained"})
         self.assertEqual(SpecialistRunService.version_for("wais3"), SpecialistRunService.VERSION)
 
+    def test_grounding_version_preserves_compatible_success_but_never_replays_old_failures(self):
+        old = self.enqueue()
+        old.specialist_version = "pydantic-bpa2-3"
+        old.status = SpecialistRun.Status.NEEDS_REVIEW
+        old.output_payload = synthetic_output(old.input_payload["facts"])
+        old.save()
+        self.assertTrue(SpecialistRunService.is_current(old))
+        current = self.enqueue()
+        self.assertNotEqual(old.pk, current.pk)
+        self.assertEqual(current.specialist_version, BPA2_VERSION)
+        old.refresh_from_db()
+        self.assertEqual(old.output_payload, synthetic_output(old.input_payload["facts"]))
+        for status in (SpecialistRun.Status.QUEUED, SpecialistRun.Status.FAILED):
+            old.status = status
+            self.assertFalse(SpecialistRunService.is_current(old))
+
+    @override_settings(
+        SPECIALIST_AI_PROVIDER="ollama", SPECIALIST_AI_MODEL="qwen3.5:9b",
+        SPECIALIST_OLLAMA_BASE_URL="http://127.0.0.1:11434/v1",
+    )
+    def test_older_local_success_is_compatible_but_failure_remains_terminal(self):
+        old = self.enqueue()
+        old.specialist_version = "pydantic-bpa2-3-ollama-4k"
+        old.status = SpecialistRun.Status.NEEDS_REVIEW
+        old.save()
+        self.assertTrue(SpecialistRunService.is_current(old))
+        old.status = SpecialistRun.Status.FAILED
+        old.error_code = "output_validation_failed"
+        old.save()
+        self.assertFalse(SpecialistRunService.is_current(old))
+        new = self.enqueue()
+        self.assertNotEqual(old.pk, new.pk)
+        self.assertEqual(new.status, SpecialistRun.Status.QUEUED)
+        old.refresh_from_db()
+        self.assertEqual(old.status, SpecialistRun.Status.FAILED)
+
     def test_agent_uses_approved_structure_and_retries_semantic_error_once(self):
         run = self.enqueue()
         valid = synthetic_output(run.input_payload["facts"])
@@ -247,6 +312,9 @@ class BPA2SpecialistWorkflowTests(TestCase):
             body = json.loads(request.content)
             self.assertEqual(body["response_format"]["type"], "json_schema")
             self.assertIn("analise_clinica", json.dumps(body["response_format"]))
+            schema = body["response_format"]["json_schema"]["schema"]
+            # O adaptador pode renomear/inlining $defs ao preparar o schema.
+            self.assertIn('"enum": ' + json.dumps(sorted(run.input_payload["facts"])), json.dumps(schema))
             self.assertEqual(body["reasoning_effort"], "none")
             self.assertEqual(body["model"], "qwen3.5:9b")
             self.assertEqual(request.headers["authorization"], "Bearer ollama-local")

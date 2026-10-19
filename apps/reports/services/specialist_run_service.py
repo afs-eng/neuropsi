@@ -10,7 +10,7 @@ from apps.reports.models import Report, ReportStatus, SpecialistRun
 from apps.tests.models import TestApplication
 
 from .specialist_agent_service import SpecialistAgentService
-from .bpa2_specialist import BPA2_VERSION
+from .bpa2_specialist import BPA2_COMPATIBLE_REVIEW_VERSIONS, BPA2_VERSION
 from .specialist_contracts import specialist_output_model, validate_evidence
 from .specialist_errors import (
     SpecialistGenerationError, SpecialistValidationError, generation_error_code, safe_diagnostics,
@@ -114,6 +114,11 @@ class SpecialistRunService:
             run.provider_name == "ollama"
             and run.status == SpecialistRun.Status.NEEDS_REVIEW
             and run.specialist_version == cls.version_for(run.instrument_code, "openai")
+        )
+        compatible_review = compatible_review or (
+            run.instrument_code == "bpa2"
+            and run.status == SpecialistRun.Status.NEEDS_REVIEW
+            and run.specialist_version in BPA2_COMPATIBLE_REVIEW_VERSIONS
         )
         return (
             app.is_validated

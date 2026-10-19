@@ -43,7 +43,7 @@ do servidor Ollama. A janela precisa comportar entrada, instruções e saída;
 contexto insuficiente ainda pode impedir a geração completa. Conferir a janela
 no Ollama Windows durante os testes; ela não foi alterada automaticamente.
 
-### BPA-2: redação estruturada por componentes (versão `pydantic-bpa2-3`)
+### BPA-2: redação estruturada por componentes (versão `pydantic-bpa2-4`)
 
 O especialista usa o modelo escolhido em `SPECIALIST_AI_MODEL` (inclusive o
 `qwen3.5:9b` local), sem fine-tuning ou escolha automática de modelo. As instruções
@@ -70,13 +70,28 @@ O painel apresenta os títulos e preserva as evidências de cada parágrafo.
   agente. Não se incluem nomes do paciente nem se copiam nomes de exemplos.
 - Falhas de validação na saída permitem uma correção dentro do limite existente
   de duas requisições; não há aumento automático de tokens/tempo ou fallback.
+- No Ollama, o schema nativo de `evidence_ids` enumera as chaves exatas de `facts`
+  desta aplicação. É criado por requisição, sem cache compartilhado entre pacientes.
+  O modelo deve copiar os IDs apontados pelo guia, não nomes de componentes nem
+  caminhos de `reading_guide`. Um enum orienta a geração, mas não substitui a
+  validação: respostas de provedores que ignorarem o schema continuam bloqueadas.
+- Em `evidence_not_found`, a tentativa de correção recebe a lista dos IDs permitidos,
+  sem converter, remover ou completar referências silenciosamente. Texto rejeitado,
+  IDs desconhecidos e mensagens brutas não são persistidos em diagnósticos.
+  Falhas antigas sem texto rejeitado não permitem descobrir qual ID foi inventado.
 
 Para retestar: publicar backend/frontend e atualizar também o código do worker
 local. Não há migration nova. Manter o mesmo modelo/endpoint configurado nos dois.
-As execuções BPA-2 anteriores ficam preservadas, mas desatualizadas por versão;
-as demais especialidades mantêm sua versão. No laudo sintético, selecionar BPA-2
+As execuções BPA-2 anteriores ficam preservadas. Sucessos `needs_review` da versão
+3 (com ou sem `-ollama-4k`) continuam revisáveis quando a fonte permanece atual:
+a versão 4 muda grounding/instruções de IDs, não as regras clínicas de validação.
+Jobs antigos pendentes/falhos não são reativados pela mudança. As demais
+especialidades mantêm sua versão. No laudo sintético, selecionar BPA-2
 e solicitar novamente: isso cria uma nova execução com as instruções novas, sem
 reutilizar a antiga. Processar com `--once --report-id ID` e atualizar o painel.
+Também é possível manter o worker contínuo `--username SEU_USUARIO` já descrito
+abaixo. A versão local nova é `pydantic-bpa2-4-ollama-4k`. O transporte e os retries
+foram testados com respostas sintéticas; o modelo real ainda precisa ser retestado.
 Se houver jobs antigos ainda na fila, podem ser marcados como desatualizados antes
 do novo job; `--once` processa no máximo um job por chamada. Nenhum resultado é
 inserido automaticamente no texto final ou DOCX, mesmo após aprovação do piloto.

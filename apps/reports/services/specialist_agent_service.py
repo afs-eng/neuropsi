@@ -11,7 +11,7 @@ from pydantic_ai.providers.ollama import OllamaProvider
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.usage import RunUsage, UsageLimits
 
-from .specialist_contracts import specialist_output_model, validate_evidence
+from .specialist_contracts import bpa2_generation_model, specialist_output_model, validate_evidence
 from .specialist_errors import SpecialistGenerationError, SpecialistValidationError, generation_error_code
 from .specialist_instructions import BASE_INSTRUCTIONS, INSTRUMENT_INSTRUCTIONS
 
@@ -42,6 +42,8 @@ class SpecialistAgentService:
         local = run.provider_name == "ollama"
         max_output_tokens = settings.SPECIALIST_OLLAMA_MAX_TOKENS if local else settings.SPECIALIST_AI_MAX_TOKENS
         output_model = specialist_output_model(run.instrument_code)
+        if local and run.instrument_code == "bpa2":
+            output_model = bpa2_generation_model(run.input_payload["facts"])
         model_settings = OpenAIChatModelSettings(
             temperature=0.1, max_tokens=max_output_tokens,
         )
@@ -87,6 +89,14 @@ class SpecialistAgentService:
                     except ValueError as exc:
                         if isinstance(exc, SpecialistValidationError):
                             last_validation_code = exc.code
+                            if exc.code == "evidence_not_found":
+                                raise ModelRetry(
+                                    "evidence_ids deve conter apenas chaves EXATAS de facts. "
+                                    "Não use nomes de componentes, caminhos do reading_guide nem valores. "
+                                    "Consulte component_evidence_ids e copie os IDs apontados, "
+                                    "incluindo / inicial e índices numéricos. IDs permitidos: "
+                                    + json.dumps(sorted(run.input_payload["facts"]), ensure_ascii=False)
+                                ) from None
                         raise ModelRetry(str(exc)) from None
                     return output
             with capture_run_messages() as messages:

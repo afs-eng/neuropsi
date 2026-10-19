@@ -60,6 +60,48 @@ class SpecialistDiagnosticTests(TestCase):
         self.assertEqual(len(calls), 2)
         self.assertEqual(result.output_payload, {})
 
+    def test_unknown_reference_retry_lists_exact_ids_and_can_recover(self):
+        run = self.enqueue()
+        valid = test_bpa2_specialist.synthetic_output(run.input_payload["facts"])
+        invalid = json.loads(json.dumps(valid))
+        invalid["findings"][1]["evidence_ids"] = ["/reading_guide/ac/percentil"]
+        calls = []
+
+        def respond(request):
+            body = json.loads(request.content)
+            calls.append(body)
+            if len(calls) == 2:
+                correction = body["messages"][-1]["content"]
+                self.assertIn("chaves EXATAS de facts", correction)
+                self.assertIn("/computed_payload/ac/total", correction)
+                self.assertIn("/classified_payload/subtestes/0/percentil", correction)
+            return self.response(json.dumps(invalid if len(calls) == 1 else valid))
+
+        with self.mock_client(respond):
+            result = SpecialistRunService.process_next(report_id=self.report.pk)
+        self.assertEqual(result.status, "needs_review")
+        self.assertEqual(result.output_payload, valid)
+        self.assertEqual(result.usage_payload["requests"], 2)
+
+    def test_repeated_unknown_references_remain_blocked_without_clinical_output(self):
+        run = self.enqueue()
+        invalid = test_bpa2_specialist.synthetic_output(run.input_payload["facts"])
+        marker = "UNKNOWN-PRIVATE-REFERENCE"
+        invalid["findings"][1]["evidence_ids"] = [marker]
+        calls = []
+
+        def respond(request):
+            calls.append(1)
+            return self.response(json.dumps(invalid))
+
+        with self.mock_client(respond):
+            result = SpecialistRunService.process_next(report_id=self.report.pk)
+        self.assertEqual(len(calls), 2)
+        self.assertEqual(result.error_code, "output_validation_failed")
+        self.assertEqual(result.usage_payload["validation_code"], "evidence_not_found")
+        self.assertNotIn(marker, json.dumps(result.usage_payload))
+        self.assertEqual(result.output_payload, {})
+
     def test_valid_looking_truncated_json_is_never_accepted(self):
         run = self.enqueue()
         valid = test_bpa2_specialist.synthetic_output(run.input_payload["facts"])

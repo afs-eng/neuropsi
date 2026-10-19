@@ -2,7 +2,7 @@ import re
 
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, create_model, field_validator, model_validator
 
 from .bpa2_specialist import BPA2_SECTIONS, validate_bpa2_findings
 from .specialist_errors import SpecialistValidationError
@@ -48,6 +48,28 @@ class BPA2SpecialistOutput(SpecialistOutput):
 
 def specialist_output_model(instrument_code: str):
     return BPA2SpecialistOutput if instrument_code == "bpa2" else SpecialistOutput
+
+
+def bpa2_generation_model(facts: dict):
+    """Restringe o schema nativo aos IDs da aplicação, sem cache entre pacientes.
+
+    O enum orienta a geração; provedores que ignoram o schema ainda passam pelo
+    validate_evidence. Nunca converter referências desconhecidas em IDs válidos.
+    """
+    if not facts:
+        raise ValueError("BPA-2 sem evidências para geração.")
+    finding = create_model(
+        "BPA2GroundedFinding", __base__=BPA2Finding,
+        evidence_ids=(list[str], Field(
+            min_length=1, max_length=30,
+            description="Copie IDs exatos de facts; não cite caminhos do reading_guide nem nomes de componentes.",
+            json_schema_extra={"items": {"type": "string", "enum": sorted(facts)}},
+        )),
+    )
+    return create_model(
+        "BPA2GroundedOutput", __base__=BPA2SpecialistOutput,
+        findings=(list[finding], Field(min_length=6, max_length=6)),
+    )
 
 
 def validate_evidence(output: SpecialistOutput, facts: dict, instrument_code: str = "") -> None:
