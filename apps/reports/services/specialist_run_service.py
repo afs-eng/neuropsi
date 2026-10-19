@@ -18,6 +18,7 @@ from .specialist_errors import (
 from .specialist_input_service import SpecialistInputService
 from .specialist_instructions import INSTRUMENT_INSTRUCTIONS
 from .self_report_specialists import SELF_REPORT_VERSIONS
+from .fdt_specialist import FDT_COMPATIBLE_REVIEW_VERSIONS, FDT_SPECIALIST_VERSION
 
 
 class SpecialistRunService:
@@ -27,6 +28,8 @@ class SpecialistRunService:
     @classmethod
     def version_for(cls, instrument_code: str, provider_name: str | None = None) -> str:
         version = BPA2_VERSION if instrument_code == "bpa2" else SELF_REPORT_VERSIONS.get(instrument_code, cls.VERSION)
+        if instrument_code == "fdt":
+            version = FDT_SPECIALIST_VERSION
         if (provider_name or cls.provider_name()) == "ollama":
             return f"{version}-ollama-4k"
         return version
@@ -120,6 +123,11 @@ class SpecialistRunService:
             run.instrument_code == "bpa2"
             and run.status == SpecialistRun.Status.NEEDS_REVIEW
             and run.specialist_version in BPA2_COMPATIBLE_REVIEW_VERSIONS
+        )
+        compatible_review = compatible_review or (
+            run.instrument_code == "fdt"
+            and run.status == SpecialistRun.Status.NEEDS_REVIEW
+            and run.specialist_version in FDT_COMPATIBLE_REVIEW_VERSIONS
         )
         return (
             app.is_validated

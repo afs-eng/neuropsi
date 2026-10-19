@@ -1,4 +1,5 @@
 import re
+from decimal import Decimal
 
 from typing import Annotated, Literal
 
@@ -107,6 +108,23 @@ def self_report_generation_model(instrument_code: str, facts: dict):
     )
 
 
+def fdt_generation_model(facts: dict):
+    if not facts:
+        raise ValueError("FDT sem evidências para geração.")
+    finding = create_model(
+        "FDTGroundedFinding", __base__=SupportedFinding,
+        evidence_ids=(list[str], Field(
+            min_length=1, max_length=30,
+            description="Copie as chaves exatas de facts apontadas pelo reading_guide; nunca cite caminhos do próprio guia.",
+            json_schema_extra={"items": {"type": "string", "enum": sorted(facts)}},
+        )),
+    )
+    return create_model(
+        "FDTGroundedOutput", __base__=SpecialistOutput,
+        findings=(list[finding], Field(min_length=1, max_length=15)),
+    )
+
+
 def validate_evidence(output: SpecialistOutput, facts: dict, instrument_code: str = "") -> None:
     if instrument_code == "bpa2":
         output = BPA2SpecialistOutput.model_validate(output.model_dump())
@@ -120,7 +138,14 @@ def validate_evidence(output: SpecialistOutput, facts: dict, instrument_code: st
             if instrument_code == code:
                 statement = re.sub(re.escape(label), "instrumento", statement, flags=re.IGNORECASE)
         stated_numbers = set(re.findall(r"-?\d+(?:[.,]\d+)?", statement.replace(",", ".")))
-        if not stated_numbers.issubset(allowed_numbers):
+        if instrument_code == "fdt":
+            # Tempos calculados são floats; 30, 30.0 e 30,0 representam o mesmo valor.
+            numbers_supported = {Decimal(value) for value in stated_numbers}.issubset(
+                {Decimal(value) for value in allowed_numbers},
+            )
+        else:
+            numbers_supported = stated_numbers.issubset(allowed_numbers)
+        if not numbers_supported:
             raise SpecialistValidationError("ungrounded_number", "O achado contém número sem suporte nas evidências citadas.")
     if instrument_code == "bpa2":
         validate_bpa2_findings(output, facts)

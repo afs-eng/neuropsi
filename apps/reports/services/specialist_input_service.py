@@ -4,6 +4,7 @@ from datetime import date
 
 from .bpa2_specialist import bpa2_reading_guide
 from .self_report_specialists import SELF_REPORT_VERSIONS, self_report_reading_guide, self_report_sources
+from .fdt_specialist import fdt_reading_guide
 
 
 class SpecialistInputService:
@@ -92,6 +93,8 @@ class SpecialistInputService:
             payload["reading_guide"] = bpa2_reading_guide(facts)
         elif code in SELF_REPORT_VERSIONS:
             payload["reading_guide"] = self_report_reading_guide(code, facts)
+        elif code == "fdt":
+            payload["reading_guide"] = fdt_reading_guide(facts)
         if len(json.dumps(payload, ensure_ascii=False).encode()) > 60000:
             raise ValueError("Resultados excedem o tamanho permitido para o especialista.")
         return payload

@@ -72,6 +72,40 @@ ainda precisa de avaliação autorizada; sucesso técnico não é homologação 
 
 ## Ativação controlada
 
+### FDT: correção de referências — `pydantic-fdt-2`
+
+Relato de execução falha com `output_validation_failed / evidence_not_found`.
+A resposta rejeitada não foi persistida; o ID específico usado naquele caso
+não pode ser recuperado deste diagnóstico. A reprodução sintética identificou
+duas lacunas: FDT não enumerava IDs no schema nativo do Ollama e a validação de
+evidências ocorria somente depois de encerrar a geração, sem correção interna.
+
+- O schema nativo agora enumera somente as chaves exatas de `facts` da aplicação.
+- O `reading_guide.metric_evidence_ids` aponta para linhas reais de `metric_results`
+  por `codigo`, tempos/erros de etapas, índices derivados e classificação de erros.
+  Não supõe a ordem da lista nem inventa campos ausentes. O guia não é evidência.
+- Evidência desconhecida continua bloqueada. Uma correção recebe a lista dos IDs
+  permitidos dentro das **duas chamadas existentes**, sem converter ou completar
+  referências automaticamente, aumentar orçamento ou aceitar texto de fallback.
+- O validador permanece obrigatório se o provedor ignorar o enum. Duas respostas
+  inválidas encerram a execução; somente códigos/contagens seguros são persistidos.
+- A regressão com tempos reais do motor também revelou rejeição indevida de `30`
+  quando o fato era `30.0`. Somente no FDT, a comparação usa equivalência decimal:
+  `30`, `30.0` e `30,0` representam o mesmo número; valores/sinais alterados continuam
+  rejeitados. Não há recálculo de escores nem mudança nos outros especialistas.
+- Versão Ollama nova: `pydantic-fdt-2-ollama-4k`. Após atualizar **backend e worker**,
+  nova solicitação explícita cria outro registro. A execução antiga falha não é
+  repetida, apagada ou alterada. Jobs pendentes antigos não recebem silenciosamente
+  a política nova. Sucessos antigos `needs_review` das versões genéricas anteriores
+  continuam revisáveis com fontes atuais, pois a mudança é de grounding/transporte,
+  não de regras clínicas. Laudos, revisões e textos humanos são preservados.
+
+Testes em `test_fdt_specialist_grounding.py`: motor determinístico com entradas
+sintéticas e transporte Ollama simulado; nenhuma inferência real ou acesso à
+execução relatada. **Isso não comprova que o modelo real passará ou que a redação
+estará clinicamente correta.** Continua necessária uma avaliação autorizada com
+o modelo real. Nenhuma publicação ou nova execução clínica foi iniciada na correção.
+
 ### Orçamento local Ollama: 4.000 tokens por resposta
 
 `SPECIALIST_OLLAMA_MAX_TOKENS=4000` é definido nas configurações do projeto e

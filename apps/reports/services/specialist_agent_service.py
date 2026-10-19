@@ -11,7 +11,10 @@ from pydantic_ai.providers.ollama import OllamaProvider
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.usage import RunUsage, UsageLimits
 
-from .specialist_contracts import bpa2_generation_model, self_report_generation_model, specialist_output_model, validate_evidence
+from .specialist_contracts import (
+    bpa2_generation_model, fdt_generation_model, self_report_generation_model,
+    specialist_output_model, validate_evidence,
+)
 from .bpa2_specialist import validate_bpa2_editorial_layout
 from .specialist_errors import SpecialistGenerationError, SpecialistValidationError, generation_error_code
 from .specialist_instructions import BASE_INSTRUCTIONS, INSTRUMENT_INSTRUCTIONS
@@ -48,6 +51,8 @@ class SpecialistAgentService:
             output_model = bpa2_generation_model(run.input_payload["facts"])
         elif local and run.instrument_code in SELF_REPORT_VERSIONS:
             output_model = self_report_generation_model(run.instrument_code, run.input_payload["facts"])
+        elif local and run.instrument_code == "fdt":
+            output_model = fdt_generation_model(run.input_payload["facts"])
         model_settings = OpenAIChatModelSettings(
             temperature=0.1, max_tokens=max_output_tokens,
         )
@@ -83,7 +88,7 @@ class SpecialistAgentService:
             last_validation_code = None
             last_validation_section = None
             last_validation_request = None
-            if run.instrument_code == "bpa2" or run.instrument_code in SELF_REPORT_VERSIONS:
+            if run.instrument_code in {"bpa2", "fdt"} or run.instrument_code in SELF_REPORT_VERSIONS:
                 @agent.output_validator
                 def validate_specialist_output(output):
                     nonlocal last_validation_code, last_validation_request, last_validation_section
@@ -105,6 +110,13 @@ class SpecialistAgentService:
                                     "Consulte component_evidence_ids e copie os IDs apontados, "
                                     "incluindo / inicial e índices numéricos. IDs permitidos: "
                                     + json.dumps(sorted(run.input_payload["facts"]), ensure_ascii=False)
+                                ) from None
+                            if exc.code == "evidence_not_found" and run.instrument_code == "fdt":
+                                raise ModelRetry(
+                                    "evidence_ids deve conter apenas chaves EXATAS de facts. "
+                                    "Copie os IDs completos apontados por reading_guide.metric_evidence_ids, "
+                                    "não os caminhos do guia nem nomes de etapas. Não altere ou invente fatos. "
+                                    "IDs permitidos: " + json.dumps(sorted(run.input_payload["facts"]), ensure_ascii=False)
                                 ) from None
                         raise ModelRetry(str(exc)) from None
                     return output
