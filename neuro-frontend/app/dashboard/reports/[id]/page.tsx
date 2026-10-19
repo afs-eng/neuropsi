@@ -5,11 +5,13 @@ import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { PageContainer, PageHeader } from "@/components/ui/page";
-import { WiscChart } from "@/components/charts/WiscChart";
 import { api, resolveApiUrl } from "@/lib/api";
 import { reportService } from "@/services/reportService";
 import { SpecialistPilotPanel } from "@/components/reports/SpecialistPilotPanel";
-import { ArrowLeft, Calendar, CheckCircle2, Download, FileText, Loader2, RotateCcw, Save, User } from "lucide-react";
+import { ReportEditorNavigation } from "@/components/reports/ReportEditorNavigation";
+import { ReportActionsMenu, ReportStatusBadge, ReportWorkspaceTabs, parseReportWorkspace, type ReportWorkspace } from "@/components/reports/ReportEditorControls";
+import { ReportTestDataPanel } from "@/components/reports/ReportTestDataPanel";
+import { ArrowLeft, CheckCircle2, Download, FileText, Loader2, RotateCcw, Save, ShieldCheck } from "lucide-react";
 
 const WISC_SUBSCALE_KEYS = new Set([
   "funcoes_executivas",
@@ -24,13 +26,6 @@ const WISC_SUBSCALE_ORDER = [
   "gnosias_praxias",
   "memoria_aprendizagem",
 ];
-
-const WISC_DOMAIN_LABELS: Record<string, string> = {
-  funcoes_executivas: "Funções Executivas",
-  linguagem: "Linguagem",
-  gnosias_praxias: "Gnosias e Praxias",
-  memoria_aprendizagem: "Memória e Aprendizagem",
-};
 
 const TEST_SECTION_MAP: Record<string, string> = {
   wisc4: "capacidade_cognitiva_global",
@@ -50,59 +45,37 @@ const TEST_SECTION_MAP: Record<string, string> = {
 };
 
 function formatTimestamp(value?: string | null) {
-  if (!value) return "Nao informado";
+  if (!value) return "Não informado";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleString("pt-BR");
 }
 
-function formatShortDate(value?: string | null) {
-  if (!value) return "Nao informado";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString("pt-BR");
-}
-
-function normalizeNumber(value: unknown) {
-  if (typeof value === "number") return value;
-  if (typeof value === "string") {
-    const normalized = Number(value.replace(",", "."));
-    return Number.isFinite(normalized) ? normalized : null;
-  }
-  return null;
-}
-
-function getPercentileWidth(value: unknown) {
-  const number = normalizeNumber(value);
-  if (number === null) return null;
-  return Math.max(0, Math.min(100, number));
-}
-
 function getGenerationSource(provider?: string | null, model?: string | null) {
   if (provider === "deterministic" || model === "rules-based") {
-    return "Fallback automatico";
+    return "Fallback automático";
   }
   if (["openai", "ollama", "anthropic"].includes(String(provider || "").toLowerCase())) {
     return "IA";
   }
-  return "Nao informado";
+  return "Não informado";
 }
 
 function getTextStatus(hasManualEdits: boolean, generationSource: string) {
   if (hasManualEdits) return "Editado manualmente";
-  if (generationSource === "Fallback automatico") {
-    return "Igual ao fallback automatico";
+  if (generationSource === "Fallback automático") {
+    return "Igual ao fallback automático";
   }
   if (generationSource === "IA") return "Igual ao texto gerado por IA";
   return "Igual ao texto gerado automaticamente";
 }
 
 function getGenerationDetails(metadata: Record<string, any>) {
-  const requestedModel = metadata.requested_model || metadata.model || "Nao informado";
-  const effectiveModel = metadata.model || "Nao informado";
+  const requestedModel = metadata.requested_model || metadata.model || "Não informado";
+  const effectiveModel = metadata.model || "Não informado";
   const usedModelFallback = Boolean(metadata.used_model_fallback);
-  const promptName = metadata.prompt_name || "Nao informado";
-  const generationPath = metadata.generation_path || "Nao informado";
+  const promptName = metadata.prompt_name || "Não informado";
+  const generationPath = metadata.generation_path || "Não informado";
 
   return {
     requestedModel,
@@ -144,83 +117,6 @@ function getCompletedTests(report: any) {
     });
 }
 
-function buildMetricRows(test: any) {
-  const structured = test.structuredResults || {};
-
-  if (Array.isArray(structured.metric_results) && structured.metric_results.length > 0) {
-    return structured.metric_results.map((item: any) => ({
-      label: item.nome || item.codigo || "Metrica",
-      primary: item.valor ?? "-",
-      percentile: item.percentil_num ?? null,
-      classification: item.classificacao || "",
-    }));
-  }
-
-  if (Array.isArray(structured.subtestes) && structured.subtestes.length > 0) {
-    return structured.subtestes.map((item: any) => ({
-      label: item.subteste || item.nome || item.codigo || "Subteste",
-      primary: item.total ?? item.escore_padrao ?? item.escore_composto ?? "-",
-      percentile: item.percentil ?? null,
-      classification: item.classificacao || "",
-    }));
-  }
-
-  if (Array.isArray(structured.indices) && structured.indices.length > 0) {
-    return structured.indices.map((item: any) => ({
-      label: item.nome || item.indice || "Indice",
-      primary: item.escore_composto ?? "-",
-      percentile: item.percentil ?? null,
-      classification: item.classificacao || "",
-    }));
-  }
-
-  if (structured.results && typeof structured.results === "object") {
-    return Object.values(structured.results).map((item: any) => ({
-      label: item.name || "Fator",
-      primary: item.raw_score ?? item.escore_total ?? "-",
-      percentile: item.percentile_text || item.percentil || null,
-      classification: item.classification || item.classificacao || "",
-    }));
-  }
-
-  return [];
-}
-
-function getBpa2Subtests(test: any) {
-  const payload = test.classifiedPayload || test.structuredResults || test.computedPayload || {};
-  return Array.isArray(payload.subtestes) ? payload.subtestes : [];
-}
-
-function getBpa2Label(code: string, fallback?: string) {
-  const labels: Record<string, string> = {
-    ac: "Atenção Concentrada - AC",
-    ad: "Atenção Dividida - AD",
-    aa: "Atenção Alternada - AA",
-    ag: "Atenção Geral - AG",
-  };
-
-  return labels[String(code || "").toLowerCase()] || fallback || code || "Subteste";
-}
-
-function getWiscChartData(test: any) {
-  const payload = test.classifiedPayload || test.structuredResults || test.computedPayload || {};
-  const indices = Array.isArray(payload.indices) ? payload.indices : [];
-  const byIndex = Object.fromEntries(indices.map((item: any) => [item.indice, item]));
-  const rows = [
-    { label: "ICV", value: byIndex.icv?.escore_composto },
-    { label: "IOP", value: byIndex.iop?.escore_composto },
-    { label: "IMO", value: byIndex.imt?.escore_composto },
-    { label: "IVP", value: byIndex.ivp?.escore_composto },
-    { label: "QI Total", value: payload.qit_data?.escore_composto },
-    { label: "GAI", value: payload.gai_data?.escore_composto },
-    { label: "CPI", value: payload.cpi_data?.escore_composto },
-  ];
-
-  return rows
-    .map((item) => ({ ...item, value: normalizeNumber(item.value) }))
-    .filter((item) => item.value !== null) as Array<{ label: string; value: number }>;
-}
-
 function getMissingSectionsFromTests(report: any, completedTests: any[]) {
   if (report?.ai_metadata?.generation_scope === "tests_only") {
     return [];
@@ -244,6 +140,7 @@ export default function ReportDetailPage() {
   const searchParams = useSearchParams();
   const reportId = params.id;
   const router = useRouter();
+  const workspace = parseReportWorkspace(searchParams.get("view"));
   const autobuildTriggeredRef = useRef(false);
   const [report, setReport] = useState<any>(null);
   const [activeSectionId, setActiveSectionId] = useState<number | null>(null);
@@ -268,10 +165,25 @@ export default function ReportDetailPage() {
     () => getMissingSectionsFromTests(report, completedTests),
     [report, completedTests]
   );
-  const sidebarSections = useMemo(
-    () => report?.sections?.filter((section: any) => !WISC_SUBSCALE_KEYS.has(section.key)) || [],
-    [report]
-  );
+
+  function selectWorkspace(value: ReportWorkspace) {
+    const query = new URLSearchParams(searchParams.toString());
+    query.set("view", value);
+    const hash = value === "specialists" ? window.location.hash : "";
+    router.replace(`/dashboard/reports/${reportId}?${query.toString()}${hash}`, { scroll: false });
+  }
+
+  useEffect(() => {
+    const revealSpecialist = () => {
+      if (!window.location.hash.startsWith("#specialist-run-")) return;
+      const url = new URL(window.location.href);
+      url.searchParams.set("view", "specialists");
+      router.replace(`${url.pathname}${url.search}${url.hash}`, { scroll: false });
+    };
+    revealSpecialist();
+    window.addEventListener("hashchange", revealSpecialist);
+    return () => window.removeEventListener("hashchange", revealSpecialist);
+  }, [router]);
 
   const loadReport = useCallback(async () => {
     try {
@@ -604,43 +516,49 @@ export default function ReportDetailPage() {
   const generationSource = getGenerationSource(generationMetadata.provider, generationMetadata.model);
   const textStatus = getTextStatus(hasManualEdits, generationSource);
   const generationDetails = getGenerationDetails(generationMetadata);
-  const visibleSelectedTests = completedTests.filter((test: any) => selectedTests.includes(test.applicationKey));
+  const hasUnsavedChanges = Boolean(activeSection && editedText !== String(activeSection.edited_text || activeSection.generated_text || ""));
 
   return (
-    <PageContainer>
-      <PageHeader
-        title={report.title}
-        subtitle={`${report.patient_name || "Paciente"} · ${report.evaluation_title || "Avaliacao"}${report.purpose ? ` · ${report.purpose}` : ""}`}
-        actions={
-          <div className="flex gap-2">
-            <Link href="/dashboard/reports">
-              <Button variant="outline" className="gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                Voltar
-              </Button>
-            </Link>
-            <Button variant="outline" className="gap-2" onClick={handleExportHtml} disabled={isTestsOnlyReport}>
-              <Download className="h-4 w-4" />
-              Exportar HTML
-            </Button>
-            <Button variant="outline" className="gap-2" onClick={handleExportDocx} disabled={isTestsOnlyReport}>
-              <FileText className="h-4 w-4" />
-              Exportar DOCX
-            </Button>
+    <PageContainer className="!p-4 sm:!p-6 lg:!p-8">
+      <header className="mb-6 space-y-5">
+        <Link href="/dashboard/reports" className="inline-flex items-center gap-2 rounded text-sm text-slate-500 hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
+          <ArrowLeft aria-hidden="true" className="h-4 w-4" />Todos os laudos
+        </Link>
+        <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="flex flex-wrap items-center gap-2.5"><span className="text-xs font-medium text-slate-500">LAUDO #{report.id}</span><ReportStatusBadge status={report.status} /></div>
+            <h1 className="break-words text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">{report.patient_name || report.title}</h1>
+            <p className="break-words text-sm text-slate-500">{report.title} <span aria-hidden="true">·</span> {report.evaluation_title || "Avaliação neuropsicológica"}</p>
           </div>
-        }
-      />
+          <div className="flex flex-wrap items-center gap-2">
+            <Button type="button" variant="outline" className="gap-2 bg-white" onClick={handleExportDocx} disabled={isTestsOnlyReport}>
+              <Download aria-hidden="true" className="h-4 w-4" />Exportar DOCX
+            </Button>
+            <ReportActionsMenu disabled={saving} actions={[
+              { label: "Visualizar HTML", onSelect: handleExportHtml, disabled: isTestsOnlyReport, icon: <FileText aria-hidden="true" className="h-4 w-4" /> },
+              ...(isFinalized ? [{ label: "Criar nova revisão", onSelect: handleCreateRevision }] : [
+                { label: "Regenerar testes", onSelect: handleRegenerateTests, disabled: completedTests.length === 0, icon: <RotateCcw aria-hidden="true" className="h-4 w-4" /> },
+              ]),
+            ]} />
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-x-5 gap-y-2 border-t border-slate-200 pt-4 text-xs leading-5 text-slate-500">
+          <span>Responsável: <span className="font-medium text-slate-700">{report.author_name || "Não informado"}</span></span>
+          <span>Atualizado em {formatTimestamp(report.updated_at)}</span>
+          <span>{report.sections?.length || 0} capítulos · {completedTests.length} aplicações validadas</span>
+        </div>
+      </header>
 
-      {error && <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
-      {notice && <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{notice}</div>}
+      {error && <div role="alert" className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
+      {notice && <div role="status" className="mb-4 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">{notice}</div>}
       {isTestsOnlyReport && (
-        <div className="mb-4 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-800">
+        <div className="mb-4 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="rounded-full bg-indigo-600 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
               Somente testes
             </span>
             <span>
-              Este laudo foi gerado apenas com as secoes de testes validados. Finalizacao e exportacao ficam disponiveis apos gerar o laudo completo.
+              Este laudo contém apenas seções de testes validados. Aprovação e exportação ficam disponíveis após gerar o laudo completo.
             </span>
           </div>
         </div>
@@ -651,7 +569,7 @@ export default function ReportDetailPage() {
             <div>
               <div className="font-medium">Novos testes validados foram encontrados</div>
               <div className="mt-1">
-                O snapshot do laudo ja foi atualizado, mas ainda faltam secoes correspondentes no texto atual. Reconstrua o laudo para incluir: {missingSections.join(", ")}.
+                As fontes foram atualizadas, mas ainda faltam seções no texto atual. Reconstrua o laudo para incluir: {missingSections.join(", ")}.
               </div>
             </div>
             <Button variant="outline" className="border-amber-300 bg-white text-amber-900 hover:bg-amber-100" disabled={saving} onClick={handleRebuildReport}>
@@ -662,423 +580,109 @@ export default function ReportDetailPage() {
         </div>
       )}
 
-      <SpecialistPilotPanel key={String(report.id)} reportId={report.id} />
+      <ReportWorkspaceTabs value={workspace} onChange={selectWorkspace} />
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
-        <aside className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="space-y-2">
-            {wiscSubscaleSections.length > 0 && (
-              <button
-                type="button"
-                onClick={handleRegenerateWiscSubscales}
-                disabled={saving}
-                className={`w-full rounded-xl border px-4 py-3 text-left text-sm transition ${
-                  isWiscSubscaleActive
-                    ? "border-indigo-600 bg-indigo-600 text-white"
-                    : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-white"
-                }`}
-              >
-                <div className="font-medium">Subscalas-Wisc</div>
-                <div className={`mt-1 text-xs ${isWiscSubscaleActive ? "text-indigo-100" : "text-slate-400"}`}>
-                  Regenera Funções Executivas, Linguagem, Gnosias e Praxias, Memória e Aprendizagem
-                </div>
-              </button>
-            )}
+      <section id="report-panel-editor" role="tabpanel" aria-labelledby="report-tab-editor" hidden={workspace !== "editor"} tabIndex={0} className="rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
+      <div className="grid min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[240px_minmax(0,1fr)]">
+        <ReportEditorNavigation sections={report.sections || []} activeSectionId={activeSectionId} onSelect={setActiveSectionId} />
 
-            {sidebarSections.map((section: any) => (
-              <button
-                key={section.id}
-                type="button"
-                onClick={() => setActiveSectionId(section.id)}
-                className={`w-full rounded-xl border px-4 py-3 text-left text-sm transition ${
-                  activeSectionId === section.id
-                    ? "border-indigo-600 bg-indigo-600 text-white"
-                    : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-white"
-                }`}
-              >
-                <div className="font-medium">{section.title}</div>
-                <div className={`mt-1 text-xs ${activeSectionId === section.id ? "text-indigo-100" : "text-slate-400"}`}>
-                  {section.key}
-                </div>
-              </button>
-            ))}
-          </div>
-
-          <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-600">
-            <div className="flex items-center gap-2"><User className="h-4 w-4 text-slate-400" />{report.author_name}</div>
-            <div className="mt-2 flex items-center gap-2"><Calendar className="h-4 w-4 text-slate-400" />{report.updated_at ? new Date(report.updated_at).toLocaleString("pt-BR") : "Sem atualizacao"}</div>
-            <div className="mt-2 flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-slate-400" />Status: {report.status}</div>
-            <div className="mt-2 text-xs text-slate-500">Interessado: {report.interested_party || report.patient_name}</div>
-          </div>
-
-          <div>
-            <h3 className="mb-2 text-sm font-semibold text-slate-900">Testes concluidos</h3>
-            <div className="space-y-2">
-              {completedTests.length > 0 ? completedTests.map((test: any) => {
-                const key = test.applicationKey;
-                const isSelected = selectedTests.includes(key);
-
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => setSelectedTests((prev) => prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key])}
-                    className={`w-full rounded-xl border px-3 py-2 text-xs transition text-left ${isSelected ? "border-indigo-600 bg-indigo-600 text-white" : "border-slate-100 bg-slate-50 text-slate-600 hover:bg-white"}`}
-                  >
-                    <div className="font-medium text-slate-800">{test.name}</div>
-                    {test.respondent && <div className="text-xs text-slate-500">Informante: {test.respondent}</div>}
-                    <div className="mt-1 uppercase tracking-wide text-slate-400">{test.code || "sem-codigo"}</div>
-                  </button>
-                );
-              }) : (
-                <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-500">
-                  Nenhum teste concluido disponivel neste laudo.
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <h3 className="mb-2 text-sm font-semibold text-slate-900">Historico</h3>
-            <div className="space-y-2">
-              {(report.versions || []).slice(0, 5).map((version: any) => (
-                <div key={version.id} className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                  <div className="font-medium text-slate-800">Versao {version.version_number}</div>
-                  <div>{version.created_by}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </aside>
-
-        <main className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+        <div className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6">
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">{isWiscSubscaleActive ? "Subscalas-Wisc" : activeSection?.title || "Selecione uma secao"}</h2>
-              <p className="text-sm text-slate-500">
+              <h2 className="text-base font-semibold text-slate-900">{activeSection?.title || "Selecione um capítulo"}</h2>
+              <p className="mt-1 text-xs leading-5 text-slate-500">
                 {isTestsOnlyReport
-                  ? "Edite e regenere as secoes de testes. Gere o laudo completo quando quiser concluir e exportar o documento final."
-                  : "Edite o rascunho gerado e regenere a secao quando necessario."}
+                  ? "Rascunho de testes · gere o laudo completo antes de concluir."
+                  : isFinalized ? "Versão aprovada · conteúdo disponível para consulta." : "Revise o conteúdo antes de salvar este capítulo."}
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {isFinalized && (
-                <Button variant="outline" disabled={saving} onClick={handleCreateRevision}>
+                <Button type="button" variant="outline" disabled={saving} onClick={handleCreateRevision}>
                   Nova revisão
                 </Button>
               )}
               {!isFinalized && (
                 <>
-                  <Button variant="outline" className="gap-2" disabled={saving || completedTests.length === 0} onClick={handleRegenerateTests}>
-                    <RotateCcw className="h-4 w-4" />
-                    Regenerar testes
-                  </Button>
-                  <Button variant="outline" className="gap-2" disabled={saving || !activeSection} onClick={isWiscSubscaleActive ? handleRegenerateWiscSubscales : handleRegenerate}>
-                    <RotateCcw className="h-4 w-4" />
-                    {isWiscSubscaleActive ? "Regenerar Subscalas-Wisc" : "Regenerar secao"}
-                  </Button>
-                  <Button className="gap-2" disabled={saving || !activeSection} onClick={handleSave}>
-                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                    Salvar
+                  <ReportActionsMenu label="Opções" disabled={saving || !activeSection} actions={[
+                    { label: isWiscSubscaleActive ? "Regenerar domínios WISC" : "Regenerar seção", onSelect: isWiscSubscaleActive ? handleRegenerateWiscSubscales : handleRegenerate, icon: <RotateCcw aria-hidden="true" className="h-4 w-4" /> },
+                  ]} />
+                  <Button type="button" className="gap-2" disabled={saving || !activeSection} onClick={handleSave}>
+                    {saving ? <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin motion-reduce:animate-none" /> : <Save aria-hidden="true" className="h-4 w-4" />}
+                    {saving ? "Processando…" : "Salvar seção"}
                   </Button>
                 </>
               )}
-              <Button variant="outline" disabled={saving || isFinalized || isTestsOnlyReport} onClick={handleAudit}>
-                Auditar textos salvos
-              </Button>
-              <Button variant="outline" disabled={saving || isFinalized || isTestsOnlyReport} onClick={handleFinalize}>
-                Aprovar laudo
-              </Button>
             </div>
           </div>
 
-          {activeSection && (
-            <div className="border-b border-slate-200 bg-slate-50/70 px-6 py-4">
-              {isWiscSubscaleActive && wiscSubscaleSections.length > 0 && (
-                <div className="mb-4 flex flex-wrap gap-2">
-                  {wiscSubscaleSections.map((section: any) => (
-                    <button
-                      key={section.id}
-                      type="button"
-                      onClick={() => setActiveSectionId(section.id)}
-                      className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-                        activeSectionId === section.id
-                          ? "border-indigo-600 bg-indigo-600 text-white"
-                          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
-                      }`}
-                    >
-                      {section.title}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-                <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
-                  <div className="text-xs uppercase tracking-wide text-slate-400">Origem</div>
-                  <div className="mt-1 font-medium text-slate-800">{generationSource}</div>
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
-                  <div className="text-xs uppercase tracking-wide text-slate-400">Provider</div>
-                  <div className="mt-1 font-medium text-slate-800">{generationMetadata.provider || "Nao informado"}</div>
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
-                  <div className="text-xs uppercase tracking-wide text-slate-400">Modelo</div>
-                  <div className="mt-1 font-medium text-slate-800">{generationDetails.effectiveModel}</div>
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
-                  <div className="text-xs uppercase tracking-wide text-slate-400">Ultima geracao</div>
-                  <div className="mt-1 font-medium text-slate-800">{formatTimestamp(generationTimestamp)}</div>
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
-                  <div className="text-xs uppercase tracking-wide text-slate-400">Status do texto</div>
-                  <div className="mt-1 font-medium text-slate-800">{textStatus}</div>
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
-                  <div className="text-xs uppercase tracking-wide text-slate-400">Execucao</div>
-                  <div className="mt-1 font-medium text-slate-800">{generationDetails.usedModelFallback ? "IA com fallback de modelo" : generationDetails.generationPath === "ai" ? "IA direta" : generationDetails.generationPath === "deterministic_fallback" ? "Fallback da secao" : "Fluxo padrao"}</div>
-                </div>
-              </div>
-
-              {generationSource === "IA" && (
-                <div className="mt-3 grid gap-3 md:grid-cols-2">
-                  <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
-                    <div className="text-xs uppercase tracking-wide text-slate-400">Modelo solicitado</div>
-                    <div className="mt-1 font-medium text-slate-800">{generationDetails.requestedModel}</div>
-                  </div>
-                  <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
-                    <div className="text-xs uppercase tracking-wide text-slate-400">Prompt</div>
-                    <div className="mt-1 font-medium break-all text-slate-800">{generationDetails.promptName}</div>
-                  </div>
-                </div>
-              )}
-
-              {selectedTests.length > 0 && (
-                <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <h3 className="text-sm font-semibold text-slate-900">Dados dos testes concluidos</h3>
-                      <p className="mt-1 text-xs text-slate-500">Resumo estrutural usado na construcao do laudo. Mostra apenas testes validados.</p>
-                    </div>
-                    <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-                      {visibleSelectedTests.length} teste{visibleSelectedTests.length > 1 ? "s" : ""}
-                    </div>
-                  </div>
-
-                  <div className="mt-4 space-y-4">
-                    {visibleSelectedTests.map((test: any) => {
-                      const metricRows = buildMetricRows(test);
-                      const bpa2Subtests = test.code === "bpa2" ? getBpa2Subtests(test) : [];
-                      const wiscChartData = test.code === "wisc4" ? getWiscChartData(test) : [];
-
-                      return (
-                        <div key={test.applicationKey} className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
-                          <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-                            <div>
-                              <div className="text-sm font-semibold text-slate-900">{test.name}</div>
-                              {test.respondent && <div className="text-xs text-slate-500">Informante: {test.respondent}</div>}
-                              <div className="mt-1 text-xs uppercase tracking-wide text-slate-400">{test.code || "sem-codigo"}{test.domain ? ` · ${test.domain}` : ""}</div>
-                            </div>
-                            <div className="text-xs text-slate-500">Aplicado em {formatShortDate(test.appliedOn)}</div>
-                          </div>
-
-                          {test.summary && (
-                            <div className="mt-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
-                              <span className="font-medium text-slate-900">Resumo:</span> {test.summary}
-                            </div>
-                          )}
-
-                          {test.code === "wisc4" && wiscChartData.length > 0 && (
-                            <div className="mt-3">
-                              <WiscChart data={wiscChartData} />
-                            </div>
-                          )}
-
-                          {test.code === "bpa2" && bpa2Subtests.length > 0 && (
-                            <div className="mt-3 space-y-3">
-                              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-                                <div className="grid grid-cols-[minmax(0,2fr)_120px_120px_minmax(0,1fr)] gap-3 border-b border-slate-100 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                                  <div>Atencao BPA</div>
-                                  <div>Pontos</div>
-                                  <div>Percentil</div>
-                                  <div>Classificacao</div>
-                                </div>
-                                <div>
-                                  {bpa2Subtests.map((item: any, index: number) => (
-                                    <div key={`${item.codigo}-${index}`} className="grid grid-cols-[minmax(0,2fr)_120px_120px_minmax(0,1fr)] gap-3 border-b border-slate-100 px-3 py-2 text-sm last:border-b-0">
-                                      <div className="font-medium text-slate-800">{getBpa2Label(item.codigo, item.subteste)}</div>
-                                      <div className="text-slate-600">{item.total ?? item.brutos ?? "-"}</div>
-                                      <div className="text-slate-600">{item.percentil ?? "-"}</div>
-                                      <div className="text-slate-600">{item.classificacao || "-"}</div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {test.code !== "bpa2" && metricRows.length > 0 && (
-                            test.code === "wisc4" && Object.values(test.wiscTables || {}).some((rows: any) => Array.isArray(rows) && rows.length > 0) ? (
-                              <div className="mt-3 space-y-4">
-                                {WISC_SUBSCALE_ORDER.map((domainKey) => {
-                                  const rows = test.wiscTables?.[domainKey] || [];
-                                  if (!rows.length) return null;
-
-                                  return (
-                                    <div key={domainKey} className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-                                      <div className="border-b border-slate-100 px-3 py-2 text-sm font-semibold text-slate-800">
-                                        {WISC_DOMAIN_LABELS[domainKey] || domainKey}
-                                      </div>
-                                      <div className="overflow-x-auto">
-                                        <table className="w-full border-collapse table-fixed text-[9px] leading-[1.4]">
-                                          <colgroup>
-                                            <col className="w-[27%]" />
-                                            <col className="w-[14%]" />
-                                            <col className="w-[14%]" />
-                                            <col className="w-[14%]" />
-                                            <col className="w-[14%]" />
-                                            <col className="w-[17%]" />
-                                          </colgroup>
-                                          <thead>
-                                            <tr>
-                                              <th className="border border-white bg-[#A8D08D] px-3 py-2 text-left font-semibold uppercase tracking-wide text-slate-900">Testes Utilizados</th>
-                                              <th className="border border-white bg-[#A8D08D] px-2 py-2 text-center font-semibold uppercase tracking-wide text-slate-900">Escore Máximo</th>
-                                              <th className="border border-white bg-[#A8D08D] px-2 py-2 text-center font-semibold uppercase tracking-wide text-slate-900">Escore Médio</th>
-                                              <th className="border border-white bg-[#A8D08D] px-2 py-2 text-center font-semibold uppercase tracking-wide text-slate-900">Escore Mínimo</th>
-                                              <th className="border border-white bg-[#A8D08D] px-2 py-2 text-center font-semibold uppercase tracking-wide text-slate-900">Escore Bruto</th>
-                                              <th className="border border-white bg-[#A8D08D] px-2 py-2 text-center font-semibold uppercase tracking-wide text-slate-900">Classificação</th>
-                                            </tr>
-                                          </thead>
-                                          <tbody>
-                                            {rows.map((row: any, index: number) => (
-                                              row.note ? (
-                                                <tr key={`${domainKey}-${row.label}-${index}`}>
-                                                  <td className="border border-white bg-[#538135] px-3 py-1.5 font-medium text-white">{row.label}</td>
-                                                  <td colSpan={5} className="border border-white bg-[#E2EFD9] px-3 py-1.5 text-left text-slate-700">{row.note}</td>
-                                                </tr>
-                                              ) : (
-                                                <tr key={`${domainKey}-${row.label}-${index}`}>
-                                                  <td className="border border-white bg-[#538135] px-3 py-1.5 text-left font-medium text-white">{row.label}</td>
-                                                  <td className="border border-white bg-[#E2EFD9] px-2 py-1.5 text-center text-slate-700">{row.maxScore}</td>
-                                                  <td className="border border-white bg-[#E2EFD9] px-2 py-1.5 text-center text-slate-700">{row.avgScore}</td>
-                                                  <td className="border border-white bg-[#E2EFD9] px-2 py-1.5 text-center text-slate-700">{row.minScore}</td>
-                                                  <td className="border border-white bg-[#E2EFD9] px-2 py-1.5 text-center text-slate-700">{row.obtainedScore}</td>
-                                                  <td className="border border-white bg-[#E2EFD9] px-2 py-1.5 text-center text-slate-700">{row.classification}</td>
-                                                </tr>
-                                              )
-                                            ))}
-                                          </tbody>
-                                        </table>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            ) : (
-                            <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-white">
-                              <div className="grid grid-cols-[minmax(0,2fr)_120px_120px_minmax(0,1fr)] gap-3 border-b border-slate-100 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                                <div>Indicador</div>
-                                <div>Valor</div>
-                                <div>Percentil</div>
-                                <div>Classificacao</div>
-                              </div>
-                              <div>
-                                {metricRows.map((row: any, index: number) => {
-                                  const percentileWidth = getPercentileWidth(row.percentile);
-
-                                  return (
-                                    <div key={`${row.label}-${index}`} className="grid grid-cols-[minmax(0,2fr)_120px_120px_minmax(0,1fr)] gap-3 border-b border-slate-100 px-3 py-2 text-sm last:border-b-0">
-                                      <div className="font-medium text-slate-800">{row.label}</div>
-                                      <div className="text-slate-600">{String(row.primary ?? "-")}</div>
-                                      <div>
-                                        <div className="text-slate-600">{row.percentile ?? "-"}</div>
-                                        {percentileWidth !== null && (
-                                          <div className="mt-1 h-1.5 rounded-full bg-slate-100">
-                                            <div className="h-1.5 rounded-full bg-indigo-500" style={{ width: `${percentileWidth}%` }} />
-                                          </div>
-                                        )}
-                                      </div>
-                                      <div className="text-slate-600">{row.classification || "-"}</div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                            )
-                          )}
-
-                          {(test.code !== "bpa2" && !metricRows.length && test.resultRows.length > 0) && (
-                            <div className="mt-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
-                              <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Linhas de resultado</div>
-                              <ul className="mt-2 space-y-1 text-sm text-slate-700">
-                                {test.resultRows.map((row: string, index: number) => (
-                                  <li key={`${index}-${row}`}>{row}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-
-                          {test.clinicalInterpretation && (
-                            <details className="mt-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
-                              <summary className="cursor-pointer font-medium text-slate-900">{test.code === "bpa2" ? "Interpretação e Observações Clínicas" : "Ver interpretacao tecnica"}</summary>
-                              <pre className="mt-3 whitespace-pre-wrap hide-scrollbar text-sm leading-6 text-slate-600">{test.clinicalInterpretation}</pre>
-                            </details>
-                          )}
-
-                          {test.warnings.length > 0 && (
-                            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                              <div className="font-medium">Avisos do teste</div>
-                              <ul className="mt-2 list-disc pl-5">
-                                {test.warnings.map((warning: string, index: number) => (
-                                  <li key={`${index}-${warning}`}>{warning}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {warnings.length > 0 && (
-                <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                  <div className="font-medium">Avisos da geracao</div>
-                  <ul className="mt-2 list-disc pl-5">
-                    {warnings.map((warning: string, index: number) => (
-                      <li key={`${index}-${warning}`}>{warning}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {hasManualEdits && generatedText && (
-                <div className="mt-3 grid gap-3 xl:grid-cols-2">
-                  <div className="rounded-xl border border-slate-200 bg-white">
-                    <div className="border-b border-slate-100 px-4 py-3 text-sm font-medium text-slate-800">
-                      {generationSource === "Fallback automatico" ? "Texto gerado pelo fallback automatico" : generationSource === "IA" ? "Texto gerado por IA" : "Texto gerado automaticamente"}
-                    </div>
-                    <pre className="max-h-72 overflow-auto hide-scrollbar whitespace-pre-wrap px-4 py-3 text-sm leading-7 text-slate-600">{generatedText}</pre>
-                  </div>
-                  <div className="rounded-xl border border-indigo-200 bg-indigo-50/60 px-4 py-3 text-sm text-indigo-900">
-                    <div className="font-medium">Texto atual em edicao</div>
-                    <p className="mt-2 leading-6">O editor abaixo mostra o texto editado por voce. O painel ao lado preserva a ultima versao gerada pela IA para comparacao.</p>
-                  </div>
-                </div>
-              )}
+          {activeSection && warnings.length > 0 && (
+            <div className="mx-5 mt-5 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 sm:mx-6">
+              <h3 className="font-medium">Atenção antes de concluir este capítulo</h3>
+              <ul className="mt-2 list-disc space-y-1 pl-5">{warnings.map((warning: string, index: number) => <li key={index}>{warning}</li>)}</ul>
             </div>
           )}
+          <div className="px-5 py-5 sm:px-6">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+              <label htmlFor="report-section-content" className="font-medium text-slate-600">Conteúdo do capítulo</label>
+              <span role="status">{!activeSection ? "Nenhum capítulo selecionado" : isFinalized ? "Somente leitura" : hasUnsavedChanges ? "Alterações não salvas" : "Texto salvo"}</span>
+            </div>
+            <textarea
+              id="report-section-content" name="section_content" lang="pt-BR" spellCheck
+              value={editedText}
+              onChange={(event) => setEditedText(event.target.value)}
+              disabled={isFinalized || !activeSection}
+              className="min-h-[480px] w-full resize-y rounded-lg border border-slate-100 bg-white p-4 text-[15px] leading-8 text-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary disabled:bg-slate-50/50 disabled:text-slate-600 sm:p-5 lg:min-h-[580px]"
+              placeholder="Selecione um capítulo para revisar o conteúdo…"
+            />
+            <p className="mt-3 text-xs leading-5 text-slate-500">{isFinalized ? "Para alterar este conteúdo, crie uma nova revisão. O original aprovado será preservado." : "Salvar uma seção não aprova o laudo. A revisão e a aprovação final são etapas separadas."}</p>
+          </div>
+          {activeSection && <div className="divide-y divide-slate-100 border-t border-slate-100">
+            <details className="px-5 py-4 sm:px-6">
+              <summary className="cursor-pointer text-sm font-medium text-slate-600 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">Origem e detalhes da geração</summary>
+              <dl className="mt-5 grid gap-x-6 gap-y-4 text-sm sm:grid-cols-2 [&_dt]:text-xs [&_dt]:text-slate-500 [&_dd]:mt-1 [&_dd]:break-words [&_dd]:text-slate-800">
+                <div><dt>Origem</dt><dd>{generationSource}</dd></div>
+                <div><dt>Status do texto salvo</dt><dd>{textStatus}</dd></div>
+                <div><dt>Provedor</dt><dd>{generationMetadata.provider || "Não informado"}</dd></div>
+                <div><dt>Modelo</dt><dd>{generationDetails.effectiveModel}</dd></div>
+                <div><dt>Última geração</dt><dd>{formatTimestamp(generationTimestamp)}</dd></div>
+                <div><dt>Execução</dt><dd>{generationDetails.usedModelFallback ? "IA com fallback de modelo" : generationDetails.generationPath === "ai" ? "IA direta" : generationDetails.generationPath === "deterministic_fallback" ? "Fallback da seção" : "Fluxo padrão"}</dd></div>
+                {generationSource === "IA" && <><div><dt>Modelo solicitado</dt><dd>{generationDetails.requestedModel}</dd></div><div><dt>Prompt</dt><dd>{generationDetails.promptName}</dd></div></>}
+              </dl>
+            </details>
+            {hasManualEdits && generatedText && <details className="px-5 py-4 sm:px-6">
+              <summary className="cursor-pointer text-sm font-medium text-slate-600 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">Comparar com o texto gerado</summary>
+              <p className="mt-4 text-xs leading-5 text-slate-500">Versão gerada antes da edição manual. O conteúdo atual permanece no editor acima.</p>
+              <pre className="mt-3 max-h-80 overflow-y-auto whitespace-pre-wrap break-words rounded-lg bg-slate-50 p-4 font-sans text-sm leading-7 text-slate-600">{generatedText}</pre>
+            </details>}
+          </div>}
+        </div>
 
-          <textarea
-            value={editedText}
-            onChange={(event) => setEditedText(event.target.value)}
-            disabled={isFinalized || !activeSection}
-            className="min-h-[620px] w-full resize-none border-0 p-6 text-sm leading-7 text-slate-700 focus:ring-0 hide-scrollbar overflow-auto"
-            placeholder="Selecione uma secao para revisar o conteudo..."
-          />
-        </main>
+        <div className="min-w-0 space-y-5 lg:col-start-2">
+          <section aria-labelledby="report-final-review" className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6">
+            <div className="flex items-start gap-3"><ShieldCheck aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-primary" /><div><h2 id="report-final-review" className="text-sm font-semibold text-slate-900">Revisão e conclusão do laudo</h2><p className="mt-1 text-sm leading-6 text-slate-500">{isFinalized ? "Esta versão foi aprovada. Alterações exigem uma nova revisão, sem modificar o original." : "Após conferir todos os capítulos, audite os textos salvos e registre a aprovação profissional. A auditoria não substitui a revisão clínica."}</p></div></div>
+            {!isFinalized && <div className="mt-5 flex flex-wrap gap-2">
+              <Button type="button" variant="outline" disabled={saving || isFinalized || isTestsOnlyReport} onClick={handleAudit}>Auditar textos salvos</Button>
+              <Button type="button" variant="outline" className="gap-2" disabled={saving || isFinalized || isTestsOnlyReport} onClick={handleFinalize}><CheckCircle2 aria-hidden="true" className="h-4 w-4" />Aprovar laudo</Button>
+            </div>}
+          </section>
+          <details className="rounded-xl border border-slate-200 bg-white px-5 py-4 sm:px-6">
+            <summary className="cursor-pointer text-sm font-medium text-slate-600 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">Informações do laudo e histórico</summary>
+            <dl className="mt-5 space-y-3 text-sm text-slate-600"><div><dt className="text-xs text-slate-500">Interessado</dt><dd className="mt-1">{report.interested_party || report.patient_name}</dd></div><div><dt className="text-xs text-slate-500">Finalidade</dt><dd className="mt-1 break-words">{report.purpose || "Não informada"}</dd></div></dl>
+            <h3 className="mt-5 text-xs font-medium text-slate-500">Últimas versões</h3>
+            {(report.versions || []).length ? <ul className="mt-2 divide-y divide-slate-100">{(report.versions || []).slice(0, 5).map((version: any) => <li key={version.id} className="flex flex-wrap justify-between gap-2 py-2 text-sm text-slate-600"><span>Versão {version.version_number}</span><span>{version.created_by}</span></li>)}</ul> : <p className="mt-2 text-sm text-slate-500">Nenhuma versão anterior registrada.</p>}
+          </details>
+        </div>
       </div>
+      </section>
+
+      <section id="report-panel-tests" role="tabpanel" aria-labelledby="report-tab-tests" hidden={workspace !== "tests"} tabIndex={0} className="min-w-0 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
+        <ReportTestDataPanel tests={completedTests} selected={selectedTests} onToggle={(key) => setSelectedTests((previous) => previous.includes(key) ? previous.filter((value) => value !== key) : [...previous, key])} />
+      </section>
+
+      <section id="report-panel-specialists" role="tabpanel" aria-labelledby="report-tab-specialists" hidden={workspace !== "specialists"} tabIndex={0} className="min-w-0 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
+        <SpecialistPilotPanel key={String(report.id)} reportId={report.id} />
+      </section>
     </PageContainer>
   );
 }
