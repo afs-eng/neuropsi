@@ -124,6 +124,37 @@ class SpecialistDiagnosticTests(TestCase):
         self.assertNotIn("/classified_payload", json.dumps(result.usage_payload))
         self.assertNotIn("Os resultados", json.dumps(result.usage_payload))
 
+    def test_editorial_format_retries_once_and_returns_three_paragraphs(self):
+        run = self.enqueue()
+        valid = test_bpa2_specialist.synthetic_output(run.input_payload["facts"])
+        invalid = json.loads(json.dumps(valid))
+        invalid["findings"][-1]["statement"] = invalid["findings"][-1]["statement"].replace("\n\n", " ")
+        calls = []
+
+        def respond(request):
+            calls.append(json.loads(request.content))
+            if len(calls) == 2:
+                self.assertIn("três parágrafos", calls[-1]["messages"][-1]["content"])
+            return self.response(json.dumps(invalid if len(calls) == 1 else valid))
+
+        with self.mock_client(respond):
+            result = SpecialistRunService.process_next(report_id=self.report.pk)
+        self.assertEqual(result.status, "needs_review")
+        self.assertEqual(result.output_payload, valid)
+        self.assertEqual(len(calls), 2)
+
+    def test_repeated_editorial_failure_does_not_persist_partial_text(self):
+        run = self.enqueue()
+        invalid = test_bpa2_specialist.synthetic_output(run.input_payload["facts"])
+        invalid["findings"][-1]["statement"] = invalid["findings"][-1]["statement"].replace("\n\n", " ")
+        with self.mock_client(lambda request: self.response(json.dumps(invalid))):
+            result = SpecialistRunService.process_next(report_id=self.report.pk)
+        self.assertEqual(result.status, "failed")
+        self.assertEqual(result.usage_payload["validation_code"], "bpa2_redaction_format")
+        self.assertEqual(result.usage_payload["validation_section"], "analise_clinica")
+        self.assertEqual(result.usage_payload["requests"], 2)
+        self.assertEqual(result.output_payload, {})
+
     def test_later_schema_failure_does_not_inherit_section_from_missing_evidence(self):
         run = self.enqueue()
         invalid = test_bpa2_specialist.synthetic_output(run.input_payload["facts"])

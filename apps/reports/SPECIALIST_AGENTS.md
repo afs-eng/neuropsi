@@ -43,12 +43,39 @@ do servidor Ollama. A janela precisa comportar entrada, instruções e saída;
 contexto insuficiente ainda pode impedir a geração completa. Conferir a janela
 no Ollama Windows durante os testes; ela não foi alterada automaticamente.
 
-### BPA-2: redação estruturada por componentes (versão `pydantic-bpa2-5`)
+### BPA-2: redação estruturada por componentes (versão `pydantic-bpa2-6`)
 
 O especialista usa o modelo escolhido em `SPECIALIST_AI_MODEL` (inclusive o
 `qwen3.5:9b` local), sem fine-tuning ou escolha automática de modelo. As instruções
 foram configuradas para o formato de introdução, AC, AD, AA, AG e análise clínica.
 O painel apresenta os títulos e preserva as evidências de cada parágrafo.
+
+#### Modelo editorial com percentis
+
+A versão 6 segue o modelo fornecido pela profissional, sem fixar os resultados
+ou conclusões do exemplo. A introdução apresenta o instrumento e uma visão do
+perfil real. Em AC/AD/AA/AG, a sequência é definição breve, escore em pontos,
+percentil, classificação e interpretação restrita à tarefa/norma. Percentis
+disponíveis permanecem obrigatórios na redação dos componentes, uma vez por
+componente; faltantes não são inventados.
+
+A análise clínica orienta-se em três parágrafos no mesmo `statement`, separados
+por linha em branco (`\n\n` no JSON): integração de AC/AD/AA; AG e limites da
+comparação estatística; síntese e necessidade de integração clínica. As instruções
+pedem não repetir números na síntese, preservando todos os IDs obrigatórios nas
+evidências. O painel renderiza os parágrafos como texto escapado, sem aceitar HTML.
+
+Nas novas gerações, `bpa2_redaction_format` verifica exatamente três parágrafos
+não vazios na síntese e permite correção dentro das duas requisições já existentes.
+Esse verificador é editorial, não uma validação clínica completa. Não impõe essa
+formatação retroativamente na leitura/revisão de versões anteriores. Mantém-se
+o limite existente de 2.000 caracteres por statement e o orçamento por provedor.
+
+Heterogeneidade, fragilidade e preservação relativa não são conclusões fixas:
+as instruções exigem adaptação às classificações e lacunas da aplicação. Ressalvas
+estatísticas não podem afirmar ausência de significância sem análise. Essas
+orientações não substituem os validadores clínicos contextuais ainda planejados
+nem homologação profissional. Não houve inferência real nesta alteração.
 
 - O guia de leitura mapeia os escores calculados, percentis e classificações para
   os fatos originais; não recalcula normas. `total` significa escore em pontos,
@@ -93,14 +120,15 @@ O painel apresenta os títulos e preserva as evidências de cada parágrafo.
 Para retestar: publicar backend/frontend e atualizar também o código do worker
 local. Não há migration nova. Manter o mesmo modelo/endpoint configurado nos dois.
 As execuções BPA-2 anteriores ficam preservadas. Sucessos `needs_review` das versões
-3 e 4 (com ou sem `-ollama-4k`) continuam revisáveis quando a fonte permanece atual:
-as versões 4/5 mudam grounding/instruções de IDs, não as regras clínicas de validação.
+3, 4 e 5 (com ou sem `-ollama-4k`) continuam revisáveis quando a fonte permanece atual:
+as versões 4/5 mudam grounding e a 6 muda o formato das novas gerações, sem
+aplicar regra editorial retroativa ou mudar a validação clínica existente.
 Jobs antigos pendentes/falhos não são reativados pela mudança. As demais
 especialidades mantêm sua versão. No laudo sintético, selecionar BPA-2
 e solicitar novamente: isso cria uma nova execução com as instruções novas, sem
 reutilizar a antiga. Processar com `--once --report-id ID` e atualizar o painel.
 Também é possível manter o worker contínuo `--username SEU_USUARIO` já descrito
-abaixo. A versão local nova é `pydantic-bpa2-5-ollama-4k`. O transporte e os retries
+abaixo. A versão local nova é `pydantic-bpa2-6-ollama-4k`. O transporte e os retries
 foram testados com respostas sintéticas; o modelo real ainda precisa ser retestado.
 Se houver jobs antigos ainda na fila, podem ser marcados como desatualizados antes
 do novo job; `--once` processa no máximo um job por chamada. Nenhum resultado é

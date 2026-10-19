@@ -5,7 +5,7 @@ from pydantic_ai.exceptions import ContentFilterError, ModelHTTPError, Unexpecte
 
 VALIDATION_CODES = {
     "evidence_not_found", "ungrounded_number", "bpa2_semantics",
-    "bpa2_missing_evidence", "bpa2_score_text", "invalid_schema",
+    "bpa2_missing_evidence", "bpa2_score_text", "bpa2_redaction_format", "invalid_schema",
 }
 GENERATION_CODES = {
     "output_validation_failed", "output_schema_invalid", "output_truncated", "provider_refusal",

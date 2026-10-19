@@ -4,39 +4,59 @@ import re
 from .specialist_errors import SpecialistValidationError
 
 
-BPA2_VERSION = "pydantic-bpa2-5"
-# Mudança de grounding, sem mudar regras clínicas: rascunhos já válidos continuam revisáveis.
+BPA2_VERSION = "pydantic-bpa2-6"
+# Mudanças de grounding/estilo não reescrevem revisões nem validam qualidade clínica.
 BPA2_COMPATIBLE_REVIEW_VERSIONS = {
     "pydantic-bpa2-3", "pydantic-bpa2-3-ollama-4k",
     "pydantic-bpa2-4", "pydantic-bpa2-4-ollama-4k",
+    "pydantic-bpa2-5", "pydantic-bpa2-5-ollama-4k",
 }
 BPA2_SECTIONS = ("introducao", "ac", "ad", "aa", "ag", "analise_clinica")
 
 BPA2_INSTRUCTIONS = """
-BPA-2 — modelo de redação por componentes, versão 5.
+BPA-2 — modelo de redação por componentes, versão 6.
 Siga a organização abaixo, não uma conclusão fixa. Redija em português técnico,
 com parágrafos coesos e proporcionais aos resultados, sem listas de números soltos.
 Retorne exatamente seis findings, nesta ordem, usando o campo section:
 introducao, ac, ad, aa, ag, analise_clinica. Os títulos são montados pela interface.
-Cada statement deve ser um parágrafo breve (aproximadamente 40–65 palavras nos
-componentes; introdução e síntese podem ser menores). Não numere os parágrafos.
+Use um parágrafo na introdução e em cada componente, aproximadamente 60–100
+palavras por componente. A análise clínica deve ter EXATAMENTE três parágrafos,
+separados por uma linha em branco (escape JSON \\n\\n), no mesmo statement.
+Use texto simples, sem HTML, listas ou numeração. Respeite o limite de 2.000
+caracteres por statement; busque síntese de aproximadamente 150–210 palavras.
 
 Introdução: apresente a Bateria Psicológica para Avaliação da Atenção – Segunda
-Edição (BPA-2), o escopo desta aplicação e os componentes avaliados. Não use nomes.
+Edição (BPA-2), o escopo desta aplicação e os componentes avaliados. Inclua uma
+visão integrada das classificações reais, sem repetir escores/percentis. Cite as
+evidências das classificações descritas. Não declare perfil heterogêneo por
+rotina: se todas as medidas estiverem na mesma faixa, descreva essa convergência;
+com dados incompletos, explicite o limite para caracterizar o perfil. Não use nomes.
 Não é necessário repetir a idade; se a informar, use apenas a idade fornecida.
-AC: descreva brevemente a seleção de estímulos relevantes diante de distratores;
-informe escore em pontos, percentil e classificação quando fornecidos, depois
-interprete o desempenho restrito a essa tarefa e ao grupo normativo informado.
+Em AC, AD, AA e AG, siga: definição breve → escore em pontos, percentil e
+classificação → interpretação contextualizada → limite da inferência.
+Apresente cada resultado uma única vez no componente correspondente, em redação
+natural, por exemplo '62 pontos, percentil 10, classificação Inferior' SOMENTE
+quando esses forem os dados recebidos. Não omita percentis disponíveis.
+AC: descreva seleção de estímulos relevantes e manutenção do foco diante de
+distratores. Relacione a classificação à tarefa e ao grupo normativo, sem deduzir
+precisão, erros, duração da atenção ou dificuldades cotidianas apenas do escore.
 AD: descreva a distribuição da atenção entre estímulos simultâneos e aplique a
 mesma organização (escore, percentil, classificação, interpretação contextualizada).
-AA: descreva alternância do foco entre estímulos/critérios; não conclua sobre toda
-a flexibilidade executiva com base nessa modalidade.
+AA: descreva alternância do foco entre estímulos/critérios e adaptação às exigências
+da tarefa; não conclua sobre toda a flexibilidade executiva com base nessa modalidade.
 AG: apresente a medida agregada de AC, AD e AA, NÃO um subteste independente.
-Análise clínica: integre o perfil desta bateria, preservando eventuais fragilidades.
-Não repita simplesmente os quatro parágrafos. Diferencie comparação normativa e
-posição relativa entre modalidades; não atribua significância estatística a
-diferenças sem uma análise de significância fornecida. Não converta percentis
-em percentuais de acertos. Não generalize o teste para a vida cotidiana.
+AG: interprete o agregado à luz dos componentes; não o trate como prova de
+comprometimento uniforme. Não atribua faixa de intensidade além da classificação.
+Análise clínica: não repita números, escores ou percentis. Mantenha as referências
+nas evidence_ids, mesmo sem repeti-los na prosa. Organize os três parágrafos:
+1) Integração de AC, AD e AA, com convergências/fragilidades efetivamente sustentadas.
+2) AG à luz do perfil, distinguindo comparação normativa de posição relativa;
+   diferenças são descritivas. Sem análise fornecida, diga que não é possível
+   estabelecer significância estatística — não que a diferença é não significativa.
+3) Síntese qualitativa e limites: necessidade de integrar história do desenvolvimento,
+   observações, outros instrumentos e relatos funcionais, sem inventar seus achados.
+   Não é possível estabelecer ou excluir diagnóstico exclusivamente pela BPA-2.
+Não converta percentis em percentuais de acertos. Não generalize para o cotidiano.
 
 Use reading_guide para localizar os fatos. Campos total são ESCORES CALCULADOS,
 não quantidade de itens apresentados, tentativas ou acertos. AG é agregado.
@@ -77,13 +97,31 @@ Não copie os números ou conclusões desses exemplos para outras aplicações.
 Evite certezas como 'capacidade preservada', 'sem comprometimento' ou 'ausência
 de prejuízo global'. Prefira 'desempenho dentro dos parâmetros normativos nessa
 tarefa' quando sustentado pela classificação. Resultados baixos devem ser
-descritos sem diagnóstico ou causalidade. Não cite WAIS, WISC, memória operacional,
+descritos sem diagnóstico ou causalidade. Evite 'fragilidade significativa',
+'déficit comprovado' ou 'precisão limitada' sem suporte específico. 'Adequado' ou
+'preservação relativa' devem estar restritos às condições da tarefa avaliada,
+nunca como afirmação de funcionamento global preservado. Não cite WAIS, WISC, memória operacional,
 velocidade de processamento, história clínica ou observações não fornecidas:
 integração entre instrumentos pertence a outra etapa, não a este especialista.
 Inclua limitations sobre escopo do instrumento, ausência de integração com
 anamnese/observações e revisão profissional. Evite metacomentários como 'conforme
 diretrizes do payload'. A saída é rascunho, não laudo final ou diagnóstico.
 """
+
+
+def validate_bpa2_editorial_layout(output) -> None:
+    """Formato das novas gerações; não se aplica retroativamente às revisões."""
+    synthesis = next(finding for finding in output.findings if finding.section == "analise_clinica")
+    paragraphs = re.split(r"\n[ \t]*\n", synthesis.statement.replace("\r\n", "\n").strip())
+    if len(paragraphs) != 3 or any(not paragraph.strip() for paragraph in paragraphs):
+        raise SpecialistValidationError(
+            "bpa2_redaction_format",
+            "BPA-2: analise_clinica deve conter exatamente três parágrafos não vazios, "
+            "separados por uma linha em branco (\\n\\n), dentro do mesmo statement. "
+            "Organize integração das modalidades, agregado/limites estatísticos e "
+            "síntese/integração clínica, sem repetir escores ou percentis.",
+            section="analise_clinica",
+        )
 
 
 def bpa2_reading_guide(facts: dict) -> dict:

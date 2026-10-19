@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { SpecialistFindingText } from "./SpecialistFindingText";
 import { SpecialistProgressPanel } from "./SpecialistProgressPanel";
 import { shouldPollSpecialists, startSpecialistPolling, type SpecialistProgressRun } from "./specialistProgress";
 
@@ -49,6 +50,7 @@ const VALIDATION_ERRORS: Record<string, string> = {
   bpa2_semantics: "A redação confundiu escore/AG ou mencionou outro instrumento.",
   bpa2_missing_evidence: "Faltaram evidências obrigatórias de um componente ou da síntese.",
   bpa2_score_text: "O parágrafo não apresentou corretamente escore em pontos, percentil ou classificação.",
+  bpa2_redaction_format: "A análise clínica não apresentou os três parágrafos exigidos pelo modelo de redação.",
 };
 
 export function SpecialistPilotPanel({ reportId }: { reportId: string | number }) {
@@ -209,7 +211,7 @@ function SpecialistPilotContent({ reportId }: { reportId: string | number }) {
             {(run.output.findings || []).map((finding, index) => (
               <div key={index} className="mt-3 text-sm">
                 {run.instrument_code === "bpa2" && finding.section && BPA2_SECTION_TITLES[finding.section] && <h3 className="mb-1 font-semibold">{BPA2_SECTION_TITLES[finding.section]}</h3>}
-                <p>{finding.statement}</p>
+                <SpecialistFindingText statement={finding.statement} />
                 <details className="mt-1 text-xs text-slate-600">
                   <summary className="cursor-pointer">Consultar evidências citadas</summary>
                   <ul className="mt-1 space-y-1">{finding.evidence_ids.map((id) => <li key={id} className="break-words"><code>{id}</code>: {JSON.stringify(run.evidence[id] ?? null)}</li>)}</ul>

@@ -12,6 +12,7 @@ from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.usage import RunUsage, UsageLimits
 
 from .specialist_contracts import bpa2_generation_model, specialist_output_model, validate_evidence
+from .bpa2_specialist import validate_bpa2_editorial_layout
 from .specialist_errors import SpecialistGenerationError, SpecialistValidationError, generation_error_code
 from .specialist_instructions import BASE_INSTRUCTIONS, INSTRUMENT_INSTRUCTIONS
 
@@ -88,6 +89,7 @@ class SpecialistAgentService:
                     last_validation_request = usage.requests
                     try:
                         validate_evidence(output, run.input_payload["facts"], run.instrument_code)
+                        validate_bpa2_editorial_layout(output)
                     except ValueError as exc:
                         if isinstance(exc, SpecialistValidationError):
                             last_validation_code = exc.code

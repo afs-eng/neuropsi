@@ -10,7 +10,9 @@ from pydantic_ai.models.function import FunctionModel
 
 from apps.reports import test_specialist_runs
 from apps.reports.models import SpecialistReview, SpecialistRun
-from apps.reports.services.bpa2_specialist import BPA2_INSTRUCTIONS, BPA2_VERSION, bpa2_reading_guide
+from apps.reports.services.bpa2_specialist import (
+    BPA2_INSTRUCTIONS, BPA2_VERSION, bpa2_reading_guide, validate_bpa2_editorial_layout,
+)
 from apps.reports.services.specialist_agent_service import SpecialistAgentService
 from apps.reports.services.specialist_contracts import BPA2SpecialistOutput, bpa2_generation_model, validate_evidence
 from apps.reports.services.specialist_input_service import SpecialistInputService
@@ -49,7 +51,13 @@ def synthetic_output(facts):
         })
     findings.append({
         "section": "analise_clinica",
-        "statement": "Os resultados precisam ser contextualizados por modalidade e integrados à história clínica. Posição relativa no perfil não equivale a desempenho superior à média normativa.",
+        "statement": (
+            "Os resultados precisam ser contextualizados por modalidade e integrados à história clínica.\n\n"
+            "Posição relativa no perfil não equivale a desempenho superior à média normativa. "
+            "Não foi fornecida análise que permita estabelecer significância estatística das diferenças.\n\n"
+            "A relevância clínica exige integração com desenvolvimento, observações e relatos funcionais. "
+            "O instrumento isolado não estabelece nem exclui diagnóstico."
+        ),
         "evidence_ids": [guide[code][key] for code in CODES for key in ("percentil", "classificacao")],
     })
     return {
@@ -60,6 +68,41 @@ def synthetic_output(facts):
 
 
 class BPA2ContractTests(SimpleTestCase):
+    def test_editorial_layout_accepts_three_paragraphs_for_both_profiles(self):
+        for profile in (MIXED, AVERAGE):
+            facts = synthetic_facts(profile)
+            output = BPA2SpecialistOutput.model_validate(synthetic_output(facts))
+            validate_evidence(output, facts, "bpa2")
+            validate_bpa2_editorial_layout(output)
+            self.assertEqual(len(output.findings[-1].statement.split("\n\n")), 3)
+            self.assertLessEqual(len(output.findings[-1].statement), 2000)
+            self.assertNotRegex(output.findings[-1].statement, r"\d")
+
+    def test_editorial_layout_rejects_single_paragraph_without_altering_output(self):
+        data = synthetic_output(synthetic_facts())
+        data["findings"][-1]["statement"] = data["findings"][-1]["statement"].replace("\n\n", " ")
+        output = BPA2SpecialistOutput.model_validate(data)
+        # Existing review contract remains compatible; editorial check is generation-only.
+        validate_evidence(output, synthetic_facts(), "bpa2")
+        with self.assertRaises(ValueError) as caught:
+            validate_bpa2_editorial_layout(output)
+        self.assertEqual(caught.exception.code, "bpa2_redaction_format")
+        self.assertEqual(caught.exception.section, "analise_clinica")
+        self.assertEqual(output.model_dump(), data)
+
+    def test_editorial_layout_accepts_windows_line_breaks(self):
+        data = synthetic_output(synthetic_facts())
+        data["findings"][-1]["statement"] = data["findings"][-1]["statement"].replace("\n", "\r\n")
+        validate_bpa2_editorial_layout(BPA2SpecialistOutput.model_validate(data))
+
+    def test_percentile_remains_required_in_component_text(self):
+        facts = synthetic_facts()
+        data = synthetic_output(facts)
+        data["findings"][1]["statement"] = data["findings"][1]["statement"].replace(", percentil 10", "")
+        with self.assertRaises(ValueError) as caught:
+            validate_evidence(BPA2SpecialistOutput.model_validate(data), facts, "bpa2")
+        self.assertEqual(caught.exception.code, "bpa2_score_text")
+
     def test_section_requirements_match_component_scores_and_complete_synthesis(self):
         facts = synthetic_facts()
         guide = bpa2_reading_guide(facts)
@@ -268,7 +311,7 @@ class BPA2SpecialistWorkflowTests(TestCase):
 
     def test_previous_grounding_version_success_remains_current_without_reactivating_failures(self):
         old = self.enqueue()
-        for version in ("pydantic-bpa2-4", "pydantic-bpa2-4-ollama-4k"):
+        for version in ("pydantic-bpa2-4", "pydantic-bpa2-4-ollama-4k", "pydantic-bpa2-5", "pydantic-bpa2-5-ollama-4k"):
             with self.subTest(version=version):
                 old.specialist_version = version
                 old.status = SpecialistRun.Status.NEEDS_REVIEW
@@ -276,6 +319,22 @@ class BPA2SpecialistWorkflowTests(TestCase):
                 for status in (SpecialistRun.Status.QUEUED, SpecialistRun.Status.FAILED):
                     old.status = status
                     self.assertFalse(SpecialistRunService.is_current(old))
+
+    def test_old_single_paragraph_draft_can_still_be_reviewed_without_rewrite(self):
+        old = self.enqueue()
+        data = synthetic_output(old.input_payload["facts"])
+        data["findings"][-1]["statement"] = data["findings"][-1]["statement"].replace("\n\n", " ")
+        old.specialist_version = "pydantic-bpa2-5"
+        old.status = SpecialistRun.Status.NEEDS_REVIEW
+        old.output_payload = data
+        old.save()
+        SpecialistReviewService.review(
+            user=self.owner, report_id=self.report.pk, run_id=old.pk, decision="approved",
+            notes="Revisão sintética de conteúdo anterior, sem reformatar.",
+            source_sha256=old.source_sha256, output_sha256=SpecialistReviewService.output_fingerprint(old),
+        )
+        old.refresh_from_db()
+        self.assertEqual(old.output_payload, data)
 
     @override_settings(
         SPECIALIST_AI_PROVIDER="ollama", SPECIALIST_AI_MODEL="qwen3.5:9b",

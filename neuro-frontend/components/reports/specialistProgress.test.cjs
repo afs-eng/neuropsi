@@ -24,6 +24,7 @@ function load(source, overrides = {}) {
 
 const progress = load("specialistProgress.ts");
 const { SpecialistProgressPanel } = load("SpecialistProgressPanel.tsx", { "./specialistProgress": progress });
+const { SpecialistFindingText } = load("SpecialistFindingText.tsx");
 const start = Date.parse("2026-10-18T12:00:00Z");
 const run = (extra = {}) => ({
   id: 1, application_id: 20, instrument_code: "bpa2", status: "queued", is_current: true,
@@ -32,6 +33,21 @@ const run = (extra = {}) => ({
 const render = (extra = {}) => renderToStaticMarkup(React.createElement(SpecialistProgressPanel, {
   runs: [], requestedIds: [], submitting: false, lastUpdatedAt: start, refreshError: "", errorMessages: {}, ...extra,
 }));
+
+test("finding text preserves three paragraphs and escapes model HTML", () => {
+  const html = renderToStaticMarkup(React.createElement(SpecialistFindingText, {
+    statement: 'Perfil atencional.\r\n\r\nAgregado e limites.\r\n\r\n<script>unsafe()</script>',
+  }));
+  assert.equal((html.match(/<p>/g) || []).length, 3);
+  assert.match(html, /&lt;script&gt;/);
+  assert.doesNotMatch(html, /<script>/);
+});
+
+test("old single paragraph findings remain readable", () => {
+  const html = renderToStaticMarkup(React.createElement(SpecialistFindingText, { statement: "Texto anterior." }));
+  assert.equal((html.match(/<p>/g) || []).length, 1);
+  assert.match(html, /Texto anterior/);
+});
 
 test("polls only current pending runs or unconfirmed requested IDs", () => {
   assert.equal(progress.shouldPollSpecialists([run()], []), true);
