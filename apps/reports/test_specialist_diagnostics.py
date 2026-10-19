@@ -83,6 +83,64 @@ class SpecialistDiagnosticTests(TestCase):
         self.assertEqual(result.output_payload, valid)
         self.assertEqual(result.usage_payload["requests"], 2)
 
+    def test_missing_component_and_synthesis_evidence_retry_names_all_gaps(self):
+        run = self.enqueue()
+        valid = test_bpa2_specialist.synthetic_output(run.input_payload["facts"])
+        invalid = json.loads(json.dumps(valid))
+        # Existing IDs, correct text/numbers; omissions are genuinely missing citations.
+        invalid["findings"][1]["evidence_ids"].remove("/classified_payload/subtestes/0/classificacao")
+        invalid["findings"][5]["evidence_ids"] = ["/classified_payload/subtestes/0/percentil"]
+        calls = []
+
+        def respond(request):
+            body = json.loads(request.content)
+            calls.append(body)
+            if len(calls) == 2:
+                correction = body["messages"][-1]["content"]
+                self.assertIn('"ac"', correction)
+                self.assertIn('"analise_clinica"', correction)
+                self.assertIn("/classified_payload/subtestes/0/classificacao", correction)
+                self.assertIn("/classified_payload/subtestes/3/percentil", correction)
+                self.assertIn("/classified_payload/subtestes/3/classificacao", correction)
+            return self.response(json.dumps(invalid if len(calls) == 1 else valid))
+
+        with self.mock_client(respond):
+            result = SpecialistRunService.process_next(report_id=self.report.pk)
+        self.assertEqual(result.status, "needs_review")
+        self.assertEqual(result.output_payload, valid)
+        self.assertEqual(len(calls), 2)
+
+    def test_missing_synthesis_evidence_stays_blocked_and_records_only_safe_section(self):
+        run = self.enqueue()
+        invalid = test_bpa2_specialist.synthetic_output(run.input_payload["facts"])
+        invalid["findings"][5]["evidence_ids"] = ["/classified_payload/subtestes/0/percentil"]
+        with self.mock_client(lambda request: self.response(json.dumps(invalid))):
+            result = SpecialistRunService.process_next(report_id=self.report.pk)
+        self.assertEqual(result.status, "failed")
+        self.assertEqual(result.usage_payload["requests"], 2)
+        self.assertEqual(result.usage_payload["validation_code"], "bpa2_missing_evidence")
+        self.assertEqual(result.usage_payload["validation_section"], "analise_clinica")
+        self.assertEqual(result.output_payload, {})
+        self.assertNotIn("/classified_payload", json.dumps(result.usage_payload))
+        self.assertNotIn("Os resultados", json.dumps(result.usage_payload))
+
+    def test_later_schema_failure_does_not_inherit_section_from_missing_evidence(self):
+        run = self.enqueue()
+        invalid = test_bpa2_specialist.synthetic_output(run.input_payload["facts"])
+        invalid["findings"][5]["evidence_ids"] = ["/classified_payload/subtestes/0/percentil"]
+        calls = []
+
+        def respond(request):
+            calls.append(1)
+            return self.response(json.dumps(invalid) if len(calls) == 1 else "invalid-json")
+
+        with self.mock_client(respond):
+            result = SpecialistRunService.process_next(report_id=self.report.pk)
+        self.assertEqual(result.error_code, "output_schema_invalid")
+        self.assertNotIn("validation_section", result.usage_payload)
+        self.assertNotIn("validation_code", result.usage_payload)
+        self.assertEqual(len(calls), 2)
+
     def test_repeated_unknown_references_remain_blocked_without_clinical_output(self):
         run = self.enqueue()
         invalid = test_bpa2_specialist.synthetic_output(run.input_payload["facts"])
@@ -208,7 +266,7 @@ class SpecialistDiagnosticTests(TestCase):
         run = self.enqueue()
         failure = SpecialistGenerationError(
             "output_validation_failed", usage=RunUsage(requests=2),
-            finish_reason="stop", validation_code="bpa2_missing_evidence",
+            finish_reason="stop", validation_code="bpa2_missing_evidence", validation_section="analise_clinica",
         )
         stdout = StringIO()
         with patch.object(SpecialistAgentService, "generate", side_effect=failure) as generate:
@@ -217,6 +275,7 @@ class SpecialistDiagnosticTests(TestCase):
         self.assertEqual(generate.call_count, 1)
         self.assertIn("error_code=output_validation_failed", stdout.getvalue())
         self.assertIn("validation_code=bpa2_missing_evidence", stdout.getvalue())
+        self.assertIn("validation_section=analise_clinica", stdout.getvalue())
         self.assertNotIn(self.patient.full_name, stdout.getvalue())
         run.refresh_from_db()
         self.assertEqual(run.status, SpecialistRun.Status.FAILED)
@@ -234,5 +293,8 @@ class SpecialistDiagnosticTests(TestCase):
         diagnostics = safe_diagnostics(
             RunUsage(requests=2, input_tokens=100, output_tokens=200),
             finish_reason="SECRET-CLINICAL-TEXT", validation_code="SECRET-CLINICAL-TEXT",
+            validation_section="SECRET-CLINICAL-TEXT",
         )
         self.assertEqual(diagnostics, {"requests": 2, "input_tokens": 100, "output_tokens": 200})
+        self.assertEqual(safe_diagnostics(validation_code="bpa2_missing_evidence", validation_section="SECRET"), {"validation_code": "bpa2_missing_evidence"})
+        self.assertEqual(safe_diagnostics(validation_section="ac"), {})

@@ -1,15 +1,19 @@
+import json
 import re
 
 from .specialist_errors import SpecialistValidationError
 
 
-BPA2_VERSION = "pydantic-bpa2-4"
+BPA2_VERSION = "pydantic-bpa2-5"
 # Mudança de grounding, sem mudar regras clínicas: rascunhos já válidos continuam revisáveis.
-BPA2_COMPATIBLE_REVIEW_VERSIONS = {"pydantic-bpa2-3", "pydantic-bpa2-3-ollama-4k"}
+BPA2_COMPATIBLE_REVIEW_VERSIONS = {
+    "pydantic-bpa2-3", "pydantic-bpa2-3-ollama-4k",
+    "pydantic-bpa2-4", "pydantic-bpa2-4-ollama-4k",
+}
 BPA2_SECTIONS = ("introducao", "ac", "ad", "aa", "ag", "analise_clinica")
 
 BPA2_INSTRUCTIONS = """
-BPA-2 — modelo de redação por componentes, versão 4.
+BPA-2 — modelo de redação por componentes, versão 5.
 Siga a organização abaixo, não uma conclusão fixa. Redija em português técnico,
 com parágrafos coesos e proporcionais aos resultados, sem listas de números soltos.
 Retorne exatamente seis findings, nesta ordem, usando o campo section:
@@ -49,8 +53,13 @@ abreviados como IDs. Não acrescente /facts ao início das chaves.
 Para escores, são aceitos os IDs calculado ou classificado equivalentes indicados
 em score_evidence_alternatives; basta citar um deles. Prefira a forma explícita
 'X pontos, percentil Y, classificação Z', sem trocar os valores entre si.
-Na síntese, cite os percentis/classificações disponíveis de todas as modalidades
-discutidas. Não use classificações automáticas de pontos fortes como conclusão
+Use section_evidence_requirements como checklist mínimo de cada seção:
+inclua TODOS os required_ids e pelo menos UM ID de score_one_of quando a lista
+não estiver vazia. Referências de outra modalidade não substituem essas listas.
+Na síntese (analise_clinica), integre as QUATRO modalidades (AC, AD, AA e AG) e
+cite TODOS os percentis/classificações disponíveis listados para essa seção,
+mesmo quando não repetir números na redação. Citar apenas AC ou AG não basta.
+Não use classificações automáticas de pontos fortes como conclusão
 absoluta: destaque relativo não é desempenho superior à média normativa.
 
 Exemplos SINTÉTICOS de estilo e raciocínio, nunca fatos deste paciente:
@@ -100,32 +109,58 @@ def bpa2_reading_guide(facts: dict) -> dict:
             refs[label] = next((key for key in candidates if key in facts), None)
         components[code] = refs
         score_alternatives[code] = [key for key in (computed_score, classified_score) if key in facts]
+    requirements = {"introducao": {"required_ids": [], "score_one_of": []}}
+    synthesis_ids = []
+    for code, refs in components.items():
+        required_ids = [refs[label] for label in ("percentil", "classificacao") if refs[label] is not None]
+        requirements[code] = {"required_ids": required_ids, "score_one_of": score_alternatives[code]}
+        synthesis_ids.extend(required_ids)
+    requirements["analise_clinica"] = {"required_ids": synthesis_ids, "score_one_of": []}
     return {
         "total_significa": "escore calculado em pontos; não é quantidade de itens",
         "ag_significa": "medida agregada de AC, AD e AA; não é subteste independente",
         "component_evidence_ids": components,
         "score_evidence_alternatives": score_alternatives,
+        "section_evidence_requirements": requirements,
     }
+
+
+def bpa2_evidence_gaps(output, facts: dict) -> dict:
+    """Reporta ausências; nunca altera a saída nem cria citações."""
+    requirements = bpa2_reading_guide(facts)["section_evidence_requirements"]
+    gaps = {}
+    for finding in output.findings:
+        required = requirements[finding.section]
+        missing = [key for key in required["required_ids"] if key not in finding.evidence_ids]
+        score_ids = required["score_one_of"]
+        missing_score = score_ids if score_ids and not set(score_ids).intersection(finding.evidence_ids) else []
+        if missing or missing_score:
+            gaps[finding.section] = {"missing_required_ids": missing, "missing_score_one_of": missing_score}
+    return gaps
 
 
 def validate_bpa2_findings(output, facts: dict) -> None:
     reading_guide = bpa2_reading_guide(facts)
     guide = reading_guide["component_evidence_ids"]
+    gaps = bpa2_evidence_gaps(output, facts)
+    if gaps:
+        raise SpecialistValidationError(
+            "bpa2_missing_evidence",
+            "BPA-2: faltam evidências específicas. Corrija TODAS as seções indicadas; "
+            "inclua missing_required_ids e pelo menos um missing_score_one_of quando não vazio. "
+            "Releia os fatos para sustentar o texto, sem inventar dados. Ausências por seção: "
+            + json.dumps(gaps, ensure_ascii=False),
+            section=next(iter(gaps)),
+        )
     for finding in output.findings:
         statement = finding.statement.casefold()
         if re.search(r"\b\d+\s+itens\b|\bsubteste\s+(?:de\s+)?atenção geral\b|\b(?:wais|wisc)\b", statement):
-            raise SpecialistValidationError("bpa2_semantics", "BPA-2: redação confunde escore/AG ou inclui outro instrumento.")
+            raise SpecialistValidationError("bpa2_semantics", "BPA-2: redação confunde escore/AG ou inclui outro instrumento.", section=finding.section)
         codes = (finding.section,) if finding.section in guide else (
             ("ac", "ad", "aa", "ag") if finding.section == "analise_clinica" else ()
         )
         for code in codes:
             refs = guide[code]
-            labels = ("percentil", "classificacao") if finding.section == "analise_clinica" else tuple(refs)
-            required = {refs[label] for label in labels if label != "escore_pontos" and refs[label] is not None}
-            score_ids = reading_guide["score_evidence_alternatives"][code]
-            score_missing = finding.section in guide and score_ids and not set(score_ids).intersection(finding.evidence_ids)
-            if not required.issubset(finding.evidence_ids) or score_missing:
-                raise SpecialistValidationError("bpa2_missing_evidence", "BPA-2: faltam evidências específicas do componente ou da síntese.")
             if finding.section in guide:
                 for label in ("escore_pontos", "percentil", "classificacao"):
                     key = refs[label]
@@ -139,4 +174,4 @@ def validate_bpa2_findings(output, facts: dict) -> None:
                     else:
                         pattern = rf"(?<!\w){value}(?!\w|\s+(?:inferior|superior)\b)"
                     if not re.search(pattern, statement):
-                        raise SpecialistValidationError("bpa2_score_text", "BPA-2: componente não apresenta escore em pontos, percentil ou classificação fornecidos.")
+                        raise SpecialistValidationError("bpa2_score_text", "BPA-2: componente não apresenta escore em pontos, percentil ou classificação fornecidos.", section=finding.section)

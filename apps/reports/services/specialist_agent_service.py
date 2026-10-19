@@ -77,18 +77,21 @@ class SpecialistAgentService:
             )
             usage = RunUsage()
             last_validation_code = None
+            last_validation_section = None
             last_validation_request = None
             if run.instrument_code == "bpa2":
                 @agent.output_validator
                 def validate_bpa2_output(output):
-                    nonlocal last_validation_code, last_validation_request
+                    nonlocal last_validation_code, last_validation_request, last_validation_section
                     last_validation_code = None
+                    last_validation_section = None
                     last_validation_request = usage.requests
                     try:
                         validate_evidence(output, run.input_payload["facts"], run.instrument_code)
                     except ValueError as exc:
                         if isinstance(exc, SpecialistValidationError):
                             last_validation_code = exc.code
+                            last_validation_section = exc.section
                             if exc.code == "evidence_not_found":
                                 raise ModelRetry(
                                     "evidence_ids deve conter apenas chaves EXATAS de facts. "
@@ -121,6 +124,9 @@ class SpecialistAgentService:
                     validation_code = exc.code if isinstance(exc, SpecialistValidationError) else (
                         last_validation_code if last_validation_request == usage.requests else None
                     )
+                    validation_section = exc.section if isinstance(exc, SpecialistValidationError) else (
+                        last_validation_section if last_validation_request == usage.requests else None
+                    )
                     code = generation_error_code(exc, finish_reason=finish_reason, validation_code=validation_code)
                     if code in {
                         "provider_timeout", "provider_connection", "provider_auth", "provider_rate_limit",
@@ -129,8 +135,10 @@ class SpecialistAgentService:
                         finish_reason = None
                     if code != "output_validation_failed":
                         validation_code = None
+                        validation_section = None
                     raise SpecialistGenerationError(
                         code, usage=usage, finish_reason=finish_reason, validation_code=validation_code,
+                        validation_section=validation_section,
                     ) from None
         usage = result.usage
         return result.output.model_dump(), {

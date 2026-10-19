@@ -13,7 +13,7 @@ type Run = SpecialistProgressRun & {
   id: number; application_id: number; instrument_code: string; model: string; provider: string;
   status: string; is_current: boolean; source_sha256: string; output_sha256: string;
   error_code: string; review_is_current: boolean; reviews: Review[];
-  usage?: { finish_reason?: string; validation_code?: string };
+  usage?: { finish_reason?: string; validation_code?: string; validation_section?: string };
   output: { findings?: { section?: string; statement: string; evidence_ids: string[] }[]; limitations?: string[]; review_questions?: string[] };
   evidence: Record<string, unknown>;
 };
@@ -203,7 +203,8 @@ function SpecialistPilotContent({ reportId }: { reportId: string | number }) {
             <p className="mt-2 text-xs text-slate-500">Execução #{run.id} · provedor: {run.provider} · modelo: {run.model}</p>
             {run.error_code && <p className="mt-2 text-sm text-red-700">Motivo técnico: {run.error_code}. Solicitar novamente a mesma execução não dispara uma repetição.</p>}
             {GENERATION_ERRORS[run.error_code] && <p className="mt-1 text-sm text-red-700">{GENERATION_ERRORS[run.error_code]}</p>}
-            {run.usage?.validation_code && VALIDATION_ERRORS[run.usage.validation_code] && <p className="mt-1 text-sm text-red-700">{VALIDATION_ERRORS[run.usage.validation_code]} Código: {run.usage.validation_code}.</p>}
+             {run.usage?.validation_code && VALIDATION_ERRORS[run.usage.validation_code] && <p className="mt-1 text-sm text-red-700">{VALIDATION_ERRORS[run.usage.validation_code]} Código: {run.usage.validation_code}.</p>}
+             {run.instrument_code === "bpa2" && run.usage?.validation_section && BPA2_SECTION_TITLES[run.usage.validation_section] && <p className="mt-1 text-sm text-red-700">Primeira seção com falha de validação: {BPA2_SECTION_TITLES[run.usage.validation_section]}.</p>}
             {!run.is_current && <p className="mt-2 text-sm text-amber-800">Dados ou versão do especialista alterados: solicite um novo rascunho para revisar a configuração atual. O histórico anterior foi preservado.</p>}
             {(run.output.findings || []).map((finding, index) => (
               <div key={index} className="mt-3 text-sm">

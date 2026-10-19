@@ -62,7 +62,11 @@ def bpa2_generation_model(facts: dict):
         "BPA2GroundedFinding", __base__=BPA2Finding,
         evidence_ids=(list[str], Field(
             min_length=1, max_length=30,
-            description="Copie IDs exatos de facts; não cite caminhos do reading_guide nem nomes de componentes.",
+            description=(
+                "Copie IDs exatos de facts; não cite caminhos do reading_guide nem nomes de componentes. "
+                "Para esta section, inclua TODOS os required_ids de section_evidence_requirements "
+                "e UM score_one_of quando não vazio. Na analise_clinica, cite as quatro modalidades."
+            ),
             json_schema_extra={"items": {"type": "string", "enum": sorted(facts)}},
         )),
     )

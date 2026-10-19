@@ -12,24 +12,26 @@ GENERATION_CODES = {
     "provider_timeout", "provider_connection", "provider_rate_limit", "provider_auth",
     "provider_error", "usage_limit_exceeded", "generation_failed",
 }
+VALIDATION_SECTIONS = {"introducao", "ac", "ad", "aa", "ag", "analise_clinica"}
 
 
 class SpecialistValidationError(ValueError):
-    def __init__(self, code: str, message: str):
+    def __init__(self, code: str, message: str, *, section=None):
         self.code = code if code in VALIDATION_CODES else "invalid_schema"
+        self.section = section if isinstance(section, str) and section in VALIDATION_SECTIONS else None
         super().__init__(message)
 
 
 class SpecialistGenerationError(Exception):
     """Somente metadados selecionados; nunca inclui texto de exceções/respostas."""
 
-    def __init__(self, code: str, *, usage=None, finish_reason=None, validation_code=None):
+    def __init__(self, code: str, *, usage=None, finish_reason=None, validation_code=None, validation_section=None):
         self.code = code if code in GENERATION_CODES else "generation_failed"
-        self.diagnostics = safe_diagnostics(usage, finish_reason, validation_code)
+        self.diagnostics = safe_diagnostics(usage, finish_reason, validation_code, validation_section)
         super().__init__(self.code)
 
 
-def safe_diagnostics(usage=None, finish_reason=None, validation_code=None) -> dict:
+def safe_diagnostics(usage=None, finish_reason=None, validation_code=None, validation_section=None) -> dict:
     diagnostics = {}
     for key in ("requests", "input_tokens", "output_tokens"):
         value = getattr(usage, key, None)
@@ -39,6 +41,8 @@ def safe_diagnostics(usage=None, finish_reason=None, validation_code=None) -> di
         diagnostics["finish_reason"] = finish_reason
     if isinstance(validation_code, str) and validation_code in VALIDATION_CODES:
         diagnostics["validation_code"] = validation_code
+        if isinstance(validation_section, str) and validation_section in VALIDATION_SECTIONS:
+            diagnostics["validation_section"] = validation_section
     return diagnostics
 
 

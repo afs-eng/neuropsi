@@ -7,7 +7,7 @@ from django.db import DatabaseError
 from apps.reports.models import SpecialistRun
 
 from apps.reports.services.specialist_run_service import SpecialistRunService
-from apps.reports.services.specialist_errors import VALIDATION_CODES
+from apps.reports.services.specialist_errors import VALIDATION_CODES, VALIDATION_SECTIONS
 
 
 class Command(BaseCommand):
@@ -66,6 +66,9 @@ class Command(BaseCommand):
                     validation_code = (run.usage_payload or {}).get("validation_code")
                     if validation_code in VALIDATION_CODES:
                         details += f" validation_code={validation_code}"
+                        section = (run.usage_payload or {}).get("validation_section")
+                        if isinstance(section, str) and section in VALIDATION_SECTIONS:
+                            details += f" validation_section={section}"
                     self.stdout.write(f"specialist_run={run.pk} status={run.status}{details}")
                 if options["once"]:
                     return

@@ -60,6 +60,29 @@ def synthetic_output(facts):
 
 
 class BPA2ContractTests(SimpleTestCase):
+    def test_section_requirements_match_component_scores_and_complete_synthesis(self):
+        facts = synthetic_facts()
+        guide = bpa2_reading_guide(facts)
+        requirements = guide["section_evidence_requirements"]
+        self.assertEqual(requirements["introducao"], {"required_ids": [], "score_one_of": []})
+        for index, code in enumerate(CODES):
+            self.assertEqual(requirements[code]["required_ids"], [
+                f"/classified_payload/subtestes/{index}/percentil",
+                f"/classified_payload/subtestes/{index}/classificacao",
+            ])
+            self.assertEqual(set(requirements[code]["score_one_of"]), {
+                f"/computed_payload/{code}/total", f"/classified_payload/subtestes/{index}/total",
+            })
+        self.assertEqual(len(requirements["analise_clinica"]["required_ids"]), 8)
+        self.assertEqual(requirements["analise_clinica"]["score_one_of"], [])
+
+    def test_section_requirements_do_not_fabricate_missing_results(self):
+        guide = bpa2_reading_guide({"/computed_payload/ac/total": 0})
+        requirements = guide["section_evidence_requirements"]
+        self.assertEqual(requirements["ac"], {"required_ids": [], "score_one_of": ["/computed_payload/ac/total"]})
+        self.assertEqual(requirements["ag"], {"required_ids": [], "score_one_of": []})
+        self.assertEqual(requirements["analise_clinica"]["required_ids"], [])
+
     def test_generation_schema_enumerates_only_current_application_fact_ids(self):
         facts = synthetic_facts()
         schema = bpa2_generation_model(facts).model_json_schema()
@@ -242,6 +265,17 @@ class BPA2SpecialistWorkflowTests(TestCase):
         for status in (SpecialistRun.Status.QUEUED, SpecialistRun.Status.FAILED):
             old.status = status
             self.assertFalse(SpecialistRunService.is_current(old))
+
+    def test_previous_grounding_version_success_remains_current_without_reactivating_failures(self):
+        old = self.enqueue()
+        for version in ("pydantic-bpa2-4", "pydantic-bpa2-4-ollama-4k"):
+            with self.subTest(version=version):
+                old.specialist_version = version
+                old.status = SpecialistRun.Status.NEEDS_REVIEW
+                self.assertTrue(SpecialistRunService.is_current(old))
+                for status in (SpecialistRun.Status.QUEUED, SpecialistRun.Status.FAILED):
+                    old.status = status
+                    self.assertFalse(SpecialistRunService.is_current(old))
 
     @override_settings(
         SPECIALIST_AI_PROVIDER="ollama", SPECIALIST_AI_MODEL="qwen3.5:9b",

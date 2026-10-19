@@ -203,7 +203,10 @@ class SpecialistRunService:
         except Exception as exc:
             # Exceções do SDK podem conter dados clínicos ou credenciais: não persistir/logar o texto.
             error = generation_error_code(exc)
-            usage = safe_diagnostics(validation_code=exc.code if isinstance(exc, SpecialistValidationError) else None)
+            usage = safe_diagnostics(
+                validation_code=exc.code if isinstance(exc, SpecialistValidationError) else None,
+                validation_section=exc.section if isinstance(exc, SpecialistValidationError) else None,
+            )
             output = {}
         SpecialistRun.objects.filter(pk=run_id, status=SpecialistRun.Status.RUNNING).update(
             status=status, output_payload=output, usage_payload=usage,
