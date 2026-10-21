@@ -72,6 +72,31 @@ ainda precisa de avaliação autorizada; sucesso técnico não é homologação 
 
 ## Ativação controlada
 
+### WAIS-III: entrada sem tabelas normativas e duplicações
+
+`SpecialistInputService` agora seleciona somente resultados individuais do WAIS-III:
+idade/faixa normativa, subtestes, índices/QIs e intervalos, análises de facilidades/
+dificuldades e discrepâncias, Dígitos, GAI, clusters, disponibilidade normativa e
+alertas. As tabelas normativas completas, gráficos, manifesto e cópias de impressão
+não são enviados ao especialista. Nenhum resultado original é apagado ou recalculado.
+
+Campos iguais entre `computed_payload` e `classified_payload` são enviados uma vez,
+com IDs sob a fonte original; campos novos da classificação conservam IDs próprios.
+`composites` é tratado como alias de `indices`, com conferência de igualdade quando
+ambos existem. Valores divergentes bloqueiam a preparação, sem escolher uma fonte.
+Alertas adicionais da classificação são preservados sem repetir os anteriores.
+Os limites de 600 fatos e 60.000 bytes permanecem; não há truncamento de resultados.
+
+A versão de entrada `1-wais3-2` muda somente o fingerprint WAIS-III. Execuções
+anteriores ficam desatualizadas e não são reaproveitadas/reexecutadas silenciosamente;
+uma nova solicitação explícita usa a entrada corrigida. Histórico e textos humanos
+permanecem intactos. Atualizar backend e worker juntos; sem nova migration, mudança
+de modelo ou orçamento. Não houve deploy, inferência real ou acesso ao banco clínico.
+
+Regressões usam o motor determinístico com dados sintéticos, incluindo todos os
+subtestes e escores de processo, mais fila/revisão com gerador simulado. Isso não
+comprova qualidade clínica nem disponibilidade do Ollama real.
+
 ### FDT: correção de referências — `pydantic-fdt-2`
 
 Relato de execução falha com `output_validation_failed / evidence_not_found`.

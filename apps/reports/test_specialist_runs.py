@@ -78,6 +78,41 @@ class SpecialistRunTests(TestCase):
         runs, _ = SpecialistRunService.enqueue(user=self.owner, report_id=self.report.pk, **kwargs)
         return runs[0]
 
+    @override_settings(SPECIALIST_AI_INSTRUMENTS=["wais3"])
+    def test_full_wais3_can_be_enqueued_and_reviewed_without_changing_human_text(self):
+        from apps.tests.wais3.calculators import compute_wais3_payload
+        from apps.tests.wais3.classifiers import classify_wais3_payload
+        from apps.tests.wais3.constants import WAIS3_SUBTEST_ORDER
+
+        self.application.instrument, _ = Instrument.objects.get_or_create(code="wais3", defaults={"name": "WAIS-III"})
+        self.application.computed_payload = compute_wais3_payload({
+            "idade": {"anos": 30, "meses": 0},
+            "subtestes": {key: {"pontos_brutos": 10} for key in WAIS3_SUBTEST_ORDER},
+        })
+        self.application.classified_payload = classify_wais3_payload(self.application.computed_payload)
+        self.application.save()
+        with patch.object(SpecialistAgentService, "generate") as generate:
+            run = self.enqueue()
+            generate.assert_not_called()
+        self.assertLessEqual(len(run.input_payload["facts"]), 600)
+        self.assertEqual(self.enqueue().pk, run.pk)
+
+        def generator(queued):
+            fact_id = "/computed_payload/indices/qi_total/pontuacao_composta"
+            score = queued.input_payload["facts"][fact_id]
+            return {
+                "findings": [{"statement": f"O QI total informado foi {score}.", "evidence_ids": [fact_id]}],
+                "limitations": ["Exige revisão profissional."], "review_questions": [],
+            }, {}
+
+        SpecialistRunService.process_next(generator=generator)
+        run.refresh_from_db()
+        self.assertEqual(run.status, SpecialistRun.Status.NEEDS_REVIEW)
+        self.section.refresh_from_db()
+        self.report.refresh_from_db()
+        self.assertEqual(self.section.content_edited, "Revisão humana.")
+        self.assertEqual(self.report.edited_text, "Texto revisado que deve ser preservado.")
+
     @staticmethod
     def valid_generator(run):
         return VALID_OUTPUT, {"input_tokens": 20, "output_tokens": 30, "requests": 1}

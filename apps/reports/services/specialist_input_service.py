@@ -5,6 +5,7 @@ from datetime import date
 from .bpa2_specialist import bpa2_reading_guide
 from .self_report_specialists import SELF_REPORT_VERSIONS, self_report_reading_guide, self_report_sources
 from .fdt_specialist import fdt_reading_guide
+from .wais3_specialist_input import WAIS3_INPUT_VERSION, wais3_specialist_sources
 
 
 class SpecialistInputService:
@@ -23,7 +24,7 @@ class SpecialistInputService:
     def fingerprint(cls, application) -> str:
         patient = application.evaluation.patient
         source = {
-            "input_version": cls.VERSION,
+            "input_version": WAIS3_INPUT_VERSION if application.instrument.code == "wais3" else cls.VERSION,
             "application_id": application.pk,
             "evaluation_id": application.evaluation_id,
             "patient_id": patient.pk,
@@ -76,6 +77,8 @@ class SpecialistInputService:
         code = getattr(getattr(application, "instrument", None), "code", "")
         if code in SELF_REPORT_VERSIONS:
             sources = self_report_sources(code, *sources)
+        elif code == "wais3":
+            sources = wais3_specialist_sources(*sources)
         for key, source in zip(("computed_payload", "classified_payload"), sources):
             visit(source, f"/{key}")
         if not facts:
