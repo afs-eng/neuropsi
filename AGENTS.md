@@ -1,3 +1,11 @@
+## Organização dos agentes
+
+- O diretório canônico de agentes, skills, scripts, regras e workflows é `.agents/`.
+- Instale novas skills em `.agents/skills/`; não recrie cópias em outros diretórios.
+- Preserve os materiais clínicos adicionais em `.agents/skills/interpretacoes_testes/`, `.agents/skills/modelo-teste/` e `.agents/skills/skill-systema/`.
+- `.opencode/` contém apenas configurações, plugins e arquivos de dependências específicos do OpenCode.
+- Consulte `.agents/README.md` para a estrutura e as orientações de uso.
+
 ## graphify
 
 This project has a graphify knowledge graph at graphify-out/.

@@ -1,7 +1,7 @@
 # Análise de Adequação do Módulo WAIS-III à Skill skill_implementacao_wais3.md
 
 ## Contexto
-Skill analisada: `.opencode/skills/modelo-teste/skill_implementacao_wais3.md`
+Skill analisada: `.agents/skills/modelo-teste/skill_implementacao_wais3.md`
 Módulo avaliado: `apps/tests/wais3/`
 
 ---
