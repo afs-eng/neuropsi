@@ -314,7 +314,8 @@ def _lookup_b10_frequency(first_code: str, second_code: str, difference: int | N
 
 
 def build_process_scores(raw_scores: dict, anos: int, meses: int, computed_data: dict) -> dict:
-    a8_table = _carregar_tabela_a8(anos, meses)
+    has_process_scores = any(raw_scores.get(key) is not None for key in PROCESS_SCORE_CONFIG)
+    a8_table = _carregar_tabela_a8(anos, meses) if has_process_scores else []
     scaled_rows = []
     process_by_code = {}
     for raw_key, config in PROCESS_SCORE_CONFIG.items():
