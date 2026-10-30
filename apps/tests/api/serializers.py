@@ -3,6 +3,7 @@ from apps.tests.services import TestReportPayloadService
 
 
 INSTRUMENT_DESCRIPTIONS = {
+    "vineland3": "Comportamento adaptativo: Entrevista, Pais/Cuidadores e Professores extensivos. Correção quantitativa por normas americanas; requer revisão clínica.",
     "thcp": "Avalia habilidades percepto-motoras, linguagem, pensamento quantitativo, memória e atenção na pré-alfabetização (4–7 anos).",
     "bfp": "Avalia traços de personalidade nos cinco grandes fatores e suas facetas.",
     "wasi": "Estimativa abreviada de inteligencia verbal, de execucao e global por quatro subtestes.",

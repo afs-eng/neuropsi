@@ -14,6 +14,7 @@ from apps.tests.wisc4.calculators import _calcular_idade, _carregar_tabela_ncp
 
 
 SECTION_MAP = {
+    "vineland3": "escalas_complementares",
     "thcp": "escalas_complementares",
     "wisc4": "eficiencia_intelectual",
     "wais3": "eficiencia_intelectual",
@@ -314,6 +315,8 @@ def _is_effectively_applied_test(item) -> bool:
 
 def _application_signature(item) -> tuple[str, str]:
     instrument_code = getattr(getattr(item, "instrument", None), "code", "") or ""
+    if instrument_code == "vineland3":
+        return instrument_code, str(item.pk)
     classified_payload = getattr(item, "classified_payload", None) or {}
     raw_payload = getattr(item, "raw_payload", None) or {}
     form_type = (
@@ -332,6 +335,8 @@ def _select_report_applications(evaluation) -> list:
     for item in validated:
         selected[_application_signature(item)] = item
     for item in all_applied:
+        if item.instrument.code == "vineland3" and not item.is_validated:
+            continue
         selected.setdefault(_application_signature(item), item)
 
     def sort_key(item):
@@ -637,6 +642,12 @@ def _build_wais3_tables(payload: dict, evaluation, applied_on) -> dict:
 def build_result_rows(instrument_code: str, payload: dict) -> list[str]:
     if not payload:
         return []
+    if instrument_code == "vineland3":
+        return [_format_result_line(
+            row["label"],
+            f"escala-v {row['v_scale']}" if "v_scale" in row else f"escore padrão {row['standard_score']}",
+            f"percentil {row['percentile']}" if row.get("percentile") is not None else "",
+        ) for row in payload.get("results", [])]
     if instrument_code == "thcp":
         return [
             _format_result_line(
@@ -679,6 +690,8 @@ def build_validated_tests_snapshot(evaluation) -> list[dict]:
             continue
         warnings = []
         structured_results = item.classified_payload or item.computed_payload or {}
+        if item.instrument.code == "vineland3":
+            structured_results = item.computed_payload or {}
         clinical_interpretation = (item.interpretation_text or "").strip()
 
         module = get_test_module(item.instrument.code)
@@ -732,7 +745,7 @@ def build_validated_tests_snapshot(evaluation) -> list[dict]:
             {
                 "id": item.id,
                 "application_id": item.id,
-                "respondent_name": str((item.raw_payload or {}).get("respondent_name") or ""),
+                "respondent_name": str((item.raw_payload or {}).get("respondent_name") or ((item.raw_payload or {}).get("respondent") if item.instrument.code == "vineland3" else "") or ""),
                 "informant": str((item.raw_payload or {}).get("informant") or (item.raw_payload or {}).get("respondent_type") or ""),
                 "instrument": item.instrument.name,
                 "instrument_code": item.instrument.code,

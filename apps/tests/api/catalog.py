@@ -3,6 +3,11 @@ from apps.tests.models import Instrument
 
 REQUIRED_INSTRUMENTS = [
     {
+        "code": "vineland3",
+        "name": "Vineland-3 — Escalas de Comportamento Adaptativo",
+        "category": "Comportamento adaptativo",
+    },
+    {
         "code": "thcp",
         "name": "THCP - Teste de Habilidades e Conhecimento Pré-Alfabetização",
         "category": "Habilidades pré-alfabetização",

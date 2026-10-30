@@ -8,6 +8,13 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         instrumentos = [
             {
+                "code": "vineland3",
+                "name": "Vineland-3 — Escalas de Comportamento Adaptativo",
+                "category": "Comportamento adaptativo",
+                "version": "3ª Edição",
+                "is_active": True,
+            },
+            {
                 "code": "thcp",
                 "name": "THCP - Teste de Habilidades e Conhecimento Pré-Alfabetização",
                 "category": "Habilidades pré-alfabetização",

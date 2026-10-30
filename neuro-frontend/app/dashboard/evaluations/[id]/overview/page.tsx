@@ -776,6 +776,7 @@ export default function EvaluationDetailPage() {
       "ravlt": "/dashboard/tests/ravlt",
       "srs2": "/dashboard/tests/srs2",
       "ssrs": "/dashboard/tests/ssrs",
+      "vineland3": "/dashboard/tests/vineland3",
       "scared": "/dashboard/tests/scared",
       "thcp": "/dashboard/tests/thcp",
       "cars2_hf": "/dashboard/tests/cars2-hf",

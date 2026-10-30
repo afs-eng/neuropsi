@@ -14,12 +14,21 @@ class TestScoringService:
                 "errors": [f"Nenhum módulo registrado para {application.instrument.code}."],
             }
 
+        raw_scores = application.raw_payload or {}
+        if application.instrument.code == "vineland3":
+            patient = application.evaluation.patient
+            reference_date = application.applied_on or application.evaluation.start_date
+            raw_scores = {
+                **raw_scores,
+                "birth_date": patient.birth_date.isoformat() if patient.birth_date else None,
+                "reference_date": reference_date.isoformat() if reference_date else None,
+            }
         context = TestContext(
             patient_name=application.evaluation.patient.full_name,
             evaluation_id=application.evaluation_id,
             instrument_code=application.instrument.code,
             patient_age=TestReportPayloadService._patient_age(application),
-            raw_scores=application.raw_payload or {},
+            raw_scores=raw_scores,
             reviewed_scores=application.reviewed_payload or {},
         )
 

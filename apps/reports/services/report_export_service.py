@@ -472,6 +472,7 @@ class ReportExportService:
                 cls._populate_wasi_tables(document, context)
 
         cls._insert_thcp_results(document, context)
+        cls._insert_vineland3_results(document, context)
         if primary_test_code != "wisc4":
             cls._ensure_model_table_styles(document)
         if primary_test_code not in {"wais3", "wisc4"}:
@@ -583,6 +584,40 @@ class ReportExportService:
             text = interpret_thcp_results(data, (context.get("patient") or {}).get("full_name") or "Paciente")
             anchor = cls._insert_interpretation_block_after(anchor, text)
             for note in technical_notes(data):
+                anchor = cls._insert_paragraph_after(anchor, note)
+                cls._format_body_paragraph(anchor)
+
+    @classmethod
+    def _insert_vineland3_results(cls, document: Document, context: dict):
+        from apps.tests.vineland3.interpreters import interpret_results
+        from apps.tests.vineland3.presentation import build_chart, docx_rows
+
+        tests = cls._find_tests(context, "vineland3")
+        if not tests:
+            return
+        conclusion = cls._find_paragraph(document, "14. CONCLUSÃO") or cls._find_paragraph(document, "Conclusão")
+        if conclusion is None:
+            conclusion = next((p for p in document.paragraphs if any(
+                heading in p.text.upper() for heading in cls.REFERENCE_SECTION_HEADINGS
+            )), None)
+        anchor = conclusion.insert_paragraph_before("") if conclusion is not None else document.add_paragraph()
+        for test in tests:
+            data = test.get("computed_payload") or {}
+            if not data.get("domains"):
+                continue
+            anchor = cls._insert_paragraph_after(anchor, f"Vineland-3 — {data['form_label']} — {data['respondent']}")
+            cls._format_subtitle_paragraph(anchor)
+            table = cls._insert_table_after(anchor, docx_rows(data), "default")
+            cls._format_table(table, "default")
+            anchor = cls._insert_paragraph_after_table(table, "Bruto: subdomínio; soma: escalas-v por domínio ou escores padrão para o CCA.")
+            cls._format_caption_paragraph(anchor)
+            image = build_chart(data)
+            if image:
+                anchor = cls._insert_paragraph_after(anchor, "")
+                anchor.add_run().add_picture(BytesIO(image), width=cls.IMAGE_WIDTH)
+                anchor.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            anchor = cls._insert_interpretation_block_after(anchor, interpret_results(data))
+            for note in data.get("technical_notes", []):
                 anchor = cls._insert_paragraph_after(anchor, note)
                 cls._format_body_paragraph(anchor)
 

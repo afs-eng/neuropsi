@@ -24,3 +24,4 @@ class TestsConfig(AppConfig):
         from apps.tests.mchat import MCHATModule  # noqa
         from apps.tests.ssrs import SSRSModule  # noqa
         from apps.tests.thcp import THCPModule  # noqa
+        from apps.tests.vineland3 import Vineland3Module  # noqa
