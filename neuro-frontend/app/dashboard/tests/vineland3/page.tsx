@@ -6,16 +6,17 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { api } from '@/lib/api'
+import { VinelandItemFields, type VinelandItemProtocol, type VinelandItemResponses } from '@/components/tests/VinelandItemFields'
 
 type FormCode = 'entrevista' | 'pais_cuidadores' | 'professores'
 interface Scale { code: string; label: string; max: number; optional: boolean; min_months: number; max_months: number | null }
-interface Protocol { forms: Record<FormCode, { label: string; scales: Scale[] }>; technical_notes: string[] }
+interface Protocol { forms: Record<FormCode, { label: string; scales: Scale[] }>; technical_notes: string[]; item_protocol: VinelandItemProtocol }
 interface Evaluation { id: number; patient_name: string; patient_birth_date: string | null; start_date: string | null }
 interface Subdomain { scale: string; label: string; raw_score: number; v_scale: number }
 interface Domain { scale: string; label: string; standard_score: number; percentile: string }
 interface Application {
   id: number; evaluation_id: number; instrument_code: string; status: string; is_validated: boolean; applied_on: string | null
-  raw_payload: { form?: FormCode; respondent?: string; raw_scores?: Record<string, number> }
+  raw_payload: { form?: FormCode; respondent?: string; raw_scores?: Record<string, number>; entry_mode?: 'totals' | 'items'; item_responses?: VinelandItemResponses }
   computed_payload: { domains?: Domain[]; subdomains?: Subdomain[]; form_label?: string; respondent?: string; age_months?: number; norm_source?: { file: string; subdomain_pages: number[]; domain_pages: number[] } }
   interpretation_text: string
 }
@@ -45,6 +46,9 @@ function Vineland3Form() {
   const [respondent, setRespondent] = useState('')
   const [appliedOn, setAppliedOn] = useState('')
   const [scores, setScores] = useState<Record<string, string>>({})
+  const [entryMode, setEntryMode] = useState<'totals' | 'items'>('items')
+  const [itemResponses, setItemResponses] = useState<VinelandItemResponses>({})
+  const [success, setSuccess] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -68,6 +72,8 @@ function Vineland3Form() {
         setProtocol(definitions)
         setEvaluation(data)
         setApplication(existing)
+        setEntryMode(existing?.raw_payload.entry_mode || (existing ? 'totals' : 'items'))
+        setItemResponses(existing?.raw_payload.item_responses || {})
         setForm(existing?.raw_payload.form || 'entrevista')
         setRespondent(existing?.raw_payload.respondent || '')
         setScores(Object.fromEntries(Object.entries(existing?.raw_payload.raw_scores || {}).map(([key, value]) => [key, String(value)])))
@@ -91,8 +97,9 @@ function Vineland3Form() {
     event.preventDefault()
     if (!evaluation || saving || locked) return
     setError('')
+    setSuccess('')
     const raw: Record<string, number> = {}
-    for (const scale of activeScales) {
+    for (const scale of entryMode === 'totals' ? activeScales : []) {
       const value = scores[scale.code] || ''
       if (scale.optional && value === '') continue
       if (value === '' || !Number.isInteger(Number(value)) || Number(value) < 0 || Number(value) > scale.max) {
@@ -101,12 +108,19 @@ function Vineland3Form() {
       }
       raw[scale.code] = Number(value)
     }
+    if (entryMode === 'items' && Object.values(itemResponses).some(items => Object.values(items).some(item => item.response !== '' && !/^[210ND]$/.test(item.response)))) {
+      setError('Há respostas inválidas. Digite somente 2, 1, 0, N ou D em todos os domínios.')
+      return
+    }
     setSaving(true)
     try {
-      const result = await api.post<{ application_id: number }>('/api/tests/vineland3/submit', {
+      const result = await api.post<Application & { application_id: number }>('/api/tests/vineland3/submit', {
         evaluation_id: evaluation.id, application_id: applicationId ? Number(applicationId) : null,
-        applied_on: appliedOn, form, respondent, entry_mode: 'totals', raw_scores: raw,
+        applied_on: appliedOn, form: entryMode === 'totals' ? form : null, respondent, entry_mode: entryMode, raw_scores: raw,
+        ...(entryMode === 'items' ? { item_protocol_id: protocol?.item_protocol.id, item_responses: itemResponses } : {}),
       })
+      setApplication(result)
+      setSuccess(entryMode === 'items' ? 'Registro parcial salvo. Respostas e observações preservadas; sem cálculo normativo ou laudo.' : 'Pontuações salvas para revisão.')
       router.replace(`/dashboard/tests/vineland3?evaluation_id=${evaluation.id}&application_id=${result.application_id}`)
     } catch (err) {
       setError(errorMessage(err))
@@ -118,11 +132,12 @@ function Vineland3Form() {
   if (loading) return <p role="status" className="p-8">Carregando Vineland-3…</p>
   return <main className="mx-auto max-w-5xl space-y-6 p-4 sm:p-8">
     <Link className="text-sm text-cyan-800 underline" href={evaluation ? `/dashboard/evaluations/${evaluation.id}/overview` : '/dashboard/evaluations'}>Voltar à avaliação</Link>
-    <header><h1 className="text-2xl font-semibold text-slate-900">Vineland-3 · {viewResult ? 'Resultados' : 'Correção'}</h1><p className="mt-2 text-slate-600">{evaluation?.patient_name}</p></header>
+    <header><h1 className="text-2xl font-semibold text-slate-900">{!viewResult && entryMode === 'items' ? 'Vineland · Registro item a item' : `Vineland-3 · ${viewResult ? 'Resultados' : 'Correção'}`}</h1><p className="mt-2 text-slate-600">{evaluation?.patient_name}</p></header>
     {error && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">{error}</p>}
+    {success && <p role="status" className="rounded-lg border border-green-200 bg-green-50 p-4 text-green-900">{success}</p>}
     <aside className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
-      <p><strong>Primeiro incremento · normas americanas.</strong> Correção quantitativa por pontuações brutas, com revisão clínica obrigatória.</p>
-      <p>Item a item e classificação qualitativa ainda não habilitados. São necessários os protocolos e as regras completas do manual.</p>
+      {entryMode === 'items' ? <p><strong>Banco parcial · edição não confirmada.</strong> Respostas e observações para conferência, sem escores ou interpretação clínica automática.</p> : <p><strong>Normas americanas.</strong> Correção quantitativa por pontuações brutas, com revisão clínica obrigatória.</p>}
+      <p>Item a item: registro do banco parcial fornecido, com edição não confirmada e sem conversão normativa. Classificação qualitativa ainda não habilitada.</p>
     </aside>
     {viewResult && application ? <>
       <section className="space-y-3 rounded-xl border bg-white p-5">
@@ -151,15 +166,22 @@ function Vineland3Form() {
       <fieldset disabled={saving || locked} className="space-y-5 rounded-xl border bg-white p-5">
         <legend className="px-2 font-semibold">Identificação do protocolo</legend>
         {locked && <p role="status">Aplicação travada para edição.</p>}
-        <div><label htmlFor="vineland-form" className="mb-2 block text-sm font-medium">Formulário extensivo</label>
+        <div><label htmlFor="vineland-entry-mode" className="mb-2 block text-sm font-medium">Modo de entrada</label>
+          <select id="vineland-entry-mode" disabled={Boolean(application)} className="h-12 w-full rounded-md border border-slate-300 px-3" value={entryMode} onChange={event => { setEntryMode(event.target.value as 'totals' | 'items'); setSuccess('') }}>
+            <option value="items">Item a item — banco parcial, edição não confirmada (somente registro)</option>
+            <option value="totals">Pontuações brutas — correção normativa Vineland-3</option>
+          </select>
+          {application && <p className="mt-1 text-xs text-slate-600">Para usar outro modo, crie uma aplicação separada e preserve o registro original.</p>}
+        </div>
+        {entryMode === 'totals' && <div><label htmlFor="vineland-form" className="mb-2 block text-sm font-medium">Formulário extensivo</label>
           <select id="vineland-form" className="h-12 w-full rounded-md border border-slate-300 px-3" value={form} onChange={event => {
             if (Object.keys(scores).length && !window.confirm('Trocar o formulário limpará as pontuações lançadas. Continuar?')) return
             setForm(event.target.value as FormCode); setScores({})
-          }}>{Object.entries(protocol.forms).map(([code, definition]) => <option key={code} value={code}>{definition.label}</option>)}</select></div>
+          }}>{Object.entries(protocol.forms).map(([code, definition]) => <option key={code} value={code}>{definition.label}</option>)}</select></div>}
         <div><label htmlFor="vineland-respondent" className="mb-2 block text-sm font-medium">Nome do respondente</label><Input id="vineland-respondent" required maxLength={200} value={respondent} onChange={event => setRespondent(event.target.value)} /></div>
         <div><label htmlFor="vineland-date" className="mb-2 block text-sm font-medium">Data da aplicação</label><Input id="vineland-date" type="date" required value={appliedOn} onChange={event => setAppliedOn(event.target.value)} /></div>
       </fieldset>
-      <fieldset disabled={saving || locked} className="space-y-4 rounded-xl border bg-white p-5">
+      {entryMode === 'items' ? <VinelandItemFields protocol={protocol.item_protocol} responses={itemResponses} onChange={responses => { setItemResponses(responses); setSuccess('') }} disabled={saving || locked} /> : <fieldset disabled={saving || locked} className="space-y-4 rounded-xl border bg-white p-5">
         <legend className="px-2 font-semibold">Pontuações brutas por subdomínio</legend>
         <p className="text-sm text-slate-600">Use os totais corrigidos no protocolo. Campos vazios não são zero. Motor é opcional; se utilizado, preencha os dois subdomínios.</p>
         {activeScales.length === 0 && <p role="status" className="text-amber-900">Verifique a data de nascimento e aplicação. Professores possui normas dos 3 anos aos 18 anos e 11 meses.</p>}
@@ -168,8 +190,8 @@ function Vineland3Form() {
           <Input id={`vineland-${scale.code}`} type="number" min={0} max={scale.max} step={1} required={!scale.optional} inputMode="numeric" value={scores[scale.code] ?? ''} onChange={event => setScores(previous => ({ ...previous, [scale.code]: event.target.value }))} aria-describedby={`vineland-${scale.code}-hint`} />
           <p id={`vineland-${scale.code}-hint`} className="mt-1 text-xs text-slate-600">De 0 a {scale.max}.</p>
         </div>)}</div>
-      </fieldset>
-      <Button type="submit" disabled={saving || locked || activeScales.length === 0}>{saving ? 'Salvando…' : 'Calcular e salvar para revisão'}</Button>
+      </fieldset>}
+      <Button type="submit" disabled={saving || locked || (entryMode === 'totals' && activeScales.length === 0)}>{saving ? 'Salvando…' : entryMode === 'items' ? 'Salvar registro parcial (sem cálculo)' : 'Calcular e salvar para revisão'}</Button>
     </form> : null}
     <details className="rounded-lg border p-4 text-sm"><summary className="cursor-pointer font-medium">Notas técnicas e limitações</summary><ul className="mt-3 list-disc space-y-2 pl-5">{protocol?.technical_notes.map(note => <li key={note}>{note}</li>)}</ul></details>
   </main>

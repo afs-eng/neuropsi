@@ -19,6 +19,8 @@ from apps.tests.registry import get_test_module
 from apps.tests.services.scoring_service import TestScoringService
 from apps.tests.vineland3 import Vineland3Module
 from apps.tests.vineland3.calculators import compute_scores
+from apps.tests.vineland3.item_protocol import DOMAIN_ITEMS, PROTOCOL_ID, item_protocol, normalize_item_responses
+from apps.tests.vineland3.import_norms import age_range
 from apps.tests.vineland3.norms import age_months, age_table, load_norms, lookup
 from apps.tests.vineland3.validators import validate_input
 
@@ -36,6 +38,36 @@ def raw(form="professores", birth="2023-01-15", applied="2026-01-15"):
 
 
 class Vineland3NormTests(SimpleTestCase):
+    def test_importer_understands_portuguese_and_english_age_ranges(self):
+        for text, expected in [("Idades 0:2:0–0:2:30", (2, 2)), ("Ages 3:0–3:3", (36, 39)),
+                               ("Ages 90+", (1080, None))]:
+            self.assertEqual(age_range(text), expected)
+
+    def test_partial_bank_is_not_presented_as_verified_vineland3(self):
+        protocol = item_protocol()
+        self.assertFalse(protocol["edition_verified"])
+        self.assertFalse(protocol["scoring_enabled"])
+        self.assertFalse(protocol["complete"])
+        self.assertEqual([len(items) for _, items in DOMAIN_ITEMS.values()], [33, 10, 5, 5, 5])
+        self.assertEqual(set(protocol["legend"]), {"2", "1", "0", "N", "D"})
+
+    def test_item_codes_blank_and_observations_are_preserved(self):
+        for code in ("2", "1", "0", "N", "D", "n", "d", ""):
+            with self.subTest(code=code):
+                data = normalize_item_responses({"comunicacao": {"1": {"response": code, "observation": "Observação clínica"}}})
+                self.assertEqual(data["comunicacao"]["1"], {"response": code.upper(), "observation": "Observação clínica"})
+        self.assertEqual(normalize_item_responses({}), {})
+
+    def test_invalid_item_codes_and_identifiers_are_rejected_not_coerced(self):
+        for code in (0, 2, True, None, "3", "20", "ND", " "):
+            with self.subTest(code=code), self.assertRaises(ValueError):
+                normalize_item_responses({"comunicacao": {"1": {"response": code}}})
+        for data in (None, [], {"unknown": {}}, {"comunicacao": []}, {"comunicacao": {"34": {}}},
+                     {"autonomia": {"1": {"observation": None}}}, {"autonomia": {"1": {"observation": "x" * 2001}}},
+                     {"autonomia": {"1": {"score": 0}}}):
+            with self.subTest(data=str(data)[:80]), self.assertRaises(ValueError):
+                normalize_item_responses(data)
+
     def test_registry_and_reference_case_from_d1_d3(self):
         self.assertIsInstance(get_test_module("vineland3"), Vineland3Module)
         data = compute_scores({**raw(), "raw_scores": PROFESSOR_SCORES})
@@ -163,7 +195,9 @@ class Vineland3ApiTests(TestCase):
         self.assertEqual(self.client.get("/api/tests/vineland3/protocol").status_code, 401)
         response = self.client.get("/api/tests/vineland3/protocol", HTTP_AUTHORIZATION=f"Bearer {self.token}")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["entry_modes"], ["totals"])
+        self.assertEqual(response.json()["entry_modes"], ["totals", "items"])
+        self.assertEqual(response.json()["item_protocol"]["id"], PROTOCOL_ID)
+        self.assertFalse(response.json()["item_protocol"]["scoring_enabled"])
         self.assertNotIn("scores", response.json())
         scales = response.json()["forms"]["pais_cuidadores"]["scales"]
         self.assertEqual(next(row for row in scales if row["code"] == "enf")["min_months"], 24)
@@ -216,6 +250,67 @@ class Vineland3ApiTests(TestCase):
         for overrides in ({"entry_mode": "items"}, {"raw_scores": {"rec": True}}, {"applied_on": "2099-01-01"}):
             self.assertEqual(self.submit(**overrides).status_code, 400)
         self.assertEqual(self.submit(birth_date="2020-01-01").status_code, 422)
+        self.assertEqual(TestApplication.objects.filter(instrument__code="vineland3").count(), 0)
+
+    def submit_items(self, **overrides):
+        return self.submit(form=None, entry_mode="items", raw_scores={}, item_protocol_id=PROTOCOL_ID,
+                           item_responses={"comunicacao": {"1": {"response": "0", "observation": "Preservar zero"},
+                                                           "2": {"response": "n", "observation": "Sem oportunidade"}},
+                                           "autonomia": {"1": {"response": "", "observation": "Observar depois"}}}, **overrides)
+
+    def test_partial_items_persist_without_scores_or_automatic_interpretation(self):
+        response = self.submit_items()
+        self.assertEqual(response.status_code, 200, response.content)
+        app = TestApplication.objects.get(pk=response.json()["application_id"])
+        self.assertEqual(app.raw_payload["item_responses"]["comunicacao"]["1"]["response"], "0")
+        self.assertEqual(app.raw_payload["item_responses"]["comunicacao"]["2"]["response"], "N")
+        self.assertEqual(app.raw_payload["item_responses"]["autonomia"]["1"], {"response": "", "observation": "Observar depois"})
+        self.assertEqual(app.raw_payload["item_protocol_id"], PROTOCOL_ID)
+        self.assertFalse(app.raw_payload["edition_verified"])
+        self.assertEqual(app.computed_payload, {})
+        self.assertEqual(app.classified_payload, {})
+        self.assertEqual(app.interpretation_text, "")
+        self.assertFalse(app.is_validated)
+        result = self.client.get(f"/api/tests/applications/{app.pk}", HTTP_AUTHORIZATION=f"Bearer {self.token}")
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual(result.json()["raw_payload"]["item_responses"], app.raw_payload["item_responses"])
+
+    def test_partial_items_never_enter_snapshot_even_if_marked_validated(self):
+        app = TestApplication.objects.get(pk=self.submit_items().json()["application_id"])
+        app.is_validated = True
+        app.save()
+        self.assertEqual(build_validated_tests_snapshot(self.evaluation), [])
+        self.assertFalse(TestScoringService.process(app)["ok"])
+        app.refresh_from_db()
+        self.assertEqual(app.computed_payload, {})
+
+    def test_item_edit_preserves_observations_and_locked_application_is_protected(self):
+        app_id = self.submit_items().json()["application_id"]
+        response = self.submit_items(application_id=app_id, respondent="Outro responsável")
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(TestApplication.objects.filter(instrument__code="vineland3").count(), 1)
+        app = TestApplication.objects.get(pk=app_id)
+        self.assertEqual(app.raw_payload["item_responses"]["comunicacao"]["1"]["observation"], "Preservar zero")
+        app.status = TestApplication.Status.LOCKED
+        app.save()
+        self.assertEqual(self.submit_items(application_id=app_id).status_code, 403)
+
+    def test_items_cannot_replace_a_scored_application(self):
+        app_id = self.submit().json()["application_id"]
+        self.assertEqual(self.submit_items(application_id=app_id).status_code, 400)
+        app = TestApplication.objects.get(pk=app_id)
+        self.assertTrue(app.computed_payload["domains"])
+        item_id = self.submit_items().json()["application_id"]
+        self.assertEqual(self.submit(application_id=item_id).status_code, 400)
+
+    def test_invalid_partial_record_is_not_saved(self):
+        base = {**self.payload, "form": None, "entry_mode": "items", "raw_scores": {},
+                "item_protocol_id": PROTOCOL_ID, "item_responses": {}}
+        for overrides in ({"form": "professores"}, {"raw_scores": {"rec": 0}}, {"item_protocol_id": "unknown"},
+                          {"item_responses": {"comunicacao": {"1": {"response": "3"}}}}, {"respondent": " "}):
+            response = self.client.post("/api/tests/vineland3/submit", data=json.dumps({**base, **overrides}),
+                                        content_type="application/json", HTTP_AUTHORIZATION=f"Bearer {self.token}")
+            self.assertEqual(response.status_code, 400, response.content)
         self.assertEqual(TestApplication.objects.filter(instrument__code="vineland3").count(), 0)
 
     def test_rescoring_uses_authoritative_dates(self):

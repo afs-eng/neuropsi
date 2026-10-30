@@ -285,6 +285,9 @@ def _is_effectively_applied_test(item) -> bool:
     classified_payload = getattr(item, "classified_payload", None) or {}
     reviewed_payload = getattr(item, "reviewed_payload", None) or {}
 
+    if instrument_code == "vineland3":
+        return raw_payload.get("entry_mode", "totals") == "totals" and bool(computed_payload.get("domains"))
+
     if instrument_code == "bfp":
         return bool(
             getattr(item, "applied_on", None)

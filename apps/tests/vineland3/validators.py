@@ -5,12 +5,12 @@ from .norms import age_months, age_table, lookup
 def validate_input(raw):
     if not isinstance(raw, dict):
         return ["Dados Vineland-3 inválidos."]
+    if raw.get("entry_mode", "totals") != "totals" or raw.get("item_responses") is not None:
+        return ["Correção item a item bloqueada: o banco parcial permite somente registro, sem edição e regras de aplicação verificadas."]
     if raw.get("form") not in FORMS:
         return ["Selecione Entrevista, Pais/Cuidadores ou Professores."]
     if not isinstance(raw.get("respondent"), str) or not raw["respondent"].strip():
         return ["Identifique o respondente."]
-    if raw.get("entry_mode", "totals") != "totals" or raw.get("item_responses") is not None:
-        return ["Correção item a item ainda bloqueada: faltam protocolos e regras de aplicação verificados."]
     try:
         table = age_table(raw["form"], "subdomains", age_months(raw))
     except ValueError as error:

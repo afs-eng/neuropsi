@@ -17,7 +17,7 @@ DOMAINS = ["COM", "AVD", "SOC", "ABC", "HMOT"]
 
 def age_range(text):
     # D.3 repeats "Idades" in its heading; the final occurrence is authoritative.
-    age = text.rsplit("Idades", 1)[1]
+    age = re.split(r"Idades|Ages", text)[-1]
     match = re.match(r"\s*(\d+(?::\d+){0,2})(\+)?(?:\s*[–-]\s*(\d+(?::\d+){0,2}))?", age)
     if not match:
         raise ValueError(f"Faixa etária não reconhecida: {age[:100]}")
@@ -42,7 +42,11 @@ def raw_range(value):
 def extract_page(page, kind):
     words = page.get_text("words")
     labels = DOMAINS if kind == "domains" else SUBDOMAINS
-    aliases = {"num": "dom", "cme": "com"}
+    aliases = {
+        "num": "dom", "cme": "com", "wrn": "esc", "per": "pes", "cmm": "com",
+        "ipr": "rin", "pla": "bri", "cop": "enf", "gmo": "cmg", "fmo": "cmf",
+        "scm": "com", "DLS": "AVD", "MOT": "HMOT",
+    }
     headers = sorted(
         [word for word in words if aliases.get(word[4], word[4]) in labels and word[1] < 100],
         key=lambda word: word[0],
@@ -86,20 +90,20 @@ def extract_page(page, kind):
     return result
 
 
-def extract_norms(directory):
+def extract_norms(directory, combined_pdf=None):
     import pymupdf
 
     output = {"version": 1, "population": "Normas americanas", "forms": {}}
     for form, appendix in FORMS.items():
-        path = directory / f"Vineland3_AppMan_APX_{appendix}.pdf"
+        path = combined_pdf or directory / f"Vineland3_AppMan_APX_{appendix}.pdf"
         tables = {"subdomains": [], "domains": []}
         with pymupdf.open(path) as document:
             for number, page in enumerate(document, 1):
                 text = page.get_text()
-                if "Conteúdo" in text:
+                if "Conteúdo" in text or "Table of Contents" in text:
                     continue
                 for kind, table in [("subdomains", 1), ("domains", 3)]:
-                    if not re.search(rf"Tabela {appendix}\.{table}\b", text):
+                    if not re.search(rf"(?:Tabela|Table) {appendix}\.{table}\b", text):
                         continue
                     low, high = age_range(text)
                     scores = extract_page(page, kind)
@@ -127,6 +131,26 @@ def extract_norms(directory):
 
 
 if __name__ == "__main__":
+    import sys
+
+    if "--verify-english" in sys.argv:
+        english = extract_norms(ROOT / "aux" / "vineland", ROOT / "aux" / "vineland" / "vineland-3-manual-appendices.pdf")
+        current = json.loads(Path(__file__).with_name("norms.json").read_text())
+        compared = 0
+        differences = []
+        for form in FORMS:
+            for kind in ("subdomains", "domains"):
+                source = english["forms"][form][kind]
+                target = current["forms"][form][kind]
+                if len(source) != len(target):
+                    differences.append(f"{form}/{kind}: contagem de tabelas divergente")
+                for left, right in zip(source, target):
+                    compared += 1
+                    for key in ("min_months", "max_months", "scores"):
+                        if left[key] != right[key]:
+                            differences.append(f"{form}/{kind}/{left['min_months']}: {key} divergente")
+        print(json.dumps({"compared": compared, "differences": differences}, ensure_ascii=False))
+        sys.exit(bool(differences))
     data = extract_norms(ROOT / "aux" / "vineland")
     destination = Path(__file__).with_name("norms.json")
     destination.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")) + "\n")

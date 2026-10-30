@@ -20,6 +20,6 @@ TECHNICAL_NOTES = [
     "Normas americanas dos apêndices B, C e D do manual Vineland-3, edição em português (2019).",
     "Entrada por pontuações brutas do protocolo, já corrigidas pelo profissional responsável.",
     "Classificação qualitativa, intervalos de confiança, equivalentes etários e comportamento mal adaptado ainda não habilitados.",
-    "Lançamento item a item depende dos protocolos e das regras de início, basal, teto e respostas especiais; não é calculado por soma simples.",
+    "Registro item a item disponível apenas para o banco parcial transcrito, de edição não confirmada, sem cálculo normativo ou laudo. Regras de início, basal, teto e N/D ainda precisam de verificação.",
     "Resultados quantitativos exigem revisão clínica e não constituem diagnóstico isolado.",
 ]
