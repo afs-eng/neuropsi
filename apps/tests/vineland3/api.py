@@ -38,6 +38,7 @@ class Vineland3SubmitIn(Schema):
     raw_scores: dict[str, Any] = Field(default_factory=dict)
     item_responses: dict | None = None
     item_protocol_id: str | None = None
+    general_observations: str = Field(default="", max_length=10000)
 
 
 @router.get("/protocol", response={200: dict, 403: MessageOut}, auth=bearer_auth)
@@ -75,6 +76,8 @@ def submit(request, payload: Vineland3SubmitIn):
     if reference > date.today():
         return 400, {"message": "A aplicação não pode estar no futuro."}
     raw = payload.model_dump(exclude={"evaluation_id", "application_id", "applied_on"})
+    if "general_observations" not in payload.model_fields_set:
+        raw.pop("general_observations", None)
     raw.update(birth_date=evaluation.patient.birth_date.isoformat(), reference_date=reference.isoformat())
     try:
         age_months(raw)
@@ -112,6 +115,8 @@ def submit(request, payload: Vineland3SubmitIn):
                 return 403, {"message": "Esta aplicação está travada e não pode ser editada."}
             if (application.raw_payload or {}).get("entry_mode", "totals") != payload.entry_mode:
                 return 400, {"message": "Crie uma aplicação separada para mudar o modo de entrada; preserve o registro original."}
+            if "general_observations" not in payload.model_fields_set and "general_observations" in (application.raw_payload or {}):
+                raw["general_observations"] = application.raw_payload["general_observations"]
         else:
             application = TestApplication(evaluation=evaluation, instrument=instrument)
         application.applied_on = reference

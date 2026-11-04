@@ -12,14 +12,24 @@ export interface VinelandItemProtocol {
 }
 export type VinelandItemResponses = Record<string, Record<string, { response: string; observation: string }>>
 
+export function restoreVinelandObservations(protocol: VinelandItemProtocol, responses: VinelandItemResponses, observations?: string) {
+  if (observations !== undefined) return observations
+  return protocol.domains.flatMap(domain => domain.items.flatMap(item => {
+    const note = responses[domain.code]?.[item.id]?.observation
+    return note ? [`${domain.label} — item ${item.id}: ${note}`] : []
+  })).join('\n')
+}
+
 interface Props {
   protocol: VinelandItemProtocol
   responses: VinelandItemResponses
   onChange: (responses: VinelandItemResponses) => void
+  observations: string
+  onObservationsChange: (observations: string) => void
   disabled: boolean
 }
 
-export function VinelandItemFields({ protocol, responses, onChange, disabled }: Props) {
+export function VinelandItemFields({ protocol, responses, onChange, observations, onObservationsChange, disabled }: Props) {
   const [activeDomain, setActiveDomain] = useState(protocol.domains[0].code)
   const domain = protocol.domains.find(entry => entry.code === activeDomain) || protocol.domains[0]
   const total = protocol.domains.reduce((count, entry) => count + entry.items.length, 0)
@@ -27,12 +37,11 @@ export function VinelandItemFields({ protocol, responses, onChange, disabled }: 
     Boolean(responses[entry.code]?.[item.id]?.response) && /^[210ND]$/.test(responses[entry.code][item.id].response)
   ).length, 0)
 
-  function update(itemId: string, field: 'response' | 'observation', value: string) {
+  function update(itemId: string, value: string) {
     onChange({ ...responses, [domain.code]: {
       ...responses[domain.code], [itemId]: {
-        response: responses[domain.code]?.[itemId]?.response ?? '',
         observation: responses[domain.code]?.[itemId]?.observation ?? '',
-        [field]: field === 'response' ? value.toUpperCase() : value,
+        response: value.toUpperCase(),
       },
     } })
   }
@@ -55,7 +64,7 @@ export function VinelandItemFields({ protocol, responses, onChange, disabled }: 
     <p role="status" className="text-sm text-slate-600">{answered} de {total} itens transcritos respondidos; {total - answered} pendentes. Campos vazios não são zero. O registro parcial pode ser salvo.</p>
     <div className="overflow-x-auto">
       <table aria-labelledby="vineland-active-domain" className="w-full text-left text-sm">
-        <thead><tr className="border-b"><th scope="col" className="p-2">Nº</th><th scope="col" className="p-2">Pergunta</th><th scope="col" className="p-2 text-right">Resposta</th><th scope="col" className="p-2">Observações</th></tr></thead>
+        <thead><tr className="border-b"><th scope="col" className="p-2">Nº</th><th scope="col" className="p-2">Pergunta</th><th scope="col" className="p-2 text-right">Resposta</th></tr></thead>
         <tbody>{domain.items.map(item => {
           const entry = responses[domain.code]?.[item.id]
           const value = entry?.response ?? ''
@@ -67,18 +76,22 @@ export function VinelandItemFields({ protocol, responses, onChange, disabled }: 
             <td className="p-2 text-right">
               <input id={id} name={`${domain.code}.${item.id}.response`} type="text" maxLength={1} inputMode="text" pattern="[210NnDd]" autoComplete="off" spellCheck={false}
                 aria-label={`${domain.label}, item ${item.id}: resposta`} aria-invalid={invalid} aria-describedby={invalid ? `${id}-error` : undefined}
-                disabled={disabled} value={value} onChange={event => update(item.id, 'response', event.target.value)}
+                disabled={disabled} value={value} onChange={event => update(item.id, event.target.value)}
                 className={`h-11 w-12 rounded-md border text-center text-base uppercase focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-700 ${invalid ? 'border-red-600' : 'border-slate-300'}`} />
               {invalid && <p id={`${id}-error`} className="mt-1 text-xs text-red-800">Use 2, 1, 0, N ou D.</p>}
               {value === '' && <span className="mt-1 block text-xs text-slate-500">Pendente</span>}
             </td>
-            <td className="p-2"><label htmlFor={`${id}-observation`} className="sr-only">{domain.label}, item {item.id}: observações</label>
-              <input id={`${id}-observation`} name={`${domain.code}.${item.id}.observation`} type="text" autoComplete="off" maxLength={2000} disabled={disabled} value={entry?.observation ?? ''}
-                onChange={event => update(item.id, 'observation', event.target.value)} className="h-11 w-full min-w-[10rem] rounded-md border border-slate-300 px-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-700" />
-            </td>
           </tr>
         })}</tbody>
       </table>
+    </div>
+    <div>
+      <label htmlFor="vineland-general-observations" className="mb-2 block text-sm font-medium">Observações gerais (opcional)</label>
+      <textarea id="vineland-general-observations" name="general_observations" rows={4} maxLength={10000} autoComplete="off"
+        disabled={disabled} value={observations} onChange={event => onObservationsChange(event.target.value)}
+        aria-describedby="vineland-general-observations-hint"
+        className="w-full rounded-md border border-slate-300 p-3 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-700" />
+      <p id="vineland-general-observations-hint" className="mt-1 text-xs text-slate-600">Campo único para todo o formulário, compartilhado entre os domínios.</p>
     </div>
   </section>
 }

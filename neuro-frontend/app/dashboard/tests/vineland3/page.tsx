@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { api } from '@/lib/api'
-import { VinelandItemFields, type VinelandItemProtocol, type VinelandItemResponses } from '@/components/tests/VinelandItemFields'
+import { VinelandItemFields, restoreVinelandObservations, type VinelandItemProtocol, type VinelandItemResponses } from '@/components/tests/VinelandItemFields'
 
 type FormCode = 'entrevista' | 'pais_cuidadores' | 'professores'
 interface Scale { code: string; label: string; max: number; optional: boolean; min_months: number; max_months: number | null }
@@ -16,7 +16,7 @@ interface Subdomain { scale: string; label: string; raw_score: number; v_scale: 
 interface Domain { scale: string; label: string; standard_score: number; percentile: string }
 interface Application {
   id: number; evaluation_id: number; instrument_code: string; status: string; is_validated: boolean; applied_on: string | null
-  raw_payload: { form?: FormCode; respondent?: string; raw_scores?: Record<string, number>; entry_mode?: 'totals' | 'items'; item_responses?: VinelandItemResponses }
+  raw_payload: { form?: FormCode; respondent?: string; raw_scores?: Record<string, number>; entry_mode?: 'totals' | 'items'; item_responses?: VinelandItemResponses; general_observations?: string }
   computed_payload: { domains?: Domain[]; subdomains?: Subdomain[]; form_label?: string; respondent?: string; age_months?: number; norm_source?: { file: string; subdomain_pages: number[]; domain_pages: number[] } }
   interpretation_text: string
 }
@@ -48,6 +48,7 @@ function Vineland3Form() {
   const [scores, setScores] = useState<Record<string, string>>({})
   const [entryMode, setEntryMode] = useState<'totals' | 'items'>('items')
   const [itemResponses, setItemResponses] = useState<VinelandItemResponses>({})
+  const [generalObservations, setGeneralObservations] = useState('')
   const [success, setSuccess] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
@@ -74,6 +75,7 @@ function Vineland3Form() {
         setApplication(existing)
         setEntryMode(existing?.raw_payload.entry_mode || (existing ? 'totals' : 'items'))
         setItemResponses(existing?.raw_payload.item_responses || {})
+        setGeneralObservations(restoreVinelandObservations(definitions.item_protocol, existing?.raw_payload.item_responses || {}, existing?.raw_payload.general_observations))
         setForm(existing?.raw_payload.form || 'entrevista')
         setRespondent(existing?.raw_payload.respondent || '')
         setScores(Object.fromEntries(Object.entries(existing?.raw_payload.raw_scores || {}).map(([key, value]) => [key, String(value)])))
@@ -117,7 +119,7 @@ function Vineland3Form() {
       const result = await api.post<Application & { application_id: number }>('/api/tests/vineland3/submit', {
         evaluation_id: evaluation.id, application_id: applicationId ? Number(applicationId) : null,
         applied_on: appliedOn, form: entryMode === 'totals' ? form : null, respondent, entry_mode: entryMode, raw_scores: raw,
-        ...(entryMode === 'items' ? { item_protocol_id: protocol?.item_protocol.id, item_responses: itemResponses } : {}),
+        ...(entryMode === 'items' ? { item_protocol_id: protocol?.item_protocol.id, item_responses: itemResponses, general_observations: generalObservations } : {}),
       })
       setApplication(result)
       setSuccess(entryMode === 'items' ? 'Registro parcial salvo. Respostas e observações preservadas; sem cálculo normativo ou laudo.' : 'Pontuações salvas para revisão.')
@@ -181,7 +183,7 @@ function Vineland3Form() {
         <div><label htmlFor="vineland-respondent" className="mb-2 block text-sm font-medium">Nome do respondente</label><Input id="vineland-respondent" required maxLength={200} value={respondent} onChange={event => setRespondent(event.target.value)} /></div>
         <div><label htmlFor="vineland-date" className="mb-2 block text-sm font-medium">Data da aplicação</label><Input id="vineland-date" type="date" required value={appliedOn} onChange={event => setAppliedOn(event.target.value)} /></div>
       </fieldset>
-      {entryMode === 'items' ? <VinelandItemFields protocol={protocol.item_protocol} responses={itemResponses} onChange={responses => { setItemResponses(responses); setSuccess('') }} disabled={saving || locked} /> : <fieldset disabled={saving || locked} className="space-y-4 rounded-xl border bg-white p-5">
+      {entryMode === 'items' ? <VinelandItemFields protocol={protocol.item_protocol} responses={itemResponses} onChange={responses => { setItemResponses(responses); setSuccess('') }} observations={generalObservations} onObservationsChange={value => { setGeneralObservations(value); setSuccess('') }} disabled={saving || locked} /> : <fieldset disabled={saving || locked} className="space-y-4 rounded-xl border bg-white p-5">
         <legend className="px-2 font-semibold">Pontuações brutas por subdomínio</legend>
         <p className="text-sm text-slate-600">Use os totais corrigidos no protocolo. Campos vazios não são zero. Motor é opcional; se utilizado, preencha os dois subdomínios.</p>
         {activeScales.length === 0 && <p role="status" className="text-amber-900">Verifique a data de nascimento e aplicação. Professores possui normas dos 3 anos aos 18 anos e 11 meses.</p>}

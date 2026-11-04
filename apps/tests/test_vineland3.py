@@ -284,6 +284,25 @@ class Vineland3ApiTests(TestCase):
         app.refresh_from_db()
         self.assertEqual(app.computed_payload, {})
 
+    def test_general_observations_persist_and_can_be_cleared(self):
+        response = self.submit_items(general_observations="Observação geral\nEm todos os domínios.")
+        self.assertEqual(response.status_code, 200, response.content)
+        app_id = response.json()["application_id"]
+        result = self.client.get(f"/api/tests/applications/{app_id}", HTTP_AUTHORIZATION=f"Bearer {self.token}")
+        self.assertEqual(result.json()["raw_payload"]["general_observations"], "Observação geral\nEm todos os domínios.")
+        # Older clients omitting the new field must not erase an existing note.
+        self.assertEqual(self.submit_items(application_id=app_id).status_code, 200)
+        app = TestApplication.objects.get(pk=app_id)
+        self.assertEqual(app.raw_payload["general_observations"], "Observação geral\nEm todos os domínios.")
+        self.assertEqual(app.raw_payload["item_responses"]["comunicacao"]["1"]["observation"], "Preservar zero")
+        self.assertEqual(self.submit_items(application_id=app_id, general_observations="").status_code, 200)
+        app.refresh_from_db()
+        self.assertEqual(app.raw_payload["general_observations"], "")
+
+    def test_general_observations_limit_is_enforced(self):
+        self.assertEqual(self.submit_items(general_observations="x" * 10001).status_code, 422)
+        self.assertEqual(TestApplication.objects.filter(instrument__code="vineland3").count(), 0)
+
     def test_item_edit_preserves_observations_and_locked_application_is_protected(self):
         app_id = self.submit_items().json()["application_id"]
         response = self.submit_items(application_id=app_id, respondent="Outro responsável")

@@ -95,7 +95,7 @@ def load_norm_data():
                                 continue
                             
                             try:
-                                tscore_val = float(val_t)
+                                tscore_val = float(val_t.replace("<", "").replace(">", "").strip())
                             except ValueError:
                                 continue
                                 
@@ -116,8 +116,7 @@ load_norm_data()
 
 def get_norm_data(raw: int, form: str, gender: str, factor: str) -> Tuple[Optional[float], Optional[float]]:
     """
-    Procura na tabela normativa o T-Score e Percentil exatos para o Ponto Bruto. 
-    Se o Ponto Bruto exceder ou faltar, ancora limites de teto, borda ou interpola.
+    Consulta a conversão exata, sem inventar normas para pontos ausentes.
     """
     if form == "idade_escolar":
         key = gender
@@ -126,37 +125,7 @@ def get_norm_data(raw: int, form: str, gender: str, factor: str) -> Tuple[Option
 
     table = NORMS.get(form, {}).get(key, {}).get(factor, {})
     
-    if raw in table:
-        return table[raw]
-
-    # Lógica auxiliar iterativa para interpolações
-    valid_points = []
-    for k, tuple_vals in table.items():
-        if isinstance(k, int):
-            valid_points.append((k, tuple_vals[0], tuple_vals[1]))
-
-    if not valid_points:
-        return None, None
-
-    valid_points.sort(key=lambda x: x[0])
-
-    # Teto inferior
-    if raw <= valid_points[0][0]:
-        return valid_points[0][1], valid_points[0][2]
-
-    # Teto superior
-    if raw >= valid_points[-1][0]:
-        return valid_points[-1][1], valid_points[-1][2]
-
-    # Interpolação linear arredondando para garantir o piso
-    for i in range(len(valid_points) - 1):
-        r1, t1, p1 = valid_points[i]
-        r2, t2, p2 = valid_points[i+1]
-        
-        if r1 < raw < r2:
-            return float(round(t1)), float(round(p1))
-
-    return None, None
+    return table.get(raw, (None, None))
 
 def classify_tscore(t: Optional[float]) -> str:
     if t is None:

@@ -14,7 +14,8 @@ Código canônico: `vineland3` (o antigo rótulo genérico `vineland` no exporta
 - API autenticada, telas de entrada/resultado, gráfico e bloco DOCX para aplicações revisadas/validadas.
 - Percentis extremos preservam `<1`/`>99`; sem extrapolação ou substituição por curva normal.
 - Aplicações salvas **não validadas**, para revisão clínica antes de inclusão no laudo.
-- Registro item a item do banco parcial fornecido: 58 perguntas em cinco domínios, respostas digitáveis `2/1/0/N/D`, observações e pendências. Letras minúsculas são convertidas para maiúsculas; zero, vazio, N e D permanecem distintos.
+- Registro item a item do banco parcial fornecido: 58 perguntas em cinco domínios, respostas digitáveis `2/1/0/N/D` e pendências. Um único campo de observações gerais fica abaixo das perguntas e é compartilhado entre os domínios. Letras minúsculas são convertidas para maiúsculas; zero, vazio, N e D permanecem distintos.
+- `general_observations` salva o texto geral (até 10.000 caracteres). Observações antigas por item continuam preservadas e são reunidas, com domínio e número do item, ao abrir um registro que ainda não possui o campo geral.
 - Este banco tem **edição e formulário não confirmados**: não está associado aos três formulários extensivos e não recebe conversão normativa, classificação, interpretação ou inclusão no laudo, mesmo se marcado como validado.
 
 ## Fonte e rastreabilidade
@@ -33,7 +34,7 @@ O importador confere cabeçalhos, marcadores laterais, continuidade dos interval
 
 ## Novos materiais conferidos
 
-- `aux/vineland/Vineland3_Instrucoes_Corrigidas.md`: fonte das perguntas e do layout; declara transcrição parcial e edição não comprovada. Banco versionado: `vineland_partial_transcription_v1`. Inputs de texto de um caractere, observações por item, navegação por domínio preservando o estado e descrição/legenda imediatamente acima do domínio ativo.
+- `aux/vineland/Vineland3_Instrucoes_Corrigidas.md`: fonte das perguntas e do layout; declara transcrição parcial e edição não comprovada. Banco versionado: `vineland_partial_transcription_v1`. Inputs de texto de um caractere, navegação por domínio preservando o estado e descrição/legenda imediatamente acima do domínio ativo. Por solicitação posterior, as observações passaram a um campo geral em vez de campos por item.
 - `aux/vineland/vineland-3-manual-appendices.pdf`: edição inglesa de 2016, 525 páginas, apêndices B–E. Não contém regras de base/teto nem comprova a edição das perguntas transcritas.
 - Conferência automatizada das **309 tabelas por faixa etária** (226 de subdomínios e 83 de domínios) contra esse PDF: **sem divergências** nos intervalos etários, intervalos brutos, escores e percentis. As normas e páginas originais em português foram preservadas.
 

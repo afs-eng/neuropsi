@@ -1840,15 +1840,18 @@ class SRS2ModuleTests(SimpleTestCase):
             patient_name="Paciente SRS-2",
             evaluation_id=1,
             instrument_code="srs2",
-            raw_scores={
-                "form": "adulto_heterorrelato",
-                "gender": "F",
-                "age": 30,
-                "responses": {str(item): 1 for item in range(1, 66)},
-            },
         )
 
-        computed = module.compute(context)
+        computed = {
+            "form": "adulto_heterorrelato",
+            "percepção_social": {"escore": 15},
+            "cognição_social": {"escore": 30},
+            "comunicação_social": {"escore": 10},
+            "motivação_social": {"escore": 31},
+            "padrões_restritos": {"escore": 0},
+            "cis": {"escore": 86},
+            "total": {"escore": 86},
+        }
         classified = module.classify(computed, gender="F", age=30)
         interpretation = module.interpret(context, classified)
 
