@@ -219,7 +219,7 @@ test('locked domain-level records disable scores, estimates and all observations
   }
 });
 
-async function loadPage(application) {
+async function loadPage(application, query = 'evaluation_id=13&application_id=78') {
   const filename = path.join(__dirname, '../../app/dashboard/tests/vineland3/page.tsx');
   const state = [];
   let cursor = 0;
@@ -243,7 +243,7 @@ async function loadPage(application) {
   const original = mod.require.bind(mod);
   mod.require = id => {
     if (id === 'react') return mockReact;
-    if (id === 'next/navigation') return { useRouter: () => ({ replace() {} }), useSearchParams: () => new URLSearchParams('evaluation_id=13&application_id=78') };
+    if (id === 'next/navigation') return { useRouter: () => ({ replace() {} }), useSearchParams: () => new URLSearchParams(query) };
     if (id === 'next/link') return { default: ({ href, children, ...props }) => React.createElement('a', { ...props, href }, children) };
     if (id === '@/components/ui/button') return { Button: props => React.createElement('button', props) };
     if (id === '@/components/ui/input') return { Input: props => React.createElement('input', props) };
@@ -291,11 +291,60 @@ test('page with saved extensive results offers a separate question form without 
   const page = await loadPage({ id: 78, evaluation_id: 13, instrument_code: 'vineland3', status: 'scored',
     raw_payload: { form: 'entrevista', raw_scores: { rec: 10 } },
     computed_payload: { domains: [{ scale: 'COM', label: 'Comunicação', standard_score: 90, percentile: '25' }] },
-    interpretation_text: 'Síntese preservada', is_validated: false });
+    interpretation_text: 'Síntese preservada', is_validated: false }, 'evaluation_id=13&application_id=78&entry=totals');
   const html = renderToStaticMarkup(page.tree());
   assert.match(html, /Síntese preservada/);
   assert.match(html, /Abrir formulário de 180 perguntas/);
   assert.match(html, /href="\/dashboard\/tests\/vineland3\?evaluation_id=13"/);
   assert.doesNotMatch(html, /Pergunta adaptativa/);
   assert.equal(page.posted(), undefined);
+});
+
+test('default evaluation link opens questions even when an application has extensive-form metadata', async () => {
+  const original = { id: 79, evaluation_id: 13, instrument_code: 'vineland3', status: 'completed',
+    raw_payload: { form: 'pais_cuidadores', entry_mode: 'totals', raw_scores: {}, respondent: '' },
+    computed_payload: {}, interpretation_text: '', is_validated: false };
+  const page = await loadPage(original, 'evaluation_id=13&application_id=79');
+  const tree = page.tree();
+  const html = renderToStaticMarkup(tree);
+  assert.match(html, /Pergunta adaptativa/);
+  assert.match(html, /Pergunta binária/);
+  assert.doesNotMatch(html, /Pontuações brutas por subdomínio/);
+  assert.match(html, /aplicação anterior #79/);
+  assert.match(html, /application_id=79&amp;entry=totals/);
+  await elements(tree).find(element => element.type === 'form').props.onSubmit({ preventDefault() {} });
+  assert.equal(page.posted().payload.entry_mode, 'items');
+  assert.equal(page.posted().payload.application_id, null);
+  assert.deepEqual(original.raw_payload.raw_scores, {});
+});
+
+test('evaluation question mode never imports old scores, answers or notes into the new protocol', async () => {
+  const page = await loadPage({ id: 79, evaluation_id: 13, instrument_code: 'vineland3', status: 'scored',
+    raw_payload: { form: 'entrevista', raw_scores: { rec: 10 }, general_observations: 'Nota do protocolo antigo' },
+    computed_payload: { domains: [{ scale: 'COM', label: 'Comunicação', standard_score: 90, percentile: '25' }] },
+    interpretation_text: 'Síntese anterior', is_validated: true }, 'evaluation_id=13&application_id=79&entry=items');
+  const tree = page.tree();
+  const html = renderToStaticMarkup(tree);
+  assert.match(html, /Pergunta adaptativa/);
+  assert.doesNotMatch(html, /Nota do protocolo antigo|Síntese anterior/);
+  await elements(tree).find(element => element.type === 'form').props.onSubmit({ preventDefault() {} });
+  assert.equal(page.posted().payload.application_id, null);
+  assert.deepEqual(page.posted().payload.raw_scores, {});
+  assert.deepEqual(page.posted().payload.item_responses, {});
+  assert.equal(page.posted().payload.general_observations, '');
+});
+
+test('evaluation question mode reopens the current questionnaire and saves the same application', async () => {
+  const savedResponses = { comunicacao: { '1': { response: '0', estimated: true, observation: 'Preservar' } } };
+  const page = await loadPage({ id: 79, evaluation_id: 13, instrument_code: 'vineland3', status: 'completed',
+    raw_payload: { entry_mode: 'items', item_protocol_id: domainProtocol.id, item_responses: savedResponses },
+    computed_payload: {}, interpretation_text: '', is_validated: false }, 'evaluation_id=13&application_id=79&entry=items');
+  const tree = page.tree();
+  const html = renderToStaticMarkup(tree);
+  assert.match(html, /Pergunta adaptativa/);
+  assert.match(html, /Preservar/);
+  assert.doesNotMatch(html, /um novo formulário/);
+  await elements(tree).find(element => element.type === 'form').props.onSubmit({ preventDefault() {} });
+  assert.equal(page.posted().payload.application_id, 79);
+  assert.deepEqual(page.posted().payload.item_responses, savedResponses);
 });

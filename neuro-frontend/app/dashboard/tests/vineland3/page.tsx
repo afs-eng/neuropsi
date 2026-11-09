@@ -41,6 +41,7 @@ function Vineland3Form() {
   const evaluationId = params.get('evaluation_id')
   const applicationId = params.get('application_id')
   const isEdit = params.get('edit') === 'true'
+  const requestQuestions = params.get('entry') !== 'totals' && !isEdit
   const [evaluation, setEvaluation] = useState<Evaluation | null>(null)
   const [application, setApplication] = useState<Application | null>(null)
   const [protocol, setProtocol] = useState<Protocol | null>(null)
@@ -56,6 +57,7 @@ function Vineland3Form() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [preservedApplicationId, setPreservedApplicationId] = useState<number | null>(null)
 
   useEffect(() => {
     let active = true
@@ -72,18 +74,22 @@ function Vineland3Form() {
         if (existing && evaluationId && existing.evaluation_id !== Number(evaluationId)) throw new Error('Aplicação de outra avaliação.')
         const data = initialEvaluation || (existing ? await api.get<Evaluation>(`/api/evaluations/${existing.evaluation_id}`) : null)
         if (!data) throw new Error('Abra o Vineland-3 a partir de uma avaliação.')
-        const selectedProtocol = resolveVinelandItemProtocol(definitions.item_protocol, definitions.legacy_item_protocol, existing?.raw_payload.item_protocol_id, existing?.raw_payload.entry_mode === 'items')
+        const separateQuestionnaire = Boolean(requestQuestions && existing && !isEmptyVinelandApplication(existing)
+          && !(existing.raw_payload.entry_mode === 'items' && existing.raw_payload.item_protocol_id === definitions.item_protocol.id))
+        const editable = separateQuestionnaire ? null : existing
+        const selectedProtocol = resolveVinelandItemProtocol(definitions.item_protocol, definitions.legacy_item_protocol, editable?.raw_payload.item_protocol_id, editable?.raw_payload.entry_mode === 'items')
         if (!active) return
         setProtocol(definitions)
         setEvaluation(data)
-        setApplication(existing)
+        setApplication(editable)
+        setPreservedApplicationId(separateQuestionnaire ? existing?.id ?? null : null)
         setItemProtocol(selectedProtocol)
-        setEntryMode(vinelandEntryMode(existing))
-        setItemResponses(existing?.raw_payload.item_responses || {})
-        setGeneralObservations(restoreVinelandObservations(selectedProtocol, existing?.raw_payload.item_responses || {}, existing?.raw_payload.general_observations))
+        setEntryMode(vinelandEntryMode(editable))
+        setItemResponses(editable?.raw_payload.item_responses || {})
+        setGeneralObservations(restoreVinelandObservations(selectedProtocol, editable?.raw_payload.item_responses || {}, editable?.raw_payload.general_observations))
         setForm(existing?.raw_payload.form || 'entrevista')
         setRespondent(existing?.raw_payload.respondent || '')
-        setScores(Object.fromEntries(Object.entries(existing?.raw_payload.raw_scores || {}).map(([key, value]) => [key, String(value)])))
+        setScores(Object.fromEntries(Object.entries(editable?.raw_payload.raw_scores || {}).map(([key, value]) => [key, String(value)])))
         setAppliedOn(existing?.applied_on || data.start_date || new Date().toLocaleDateString('en-CA'))
       } catch (err) {
         if (active) setError(errorMessage(err))
@@ -93,7 +99,7 @@ function Vineland3Form() {
     }
     load()
     return () => { active = false }
-  }, [applicationId, evaluationId, isEdit])
+  }, [applicationId, evaluationId, isEdit, requestQuestions])
 
   const months = completedMonths(evaluation?.patient_birth_date, appliedOn)
   const activeScales = protocol?.forms[form].scales.filter(scale => months >= scale.min_months && (scale.max_months === null || months <= scale.max_months)) || []
@@ -125,13 +131,14 @@ function Vineland3Form() {
     setSaving(true)
     try {
       const result = await api.post<Application & { application_id: number }>('/api/tests/vineland3/submit', {
-        evaluation_id: evaluation.id, application_id: applicationId ? Number(applicationId) : null,
+        evaluation_id: evaluation.id, application_id: application?.id ?? null,
         applied_on: appliedOn, form: entryMode === 'totals' ? form : null, respondent, entry_mode: entryMode, raw_scores: raw,
         ...(entryMode === 'items' ? { item_protocol_id: itemProtocol?.id, item_responses: itemResponses, general_observations: generalObservations } : {}),
       })
       setApplication(result)
       setSuccess(entryMode === 'items' ? 'Registro parcial salvo. Respostas e observações preservadas; sem cálculo normativo ou laudo.' : 'Pontuações salvas para revisão.')
-      router.replace(`/dashboard/tests/vineland3?evaluation_id=${evaluation.id}&application_id=${result.application_id}`)
+      const savedEntry = entryMode === 'totals' || itemProtocol?.id !== protocol?.item_protocol.id ? 'totals' : 'items'
+      router.replace(`/dashboard/tests/vineland3?evaluation_id=${evaluation.id}&application_id=${result.application_id}&entry=${savedEntry}`)
     } catch (err) {
       setError(errorMessage(err))
     } finally {
@@ -145,6 +152,10 @@ function Vineland3Form() {
     <header><h1 className="text-2xl font-semibold text-slate-900">{!viewResult && entryMode === 'items' ? 'Vineland · Registro item a item' : `Vineland-3 · ${viewResult ? 'Resultados' : 'Correção'}`}</h1><p className="mt-2 text-slate-600">{evaluation?.patient_name}</p></header>
     {error && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">{error}</p>}
     {success && <p role="status" className="rounded-lg border border-green-200 bg-green-50 p-4 text-green-900">{success}</p>}
+    {preservedApplicationId && evaluation && <section className="space-y-2 rounded-lg border border-cyan-200 bg-cyan-50 p-4 text-sm text-cyan-950">
+      <p>Você está preenchendo as 180 perguntas em um novo formulário. A aplicação anterior #{preservedApplicationId} será preservada; nenhuma resposta ou pontuação será copiada ou substituída.</p>
+      <Link className="inline-block py-2 underline" href={`/dashboard/tests/vineland3?evaluation_id=${evaluation.id}&application_id=${preservedApplicationId}&entry=totals`}>Consultar lançamento anterior</Link>
+    </section>}
     <aside className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
       {entryMode === 'items' ? <p><strong>{itemProtocol?.title || 'Registro item a item'}.</strong> Respostas e observações para conferência, sem escores ou interpretação clínica automática.</p> : <p><strong>Normas americanas.</strong> Correção quantitativa por pontuações brutas, com revisão clínica obrigatória.</p>}
       <p>O cadastro item a item não usa a correção dos formulários extensivos. Conversão normativa e classificação qualitativa desse cadastro ainda não habilitadas.</p>

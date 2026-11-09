@@ -15,6 +15,7 @@ Código canônico: `vineland3` (o antigo rótulo genérico `vineland` no exporta
 - Aplicações antigas continuam com os 58 itens originais e os códigos N/D. Não há migração automática de respostas entre bancos.
 - Aplicações vazias criadas pelo botão de adicionar teste na avaliação abrem o cadastro de perguntas e podem recebê-lo no mesmo ID. A exceção só vale sem dados brutos, calculados, classificados, revisados, interpretação ou validação; registros travados continuam protegidos. Aplicações com dados anteriores exibem um atalho para abrir as 180 perguntas em outra aplicação, sem copiar ou substituir respostas.
 - O profissional registra os dados; o campo respondente identifica o pai/cuidador informante. O preenchimento pelo profissional não altera a identidade do formulário para Entrevista.
+- A entrada padrão de `/dashboard/tests/vineland3` é o questionário. O link da avaliação explicita `entry=items`. Se o ID recebido pertencer a totais extensivos ou outro banco de itens com dados salvos, a tela abre um questionário novo, avisa qual registro será preservado e envia `application_id: null` ao salvar. Para consultar o lançamento original, o link usa `entry=totals`; a edição explícita (`edit=true`) também preserva seu modo. Questionários atuais são reabertos e salvos no próprio ID.
 
 ## Disponível
 

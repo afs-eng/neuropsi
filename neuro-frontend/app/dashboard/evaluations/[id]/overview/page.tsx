@@ -783,7 +783,7 @@ export default function EvaluationDetailPage() {
       "mchat": "/dashboard/tests/mchat",
     };
     
-    return `${baseUrls[normalizedCode] || "/dashboard/tests"}?evaluation_id=${evaluation?.id}&application_id=${testId}`;
+    return `${baseUrls[normalizedCode] || "/dashboard/tests"}?evaluation_id=${evaluation?.id}&application_id=${testId}${normalizedCode === "vineland3" ? "&entry=items" : ""}`;
   }
 
   async function removeTest(applicationId: number) {
