@@ -14,6 +14,27 @@ export interface VinelandItemProtocol {
 }
 export type VinelandItemResponses = Record<string, Record<string, { response: string; observation: string; estimated?: boolean }>>
 
+interface VinelandSavedApplication {
+  raw_payload?: { entry_mode?: 'items' | 'totals' }
+  computed_payload?: object
+  classified_payload?: object
+  reviewed_payload?: object
+  interpretation_text?: string
+  is_validated?: boolean
+  status?: string
+}
+
+export function isEmptyVinelandApplication(application: VinelandSavedApplication) {
+  return application.status !== 'locked' && !application.is_validated && !application.interpretation_text?.trim()
+    && [application.raw_payload, application.computed_payload, application.classified_payload, application.reviewed_payload]
+      .every(payload => !payload || Object.keys(payload).length === 0)
+}
+
+export function vinelandEntryMode(application?: VinelandSavedApplication | null): 'items' | 'totals' {
+  if (!application || isEmptyVinelandApplication(application)) return 'items'
+  return application.raw_payload?.entry_mode || 'totals'
+}
+
 export function resolveVinelandItemProtocol(current: VinelandItemProtocol, legacy: VinelandItemProtocol, savedId?: string, savedItems = false) {
   if (!savedItems) return current
   if (!savedId || savedId === legacy.id) return legacy

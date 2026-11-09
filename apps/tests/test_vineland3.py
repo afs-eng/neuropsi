@@ -310,6 +310,41 @@ class Vineland3ApiTests(TestCase):
                               "item_responses": {"comunicacao": {"1": {"response": "0", "estimated": True, "observation": "Conferir"}}},
                               **overrides})
 
+    def test_empty_application_created_from_evaluation_accepts_questions_on_same_id(self):
+        instrument, _ = Instrument.objects.get_or_create(code="vineland3", defaults={"name": "Vineland-3"})
+        response = self.client.post("/api/tests/applications", data=json.dumps({
+            "evaluation_id": self.evaluation.pk, "instrument_id": instrument.pk,
+        }), content_type="application/json", HTTP_AUTHORIZATION=f"Bearer {self.token}")
+        self.assertEqual(response.status_code, 201, response.content)
+        app_id = response.json()["id"]
+        self.assertEqual(response.json()["raw_payload"], {})
+        result = self.submit_domain_items(application_id=app_id)
+        self.assertEqual(result.status_code, 200, result.content)
+        self.assertEqual(result.json()["application_id"], app_id)
+        self.assertEqual(result.json()["raw_payload"]["item_protocol_id"], domain_protocol.PROTOCOL_ID)
+        self.assertEqual(TestApplication.objects.filter(evaluation=self.evaluation, instrument=instrument).count(), 1)
+
+    def test_application_with_only_date_can_be_initialized_but_recorded_data_cannot(self):
+        instrument, _ = Instrument.objects.get_or_create(code="vineland3", defaults={"name": "Vineland-3"})
+        app = TestApplication.objects.create(evaluation=self.evaluation, instrument=instrument, applied_on=date(2026, 1, 15))
+        self.assertEqual(self.submit_domain_items(application_id=app.pk).status_code, 200)
+        for fields in ({"raw_payload": {"respondent": "Nome salvo"}}, {"computed_payload": {"old": 1}},
+                       {"classified_payload": {"old": 1}}, {"reviewed_payload": {"notes": "Preservar"}},
+                       {"interpretation_text": "Texto salvo"}, {"is_validated": True}):
+            with self.subTest(fields=fields):
+                saved = TestApplication.objects.create(evaluation=self.evaluation, instrument=instrument, **fields)
+                self.assertEqual(self.submit_domain_items(application_id=saved.pk).status_code, 400)
+                saved.refresh_from_db()
+                for field, value in fields.items():
+                    self.assertEqual(getattr(saved, field), value)
+
+    def test_locked_empty_application_cannot_be_initialized(self):
+        instrument, _ = Instrument.objects.get_or_create(code="vineland3", defaults={"name": "Vineland-3"})
+        app = TestApplication.objects.create(evaluation=self.evaluation, instrument=instrument, status=TestApplication.Status.LOCKED)
+        self.assertEqual(self.submit_domain_items(application_id=app.pk).status_code, 403)
+        app.refresh_from_db()
+        self.assertEqual(app.raw_payload, {})
+
     def test_domain_level_items_persist_reopen_edit_and_remain_unscored(self):
         response = self.submit_domain_items(general_observations="Nota geral")
         self.assertEqual(response.status_code, 200, response.content)

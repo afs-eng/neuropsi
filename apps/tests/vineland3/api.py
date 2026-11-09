@@ -27,6 +27,16 @@ from .validators import validate_input
 router = Router(tags=["tests"])
 
 
+def _is_empty_application(application):
+    return (
+        application.status != TestApplication.Status.LOCKED
+        and not application.is_validated
+        and not (application.interpretation_text or "").strip()
+        and not any((application.raw_payload, application.computed_payload,
+                     application.classified_payload, application.reviewed_payload))
+    )
+
+
 class Vineland3SubmitIn(Schema):
     model_config = ConfigDict(extra="forbid")
 
@@ -120,9 +130,10 @@ def submit(request, payload: Vineland3SubmitIn):
                 return 404, {"message": "Aplicação Vineland-3 não encontrada nesta avaliação."}
             if application.status == TestApplication.Status.LOCKED:
                 return 403, {"message": "Esta aplicação está travada e não pode ser editada."}
-            if (application.raw_payload or {}).get("entry_mode", "totals") != payload.entry_mode:
+            empty_application = _is_empty_application(application)
+            if not empty_application and (application.raw_payload or {}).get("entry_mode", "totals") != payload.entry_mode:
                 return 400, {"message": "Crie uma aplicação separada para mudar o modo de entrada; preserve o registro original."}
-            if payload.entry_mode == "items" and ((application.raw_payload or {}).get("item_protocol_id") or PROTOCOL_ID) != payload.item_protocol_id:
+            if not empty_application and payload.entry_mode == "items" and ((application.raw_payload or {}).get("item_protocol_id") or PROTOCOL_ID) != payload.item_protocol_id:
                 return 400, {"message": "Crie uma aplicação separada para usar outro banco de perguntas; preserve o protocolo original."}
             if "general_observations" not in payload.model_fields_set and "general_observations" in (application.raw_payload or {}):
                 raw["general_observations"] = application.raw_payload["general_observations"]

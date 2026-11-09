@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { api } from '@/lib/api'
-import { VinelandItemFields, restoreVinelandObservations, resolveVinelandItemProtocol, vinelandResponseError, type VinelandItemProtocol, type VinelandItemResponses } from '@/components/tests/VinelandItemFields'
+import { VinelandItemFields, isEmptyVinelandApplication, vinelandEntryMode, restoreVinelandObservations, resolveVinelandItemProtocol, vinelandResponseError, type VinelandItemProtocol, type VinelandItemResponses } from '@/components/tests/VinelandItemFields'
 
 type FormCode = 'entrevista' | 'pais_cuidadores' | 'professores'
 interface Scale { code: string; label: string; max: number; optional: boolean; min_months: number; max_months: number | null }
@@ -19,6 +19,8 @@ interface Application {
   raw_payload: { form?: FormCode; respondent?: string; raw_scores?: Record<string, number>; entry_mode?: 'totals' | 'items'; item_protocol_id?: string; item_responses?: VinelandItemResponses; general_observations?: string }
   computed_payload: { domains?: Domain[]; subdomains?: Subdomain[]; form_label?: string; respondent?: string; age_months?: number; norm_source?: { file: string; subdomain_pages: number[]; domain_pages: number[] } }
   interpretation_text: string
+  classified_payload?: object
+  reviewed_payload?: object
 }
 
 function errorMessage(error: unknown) {
@@ -76,7 +78,7 @@ function Vineland3Form() {
         setEvaluation(data)
         setApplication(existing)
         setItemProtocol(selectedProtocol)
-        setEntryMode(existing?.raw_payload.entry_mode || (existing ? 'totals' : 'items'))
+        setEntryMode(vinelandEntryMode(existing))
         setItemResponses(existing?.raw_payload.item_responses || {})
         setGeneralObservations(restoreVinelandObservations(selectedProtocol, existing?.raw_payload.item_responses || {}, existing?.raw_payload.general_observations))
         setForm(existing?.raw_payload.form || 'entrevista')
@@ -97,6 +99,8 @@ function Vineland3Form() {
   const activeScales = protocol?.forms[form].scales.filter(scale => months >= scale.min_months && (scale.max_months === null || months <= scale.max_months)) || []
   const locked = application?.status === 'locked'
   const viewResult = Boolean(application?.computed_payload.domains?.length && !isEdit)
+  const emptyApplication = Boolean(application && isEmptyVinelandApplication(application))
+  const usesCurrentQuestions = entryMode === 'items' && itemProtocol?.id === protocol?.item_protocol.id
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -145,6 +149,11 @@ function Vineland3Form() {
       {entryMode === 'items' ? <p><strong>{itemProtocol?.title || 'Registro item a item'}.</strong> Respostas e observações para conferência, sem escores ou interpretação clínica automática.</p> : <p><strong>Normas americanas.</strong> Correção quantitativa por pontuações brutas, com revisão clínica obrigatória.</p>}
       <p>O cadastro item a item não usa a correção dos formulários extensivos. Conversão normativa e classificação qualitativa desse cadastro ainda não habilitadas.</p>
     </aside>
+    {application && evaluation && !emptyApplication && !usesCurrentQuestions && <section className="space-y-3 rounded-xl border border-cyan-200 bg-cyan-50 p-5">
+      <h2 className="font-semibold text-cyan-950">Quer responder às 180 perguntas?</h2>
+      <p className="text-sm text-cyan-950">Esta aplicação contém um lançamento anterior. Para preservar seus dados, preencha o formulário de Pais/Cuidadores dos Níveis de Domínio em uma nova aplicação. Nenhuma resposta será copiada ou substituída.</p>
+      <Link className="inline-flex min-h-11 items-center rounded-md bg-cyan-800 px-4 py-2 font-medium text-white hover:bg-cyan-900" href={`/dashboard/tests/vineland3?evaluation_id=${evaluation.id}`}>Abrir formulário de 180 perguntas</Link>
+    </section>}
     {viewResult && application ? <>
       <section className="space-y-3 rounded-xl border bg-white p-5">
         <h2 className="text-lg font-semibold">{application.computed_payload.form_label}</h2>
@@ -173,11 +182,11 @@ function Vineland3Form() {
         <legend className="px-2 font-semibold">Identificação do protocolo</legend>
         {locked && <p role="status">Aplicação travada para edição.</p>}
         <div><label htmlFor="vineland-entry-mode" className="mb-2 block text-sm font-medium">Modo de entrada</label>
-          <select id="vineland-entry-mode" disabled={Boolean(application)} className="h-12 w-full rounded-md border border-slate-300 px-3" value={entryMode} onChange={event => { setEntryMode(event.target.value as 'totals' | 'items'); setSuccess('') }}>
+          <select id="vineland-entry-mode" disabled={Boolean(application) && !emptyApplication} className="h-12 w-full rounded-md border border-slate-300 px-3" value={entryMode} onChange={event => { setEntryMode(event.target.value as 'totals' | 'items'); setSuccess('') }}>
             <option value="items">Item a item — {itemProtocol?.supports_estimates ? 'Pais/Cuidadores · Níveis de Domínio · 180 itens' : 'banco parcial legado'} (somente registro)</option>
             <option value="totals">Pontuações brutas — correção normativa Vineland-3</option>
           </select>
-          {application && <p className="mt-1 text-xs text-slate-600">Para usar outro modo, crie uma aplicação separada e preserve o registro original.</p>}
+          {application && !emptyApplication && <p className="mt-1 text-xs text-slate-600">Para usar outro modo, crie uma aplicação separada e preserve o registro original.</p>}
         </div>
         {entryMode === 'totals' && <div><label htmlFor="vineland-form" className="mb-2 block text-sm font-medium">Formulário extensivo</label>
           <select id="vineland-form" className="h-12 w-full rounded-md border border-slate-300 px-3" value={form} onChange={event => {
