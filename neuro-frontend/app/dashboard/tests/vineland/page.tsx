@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { api } from '@/lib/api'
 import { VinelandItemFields, isEmptyVinelandApplication, vinelandEntryMode, restoreVinelandObservations, resolveVinelandItemProtocol, vinelandResponseError, type VinelandItemProtocol, type VinelandItemResponses } from '@/components/tests/VinelandItemFields'
 import { VinelandQuestionnaireResult, type VinelandItemSummary } from '@/components/tests/VinelandQuestionnaireResult'
+import type { VinelandNormativeResultsData } from '@/components/tests/VinelandNormativeResults'
 
 type FormCode = 'entrevista' | 'pais_cuidadores' | 'professores'
 interface Scale { code: string; label: string; max: number; optional: boolean; min_months: number; max_months: number | null }
@@ -21,6 +22,7 @@ interface Application {
   computed_payload: { domains?: Domain[]; subdomains?: Subdomain[]; form_label?: string; respondent?: string; age_months?: number; norm_source?: { file: string; subdomain_pages: number[]; domain_pages: number[] } }
   interpretation_text: string
   classified_payload?: object
+  normative_results?: VinelandNormativeResultsData | null
   reviewed_payload?: object
 }
 

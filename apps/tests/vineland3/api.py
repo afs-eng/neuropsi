@@ -18,6 +18,7 @@ from apps.tests.models import Instrument, TestApplication
 
 from .calculators import compute_scores
 from . import domain_protocol
+from .domain_scoring import compute_domain_results
 from .config import FORMS, SUBDOMAINS, TECHNICAL_NOTES
 from .interpreters import interpret_results
 from .item_protocol import PROTOCOL_ID, SOURCE, item_protocol, normalize_item_responses
@@ -108,6 +109,8 @@ def submit(request, payload: Vineland3SubmitIn):
                 raw["completion_status"] = "finalized" if payload.finalize else "partial"
                 if payload.finalize:
                     raw["item_summary"] = domain_protocol.build_item_summary(raw["item_responses"])
+                    raw["scoring_enabled"] = compute_domain_results(
+                        raw["item_responses"], raw["birth_date"], raw["reference_date"])["normative_scoring"]
             else:
                 if payload.finalize:
                     raise ValueError("O banco parcial legado não permite finalização. Preserve o protocolo original.")

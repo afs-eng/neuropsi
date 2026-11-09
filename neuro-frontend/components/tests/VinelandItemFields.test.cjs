@@ -28,10 +28,21 @@ function loadResult(react = React) {
   const original = mod.require.bind(mod);
   mod.require = id => {
     if (id === 'react') return react;
+    if (id === './VinelandNormativeResults') return loadNormative();
     if (id === '@/lib/api') return { getToken: () => 'test-token', resolveApiUrl: url => `https://api.example.test${url}` };
     if (id === 'next/link') return { default: ({ href, children, ...props }) => React.createElement('a', { ...props, href }, children) };
     return original(id);
   };
+  mod._compile(ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
+  }).outputText, filename);
+  return mod.exports;
+}
+
+function loadNormative() {
+  const filename = path.join(__dirname, 'VinelandNormativeResults.tsx');
+  const mod = new Module(filename, module);
+  mod.paths = module.paths;
   mod._compile(ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
   }).outputText, filename);
@@ -595,4 +606,29 @@ test('PDF errors remain visible and allow retry without altering the questionnai
   const alert = elements(tree()).find(element => element.props?.role === 'alert');
   assert.equal(alert.props.children, 'Finalize o questionário Vineland antes de gerar o PDF.');
   assert.match(renderToStaticMarkup(tree()), /Resumo das áreas adaptativas/);
+});
+
+test('normative results replace raw-only panels with standard scores, CCA, IC95 and statistical analysis', () => {
+  const { VinelandQuestionnaireResult } = loadResult();
+  const score = { code: 'comunicacao', scale: 'COM', label: 'Comunicação', raw_score: 72, standard_score: 130, percentile: '98', confidence_interval: [122, 138], classification: 'Alto', unavailable_reason: null };
+  const result = { normative_scoring: true, confidence_level: 95, age_months: 72, population: 'Normas americanas',
+    adaptive: [score, { ...score, code: 'vida_diaria', scale: 'AVD' }, { ...score, code: 'socializacao', scale: 'SOC' }, { ...score, code: 'atividade_fisica', scale: 'HMOT', raw_score: null, standard_score: null, confidence_interval: null, classification: null, unavailable_reason: 'Seção não aplicada' }],
+    cca: { ...score, code: 'cca', scale: 'CCA', label: 'Composto de Comportamento Adaptativo', raw_score: null, standard_score: 112, percentile: '79', confidence_interval: [107, 117], sum_standard_scores: 331 },
+    behavior: [{ ...score, code: 'comportamento_a', scale: 'internalizante', raw_score: 13, v_scale: 21 }],
+    mean_standard_score: 106.25, mean_domain_count: 4,
+    strengths: [{ scale: 'COM', standard_score: 130, difference: 23.75, critical_value: 6.61, finding: 'Força', base_rate: '≤ 2%' }],
+    pairs: [{ first: 'COM', second: 'AVD', difference: 20, critical_value: 10.53, significant: true, base_rate: '> 5% a ≤ 10%' }] };
+  const html = renderToStaticMarkup(React.createElement(VinelandQuestionnaireResult, { application: { ...finalizedQuestionnaire, normative_results: result } }));
+  for (const text of ['IC 95%', 'Normas americanas', 'Perfil dos escores padrão', '122 – 138', '107 – 117', '331', 'Escala-v', 'Taxa de base', 'Força', 'Seção não aplicada']) assert.ok(html.includes(text), text);
+  assert.match(html, /<svg/);
+  assert.doesNotMatch(html, /sem correção normativa|Perfil das somas brutas|não está habilitada/);
+  assert.match(html, /Itens críticos/);
+});
+
+test('normative result error blocks the numeric panels rather than displaying cached scores', () => {
+  const { VinelandNormativeResults } = loadNormative();
+  const html = renderToStaticMarkup(React.createElement(VinelandNormativeResults, { result: { error: 'Comunicação: faltam respostas.' } }));
+  assert.match(html, /role="alert"/);
+  assert.match(html, /faltam respostas/);
+  assert.doesNotMatch(html, /<table|<svg/);
 });

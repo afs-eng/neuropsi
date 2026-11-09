@@ -6,6 +6,7 @@ from apps.tests.services.playwright_pdf_service import generate_pdf_from_html
 
 from .domain_protocol import DOMAIN_ITEMS, PROTOCOL_ID, build_item_summary
 from .norms import age_months
+from .domain_scoring import results_for_application
 
 
 class Vineland3PdfService:
@@ -37,6 +38,7 @@ class Vineland3PdfService:
             raise ValueError("Finalize o questionário Vineland antes de gerar o PDF.")
         # Rebuild from the recorded answers; never export a stale cached summary.
         summary = build_item_summary(raw.get("item_responses"))
+        normative = results_for_application(application)
         evaluation = application.evaluation
         patient = evaluation.patient
         applied = application.applied_on
@@ -51,10 +53,13 @@ class Vineland3PdfService:
         behavior = []
         for section in summary["sections"]:
             row = {**section, "score_label": section["raw_score"] if section["raw_score"] is not None else "—"}
+            result = next((r for r in normative["adaptive"] + normative["behavior"] if r["code"] == section["code"]), {})
+            row.update(result)
+            row["ci_label"] = " – ".join(map(str, result["confidence_interval"])) if result.get("confidence_interval") else "—"
             if section["kind"] == "adaptive":
                 row.update(abbreviation=cls.ABBREVIATIONS[section["code"]],
                            display_label=cls.ADAPTIVE_LABELS[section["code"]],
-                           bar_width=(section["raw_score"] or 0) / 80 * 100)
+                           bar_width=(result.get("standard_score") or 0) / 160 * 100)
                 adaptive.append(row)
             elif section["kind"] == "behavior":
                 row["short_label"] = "Internalizante (A)" if section["code"] == "comportamento_a" else "Externalizante (B)"
@@ -65,6 +70,17 @@ class Vineland3PdfService:
                           "response": critical_responses.get(str(index), {}).get("response", "") or "—",
                           "flagged": critical_responses.get(str(index), {}).get("response") in {"1", "2"}}
                          for index, text in enumerate(DOMAIN_ITEMS["comportamento_c"][1], 1)]
+        cca = {**normative["cca"], "abbreviation": "CCA", "display_label": "Composto Adaptativo (CCA)",
+               "score_label": "—", "bar_width": (normative["cca"]["standard_score"] or 0) / 160 * 100,
+               "ci_label": " – ".join(map(str, normative["cca"]["confidence_interval"])) if normative["cca"]["confidence_interval"] else "—"}
+        normative_rows = adaptive[:3] + [cca] + adaptive[3:]
+        for index, row in enumerate(normative_rows):
+            row["plot_x"] = 80 + index * 75
+            if row["standard_score"] is not None:
+                row["plot_y"] = 300 - (row["standard_score"] - 20) * 2
+                interval = row["confidence_interval"] or [row["standard_score"]] * 2
+                row["plot_low"] = 300 - (interval[0] - 20) * 2
+                row["plot_high"] = 300 - (interval[1] - 20) * 2
         return {
             "name": patient.full_name,
             "sex": {"M": "Masculino", "F": "Feminino", "O": "Outro"}.get(patient.sex, patient.sex or "Não informado"),
@@ -76,6 +92,8 @@ class Vineland3PdfService:
             "application_code": f"AVL-{application.pk:03d}",
             "report_code": f"RPT-VINELAND3-{application.pk:03d}",
             "adaptive": adaptive, "behavior": behavior, "summary": summary,
+            "normative": normative, "normative_rows": normative_rows,
+            "plot_ticks": [{"value": s, "y": 300 - (s - 20) * 2} for s in range(20, 161, 20)],
             "critical_applied": critical["applied"], "critical_rows": critical_rows,
             "observations": raw.get("general_observations") or "Nenhuma observação geral registrada.",
             "pairs": [("COM", "AVD"), ("COM", "SOC"), ("AVD", "SOC"), ("COM", "HMOT"), ("AVD", "HMOT"), ("SOC", "HMOT")],

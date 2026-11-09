@@ -35,6 +35,21 @@ def serialize_instrument(instrument):
 
 def serialize_test_application(application):
     patient = application.evaluation.patient if application.evaluation else None
+    raw_payload = application.raw_payload or {}
+    normative_results = None
+    if application.instrument.code == "vineland3":
+        from apps.tests.vineland3.domain_scoring import results_for_application
+        from apps.tests.vineland3.domain_protocol import build_item_summary
+
+        try:
+            normative_results = results_for_application(application)
+            if normative_results is not None:
+                raw_payload = {**raw_payload, "item_summary": build_item_summary(raw_payload.get("item_responses")),
+                               "scoring_enabled": normative_results["normative_scoring"],
+                               "birth_date": patient.birth_date.isoformat() if patient.birth_date else None,
+                               "reference_date": application.applied_on.isoformat() if application.applied_on else None}
+        except ValueError as error:
+            normative_results = {"error": str(error)}
     return {
         "id": application.id,
         "evaluation_id": application.evaluation_id,
@@ -45,7 +60,8 @@ def serialize_test_application(application):
         "instrument_code": application.instrument.code,
         "instrument_name": application.instrument.name,
         "applied_on": application.applied_on,
-        "raw_payload": application.raw_payload or {},
+        "raw_payload": raw_payload,
+        "normative_results": normative_results,
         "computed_payload": application.computed_payload or {},
         "classified_payload": application.classified_payload or {},
         "reviewed_payload": application.reviewed_payload or {},

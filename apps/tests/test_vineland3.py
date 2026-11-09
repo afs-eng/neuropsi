@@ -26,6 +26,7 @@ from apps.tests.vineland3.import_norms import age_range
 from apps.tests.vineland3.norms import age_months, age_table, load_norms, lookup
 from apps.tests.vineland3.validators import validate_input
 from apps.tests.vineland3.pdf_service import Vineland3PdfService
+from apps.tests.vineland3.domain_scoring import compute_domain_results, load_domain_norms, _base_rate, _classification
 
 
 # D.1, PDF page 8: these raw ranges correspond to v-scale 15.
@@ -46,13 +47,132 @@ def domain_items(value="0", core_only=False):
             if not core_only or code in {"comunicacao", "vida_diaria", "socializacao"}}
 
 
+def items_with_totals(totals):
+    responses = domain_items()
+    for code, total in totals.items():
+        for entry in responses[code].values():
+            entry["response"] = "0"
+        # Allocate pairs first so binary items never need a response of 1.
+        for key, entry in responses[code].items():
+            if total >= 2:
+                entry["response"] = "2"
+                total -= 2
+            elif total and int(key) not in domain_protocol.BINARY_ITEMS.get(code, set()):
+                entry["response"] = "1"
+                total -= 1
+        if total:
+            raise ValueError("Total não representável")
+    return responses
+
+
+class VinelandDomainScoringTests(SimpleTestCase):
+    def test_reference_six_year_case_from_c3_c4_c5_e2(self):
+        responses = items_with_totals({"comunicacao": 72, "vida_diaria": 54, "socializacao": 48,
+                                     "atividade_fisica": 37, "comportamento_a": 13, "comportamento_b": 15})
+        result = compute_domain_results(responses, "2020-11-09", "2026-11-09")
+        self.assertEqual([r["standard_score"] for r in result["adaptive"]], [130, 110, 91, 94])
+        self.assertEqual([r["percentile"] for r in result["adaptive"]], ["98", "75", "27", "34"])
+        self.assertEqual([r["confidence_interval"] for r in result["adaptive"]], [[122, 138], [102, 118], [84, 98], [85, 103]])
+        self.assertEqual(result["cca"]["sum_standard_scores"], 331)
+        self.assertEqual(result["cca"]["standard_score"], 112)
+        self.assertEqual(result["cca"]["percentile"], "79")
+        self.assertEqual(result["cca"]["confidence_interval"], [107, 117])
+        self.assertEqual([r["v_scale"] for r in result["behavior"]], [21, 22])
+        self.assertEqual(result["mean_standard_score"], 106.25)
+        self.assertEqual([r["difference"] for r in result["strengths"]], [23.75, 3.75, -15.25, -12.25])
+        self.assertEqual([r["finding"] for r in result["strengths"]], ["Força", "Não significativa", "Fraqueza", "Fraqueza"])
+        self.assertEqual(result["strengths"][0]["base_rate"], "≤ 2%")
+        self.assertEqual(result["pairs"][0], {"first": "COM", "second": "AVD", "difference": 20,
+                                             "critical_value": 10.53, "significant": True, "base_rate": "> 5% a ≤ 10%"})
+        self.assertEqual(result["confidence_level"], 95)
+
+    def test_normative_age_boundaries_use_completed_calendar_months(self):
+        for applied, expected in [("2026-05-08", 71), ("2026-05-09", 72), ("2026-11-08", 77), ("2026-11-09", 78)]:
+            result = compute_domain_results(domain_items(), "2020-05-09", applied)
+            self.assertEqual(result["age_months"], expected)
+            self.assertLessEqual(result["normative_age_range"]["min_months"], expected)
+            self.assertGreaterEqual(result["normative_age_range"]["max_months"], expected)
+        with self.assertRaises(ValueError):
+            compute_domain_results(domain_items(), "2026-11-10", "2026-11-09")
+
+    def test_motor_norms_end_at_nine_years_and_do_not_change_cca(self):
+        responses = domain_items("2")
+        younger = compute_domain_results(responses, "2016-11-10", "2026-11-09")
+        older = compute_domain_results(responses, "2016-11-09", "2026-11-09")
+        self.assertIsNotNone(younger["adaptive"][-1]["standard_score"])
+        self.assertIsNone(older["adaptive"][-1]["standard_score"])
+        self.assertEqual(older["adaptive"][-1]["unavailable_reason"], "Sem norma para a idade")
+        self.assertEqual(older["mean_domain_count"], 3)
+        blank_motor = deepcopy(responses)
+        blank_motor.pop("atividade_fisica")
+        self.assertEqual(compute_domain_results(blank_motor, "2016-11-09", "2026-11-09")["cca"], older["cca"])
+
+    def test_unapplied_and_zero_are_distinct_and_estimates_survive_without_changing_scores(self):
+        blank = domain_items(core_only=True)
+        original = deepcopy(blank)
+        blank["comunicacao"]["1"].update(estimated=True, observation="Conferir")
+        result = compute_domain_results(blank, "2020-01-01", "2026-01-01")
+        self.assertEqual(result["adaptive"][0]["raw_score"], 0)
+        self.assertIsNotNone(result["adaptive"][0]["standard_score"])
+        self.assertIsNone(result["adaptive"][-1]["standard_score"])
+        self.assertEqual(result["behavior"][0]["unavailable_reason"], "Seção não aplicada")
+        self.assertEqual(result["cca"], compute_domain_results(original, "2020-01-01", "2026-01-01")["cca"])
+        self.assertTrue(blank["comunicacao"]["1"]["estimated"])
+
+    def test_below_three_and_above_table_ages_are_not_extrapolated(self):
+        for birth, reference in [("2024-01-01", "2026-01-01"), ("1935-01-01", "2026-01-01")]:
+            result = compute_domain_results(domain_items(), birth, reference)
+            self.assertFalse(result["normative_scoring"])
+            self.assertTrue(all(r["standard_score"] is None for r in result["adaptive"]))
+            self.assertTrue(all(r["significant"] is None for r in result["pairs"]))
+
+    def test_all_applicable_raw_scores_are_covered_without_gaps_or_overlaps(self):
+        norms = load_domain_norms()
+        self.assertEqual(len(norms["domains"]), 30)
+        self.assertEqual(norms["population"], "Normas americanas")
+        for table in norms["domains"]:
+            for scale, entries in table["scores"].items():
+                if entries:
+                    self.assertEqual(entries[0][0], 60 if scale == "CCA" else 0)
+                    self.assertEqual(entries[-1][1], 420 if scale == "CCA" else 50 if scale == "HMOT" else 80)
+                for previous, current in zip(entries, entries[1:]):
+                    self.assertEqual(previous[1] + 1, current[0])
+            self.assertEqual(set(table["ci"]), {"85", "90", "95"})
+
+    def test_incomplete_or_invalid_answers_are_not_scored(self):
+        data = domain_items()
+        data["comunicacao"]["1"]["response"] = ""
+        with self.assertRaises(ValueError):
+            compute_domain_results(data, "2020-01-01", "2026-01-01")
+        data["comunicacao"]["1"]["response"] = "0"
+        data["vida_diaria"]["40"]["response"] = "1"
+        with self.assertRaises(ValueError):
+            compute_domain_results(data, "2020-01-01", "2026-01-01")
+
+    def test_base_rate_intervals_include_threshold_and_do_not_invent_exact_rates(self):
+        cutoffs = [30, 22, 18, 15, 13]
+        for value, expected in [(30, "≤ 2%"), (29, "> 2% a ≤ 5%"), (22, "> 2% a ≤ 5%"),
+                                (18, "> 5% a ≤ 10%"), (15, "> 10% a ≤ 15%"), (13, "> 15% a ≤ 25%"), (0, "> 25%")]:
+            self.assertEqual(_base_rate(value, cutoffs), expected)
+
+    def test_pairwise_table_changes_at_seven_and_classification_boundaries_match_manual(self):
+        before = compute_domain_results(domain_items(), "2019-11-10", "2026-11-09")
+        after = compute_domain_results(domain_items(), "2019-11-09", "2026-11-09")
+        self.assertEqual(before["pairs"][0]["critical_value"], 10.53)
+        self.assertEqual(after["pairs"][0]["critical_value"], 10.81)
+        for score, label in [(20, "Baixo"), (70, "Baixo"), (71, "Moderadamente baixo"), (85, "Moderadamente baixo"),
+                             (86, "Adequado"), (114, "Adequado"), (115, "Moderadamente alto"),
+                             (129, "Moderadamente alto"), (130, "Alto"), (140, "Alto")]:
+            self.assertEqual(_classification(score), label)
+
+
 class Vineland3NormTests(SimpleTestCase):
     def test_domain_level_bank_has_all_180_items_in_seven_sections(self):
         protocol = domain_protocol.item_protocol()
         self.assertEqual([len(domain["items"]) for domain in protocol["domains"]], [40, 40, 40, 25, 13, 11, 11])
         self.assertTrue(protocol["complete"])
         self.assertTrue(protocol["supports_estimates"])
-        self.assertFalse(protocol["scoring_enabled"])
+        self.assertTrue(protocol["scoring_enabled"])
         self.assertEqual(set(protocol["legend"]), {"2", "1", "0"})
         for domain in protocol["domains"]:
             self.assertEqual([item["id"] for item in domain["items"]], [str(i) for i in range(1, len(domain["items"]) + 1)])
@@ -251,7 +371,7 @@ class Vineland3ApiTests(TestCase):
         self.assertEqual(response.json()["entry_modes"], ["totals", "items"])
         self.assertEqual(response.json()["item_protocol"]["id"], domain_protocol.PROTOCOL_ID)
         self.assertEqual(response.json()["legacy_item_protocol"]["id"], PROTOCOL_ID)
-        self.assertFalse(response.json()["item_protocol"]["scoring_enabled"])
+        self.assertTrue(response.json()["item_protocol"]["scoring_enabled"])
         self.assertNotIn("scores", response.json())
         scales = response.json()["forms"]["pais_cuidadores"]["scales"]
         self.assertEqual(next(row for row in scales if row["code"] == "enf")["min_months"], 24)
@@ -477,6 +597,51 @@ class Vineland3ApiTests(TestCase):
         app.refresh_from_db()
         self.assertEqual(app.raw_payload, original)
 
+    def test_normative_results_recalculate_old_finalized_records_without_writing_answers_or_validation(self):
+        app_id = self.submit_domain_items(item_responses=domain_items("2"), finalize=True).json()["application_id"]
+        app = TestApplication.objects.get(pk=app_id)
+        app.raw_payload["scoring_enabled"] = False
+        app.raw_payload["item_summary"]["sections"][0]["raw_score"] = 999
+        app.raw_payload["birth_date"] = "1900-01-01"
+        app.save()
+        stored = deepcopy(app.raw_payload)
+        response = self.client.get(f"/api/tests/applications/{app_id}", HTTP_AUTHORIZATION=f"Bearer {self.token}")
+        self.assertEqual(response.status_code, 200, response.content)
+        result = response.json()["normative_results"]
+        self.assertEqual(result["age_months"], 36)
+        self.assertEqual(response.json()["raw_payload"]["birth_date"], self.patient.birth_date.isoformat())
+        self.assertEqual(result["adaptive"][0]["raw_score"], 80)
+        self.assertEqual(result["confidence_level"], 95)
+        self.assertEqual(response.json()["raw_payload"]["item_summary"]["sections"][0]["raw_score"], 80)
+        app.refresh_from_db()
+        self.assertEqual(app.raw_payload, stored)
+        self.assertFalse(app.is_validated)
+        self.assertEqual(app.computed_payload, {})
+        self.assertEqual(app.reviewed_payload, {})
+        self.assertEqual(Vineland3PdfService._build_context(app)["normative"], result)
+        self.assertEqual(build_validated_tests_snapshot(self.evaluation), [])
+
+    def test_normative_result_rebuilds_after_edit_and_drafts_have_no_scores(self):
+        response = self.submit_domain_items(item_responses=domain_items("2"), finalize=True)
+        app_id = response.json()["application_id"]
+        self.assertTrue(response.json()["normative_results"]["normative_scoring"])
+        partial = self.submit_domain_items(application_id=app_id, item_responses=domain_items())
+        self.assertIsNone(partial.json()["normative_results"])
+        revised = self.submit_domain_items(application_id=app_id, item_responses=domain_items(), finalize=True)
+        self.assertNotEqual(response.json()["normative_results"]["cca"], revised.json()["normative_results"]["cca"])
+        self.assertEqual(revised.json()["normative_results"]["adaptive"][0]["raw_score"], 0)
+
+    def test_invalid_old_finalized_record_returns_actionable_error_not_stale_scores(self):
+        app_id = self.submit_domain_items(item_responses=domain_items(), finalize=True).json()["application_id"]
+        app = TestApplication.objects.get(pk=app_id)
+        app.raw_payload["item_responses"]["comunicacao"]["1"]["response"] = ""
+        app.save()
+        result = self.client.get(f"/api/tests/applications/{app_id}", HTTP_AUTHORIZATION=f"Bearer {self.token}")
+        self.assertEqual(result.status_code, 200)
+        self.assertIn("faltam respostas", result.json()["normative_results"]["error"])
+        with self.assertRaises(ValueError):
+            Vineland3PdfService._build_context(app)
+
     def test_pdf_context_recalculates_answers_and_uses_current_identity_not_stale_summary(self):
         app_id = self.submit_domain_items(item_responses=domain_items("2"), finalize=True).json()["application_id"]
         app = TestApplication.objects.with_details().get(pk=app_id)
@@ -486,23 +651,24 @@ class Vineland3ApiTests(TestCase):
         app.evaluation.examiner.crp = "00/0000"
         context = Vineland3PdfService._build_context(app)
         self.assertEqual(context["adaptive"][0]["raw_score"], 80)
-        self.assertEqual(context["adaptive"][0]["bar_width"], 100)
-        self.assertEqual(context["adaptive"][-1]["bar_width"], 62.5)
+        self.assertEqual(context["adaptive"][0]["standard_score"], 140)
+        self.assertEqual(context["adaptive"][0]["plot_y"], 60)
+        self.assertEqual(context["adaptive"][-1]["standard_score"], 140)
         self.assertEqual(context["age"], "3 anos e 0 meses")
         self.assertEqual(context["name"], self.patient.full_name)
         self.assertEqual(context["professional"], "Profissional da avaliação · CRP 00/0000")
         self.assertEqual(context["report_code"], f"RPT-VINELAND3-{app_id:03d}")
         self.assertTrue(all(row["flagged"] for row in context["critical_rows"]))
 
-    def test_pdf_template_has_four_sections_and_explicitly_unavailable_normative_analysis(self):
+    def test_pdf_template_has_four_sections_and_normative_analysis(self):
         app_id = self.submit_domain_items(item_responses=domain_items(core_only=True), finalize=True).json()["application_id"]
         app = TestApplication.objects.with_details().get(pk=app_id)
         html = Vineland3PdfService.render_html(app)
         self.assertEqual(html.count('<section class="page">'), 4)
         self.assertEqual(html.count('<header class="report-header">'), 3)
-        for text in ("Dados do avaliado", "Resumo da pontuação adaptativa", "Perfil das pontuações brutas",
+        for text in ("Dados do avaliado", "Resumo da pontuação adaptativa", "Perfil dos escores padrão",
                      "Página de Análise", "Análise de força / fraqueza", "Comparação das diferenças emparelhadas",
-                     "Síntese descritiva", "Interpretação clínica não gerada", "PÁGINA", "Não aplicada"):
+                     "Síntese dos resultados", "Revisão clínica necessária", "PÁGINA", "Seção não aplicada", "IC 95%"):
             self.assertIn(text, html)
         self.assertIn('class="score">0</td>', html)
         self.assertIn("Seção C não aplicada", html)

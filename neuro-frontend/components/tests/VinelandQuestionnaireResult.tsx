@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { getToken, resolveApiUrl } from '@/lib/api'
+import { VinelandNormativeResults, type VinelandNormativeResultsData } from './VinelandNormativeResults'
 
 const dateFormatter = new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' })
 
@@ -34,6 +35,7 @@ export interface VinelandResultApplication {
   patient_name?: string
   applied_on: string | null
   status: string
+  normative_results?: VinelandNormativeResultsData | null
   raw_payload: {
     respondent?: string
     birth_date?: string
@@ -142,6 +144,7 @@ export function VinelandQuestionnaireResult({ application }: { application: Vine
           </dl>
           <p className="mt-4 font-medium text-slate-800">Preenchimento finalizado · {summary.answered} de {summary.applied_total} itens das seções aplicadas respondidos.</p>
         </section>
+        {application.normative_results ? <VinelandNormativeResults result={application.normative_results} /> : <>
         <aside className="space-y-2 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950">
           <h2 className="font-semibold">Resultado descritivo — sem correção normativa</h2>
           <p>As somas abaixo são das respostas registradas. Não são escores padrão, percentis, classificação clínica ou CCA. A conversão normativa deste formulário ainda não está habilitada.</p>
@@ -164,6 +167,7 @@ export function VinelandQuestionnaireResult({ application }: { application: Vine
           <p className="px-5 py-3 text-sm text-slate-600">Nestas seções, maior soma indica maior frequência dos comportamentos relatados, não melhor habilidade. Sem escala-v ou classificação automática.</p>
           {sectionTable(behavior)}
         </section>
+        </>}
         <section aria-labelledby="vineland-critical-items" className="rounded-xl border border-slate-200 bg-white p-5">
           <h2 id="vineland-critical-items" className="mb-3 font-semibold text-slate-900">Itens críticos — Seção C</h2>
           <p className="mb-3 text-sm text-slate-600">Itens com resposta 1 ou 2 são apresentados individualmente para revisão profissional. Esta seção não recebe soma ou diagnóstico automático.</p>

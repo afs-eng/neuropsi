@@ -81,17 +81,17 @@
   <section class="page">
     <div class="brand">NEUROAVALIA</div>
     <div class="cover-head">
-      <div><div class="cover-title">Vineland<span>-3</span></div><p class="subtitle">Escalas de Comportamento Adaptativo</p><p class="small">Formulário de Pais/Cuidadores dos Níveis de Domínio<br>Relatório de pontuação · Resumo descritivo</p></div>
+      <div><div class="cover-title">Vineland<span>-3</span></div><p class="subtitle">Escalas de Comportamento Adaptativo</p><p class="small">Formulário de Pais/Cuidadores dos Níveis de Domínio<br>Relatório de pontuação · Correção normativa</p></div>
       <dl class="metadata"><dt>Código do avaliado</dt><dd>{{ application_code }}</dd><dt>Código do relatório</dt><dd>{{ report_code }}</dd><dt>Data da aplicação</dt><dd>{{ applied_on }}</dd></dl>
     </div>
     <h2>Dados do avaliado</h2>
     <dl class="identity">
       <dt>Nome</dt><dd>{{ name }}</dd><dt>Sexo</dt><dd>{{ sex }}</dd><dt>Nascimento</dt><dd>{{ birth_date }}</dd><dt>Idade no teste</dt><dd>{{ age }}</dd><dt>Escolaridade</dt><dd>{{ schooling }}</dd><dt>Profissional</dt><dd>{{ professional }}</dd><dt>Pais / cuidador</dt><dd>{{ respondent }}</dd><dt>Aplicação</dt><dd>Preenchimento finalizado · {{ summary.answered }}/{{ summary.applied_total }} itens das seções aplicadas</dd>
-      <dt>Tabela normativa</dt><dd>Conversão normativa não habilitada para este formulário</dd>
+      <dt>Tabela normativa</dt><dd>Pais/Cuidadores — Níveis de Domínio · Normas americanas · IC 95%</dd>
     </dl>
     <div class="intro-row"><h2>Introdução</h2><div><p>O Vineland-3 investiga comportamentos adaptativos do cotidiano, a partir de informações fornecidas por pais ou cuidadores. Este formulário reúne Comunicação, Atividades de Vida Diária e Socialização, além das seções opcionais de Habilidades Motoras e Problemas de Comportamento.</p><p>As respostas descrevem o que a pessoa realiza habitualmente de forma independente, e não apenas o que seria capaz de fazer.</p></div></div>
     <div class="intro-row"><h2>Definição</h2><div><p>As pontuações brutas correspondem à soma das respostas das seções aplicadas. Em Comunicação, Atividades de Vida Diária, Socialização e Habilidades Motoras, os valores referem-se à frequência das habilidades relatadas.</p><p>Nas seções Internalizante e Externalizante, maior soma indica maior frequência dos comportamentos relatados. Os itens críticos são apresentados individualmente, sem soma diagnóstica.</p></div></div>
-    <div class="intro-row"><h2>Utilização do relatório</h2><div><p>Este documento apresenta um resumo descritivo do preenchimento e não substitui correção normativa ou avaliação clínica. Os resultados devem ser integrados ao histórico, à entrevista, às observações e aos demais instrumentos da avaliação.</p><p class="small"><strong>Limitação:</strong> escores padrão, CCA, percentis, intervalos de confiança, classificação e comparações estatísticas não calculados. Finalização não equivale a validação clínica ou inclusão no laudo.</p></div></div>
+    <div class="intro-row"><h2>Utilização do relatório</h2><div><p>A correção utiliza as tabelas C.3, C.4, C.5 e E.2 específicas de Pais/Cuidadores, com normas americanas e intervalos de confiança de 95%. Os resultados devem ser integrados ao histórico, à entrevista, às observações e aos demais instrumentos da avaliação.</p><p class="small"><strong>Limitação:</strong> não há extrapolação quando a tabela não apresenta norma para a idade. A correção quantitativa não equivale a diagnóstico, validação clínica ou inclusão no laudo.</p></div></div>
   </section>
 
   <section class="page">
@@ -101,25 +101,27 @@
     <div class="columns">
       <div class="panel">
         <h2 class="panel-title">Resumo da pontuação adaptativa</h2>
-        <table class="adaptive-table"><colgroup><col style="width: 42%"><col style="width: 18%"><col style="width: 17%"><col style="width: 8%"><col style="width: 15%"></colgroup><thead><tr><th scope="col">Domínio</th><th scope="col">Pontuação bruta</th><th scope="col">Escore padrão</th><th scope="col">IC</th><th scope="col">Percentil</th></tr></thead><tbody>
-          {% for row in adaptive %}<tr><th scope="row">{{ row.display_label }} ({{ row.abbreviation }})</th><td class="score">{{ row.score_label }}</td><td>—</td><td>—</td><td>—</td></tr>{% endfor %}
-          <tr><th scope="row">Composto Adaptativo (CCA)</th><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        <table class="adaptive-table"><colgroup><col style="width: 36%"><col style="width: 14%"><col style="width: 17%"><col style="width: 20%"><col style="width: 13%"></colgroup><thead><tr><th scope="col">Domínio</th><th scope="col">Bruto</th><th scope="col">Escore padrão</th><th scope="col">IC 95%</th><th scope="col">Percentil</th></tr></thead><tbody>
+          {% for row in normative_rows %}<tr><th scope="row">{{ row.display_label }}{% if row.abbreviation != 'CCA' %} ({{ row.abbreviation }}){% endif %}</th><td class="score">{{ row.score_label }}</td><td>{{ row.standard_score|default_if_none:'—' }}</td><td>{{ row.ci_label }}</td><td>{{ row.percentile|default_if_none:'—' }}</td></tr>{% endfor %}
         </tbody></table>
-        <p class="tiny muted">— = não calculado; seção opcional sem respostas = não aplicada. Não somar pontuações brutas para produzir CCA.</p>
-        <h3>Conferência do preenchimento</h3>
-        <table><thead><tr><th scope="col">Área</th><th scope="col">Itens</th><th scope="col">Situação</th></tr></thead><tbody>{% for row in adaptive %}<tr><th scope="row">{{ row.abbreviation }}</th><td>{{ row.answered }}/{{ row.total }}</td><td>{% if row.applied %}Preenchida{% else %}Não aplicada{% endif %}</td></tr>{% endfor %}</tbody></table>
+        <p class="tiny muted">— = não aplicada ou sem norma para a idade. CCA: soma dos escores padrão de COM + AVD + SOC = {{ normative.cca.sum_standard_scores|default_if_none:'—' }}; não inclui HMOT.</p>
+        <h3>Níveis adaptativos</h3>
+        <table><thead><tr><th scope="col">Área</th><th scope="col">Nível / situação</th></tr></thead><tbody>{% for row in normative_rows %}<tr><th scope="row">{{ row.abbreviation }}</th><td>{{ row.classification|default_if_none:row.unavailable_reason }}</td></tr>{% endfor %}</tbody></table>
       </div>
       <div class="panel">
-        <h2 class="panel-title">Perfil das pontuações brutas</h2>
-        <p class="tiny muted">Escala bruta de 0 a 80. COM, AVD e SOC: máximo 80; HMOT: máximo 50. Não representa o perfil de escores padrão.</p>
-        <div class="graph">{% for row in adaptive %}<div class="graph-row"><div class="graph-label"><strong>{{ row.abbreviation }}</strong><span>{% if row.applied %}{{ row.score_label }} / {{ row.max_score }}{% else %}Não aplicada{% endif %}</span></div><div class="track">{% if row.applied %}<div class="bar" style="width: {{ row.bar_width|stringformat:'.2f' }}%"></div>{% endif %}</div></div>{% endfor %}<div class="axis"><span>0</span><span>20</span><span>40</span><span>60</span><span>80</span></div></div>
-        <div class="notice small">Perfil padrão COM / AVD / SOC / CCA / HMOT: não calculado. As somas brutas não permitem classificar o desempenho em relação à idade.</div>
+        <h2 class="panel-title">Perfil dos escores padrão</h2>
+        <p class="tiny muted">Marcadores: escores padrão. Hastes: IC 95%. Média normativa: 100.</p>
+        <svg viewBox="0 0 420 340" role="img" aria-label="Perfil dos escores padrão com IC 95%" style="width:100%">
+          {% for tick in plot_ticks %}<line x1="42" x2="405" y1="{{ tick.y }}" y2="{{ tick.y }}" stroke="{% if tick.value == 100 %}#1f6fb2{% else %}#cbd5e1{% endif %}"/><text x="34" y="{{ tick.y }}" text-anchor="end" font-size="11">{{ tick.value }}</text>{% endfor %}
+          {% for row in normative_rows %}<text x="{{ row.plot_x }}" y="325" text-anchor="middle" font-size="12">{{ row.abbreviation }}</text>{% if row.standard_score != None %}<line x1="{{ row.plot_x }}" x2="{{ row.plot_x }}" y1="{{ row.plot_low }}" y2="{{ row.plot_high }}" stroke="#1f6fb2" stroke-width="3"/><circle cx="{{ row.plot_x }}" cy="{{ row.plot_y }}" r="5" fill="#082d5f"/><text x="{{ row.plot_x|add:9 }}" y="{{ row.plot_y }}" font-size="11">{{ row.standard_score }}</text>{% else %}<text x="{{ row.plot_x }}" y="290" text-anchor="middle" font-size="11">—</text>{% endif %}{% endfor %}
+        </svg>
+        <p class="tiny muted">Conversão direta dos brutos pela C.3, bloco Níveis de Domínio. Ausência de marcador: seção não aplicada ou sem norma para a idade.</p>
       </div>
     </div>
     <div class="panel">
       <h2 class="band">Comportamento mal adaptativo</h2>
-      <table><thead><tr><th scope="col">Seção</th><th scope="col">Pontuação bruta</th><th scope="col">Escala-v</th><th scope="col">Itens respondidos</th><th scope="col">Situação</th></tr></thead><tbody>{% for row in behavior %}<tr><th scope="row">{{ row.short_label }}</th><td class="score">{{ row.score_label }}</td><td>—</td><td>{{ row.answered }}/{{ row.total }}</td><td>{% if row.applied %}Preenchida{% else %}Não aplicada{% endif %}</td></tr>{% endfor %}</tbody></table>
-      <p class="small muted">Maior soma indica maior frequência dos comportamentos relatados. Escala-v e classificação não calculadas. A Seção C está detalhada na página de análise, sem soma.</p>
+      <table><thead><tr><th scope="col">Seção</th><th scope="col">Pontuação bruta</th><th scope="col">Escala-v</th><th scope="col">Itens respondidos</th><th scope="col">Situação</th></tr></thead><tbody>{% for row in behavior %}<tr><th scope="row">{{ row.short_label }}</th><td class="score">{{ row.score_label }}</td><td>{{ row.v_scale|default_if_none:'—' }}</td><td>{{ row.answered }}/{{ row.total }}</td><td>{{ row.unavailable_reason|default_if_none:'Calculado' }}</td></tr>{% endfor %}</tbody></table>
+      <p class="small muted">Escala-v pela Tabela E.2 de Pais/Cuidadores. Maior pontuação indica maior frequência dos comportamentos relatados. A Seção C é apresentada individualmente, sem soma diagnóstica.</p>
     </div>
     <p class="small muted">Somas obtidas das respostas salvas. Não foram utilizadas normas extensivas ou do WISC-IV. Zero é uma resposta válida; seção não aplicada não equivale a zero.</p>
   </section>
@@ -130,14 +132,14 @@
     <div class="columns analysis-columns">
     <div class="panel">
       <h2 class="band">Análise de força / fraqueza</h2>
-      <table><thead><tr><th scope="col">Domínio</th><th scope="col">Escore padrão</th><th scope="col">Valor crítico</th><th scope="col">Força / fraqueza</th><th scope="col">Taxa de base</th></tr></thead><tbody>{% for row in adaptive %}<tr><th scope="row">{{ row.abbreviation }}</th><td>—</td><td>—</td><td>—</td><td>—</td></tr>{% endfor %}</tbody></table>
+      <table><thead><tr><th scope="col">Domínio</th><th scope="col">EP</th><th scope="col">EP − média</th><th scope="col">Valor crítico</th><th scope="col">Força / fraqueza</th><th scope="col">Taxa de base</th></tr></thead><tbody>{% for row in normative.strengths %}<tr><th scope="row">{{ row.scale }}</th><td>{{ row.standard_score|default_if_none:'—' }}</td><td>{{ row.difference|floatformat:2|default:'—' }}</td><td>{{ row.critical_value|floatformat:2|default:'—' }}</td><td>{{ row.finding }}</td><td>{{ row.base_rate|default_if_none:'—' }}</td></tr>{% endfor %}</tbody></table>
     </div>
     <div class="panel">
       <h2 class="band">Comparação das diferenças emparelhadas</h2>
-      <table><thead><tr><th scope="col">Domínios</th><th scope="col">Diferença</th><th scope="col">Valor crítico</th><th scope="col">Signif.</th><th scope="col">Taxa de base</th></tr></thead><tbody>{% for first, second in pairs %}<tr><th scope="row">{{ first }} – {{ second }}</th><td>—</td><td>—</td><td>—</td><td>—</td></tr>{% endfor %}</tbody></table>
+      <table><thead><tr><th scope="col">Domínios</th><th scope="col">Diferença</th><th scope="col">Valor crítico</th><th scope="col">Signif.</th><th scope="col">Taxa de base</th></tr></thead><tbody>{% for row in normative.pairs %}<tr><th scope="row">{{ row.first }} – {{ row.second }}</th><td>{{ row.difference|default_if_none:'—' }}</td><td>{{ row.critical_value|floatformat:2|default:'—' }}</td><td>{{ row.significant|yesno:'Sim,Não,—' }}</td><td>{{ row.base_rate|default_if_none:'—' }}</td></tr>{% endfor %}</tbody></table>
     </div>
     </div>
-    <p class="small muted">Estas análises dependem de escores padrão e tabelas específicas. Não foram calculadas; não inferir forças, fraquezas ou diferenças significativas das somas brutas.</p>
+    <p class="small muted">C.4 / C.5, p = 0,05. Média EP = {{ normative.mean_standard_score|floatformat:2|default:'—' }} ({{ normative.mean_domain_count }} domínios). Taxas de base em faixas, não percentis exatos. Significância estatística não equivale a diagnóstico. — = não disponível.</p>
     <h2>Itens críticos — Seção C</h2>
     {% if critical_applied %}<p class="small muted">Respostas 1 ou 2 são destacadas para revisão profissional. Não representam, isoladamente, diagnóstico ou nível de risco.</p>
     <table class="critical-table"><thead><tr><th scope="col">Item</th><th scope="col">Comportamento relatado</th><th scope="col">Resposta</th></tr></thead><tbody>{% for row in critical_rows %}<tr{% if row.flagged %} class="flagged"{% endif %}><th scope="row">{{ row.id }}</th><td>{{ row.text }}</td><td class="score">{{ row.response }}</td></tr>{% endfor %}</tbody></table>
@@ -147,13 +149,13 @@
   <section class="page">
     {% include header_template %}
     <h1>Síntese do registro</h1>
-    <h2 class="section-heading">Síntese descritiva</h2>
+    <h2 class="section-heading">Síntese dos resultados</h2>
     <div class="prose">
       <p>O formulário de Pais/Cuidadores dos Níveis de Domínio do Vineland-3 foi preenchido para <strong>{{ name }}</strong>, com informações de {{ respondent }}, na aplicação de {{ applied_on }}. Foram respondidos {{ summary.answered }} de {{ summary.applied_total }} itens das seções aplicadas.</p>
-      <p>{% for row in adaptive %}{% if row.applied %}{{ row.label }} ({{ row.abbreviation }}): pontuação bruta {{ row.raw_score }}, de um máximo de {{ row.max_score }}. {% else %}{{ row.label }} ({{ row.abbreviation }}): seção não aplicada. {% endif %}{% endfor %}</p>
-      <p>{% for row in behavior %}{% if row.applied %}{{ row.short_label }}: pontuação bruta {{ row.raw_score }}. {% else %}{{ row.short_label }}: seção não aplicada. {% endif %}{% endfor %}{% if critical_applied %}A Seção C possui {{ summary.critical_items|length }} item(ns) com resposta 1 ou 2 para conferência individual.{% else %}A Seção C não foi aplicada.{% endif %}</p>
+      <p>{% for row in normative_rows %}{% if row.standard_score != None %}{{ row.display_label }} ({{ row.abbreviation }}): escore padrão {{ row.standard_score }}, percentil {{ row.percentile }}, IC 95% {{ row.ci_label }}; nível {{ row.classification|lower }}. {% else %}{{ row.display_label }} ({{ row.abbreviation }}): {{ row.unavailable_reason|lower }}. {% endif %}{% endfor %}</p>
+      <p>{% for row in behavior %}{% if row.applied %}{{ row.short_label }}: pontuação bruta {{ row.raw_score }}, escala-v {{ row.v_scale|default_if_none:'não disponível para a idade' }}. {% else %}{{ row.short_label }}: seção não aplicada. {% endif %}{% endfor %}{% if critical_applied %}A Seção C possui {{ summary.critical_items|length }} item(ns) com resposta 1 ou 2 para conferência individual.{% else %}A Seção C não foi aplicada.{% endif %}</p>
     </div>
-    <div class="notice"><strong>Interpretação clínica não gerada</strong><p>Não foram calculados CCA, escores padrão, percentis, intervalos de confiança, escala-v ou comparações estatísticas. Este resumo não classifica o comportamento adaptativo e não deve ser apresentado como interpretação clínica ou conclusão diagnóstica.</p></div>
+    <div class="notice"><strong>Revisão clínica necessária</strong><p>As classificações e análises são quantitativas, com normas americanas específicas deste formulário. Este relatório não gera diagnóstico nem substitui a interpretação profissional integrada. Itens críticos exigem revisão individual.</p></div>
     <h2 class="section-heading">Observações gerais</h2>
     <div class="prose observations">{{ observations }}</div>
     <h2 class="section-heading">Condições de utilização</h2>

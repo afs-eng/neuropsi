@@ -230,9 +230,9 @@ def item_protocol():
         "title": "Vineland-3 — Pais/Cuidadores dos Níveis de Domínio",
         "description": "Avalie o comportamento que a pessoa realiza sozinha, sem ajuda ou lembretes. Registre as informações do pai/cuidador. Responda todos os itens das seções aplicadas; não há basal ou teto.",
         "legend": {"2": "Usualmente ou frequentemente", "1": "Às vezes", "0": "Nunca"},
-        "edition_verified": True, "complete": True, "scoring_enabled": False,
+        "edition_verified": True, "complete": True, "scoring_enabled": True,
         "supports_estimates": True, "item_observations": True,
-        "warning": "Cadastro de 180 itens para preenchimento profissional. Conferir os critérios das páginas 2 e 15 do formulário antes do uso clínico. Correção normativa, interpretação e inclusão no laudo ainda não habilitadas. Seções opcionais podem permanecer vazias; não preencher zeros fictícios.",
+        "warning": "Correção por normas americanas específicas de Pais/Cuidadores — Níveis de Domínio; IC 95%. Requer revisão clínica. Respeitar as faixas etárias das tabelas. Sem inclusão automática no laudo. Seções opcionais podem permanecer vazias; não preencher zeros fictícios.",
         "domains": [{
             "code": code, "label": label, "pages": PAGES[code],
             "behavior_problems": code.startswith("comportamento_"),

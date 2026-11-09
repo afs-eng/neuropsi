@@ -53,6 +53,7 @@ class TestApplicationOut(Schema):
     applied_on: Optional[date] = None
     raw_payload: dict[str, Any]
     computed_payload: dict[str, Any]
+    normative_results: Optional[dict[str, Any]] = None
     classified_payload: dict[str, Any]
     reviewed_payload: dict[str, Any]
     interpretation_text: str
