@@ -219,8 +219,8 @@ test('locked domain-level records disable scores, estimates and all observations
   }
 });
 
-async function loadPage(application, query = 'evaluation_id=13&application_id=78') {
-  const filename = path.join(__dirname, '../../app/dashboard/tests/vineland3/page.tsx');
+async function loadPage(application, query = 'evaluation_id=13&application_id=78', route = 'vineland') {
+  const filename = path.join(__dirname, `../../app/dashboard/tests/${route}/page.tsx`);
   const state = [];
   let cursor = 0;
   let effect;
@@ -242,6 +242,17 @@ async function loadPage(application, query = 'evaluation_id=13&application_id=78
   mod.paths = module.paths;
   const original = mod.require.bind(mod);
   mod.require = id => {
+    if (id === '../vineland/page') {
+      const canonicalFile = path.join(__dirname, '../../app/dashboard/tests/vineland/page.tsx');
+      const canonical = new Module(canonicalFile, module);
+      canonical.filename = canonicalFile;
+      canonical.paths = module.paths;
+      canonical.require = mod.require;
+      canonical._compile(ts.transpileModule(fs.readFileSync(canonicalFile, 'utf8'), {
+        compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2018 },
+      }).outputText, canonicalFile);
+      return canonical.exports;
+    }
     if (id === 'react') return mockReact;
     if (id === 'next/navigation') return { useRouter: () => ({ replace() {} }), useSearchParams: () => new URLSearchParams(query) };
     if (id === 'next/link') return { default: ({ href, children, ...props }) => React.createElement('a', { ...props, href }, children) };
@@ -252,7 +263,7 @@ async function loadPage(application, query = 'evaluation_id=13&application_id=78
       async get(url) {
         if (url.endsWith('/protocol')) return definitions;
         if (url.includes('/applications/')) return application;
-        return { id: 13, patient_name: 'Paciente de teste', patient_birth_date: '2020-01-01', start_date: '2026-01-15' };
+        return { id: Number(new URLSearchParams(query).get('evaluation_id')), patient_name: 'Paciente de teste', patient_birth_date: '2020-01-01', start_date: '2026-01-15' };
       },
       async post(url, payload) { posted = { url, payload }; return { ...application, application_id: 78 }; },
     } };
@@ -295,7 +306,7 @@ test('page with saved extensive results offers a separate question form without 
   const html = renderToStaticMarkup(page.tree());
   assert.match(html, /Síntese preservada/);
   assert.match(html, /Abrir formulário de 180 perguntas/);
-  assert.match(html, /href="\/dashboard\/tests\/vineland3\?evaluation_id=13"/);
+  assert.match(html, /href="\/dashboard\/tests\/vineland\?evaluation_id=13"/);
   assert.doesNotMatch(html, /Pergunta adaptativa/);
   assert.equal(page.posted(), undefined);
 });
@@ -347,4 +358,52 @@ test('evaluation question mode reopens the current questionnaire and saves the s
   await elements(tree).find(element => element.type === 'form').props.onSubmit({ preventDefault() {} });
   assert.equal(page.posted().payload.application_id, 79);
   assert.deepEqual(page.posted().payload.item_responses, savedResponses);
+});
+
+test('evaluation navigation points to the canonical question form and retains evaluation/application IDs', async () => {
+  const navFile = path.join(__dirname, '../../lib/vineland-navigation.ts');
+  const nav = new Module(navFile, module);
+  nav._compile(ts.transpileModule(fs.readFileSync(navFile, 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS },
+  }).outputText, navFile);
+  const overviewFile = path.join(__dirname, '../../app/dashboard/evaluations/[id]/overview/page.tsx');
+  const source = ts.createSourceFile(overviewFile, fs.readFileSync(overviewFile, 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  let routingFunction;
+  function find(node) {
+    if (ts.isFunctionDeclaration(node) && node.name?.text === 'getTestUrl') routingFunction = node;
+    ts.forEachChild(node, find);
+  }
+  find(source);
+  assert.ok(routingFunction, 'evaluation routing function must exist');
+  const routing = new Module(overviewFile, module);
+  routing.require = () => nav.exports;
+  routing._compile(ts.transpileModule(`
+    const evaluation = { id: 15 };
+    const { vinelandQuestionnaireUrl } = require('navigation');
+    export ${routingFunction.getText(source)}
+  `, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, overviewFile);
+  const url = new URL(routing.exports.getTestUrl('vineland3', 85), 'http://localhost');
+  assert.equal(url.pathname, '/dashboard/tests/vineland');
+  assert.equal(url.searchParams.get('evaluation_id'), '15');
+  assert.equal(url.searchParams.get('application_id'), '85');
+  assert.equal(url.searchParams.get('entry'), 'items');
+  assert.equal(new URL(routing.exports.getTestUrl('wasi', 86), url).pathname, '/dashboard/tests/wasi');
+  const page = await loadPage({ id: 85, evaluation_id: 15, instrument_code: 'vineland3', status: 'draft',
+    raw_payload: {}, computed_payload: {}, interpretation_text: '', is_validated: false }, url.search);
+  const tree = page.tree();
+  assert.match(renderToStaticMarkup(tree), /Pergunta adaptativa/);
+  assert.doesNotMatch(renderToStaticMarkup(tree), /Pontuações brutas por subdomínio/);
+  await elements(tree).find(element => element.type === 'form').props.onSubmit({ preventDefault() {} });
+  assert.equal(page.posted().payload.evaluation_id, 15);
+  assert.equal(page.posted().payload.application_id, 85);
+  assert.equal(page.posted().payload.entry_mode, 'items');
+});
+
+test('vineland and vineland3 URLs render the same questionnaire, not separate implementations', async () => {
+  const saved = { id: 85, evaluation_id: 15, instrument_code: 'vineland3', status: 'draft',
+    raw_payload: {}, computed_payload: {}, interpretation_text: '', is_validated: false };
+  const query = 'evaluation_id=15&application_id=85&entry=items';
+  const direct = await loadPage(saved, query, 'vineland');
+  const alias = await loadPage(saved, query, 'vineland3');
+  assert.equal(renderToStaticMarkup(direct.tree()), renderToStaticMarkup(alias.tree()));
 });

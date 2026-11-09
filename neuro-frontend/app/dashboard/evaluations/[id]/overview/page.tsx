@@ -33,6 +33,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { api, resolveApiUrl, getToken } from "@/lib/api";
 import { getEvaluationDeadlineMeta } from "@/lib/evaluation-deadline";
+import { vinelandQuestionnaireUrl } from "@/lib/vineland-navigation";
 import { AnamnesisResponseViewer } from "@/components/anamnesis/AnamnesisResponseViewer";
 import { TestWorkflowBadge } from "@/components/tests/TestWorkflowBadge";
 import { ReportPreparationPanel } from "@/components/reports/ReportPreparationPanel";
@@ -758,6 +759,9 @@ export default function EvaluationDetailPage() {
   function getTestUrl(instrumentCode: string, testId: number): string {
     // Normalize code (replace hyphens with underscores)
     const normalizedCode = instrumentCode.replace(/-/g, '_');
+    if (normalizedCode === "vineland3") {
+      return evaluation ? vinelandQuestionnaireUrl(evaluation.id, testId) : "/dashboard/tests/vineland";
+    }
     
     const baseUrls: Record<string, string> = {
       "bfp": "/dashboard/tests/bfp",
@@ -776,14 +780,13 @@ export default function EvaluationDetailPage() {
       "ravlt": "/dashboard/tests/ravlt",
       "srs2": "/dashboard/tests/srs2",
       "ssrs": "/dashboard/tests/ssrs",
-      "vineland3": "/dashboard/tests/vineland3",
       "scared": "/dashboard/tests/scared",
       "thcp": "/dashboard/tests/thcp",
       "cars2_hf": "/dashboard/tests/cars2-hf",
       "mchat": "/dashboard/tests/mchat",
     };
     
-    return `${baseUrls[normalizedCode] || "/dashboard/tests"}?evaluation_id=${evaluation?.id}&application_id=${testId}${normalizedCode === "vineland3" ? "&entry=items" : ""}`;
+    return `${baseUrls[normalizedCode] || "/dashboard/tests"}?evaluation_id=${evaluation?.id}&application_id=${testId}`;
   }
 
   async function removeTest(applicationId: number) {

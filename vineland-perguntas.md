@@ -27,3 +27,10 @@ Escopo: cadastro e preenchimento, sem liberar correção normativa ou laudo.
 - Dados de outro protocolo são preservados: a tela mostra aviso e salva o novo questionário em aplicação separada. A consulta do registro anterior usa `entry=totals`; perguntas do banco atual reabrem no ID existente.
 - 19 testes de tela/componente passaram, incluindo entrada por metadados extensivos, separação de dados antigos e persistência no ID do questionário atual. TypeScript e ESLint dos arquivos alterados passaram.
 - A aplicação remota 79 não foi inspecionada diretamente: o ambiente local não tem acesso ao banco remoto; o SQLite local está com esquema antigo. Não foram executadas migrações nem alterações nessa base.
+
+## Unificação da rota de perguntas e do acesso pela avaliação
+
+- Usuário distinguiu o acesso direto `/dashboard/tests/vineland` do endereço `/vineland3` aberto pela avaliação. No código local, apenas a segunda rota existia.
+- A página agora reside em `/vineland`; `/vineland3` reexporta exatamente a mesma implementação. Nenhum formulário foi duplicado.
+- O link da avaliação usa `vinelandQuestionnaireUrl`, apontando para a rota de perguntas e preservando avaliação, aplicação e modo `items`. As URLs após salvar e consultar registros usam a rota unificada. O identificador de instrumento e a API permanecem `vineland3`.
+- 21 testes de interface/renderização passaram, incluindo o fluxo gerador de link da avaliação → página → envio com os mesmos IDs e igualdade entre as duas rotas. TypeScript e ESLint passaram. A validação não equivale a teste autenticado no ambiente remoto.
