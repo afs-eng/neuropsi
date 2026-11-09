@@ -23,9 +23,18 @@ Código canônico: `vineland3` (o antigo rótulo genérico `vineland` no exporta
 - O formulário mantém o salvamento parcial e oferece **Finalizar teste e ver resultados**. A API recebe `finalize: true` somente para finalizar o banco de 180 perguntas. O banco legado não permite essa finalização.
 - COM, AVD e SOC precisam estar completas. Motor e comportamento A/B/C são opcionais: inteiramente vazios ficam não aplicados; se houver resposta, todos os itens da seção precisam ser preenchidos. Zero conta como resposta, vazio não. Os erros identificam a seção e os itens faltantes, sem alterar o registro salvo.
 - O servidor salva `completion_status: finalized` e `item_summary` em `raw_payload`, gerando somas descritivas, contagem de respostas e itens críticos individuais. A seção C não recebe soma; somente itens com resposta 1 ou 2 são destacados para revisão.
-- `/dashboard/tests/vineland/[id]/result` segue o layout WISC4: identificação, tabelas, perfil bruto, edição, retorno à avaliação e impressão via navegador (incluindo salvar como PDF). Não usa o endpoint de PDF WISC4.
+- `/dashboard/tests/vineland/[id]/result` segue o layout WISC4: identificação, tabelas, perfil bruto, edição e retorno à avaliação. O botão **Imprimir / PDF** baixa o relatório próprio gerado no servidor; não imprime mais a tela HTML.
 - O questionário finalizado reabre no resultado; `edit=true` restaura as respostas para edição. Nova finalização recalcula o resumo; salvar parcialmente remove o resumo anterior para não mostrar resultados desatualizados.
 - `computed_payload`, `classified_payload` e interpretação continuam vazios. Não há percentis, escores padrão, CCA, classificação clínica ou inclusão automática no laudo. O resultado explicita essas limitações. É necessário publicar frontend e backend juntos.
+
+### PDF próprio no padrão WISC4
+
+- Modelo visual consultado: `aux/vineland/modelo-wisc4.pdf` e imagens do relatório Vineland de níveis de domínio. Não há leitura do PDF modelo em produção nem reutilização de seus dados pessoais.
+- Serviço `pdf_service.py` e template `templates/tests/pdf/vineland3_report.html`, com cabeçalho compartilhado `header.html`. Usa o mesmo gerador Chromium/Playwright dos demais instrumentos, com margens A4, tabelas azuis e rodapé numerado.
+- Quatro seções/páginas usuais: identificação e finalidade; pontuação adaptativa, perfil bruto e comportamento A/B; forças/fraquezas e diferenças explicitamente não calculadas, mais os 11 itens críticos individuais quando aplicados; síntese descritiva e observações. Observações longas podem gerar páginas adicionais, sem truncamento.
+- O resumo é recalculado a partir das respostas na exportação. Nomes, profissional/CRP, nascimento e idade vêm da avaliação/paciente atual, não do PDF modelo nem de um resumo antigo. Dados de texto são escapados pelo template Django.
+- Registrado em `TestPdfExportService`: `GET /api/tests/applications/{id}/export-pdf` exige autenticação e acesso ao paciente. Recusa rascunhos, banco legado, totais extensivos e registros inconsistentes. O PDF é exclusivo do banco de 180 perguntas finalizado.
+- Escores padrão, CCA, IC, percentis, escala-v e análises inferenciais não são inventados. A ausência de cálculo está indicada nos quadros e no texto; o gráfico representa somente somas brutas, não um perfil padronizado.
 
 ## Disponível
 

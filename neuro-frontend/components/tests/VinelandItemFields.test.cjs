@@ -21,14 +21,17 @@ function load(react = React) {
   return mod.exports;
 }
 
-function loadResult() {
+function loadResult(react = React) {
   const filename = path.join(__dirname, 'VinelandQuestionnaireResult.tsx');
   const mod = new Module(filename, module);
   mod.paths = module.paths;
   const original = mod.require.bind(mod);
-  mod.require = id => id === 'next/link'
-    ? { default: ({ href, children, ...props }) => React.createElement('a', { ...props, href }, children) }
-    : original(id);
+  mod.require = id => {
+    if (id === 'react') return react;
+    if (id === '@/lib/api') return { getToken: () => 'test-token', resolveApiUrl: url => `https://api.example.test${url}` };
+    if (id === 'next/link') return { default: ({ href, children, ...props }) => React.createElement('a', { ...props, href }, children) };
+    return original(id);
+  };
   mod._compile(ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
   }).outputText, filename);
@@ -538,4 +541,58 @@ test('critical items are individual review entries, not a sum, and locked result
   assert.match(html, /Comportamento a revisar/);
   assert.match(html, /não recebe soma ou diagnóstico automático/);
   assert.doesNotMatch(html, /edit=true/);
+});
+
+function interactiveResult() {
+  const state = [];
+  let cursor;
+  const { VinelandQuestionnaireResult } = loadResult({ ...React, useState(initial) {
+    const index = cursor++;
+    if (!(index in state)) state[index] = initial;
+    return [state[index], next => { state[index] = next; }];
+  } });
+  return () => { cursor = 0; return VinelandQuestionnaireResult({ application: finalizedQuestionnaire }); };
+}
+
+test('PDF button fetches the authenticated server PDF, shows progress and downloads it instead of printing HTML', async t => {
+  const tree = interactiveResult();
+  let resolveFetch;
+  const fetchMock = t.mock.method(global, 'fetch', () => new Promise(resolve => { resolveFetch = resolve; }));
+  const blob = new Blob(['%PDF-1.4 test'], { type: 'application/pdf' });
+  t.mock.method(URL, 'createObjectURL', value => { assert.equal(value, blob); return 'blob:vineland-pdf'; });
+  let downloaded = false;
+  const anchor = { click() { downloaded = true; }, remove() {} };
+  const originalDocument = global.document;
+  const originalWindow = global.window;
+  global.document = { createElement(tag) { assert.equal(tag, 'a'); return anchor; }, body: { appendChild(value) { assert.equal(value, anchor); } } };
+  global.window = { setTimeout() {} };
+  try {
+    const button = () => elements(tree()).find(element => element.type === 'button' && element.props['aria-busy'] !== undefined);
+    const request = button().props.onClick();
+    assert.equal(button().props.disabled, true);
+    assert.equal(button().props.children, 'Gerando PDF…');
+    assert.equal(fetchMock.mock.calls[0].arguments[0], 'https://api.example.test/api/tests/applications/85/export-pdf');
+    assert.equal(fetchMock.mock.calls[0].arguments[1].headers.Authorization, 'Bearer test-token');
+    assert.equal(fetchMock.mock.calls[0].arguments[1].cache, 'no-store');
+    resolveFetch({ ok: true, blob: async () => blob });
+    await request;
+    assert.equal(downloaded, true);
+    assert.equal(anchor.href, 'blob:vineland-pdf');
+    assert.equal(anchor.download, 'VINELAND3-85.pdf');
+    assert.equal(button().props.disabled, false);
+  } finally {
+    if (originalDocument === undefined) delete global.document; else global.document = originalDocument;
+    if (originalWindow === undefined) delete global.window; else global.window = originalWindow;
+  }
+});
+
+test('PDF errors remain visible and allow retry without altering the questionnaire', async t => {
+  const tree = interactiveResult();
+  t.mock.method(global, 'fetch', async () => ({ ok: false, status: 404, json: async () => ({ message: 'Finalize o questionário Vineland antes de gerar o PDF.' }) }));
+  const button = () => elements(tree()).find(element => element.type === 'button' && element.props['aria-busy'] !== undefined);
+  await button().props.onClick();
+  assert.equal(button().props.disabled, false);
+  const alert = elements(tree()).find(element => element.props?.role === 'alert');
+  assert.equal(alert.props.children, 'Finalize o questionário Vineland antes de gerar o PDF.');
+  assert.match(renderToStaticMarkup(tree()), /Resumo das áreas adaptativas/);
 });

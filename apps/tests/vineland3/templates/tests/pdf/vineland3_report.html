@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>NeuroAvalia · Vineland-3 · {{ application_code }}</title>
+  <style>
+    @page {
+      size: A4; margin: 12mm 12mm 18mm;
+      @bottom-left { content: "NEUROAVALIA • VINELAND-3"; font: bold 8pt Arial, sans-serif; letter-spacing: 2px; color: #082d5f; border-top: 1px solid #082d5f; vertical-align: middle; }
+      @bottom-right { content: "PÁGINA " counter(page); font: bold 8pt Arial, sans-serif; letter-spacing: 2px; color: #082d5f; border-top: 1px solid #082d5f; vertical-align: middle; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: #153653; font: 9.5pt/1.4 Arial, Helvetica, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; overflow-wrap: break-word; }
+    .page { break-after: page; }
+    .page:last-child { break-after: auto; }
+    h1, h2, h3, p, dl { margin-top: 0; }
+    h1 { font-size: 25pt; line-height: 1.15; margin: 6mm 0; color: #082d5f; }
+    h2 { font-size: 13pt; margin: 0 0 3mm; color: #082d5f; }
+    h3 { font-size: 10pt; margin: 0 0 3mm; }
+    p { margin-bottom: 3mm; }
+    .brand { font-weight: bold; font-size: 11pt; letter-spacing: 5px; margin: 1mm 0 8mm; color: #082d5f; }
+    .cover-head { display: grid; grid-template-columns: 1.2fr 1fr; gap: 7mm; margin-bottom: 6mm; }
+    .cover-title { font-size: 39pt; font-weight: 900; letter-spacing: -2px; color: #082d5f; line-height: 1.1; margin-bottom: 5mm; }
+    .cover-title span, .header-title strong span { color: #1f6fb2; }
+    .subtitle { text-transform: uppercase; letter-spacing: 2px; font-size: 10pt; font-weight: bold; }
+    .metadata { display: grid; grid-template-columns: 1fr auto; gap: 3mm; align-content: start; font-size: 8pt; color: #082d5f; }
+    .metadata dt { text-transform: uppercase; }
+    .metadata dd { margin: 0; font-weight: bold; }
+    .identity { display: grid; grid-template-columns: 33mm 1fr; gap: 1.5mm 5mm; font-size: 9.5pt; margin-bottom: 5mm; }
+    .identity dt { text-transform: uppercase; font-weight: bold; font-size: 8pt; letter-spacing: 1px; }
+    .identity dd { margin: 0; }
+    .intro-row { border-top: 1px solid #a9b5c2; display: grid; grid-template-columns: 33mm 1fr; gap: 5mm; padding: 4mm 0; break-inside: avoid; }
+    .intro-row h2 { font-size: 12pt; }
+    .notice { border: 1px solid #bac8d7; border-left: 3mm solid #082d5f; background: #f4f9fc; padding: 3mm 4mm; font-size: 9pt; margin: 4mm 0; break-inside: avoid; }
+    .notice p:last-child { margin-bottom: 0; }
+    .report-header { border-top: 1px solid #697580; border-bottom: 1px solid #697580; padding: 5mm 0; display: grid; grid-template-columns: 1.2fr 1fr; align-items: center; gap: 8mm; margin-bottom: 6mm; }
+    .header-title strong { display: block; font-size: 27pt; line-height: 1.1; letter-spacing: -1px; color: #082d5f; }
+    .header-title p { font-size: 7pt; font-weight: bold; text-transform: uppercase; margin: 2mm 0 0; }
+    .report-header .metadata { margin: 0; font-size: 7pt; }
+    .columns { display: grid; grid-template-columns: 1.25fr 1fr; gap: 4mm; align-items: start; }
+    .analysis-columns { grid-template-columns: 1fr 1.2fr; }
+    .analysis-columns table { font-size: 7pt; }
+    .analysis-columns thead th { font-size: 6.5pt; overflow-wrap: normal; }
+    .panel { border: 1px solid #ccd4df; border-radius: 3mm; padding: 3mm; margin-bottom: 4mm; break-inside: avoid; }
+    .panel-title { text-align: center; margin: 0 0 3mm; font-size: 10pt; font-weight: bold; color: #082d5f; }
+    .band { background: #082d5f; color: white; padding: 2mm 3mm; margin: -1mm -1mm 3mm; border-radius: 2mm 2mm 0 0; font-size: 10pt; }
+    table { border-collapse: collapse; width: 100%; font-size: 8pt; line-height: 1.25; font-variant-numeric: tabular-nums; }
+    th, td { border: 1px solid #93a4b8; padding: 1.3mm; text-align: center; }
+    th { font-weight: bold; }
+    thead th { background: #dff1fb; }
+    tbody th { text-align: left; }
+    thead { display: table-header-group; }
+    tr { break-inside: avoid; }
+    .muted { color: #526478; }
+    .small { font-size: 8pt; }
+    .tiny { font-size: 7pt; }
+    .score { font-weight: bold; color: #082d5f; }
+    .graph { margin-top: 5mm; }
+    .graph-row { margin-bottom: 5mm; }
+    .graph-label { display: flex; justify-content: space-between; font-size: 9pt; margin-bottom: 2mm; }
+    .track { height: 6mm; background: #eaf2f8; border: 1px solid #c4d2df; }
+    .bar { background: #1f6fb2; height: 100%; }
+    .axis { display: flex; justify-content: space-between; font-size: 7pt; margin-top: 2mm; }
+    .unavailable { color: #526478; text-align: center; }
+    .critical-table { font-size: 7.5pt; }
+    .critical-table { table-layout: fixed; }
+    .critical-table thead th:first-child { width: 10mm; white-space: nowrap; }
+    .critical-table thead th:last-child { width: 18mm; white-space: nowrap; }
+    .critical-table td { padding: 1.2mm; }
+    .adaptive-table { table-layout: fixed; font-size: 7.5pt; }
+    .adaptive-table thead th { font-size: 6.5pt; padding-left: 0.6mm; padding-right: 0.6mm; overflow-wrap: normal; }
+    .critical-table td:nth-child(2) { text-align: left; }
+    .flagged { background: #fff3df; }
+    .section-heading { text-transform: uppercase; letter-spacing: 2px; border-bottom: 1px solid #a9b5c2; padding-bottom: 2mm; margin-top: 5mm; }
+    .prose { font: 11pt/1.55 Georgia, 'Times New Roman', serif; text-align: justify; }
+    .observations { white-space: pre-wrap; overflow-wrap: anywhere; }
+    .source { margin-top: 5mm; font-size: 8pt; color: #526478; }
+  </style>
+</head>
+<body>
+  <section class="page">
+    <div class="brand">NEUROAVALIA</div>
+    <div class="cover-head">
+      <div><div class="cover-title">Vineland<span>-3</span></div><p class="subtitle">Escalas de Comportamento Adaptativo</p><p class="small">Formulário de Pais/Cuidadores dos Níveis de Domínio<br>Relatório de pontuação · Resumo descritivo</p></div>
+      <dl class="metadata"><dt>Código do avaliado</dt><dd>{{ application_code }}</dd><dt>Código do relatório</dt><dd>{{ report_code }}</dd><dt>Data da aplicação</dt><dd>{{ applied_on }}</dd></dl>
+    </div>
+    <h2>Dados do avaliado</h2>
+    <dl class="identity">
+      <dt>Nome</dt><dd>{{ name }}</dd><dt>Sexo</dt><dd>{{ sex }}</dd><dt>Nascimento</dt><dd>{{ birth_date }}</dd><dt>Idade no teste</dt><dd>{{ age }}</dd><dt>Escolaridade</dt><dd>{{ schooling }}</dd><dt>Profissional</dt><dd>{{ professional }}</dd><dt>Pais / cuidador</dt><dd>{{ respondent }}</dd><dt>Aplicação</dt><dd>Preenchimento finalizado · {{ summary.answered }}/{{ summary.applied_total }} itens das seções aplicadas</dd>
+      <dt>Tabela normativa</dt><dd>Conversão normativa não habilitada para este formulário</dd>
+    </dl>
+    <div class="intro-row"><h2>Introdução</h2><div><p>O Vineland-3 investiga comportamentos adaptativos do cotidiano, a partir de informações fornecidas por pais ou cuidadores. Este formulário reúne Comunicação, Atividades de Vida Diária e Socialização, além das seções opcionais de Habilidades Motoras e Problemas de Comportamento.</p><p>As respostas descrevem o que a pessoa realiza habitualmente de forma independente, e não apenas o que seria capaz de fazer.</p></div></div>
+    <div class="intro-row"><h2>Definição</h2><div><p>As pontuações brutas correspondem à soma das respostas das seções aplicadas. Em Comunicação, Atividades de Vida Diária, Socialização e Habilidades Motoras, os valores referem-se à frequência das habilidades relatadas.</p><p>Nas seções Internalizante e Externalizante, maior soma indica maior frequência dos comportamentos relatados. Os itens críticos são apresentados individualmente, sem soma diagnóstica.</p></div></div>
+    <div class="intro-row"><h2>Utilização do relatório</h2><div><p>Este documento apresenta um resumo descritivo do preenchimento e não substitui correção normativa ou avaliação clínica. Os resultados devem ser integrados ao histórico, à entrevista, às observações e aos demais instrumentos da avaliação.</p><p class="small"><strong>Limitação:</strong> escores padrão, CCA, percentis, intervalos de confiança, classificação e comparações estatísticas não calculados. Finalização não equivale a validação clínica ou inclusão no laudo.</p></div></div>
+  </section>
+
+  <section class="page">
+    {% include header_template %}
+    <h1>Resultados</h1>
+    <p class="small">{{ name }} · Idade no teste: {{ age }} · Informante: {{ respondent }}</p>
+    <div class="columns">
+      <div class="panel">
+        <h2 class="panel-title">Resumo da pontuação adaptativa</h2>
+        <table class="adaptive-table"><colgroup><col style="width: 42%"><col style="width: 18%"><col style="width: 17%"><col style="width: 8%"><col style="width: 15%"></colgroup><thead><tr><th scope="col">Domínio</th><th scope="col">Pontuação bruta</th><th scope="col">Escore padrão</th><th scope="col">IC</th><th scope="col">Percentil</th></tr></thead><tbody>
+          {% for row in adaptive %}<tr><th scope="row">{{ row.display_label }} ({{ row.abbreviation }})</th><td class="score">{{ row.score_label }}</td><td>—</td><td>—</td><td>—</td></tr>{% endfor %}
+          <tr><th scope="row">Composto Adaptativo (CCA)</th><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        </tbody></table>
+        <p class="tiny muted">— = não calculado; seção opcional sem respostas = não aplicada. Não somar pontuações brutas para produzir CCA.</p>
+        <h3>Conferência do preenchimento</h3>
+        <table><thead><tr><th scope="col">Área</th><th scope="col">Itens</th><th scope="col">Situação</th></tr></thead><tbody>{% for row in adaptive %}<tr><th scope="row">{{ row.abbreviation }}</th><td>{{ row.answered }}/{{ row.total }}</td><td>{% if row.applied %}Preenchida{% else %}Não aplicada{% endif %}</td></tr>{% endfor %}</tbody></table>
+      </div>
+      <div class="panel">
+        <h2 class="panel-title">Perfil das pontuações brutas</h2>
+        <p class="tiny muted">Escala bruta de 0 a 80. COM, AVD e SOC: máximo 80; HMOT: máximo 50. Não representa o perfil de escores padrão.</p>
+        <div class="graph">{% for row in adaptive %}<div class="graph-row"><div class="graph-label"><strong>{{ row.abbreviation }}</strong><span>{% if row.applied %}{{ row.score_label }} / {{ row.max_score }}{% else %}Não aplicada{% endif %}</span></div><div class="track">{% if row.applied %}<div class="bar" style="width: {{ row.bar_width|stringformat:'.2f' }}%"></div>{% endif %}</div></div>{% endfor %}<div class="axis"><span>0</span><span>20</span><span>40</span><span>60</span><span>80</span></div></div>
+        <div class="notice small">Perfil padrão COM / AVD / SOC / CCA / HMOT: não calculado. As somas brutas não permitem classificar o desempenho em relação à idade.</div>
+      </div>
+    </div>
+    <div class="panel">
+      <h2 class="band">Comportamento mal adaptativo</h2>
+      <table><thead><tr><th scope="col">Seção</th><th scope="col">Pontuação bruta</th><th scope="col">Escala-v</th><th scope="col">Itens respondidos</th><th scope="col">Situação</th></tr></thead><tbody>{% for row in behavior %}<tr><th scope="row">{{ row.short_label }}</th><td class="score">{{ row.score_label }}</td><td>—</td><td>{{ row.answered }}/{{ row.total }}</td><td>{% if row.applied %}Preenchida{% else %}Não aplicada{% endif %}</td></tr>{% endfor %}</tbody></table>
+      <p class="small muted">Maior soma indica maior frequência dos comportamentos relatados. Escala-v e classificação não calculadas. A Seção C está detalhada na página de análise, sem soma.</p>
+    </div>
+    <p class="small muted">Somas obtidas das respostas salvas. Não foram utilizadas normas extensivas ou do WISC-IV. Zero é uma resposta válida; seção não aplicada não equivale a zero.</p>
+  </section>
+
+  <section class="page">
+    {% include header_template %}
+    <h1>Página de Análise</h1>
+    <div class="columns analysis-columns">
+    <div class="panel">
+      <h2 class="band">Análise de força / fraqueza</h2>
+      <table><thead><tr><th scope="col">Domínio</th><th scope="col">Escore padrão</th><th scope="col">Valor crítico</th><th scope="col">Força / fraqueza</th><th scope="col">Taxa de base</th></tr></thead><tbody>{% for row in adaptive %}<tr><th scope="row">{{ row.abbreviation }}</th><td>—</td><td>—</td><td>—</td><td>—</td></tr>{% endfor %}</tbody></table>
+    </div>
+    <div class="panel">
+      <h2 class="band">Comparação das diferenças emparelhadas</h2>
+      <table><thead><tr><th scope="col">Domínios</th><th scope="col">Diferença</th><th scope="col">Valor crítico</th><th scope="col">Signif.</th><th scope="col">Taxa de base</th></tr></thead><tbody>{% for first, second in pairs %}<tr><th scope="row">{{ first }} – {{ second }}</th><td>—</td><td>—</td><td>—</td><td>—</td></tr>{% endfor %}</tbody></table>
+    </div>
+    </div>
+    <p class="small muted">Estas análises dependem de escores padrão e tabelas específicas. Não foram calculadas; não inferir forças, fraquezas ou diferenças significativas das somas brutas.</p>
+    <h2>Itens críticos — Seção C</h2>
+    {% if critical_applied %}<p class="small muted">Respostas 1 ou 2 são destacadas para revisão profissional. Não representam, isoladamente, diagnóstico ou nível de risco.</p>
+    <table class="critical-table"><thead><tr><th scope="col">Item</th><th scope="col">Comportamento relatado</th><th scope="col">Resposta</th></tr></thead><tbody>{% for row in critical_rows %}<tr{% if row.flagged %} class="flagged"{% endif %}><th scope="row">{{ row.id }}</th><td>{{ row.text }}</td><td class="score">{{ row.response }}</td></tr>{% endfor %}</tbody></table>
+    {% else %}<div class="notice">Seção C não aplicada. Ausência de respostas não significa ausência de comportamentos críticos.</div>{% endif %}
+  </section>
+
+  <section class="page">
+    {% include header_template %}
+    <h1>Síntese do registro</h1>
+    <h2 class="section-heading">Síntese descritiva</h2>
+    <div class="prose">
+      <p>O formulário de Pais/Cuidadores dos Níveis de Domínio do Vineland-3 foi preenchido para <strong>{{ name }}</strong>, com informações de {{ respondent }}, na aplicação de {{ applied_on }}. Foram respondidos {{ summary.answered }} de {{ summary.applied_total }} itens das seções aplicadas.</p>
+      <p>{% for row in adaptive %}{% if row.applied %}{{ row.label }} ({{ row.abbreviation }}): pontuação bruta {{ row.raw_score }}, de um máximo de {{ row.max_score }}. {% else %}{{ row.label }} ({{ row.abbreviation }}): seção não aplicada. {% endif %}{% endfor %}</p>
+      <p>{% for row in behavior %}{% if row.applied %}{{ row.short_label }}: pontuação bruta {{ row.raw_score }}. {% else %}{{ row.short_label }}: seção não aplicada. {% endif %}{% endfor %}{% if critical_applied %}A Seção C possui {{ summary.critical_items|length }} item(ns) com resposta 1 ou 2 para conferência individual.{% else %}A Seção C não foi aplicada.{% endif %}</p>
+    </div>
+    <div class="notice"><strong>Interpretação clínica não gerada</strong><p>Não foram calculados CCA, escores padrão, percentis, intervalos de confiança, escala-v ou comparações estatísticas. Este resumo não classifica o comportamento adaptativo e não deve ser apresentado como interpretação clínica ou conclusão diagnóstica.</p></div>
+    <h2 class="section-heading">Observações gerais</h2>
+    <div class="prose observations">{{ observations }}</div>
+    <h2 class="section-heading">Condições de utilização</h2>
+    <p class="small">A análise clínica depende da conferência dos critérios do formulário, das condições da aplicação, do contexto de desenvolvimento e dos demais dados da avaliação. O preenchimento finalizado não representa validação clínica automática. O registro item a item permanece fora da inclusão automática no laudo.</p>
+    <p class="source">Fonte das perguntas: Vineland-3, Formulário de Pais/Cuidadores dos Níveis de Domínio fornecido ao projeto (180 itens, sete seções). Relatório gerado pelo NeuroAvalia. Modelo visual inspirado no relatório WISC-IV; os instrumentos e suas regras de pontuação permanecem separados.</p>
+  </section>
+</body>
+</html>

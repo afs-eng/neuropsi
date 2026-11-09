@@ -21,6 +21,7 @@ from apps.tests.srs2.pdf_service import SRS2PdfService
 from apps.tests.wais3.pdf_service import WAIS3PdfService
 from apps.tests.wisc4.pdf_service import WISC4PdfService
 from apps.tests.thcp.pdf_service import THCPPdfService
+from apps.tests.vineland3.pdf_service import Vineland3PdfService
 
 
 def _polar_point(cx: float, cy: float, radius: float, angle: float) -> tuple[float, float]:
@@ -505,8 +506,17 @@ class THCPPdfExporter(BaseTestPdfExporter):
         return THCPPdfService.generate_pdf_bytes(application)
 
 
+class Vineland3PdfExporter(BaseTestPdfExporter):
+    instrument_code = "vineland3"
+
+    @classmethod
+    def build_pdf_bytes(cls, application) -> bytes:
+        return Vineland3PdfService.generate_pdf_bytes(application)
+
+
 class TestPdfExportService:
     EXPORTERS: dict[str, type[BaseTestPdfExporter]] = {
+        Vineland3PdfExporter.instrument_code: Vineland3PdfExporter,
         THCPPdfExporter.instrument_code: THCPPdfExporter,
         BPA2PdfExporter.instrument_code: BPA2PdfExporter,
         ETDAHADPdfExporter.instrument_code: ETDAHADPdfExporter,

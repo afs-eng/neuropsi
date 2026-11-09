@@ -1,6 +1,8 @@
 'use client'
 
 import Link from 'next/link'
+import { useState } from 'react'
+import { getToken, resolveApiUrl } from '@/lib/api'
 
 const dateFormatter = new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' })
 
@@ -43,12 +45,47 @@ export interface VinelandResultApplication {
 }
 
 export function VinelandQuestionnaireResult({ application }: { application: VinelandResultApplication }) {
+  const [exportingPdf, setExportingPdf] = useState(false)
+  const [pdfError, setPdfError] = useState('')
   const summary = application.raw_payload.item_summary!
   const adaptive = summary.sections.filter(section => section.kind === 'adaptive')
   const behavior = summary.sections.filter(section => section.kind === 'behavior')
   const critical = summary.sections.find(section => section.kind === 'critical')
   const evaluationUrl = `/dashboard/evaluations/${application.evaluation_id}/overview`
   const editUrl = `/dashboard/tests/vineland?evaluation_id=${application.evaluation_id}&application_id=${application.id}&edit=true`
+
+  async function exportPdf() {
+    if (exportingPdf) return
+    setExportingPdf(true)
+    setPdfError('')
+    try {
+      const token = getToken()
+      const response = await fetch(resolveApiUrl(`/api/tests/applications/${application.id}/export-pdf`), {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        cache: 'no-store',
+      })
+      if (!response.ok) {
+        let message = `Não foi possível gerar o PDF (${response.status}).`
+        try {
+          const payload = await response.json()
+          if (payload.message) message = String(payload.message)
+        } catch { /* Keep the HTTP error message if the server did not return JSON. */ }
+        throw new Error(message)
+      }
+      const url = URL.createObjectURL(await response.blob())
+      const download = document.createElement('a')
+      download.href = url
+      download.download = `VINELAND3-${application.id}.pdf`
+      document.body.appendChild(download)
+      download.click()
+      download.remove()
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
+    } catch (error) {
+      setPdfError(error instanceof Error ? error.message : 'Não foi possível gerar o PDF. Tente novamente.')
+    } finally {
+      setExportingPdf(false)
+    }
+  }
 
   function dateLabel(value?: string | null) {
     return value ? dateFormatter.format(new Date(`${value}T00:00:00Z`)) : '—'
@@ -90,10 +127,11 @@ export function VinelandQuestionnaireResult({ application }: { application: Vine
           </div>
           <div className="flex flex-wrap gap-3 print:hidden report-print-hide">
             {application.status !== 'locked' && <Link href={editUrl} className="rounded-full border border-black/10 bg-white px-4 py-3 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50">Editar</Link>}
-            <button type="button" onClick={() => window.print()} className="rounded-full border border-black/10 bg-white px-4 py-3 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50">Imprimir / PDF</button>
+            <button type="button" onClick={exportPdf} disabled={exportingPdf} aria-busy={exportingPdf} className="rounded-full border border-black/10 bg-white px-4 py-3 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50 disabled:cursor-wait disabled:opacity-60">{exportingPdf ? 'Gerando PDF…' : 'Imprimir / PDF'}</button>
             <Link href={evaluationUrl} className="rounded-full bg-zinc-900 px-4 py-3 text-sm font-medium text-white shadow-lg">Voltar à avaliação</Link>
           </div>
         </div>
+        {pdfError && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 print:hidden">{pdfError}</p>}
         <section aria-labelledby="vineland-identification" className="rounded-xl border border-slate-200 bg-white p-5">
           <h2 id="vineland-identification" className="mb-3 font-semibold text-slate-900">Identificação e preenchimento</h2>
           <dl className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">

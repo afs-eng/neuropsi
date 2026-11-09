@@ -2,6 +2,7 @@ import json
 from copy import deepcopy
 from datetime import date
 from io import BytesIO
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import SimpleTestCase, TestCase
@@ -24,6 +25,7 @@ from apps.tests.vineland3.item_protocol import DOMAIN_ITEMS, PROTOCOL_ID, item_p
 from apps.tests.vineland3.import_norms import age_range
 from apps.tests.vineland3.norms import age_months, age_table, load_norms, lookup
 from apps.tests.vineland3.validators import validate_input
+from apps.tests.vineland3.pdf_service import Vineland3PdfService
 
 
 # D.1, PDF page 8: these raw ranges correspond to v-scale 15.
@@ -474,6 +476,91 @@ class Vineland3ApiTests(TestCase):
         self.assertEqual(self.submit_domain_items(application_id=app_id, item_responses=domain_items(), finalize=True).status_code, 403)
         app.refresh_from_db()
         self.assertEqual(app.raw_payload, original)
+
+    def test_pdf_context_recalculates_answers_and_uses_current_identity_not_stale_summary(self):
+        app_id = self.submit_domain_items(item_responses=domain_items("2"), finalize=True).json()["application_id"]
+        app = TestApplication.objects.with_details().get(pk=app_id)
+        app.raw_payload["item_summary"]["sections"][0]["raw_score"] = 999
+        app.raw_payload["birth_date"] = "1900-01-01"
+        app.evaluation.examiner.full_name = "Profissional da avaliação"
+        app.evaluation.examiner.crp = "00/0000"
+        context = Vineland3PdfService._build_context(app)
+        self.assertEqual(context["adaptive"][0]["raw_score"], 80)
+        self.assertEqual(context["adaptive"][0]["bar_width"], 100)
+        self.assertEqual(context["adaptive"][-1]["bar_width"], 62.5)
+        self.assertEqual(context["age"], "3 anos e 0 meses")
+        self.assertEqual(context["name"], self.patient.full_name)
+        self.assertEqual(context["professional"], "Profissional da avaliação · CRP 00/0000")
+        self.assertEqual(context["report_code"], f"RPT-VINELAND3-{app_id:03d}")
+        self.assertTrue(all(row["flagged"] for row in context["critical_rows"]))
+
+    def test_pdf_template_has_four_sections_and_explicitly_unavailable_normative_analysis(self):
+        app_id = self.submit_domain_items(item_responses=domain_items(core_only=True), finalize=True).json()["application_id"]
+        app = TestApplication.objects.with_details().get(pk=app_id)
+        html = Vineland3PdfService.render_html(app)
+        self.assertEqual(html.count('<section class="page">'), 4)
+        self.assertEqual(html.count('<header class="report-header">'), 3)
+        for text in ("Dados do avaliado", "Resumo da pontuação adaptativa", "Perfil das pontuações brutas",
+                     "Página de Análise", "Análise de força / fraqueza", "Comparação das diferenças emparelhadas",
+                     "Síntese descritiva", "Interpretação clínica não gerada", "PÁGINA", "Não aplicada"):
+            self.assertIn(text, html)
+        self.assertIn('class="score">0</td>', html)
+        self.assertIn("Seção C não aplicada", html)
+        self.assertNotIn("overflow: hidden", html)
+        self.assertNotIn("Lucas Morais Costa", html)
+        self.assertNotIn("Jacqueline Oliveira Caires", html)
+
+    def test_pdf_escapes_user_text_and_keeps_full_general_observations(self):
+        note = "<script>alert('nota')</script>\n" + "Observação muito longa. " * 350 + "FIM DA OBSERVAÇÃO"
+        app_id = self.submit_domain_items(item_responses=domain_items(), finalize=True,
+                                          general_observations=note, respondent='<img src="https://example.com/tracker">').json()["application_id"]
+        app = TestApplication.objects.with_details().get(pk=app_id)
+        app.evaluation.patient.full_name = "Paciente <iframe>"
+        html = Vineland3PdfService.render_html(app)
+        self.assertIn("Paciente &lt;iframe&gt;", html)
+        self.assertIn("&lt;script&gt;", html)
+        self.assertIn("&lt;img", html)
+        self.assertIn("FIM DA OBSERVAÇÃO", html)
+        self.assertNotIn("<script>", html)
+        self.assertNotIn('<img src="https://', html)
+
+    def test_pdf_route_uses_vineland_service_and_returns_authenticated_pdf(self):
+        app_id = self.submit_domain_items(item_responses=domain_items(), finalize=True).json()["application_id"]
+        with patch("apps.tests.vineland3.pdf_service.generate_pdf_from_html", return_value=b"%PDF-1.4\nVineland") as renderer:
+            response = self.client.get(f"/api/tests/applications/{app_id}/export-pdf", HTTP_AUTHORIZATION=f"Bearer {self.token}")
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        self.assertTrue(response.content.startswith(b"%PDF"))
+        self.assertIn("VINELAND3", response["Content-Disposition"])
+        self.assertIn('-completo.pdf"', response["Content-Disposition"])
+        renderer.assert_called_once()
+        self.assertIn(self.patient.full_name, renderer.call_args.args[0])
+        self.assertIn("Resumo da pontuação adaptativa", renderer.call_args.args[0])
+
+    def test_pdf_route_rejects_drafts_legacy_totals_and_incomplete_finalized_records(self):
+        partial_id = self.submit_domain_items().json()["application_id"]
+        legacy_id = self.submit_items().json()["application_id"]
+        totals_id = self.submit().json()["application_id"]
+        with patch("apps.tests.vineland3.pdf_service.generate_pdf_from_html") as renderer:
+            for app_id in (partial_id, legacy_id, totals_id):
+                result = self.client.get(f"/api/tests/applications/{app_id}/export-pdf", HTTP_AUTHORIZATION=f"Bearer {self.token}")
+                self.assertEqual(result.status_code, 404, result.content)
+            app = TestApplication.objects.get(pk=partial_id)
+            app.raw_payload["completion_status"] = "finalized"
+            app.save()
+            result = self.client.get(f"/api/tests/applications/{partial_id}/export-pdf", HTTP_AUTHORIZATION=f"Bearer {self.token}")
+            self.assertEqual(result.status_code, 404, result.content)
+            renderer.assert_not_called()
+
+    def test_pdf_route_enforces_authentication_and_patient_ownership(self):
+        app_id = self.submit_domain_items(item_responses=domain_items(), finalize=True).json()["application_id"]
+        url = f"/api/tests/applications/{app_id}/export-pdf"
+        self.assertEqual(self.client.get(url).status_code, 401)
+        other = get_user_model().objects.create_user(username="pdf-other", email="pdf-other@example.com", role=UserRole.NEUROPSYCHOLOGIST)
+        with patch("apps.tests.vineland3.pdf_service.generate_pdf_from_html") as renderer:
+            result = self.client.get(url, HTTP_AUTHORIZATION=f"Bearer {issue_api_token(other)}")
+            self.assertEqual(result.status_code, 404, result.content)
+            renderer.assert_not_called()
 
     def test_protocols_cannot_be_swapped_in_place(self):
         old_id = self.submit_items().json()["application_id"]

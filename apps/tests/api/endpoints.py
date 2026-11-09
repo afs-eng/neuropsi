@@ -703,7 +703,7 @@ def export_test_application_pdf(request, application_id: int, report_type: str =
     patient_name = application.evaluation.patient.full_name if application.evaluation_id else f"test-{application_id}"
     if application.instrument.code == "srs2" and report_type == "complete":
         suffix = "completo"
-    elif application.instrument.code == "ebadep_a":
+    elif application.instrument.code in {"ebadep_a", "vineland3"}:
         suffix = "completo"
     else:
         suffix = "resumido"
