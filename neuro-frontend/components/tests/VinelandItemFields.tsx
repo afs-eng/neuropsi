@@ -103,7 +103,7 @@ export function VinelandItemFields({ protocol, responses, onChange, observations
       <dl aria-label="Legenda de pontuação" className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
         {['2', '1', '0', 'N', 'D'].filter(code => code in protocol.legend).map(code => <div key={code} className="flex gap-2"><dt className="font-bold">{code}</dt><dd>{domain.behavior_problems && code === '2' ? 'Frequentemente' : protocol.legend[code]}</dd></div>)}
       </dl>
-      {protocol.supports_estimates && <p className="text-sm text-slate-700">Est. = pontuação estimada. Itens binários aceitam somente 0 ou 2. Formulário de níveis de domínio a partir de 3 anos; motor opcional até 9 anos. Consulte os critérios das páginas 2 e 15 do PDF.</p>}
+      {protocol.supports_estimates && <p className="text-sm text-slate-700">Itens binários aceitam somente 0 ou 2. Formulário de níveis de domínio a partir de 3 anos; motor opcional até 9 anos. Consulte os critérios das páginas 2 e 15 do PDF.</p>}
       {domain.behavior_problems && <p className="font-medium text-amber-950">Nesta seção, maior pontuação significa mais problemas de comportamento, não maior adaptação. Itens críticos devem ser avaliados individualmente pelo profissional, sem soma diagnóstica.</p>}
     </div>
     <h2 id="vineland-active-domain" className="text-xl font-semibold text-slate-900">{domain.label}</h2>
@@ -111,7 +111,7 @@ export function VinelandItemFields({ protocol, responses, onChange, observations
     <p role="status" className="text-sm text-slate-600">{answered} de {total} itens transcritos respondidos; {total - answered} pendentes. Campos vazios não são zero. O registro parcial pode ser salvo. {protocol.supports_estimates && 'As pendências incluem seções opcionais ainda não preenchidas; isso não indica aplicação incompleta dessas seções.'}</p>
     <div className="overflow-x-auto">
       <table aria-labelledby="vineland-active-domain" className="w-full text-left text-sm">
-        <thead><tr className="border-b"><th scope="col" className="p-2">Nº</th><th scope="col" className="p-2">Pergunta</th><th scope="col" className="p-2 text-right">Resposta</th>{protocol.supports_estimates && <th scope="col" className="p-2">Est.</th>}</tr></thead>
+        <thead><tr className="border-b"><th scope="col" className="p-2">Nº</th><th scope="col" className="p-2">Pergunta</th><th scope="col" className="p-2 text-right">Resposta</th></tr></thead>
         <tbody>{domain.items.map(item => {
           const entry = responses[domain.code]?.[item.id]
           const value = entry?.response ?? ''
@@ -124,7 +124,6 @@ export function VinelandItemFields({ protocol, responses, onChange, observations
               <label htmlFor={id}>{item.text}</label>
               {item.allowed_responses?.length === 2 && <p className="mt-1 text-xs font-medium text-slate-700">Somente 2 = Sim ou 0 = Não.</p>}
               {item.hint && <p className="mt-1 text-sm text-slate-600">{item.hint}</p>}
-              {protocol.item_observations && <details className="mt-2 text-sm"><summary className="cursor-pointer text-slate-600">Observação do item</summary><label htmlFor={`${id}-observation`} className="sr-only">{domain.label}, item {item.id}: observação</label><textarea id={`${id}-observation`} rows={2} maxLength={2000} disabled={disabled} value={entry?.observation ?? ''} onChange={event => update(item.id, { observation: event.target.value })} className="mt-2 w-full rounded-md border p-2" /></details>}
             </th>
             <td className="p-2 text-right">
               <input id={id} name={`${domain.code}.${item.id}.response`} type="text" maxLength={1} inputMode={protocol.supports_estimates ? 'numeric' : 'text'} pattern={item.allowed_responses ? `[${allowed.join('')}]` : '[210NnDd]'} autoComplete="off" spellCheck={false}
@@ -134,7 +133,6 @@ export function VinelandItemFields({ protocol, responses, onChange, observations
               {invalid && <p id={`${id}-error`} className="mt-1 text-xs text-red-800">Use {allowed.join(', ')}.</p>}
               {value === '' && <span className="mt-1 block text-xs text-slate-500">Pendente</span>}
             </td>
-            {protocol.supports_estimates && <td className="p-2"><label className="flex min-h-11 min-w-11 items-center justify-center"><span className="sr-only">{domain.label}, item {item.id}: pontuação estimada</span><input type="checkbox" name={`${domain.code}.${item.id}.estimated`} checked={entry?.estimated ?? false} disabled={disabled || value === '' || invalid} onChange={event => update(item.id, { estimated: event.target.checked })} className="h-5 w-5" /></label></td>}
           </tr>
         })}</tbody>
       </table>

@@ -138,38 +138,41 @@ const domainProtocol = {
   ],
 };
 
-test('domain-level form has numeric text scores, binary constraints and separate estimate checkboxes', () => {
+test('domain-level rows contain only the question and a numeric text response, without observations or estimates', () => {
   const html = render({ protocol: domainProtocol, responses: {} });
   assert.equal((html.match(/type="text"/g) || []).length, 2);
-  assert.equal((html.match(/type="checkbox"/g) || []).length, 2);
+  assert.equal((html.match(/type="checkbox"/g) || []).length, 0);
   assert.match(html, /pattern="\[210\]"/);
   assert.match(html, /pattern="\[20\]"/);
   assert.match(html, /Somente 2 = Sim ou 0 = Não/);
   assert.match(html, /Critério específico do formulário/);
   assert.match(html, /páginas 4 e 5/);
   assert.doesNotMatch(html, /<select|\[210NnDd\]|edição não confirmada/);
-  assert.equal((html.match(/<textarea/g) || []).length, 3);
+  assert.equal((html.match(/<textarea/g) || []).length, 1);
+  const table = html.slice(html.indexOf('<table'), html.indexOf('</table>'));
+  assert.doesNotMatch(table, /Observação|Est\.|<details|<textarea|type="checkbox"/);
+  assert.equal((table.match(/scope="col"/g) || []).length, 3);
 });
 
-test('domain-level estimates and observations survive edits, tab navigation and reloading', () => {
-  const tree = interactive(domainProtocol, { comunicacao: { '1': { response: '0', observation: 'Nota', estimated: false } } });
+test('hidden historical estimates and observations survive response edits, tab navigation and reloading', () => {
+  const tree = interactive(domainProtocol, { comunicacao: { '1': { response: '0', observation: 'Nota histórica', estimated: true } } });
   const find = id => elements(tree()).find(element => element.props?.id === id || element.props?.name === id);
-  find('comunicacao.1.estimated').props.onChange({ target: { checked: true } });
-  find('vineland-item-comunicacao-1-observation').props.onChange({ target: { value: 'Nota atualizada' } });
+  assert.equal(find('comunicacao.1.estimated'), undefined);
+  assert.equal(find('vineland-item-comunicacao-1-observation'), undefined);
+  find('vineland-item-comunicacao-1').props.onChange({ target: { value: '2' } });
   elements(tree()).find(element => element.type === 'button' && element.props.children === 'Problemas de Comportamento — Seção C').props.onClick();
   const html = renderToStaticMarkup(tree());
   assert.match(html, /maior pontuação significa mais problemas/);
   assert.match(html, /sem soma diagnóstica/);
   elements(tree()).find(element => element.type === 'button' && element.props.children === 'Comunicação').props.onClick();
-  assert.equal(find('comunicacao.1.estimated').props.checked, true);
-  assert.equal(find('vineland-item-comunicacao-1').props.value, '0');
-  assert.equal(find('vineland-item-comunicacao-1-observation').props.value, 'Nota atualizada');
+  assert.equal(find('vineland-item-comunicacao-1').props.value, '2');
+  assert.deepEqual(tree.getResponses().comunicacao['1'], { response: '2', observation: 'Nota histórica', estimated: true });
   const reopened = interactive(domainProtocol, tree.getResponses());
-  assert.equal(elements(reopened()).find(element => element.props?.name === 'comunicacao.1.estimated').props.checked, true);
+  assert.equal(elements(reopened()).find(element => element.props?.id === 'vineland-item-comunicacao-1').props.value, '2');
+  assert.deepEqual(reopened.getResponses().comunicacao['1'], tree.getResponses().comunicacao['1']);
   find('vineland-item-comunicacao-1').props.onChange({ target: { value: '' } });
-  assert.equal(find('comunicacao.1.estimated').props.checked, false);
-  assert.equal(find('comunicacao.1.estimated').props.disabled, true);
-  assert.equal(find('vineland-item-comunicacao-1-observation').props.value, 'Nota atualizada');
+  assert.equal(tree.getResponses().comunicacao['1'].estimated, false);
+  assert.equal(tree.getResponses().comunicacao['1'].observation, 'Nota histórica');
 });
 
 test('domain-level form rejects N/D and binary 1 without mutating the answer', () => {
@@ -212,7 +215,7 @@ test('evaluation-created empty applications open questions instead of extensive 
   assert.equal(vinelandEntryMode({ ...placeholder, raw_payload: { entry_mode: 'items', item_protocol_id: protocol.id } }), 'items');
 });
 
-test('locked domain-level records disable scores, estimates and all observations', () => {
+test('locked domain-level records disable responses and general observations', () => {
   const tree = interactive(domainProtocol, { comunicacao: { '1': { response: '2', observation: '', estimated: true } } }, true);
   for (const element of elements(tree()).filter(element => ['input', 'textarea'].includes(element.type))) {
     assert.equal(element.props.disabled, true);

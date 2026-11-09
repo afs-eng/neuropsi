@@ -228,7 +228,7 @@ def item_protocol():
     return {
         "id": PROTOCOL_ID, "source": SOURCE, "pdf_source": PDF_SOURCE,
         "title": "Vineland-3 — Pais/Cuidadores dos Níveis de Domínio",
-        "description": "Avalie o comportamento que a pessoa realiza sozinha, sem ajuda ou lembretes. Registre as informações do pai/cuidador. Responda todos os itens das seções aplicadas; não há basal ou teto. Est. indica uma pontuação estimada.",
+        "description": "Avalie o comportamento que a pessoa realiza sozinha, sem ajuda ou lembretes. Registre as informações do pai/cuidador. Responda todos os itens das seções aplicadas; não há basal ou teto.",
         "legend": {"2": "Usualmente ou frequentemente", "1": "Às vezes", "0": "Nunca"},
         "edition_verified": True, "complete": True, "scoring_enabled": False,
         "supports_estimates": True, "item_observations": True,
