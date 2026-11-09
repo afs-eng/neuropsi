@@ -38,6 +38,12 @@ def raw(form="professores", birth="2023-01-15", applied="2026-01-15"):
             "birth_date": birth, "reference_date": applied, "raw_scores": scores}
 
 
+def domain_items(value="0", core_only=False):
+    return {code: {str(index): {"response": value} for index in range(1, len(items) + 1)}
+            for code, (_, items) in domain_protocol.DOMAIN_ITEMS.items()
+            if not core_only or code in {"comunicacao", "vida_diaria", "socializacao"}}
+
+
 class Vineland3NormTests(SimpleTestCase):
     def test_domain_level_bank_has_all_180_items_in_seven_sections(self):
         protocol = domain_protocol.item_protocol()
@@ -378,6 +384,96 @@ class Vineland3ApiTests(TestCase):
         app = TestApplication.objects.get(pk=response.json()["application_id"])
         self.assertEqual(sum(len(items) for items in app.raw_payload["item_responses"].values()), 180)
         self.assertEqual(app.computed_payload, {})
+
+    def test_finalize_all_sections_persists_descriptive_result_and_same_application(self):
+        original = self.submit_domain_items(general_observations="Nota que deve ser preservada").json()["application_id"]
+        response = self.submit_domain_items(application_id=original, item_responses=domain_items("2"), finalize=True)
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json()["application_id"], original)
+        app = TestApplication.objects.get(pk=original)
+        self.assertEqual(app.raw_payload["completion_status"], "finalized")
+        self.assertEqual(app.raw_payload["general_observations"], "Nota que deve ser preservada")
+        summary = app.raw_payload["item_summary"]
+        self.assertEqual((summary["answered"], summary["applied_total"]), (180, 180))
+        self.assertFalse(summary["normative_scoring"])
+        self.assertEqual([section["raw_score"] for section in summary["sections"]], [80, 80, 80, 50, 26, 22, None])
+        self.assertEqual(len(summary["critical_items"]), 11)
+        self.assertEqual(summary["critical_items"][0]["text"], domain_protocol.DOMAIN_ITEMS["comportamento_c"][1][0])
+        self.assertEqual(app.computed_payload, {})
+        self.assertEqual(app.classified_payload, {})
+        self.assertEqual(app.interpretation_text, "")
+        self.assertFalse(app.is_validated)
+        self.assertEqual(app.status, TestApplication.Status.COMPLETED)
+        read = self.client.get(f"/api/tests/applications/{original}", HTTP_AUTHORIZATION=f"Bearer {self.token}")
+        self.assertEqual(read.json()["raw_payload"]["item_summary"], summary)
+        # Finishing the entry must not bypass the clinical/report guard.
+        app.is_validated = True
+        app.save()
+        self.assertEqual(build_validated_tests_snapshot(self.evaluation), [])
+        self.assertFalse(TestScoringService.process(app)["ok"])
+
+    def test_finalize_core_only_counts_zero_and_optional_sections_are_not_applied(self):
+        response = self.submit_domain_items(item_responses=domain_items(core_only=True), finalize=True)
+        self.assertEqual(response.status_code, 200, response.content)
+        summary = response.json()["raw_payload"]["item_summary"]
+        self.assertEqual((summary["answered"], summary["applied_total"]), (120, 120))
+        self.assertEqual([section["raw_score"] for section in summary["sections"]], [0, 0, 0, None, None, None, None])
+        self.assertEqual([section["applied"] for section in summary["sections"]], [True, True, True, False, False, False, False])
+        self.assertEqual(summary["sections"][0]["response_counts"], {"0": 40, "1": 0, "2": 0})
+
+    def test_finalize_rejects_missing_core_and_partially_answered_optional_sections_without_overwriting(self):
+        app_id = self.submit_domain_items().json()["application_id"]
+        original = deepcopy(TestApplication.objects.get(pk=app_id).raw_payload)
+        missing = domain_items(core_only=True)
+        missing["comunicacao"]["2"]["response"] = ""
+        response = self.submit_domain_items(application_id=app_id, item_responses=missing, finalize=True)
+        self.assertEqual(response.status_code, 400, response.content)
+        self.assertIn("itens 2.", response.json()["message"])
+        for section in ("atividade_fisica", "comportamento_a", "comportamento_b", "comportamento_c"):
+            answers = domain_items(core_only=True)
+            answers[section] = {"1": {"response": "0"}}
+            result = self.submit_domain_items(application_id=app_id, item_responses=answers, finalize=True)
+            self.assertEqual(result.status_code, 400, result.content)
+            self.assertIn(domain_protocol.DOMAIN_ITEMS[section][0], result.json()["message"])
+        self.assertEqual(TestApplication.objects.get(pk=app_id).raw_payload, original)
+
+    def test_finalized_critical_items_have_no_sum_and_only_list_positive_responses(self):
+        answers = domain_items()
+        answers["comportamento_c"]["2"]["response"] = "1"
+        answers["comportamento_c"]["11"]["response"] = "2"
+        response = self.submit_domain_items(item_responses=answers, finalize=True)
+        self.assertEqual(response.status_code, 200, response.content)
+        summary = response.json()["raw_payload"]["item_summary"]
+        self.assertEqual(summary["sections"][-1]["raw_score"], None)
+        self.assertEqual(summary["sections"][-1]["max_score"], None)
+        self.assertEqual([(item["id"], item["response"]) for item in summary["critical_items"]], [("2", "1"), ("11", "2")])
+
+    def test_editing_a_finalized_questionnaire_rebuilds_result_and_partial_save_removes_it(self):
+        answers = domain_items()
+        app_id = self.submit_domain_items(item_responses=answers, finalize=True).json()["application_id"]
+        answers["comunicacao"]["1"]["response"] = "2"
+        updated = self.submit_domain_items(application_id=app_id, item_responses=answers, finalize=True)
+        self.assertEqual(updated.status_code, 200, updated.content)
+        self.assertEqual(updated.json()["raw_payload"]["item_summary"]["sections"][0]["raw_score"], 2)
+        partial = self.submit_domain_items(application_id=app_id, item_responses=answers)
+        self.assertEqual(partial.status_code, 200, partial.content)
+        self.assertEqual(partial.json()["raw_payload"]["completion_status"], "partial")
+        self.assertNotIn("item_summary", partial.json()["raw_payload"])
+        self.assertEqual(partial.json()["raw_payload"]["item_responses"]["comunicacao"]["1"]["response"], "2")
+
+    def test_finalize_rejects_legacy_invalid_binary_and_locked_records(self):
+        self.assertEqual(self.submit_items(finalize=True).status_code, 400)
+        invalid = domain_items()
+        invalid["vida_diaria"]["40"]["response"] = "1"
+        self.assertEqual(self.submit_domain_items(item_responses=invalid, finalize=True).status_code, 400)
+        app_id = self.submit_domain_items().json()["application_id"]
+        app = TestApplication.objects.get(pk=app_id)
+        original = deepcopy(app.raw_payload)
+        app.status = TestApplication.Status.LOCKED
+        app.save()
+        self.assertEqual(self.submit_domain_items(application_id=app_id, item_responses=domain_items(), finalize=True).status_code, 403)
+        app.refresh_from_db()
+        self.assertEqual(app.raw_payload, original)
 
     def test_protocols_cannot_be_swapped_in_place(self):
         old_id = self.submit_items().json()["application_id"]

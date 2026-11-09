@@ -268,3 +268,34 @@ def normalize_item_responses(responses):
                 raise ValueError(f"{domain}/{item_id}: observação deve ter até 2000 caracteres.")
             normalized[domain][item_id] = {"response": response, "observation": observation, "estimated": estimated}
     return normalized
+
+
+def build_item_summary(responses):
+    """Finalize this form with descriptive sums only, never normative scores."""
+    responses = normalize_item_responses(responses)
+    sections = []
+    critical_items = []
+    for code, (label, items) in DOMAIN_ITEMS.items():
+        entries = responses.get(code, {})
+        answered = {item_id: entry for item_id, entry in entries.items() if entry["response"] != ""}
+        applied = code in {"comunicacao", "vida_diaria", "socializacao"} or bool(answered)
+        missing = [str(index) for index in range(1, len(items) + 1) if str(index) not in answered]
+        if applied and missing:
+            raise ValueError(f"{label}: faltam respostas nos itens {', '.join(missing)}. Salve parcialmente para continuar depois.")
+        critical = code == "comportamento_c"
+        sections.append({
+            "code": code, "label": label, "applied": applied,
+            "kind": "critical" if critical else "behavior" if code.startswith("comportamento_") else "adaptive",
+            "answered": len(answered), "total": len(items),
+            "raw_score": sum(int(entry["response"]) for entry in answered.values()) if applied and not critical else None,
+            "max_score": len(items) * 2 if not critical else None,
+            "response_counts": {value: sum(entry["response"] == value for entry in answered.values()) for value in ("0", "1", "2")},
+        })
+        if critical:
+            critical_items = [{"id": item_id, "text": items[int(item_id) - 1], "response": entry["response"]}
+                              for item_id, entry in answered.items() if entry["response"] in {"1", "2"}]
+            critical_items.sort(key=lambda item: int(item["id"]))
+    return {"protocol_id": PROTOCOL_ID, "normative_scoring": False,
+            "sections": sections, "critical_items": critical_items,
+            "answered": sum(section["answered"] for section in sections),
+            "applied_total": sum(section["total"] for section in sections if section["applied"])}

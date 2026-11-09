@@ -1,12 +1,12 @@
 # Graph Report - neuropsi  (2026-11-09)
 
 ## Corpus Check
-- 763 files · ~1,040,735 words
+- 765 files · ~1,042,762 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 7974 nodes · 15930 edges · 217 communities detected
-- Extraction: 67% EXTRACTED · 33% INFERRED · 0% AMBIGUOUS · INFERRED: 5267 edges (avg confidence: 0.72)
+- 7987 nodes · 15968 edges · 217 communities detected
+- Extraction: 67% EXTRACTED · 33% INFERRED · 0% AMBIGUOUS · INFERRED: 5280 edges (avg confidence: 0.72)
 - Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
@@ -115,10 +115,10 @@
 - [[_COMMUNITY_Community 102|Community 102]]
 - [[_COMMUNITY_Community 103|Community 103]]
 - [[_COMMUNITY_Community 104|Community 104]]
-- [[_COMMUNITY_Community 105|Community 105]]
+- [[_COMMUNITY_Community 109|Community 109]]
 - [[_COMMUNITY_Community 110|Community 110]]
 - [[_COMMUNITY_Community 111|Community 111]]
-- [[_COMMUNITY_Community 112|Community 112]]
+- [[_COMMUNITY_Community 113|Community 113]]
 - [[_COMMUNITY_Community 114|Community 114]]
 - [[_COMMUNITY_Community 115|Community 115]]
 - [[_COMMUNITY_Community 116|Community 116]]
@@ -155,12 +155,11 @@
 - [[_COMMUNITY_Community 165|Community 165]]
 - [[_COMMUNITY_Community 166|Community 166]]
 - [[_COMMUNITY_Community 167|Community 167]]
-- [[_COMMUNITY_Community 229|Community 229]]
 - [[_COMMUNITY_Community 230|Community 230]]
-- [[_COMMUNITY_Community 270|Community 270]]
-- [[_COMMUNITY_Community 272|Community 272]]
+- [[_COMMUNITY_Community 231|Community 231]]
+- [[_COMMUNITY_Community 271|Community 271]]
 - [[_COMMUNITY_Community 273|Community 273]]
-- [[_COMMUNITY_Community 377|Community 377]]
+- [[_COMMUNITY_Community 274|Community 274]]
 - [[_COMMUNITY_Community 378|Community 378]]
 - [[_COMMUNITY_Community 379|Community 379]]
 - [[_COMMUNITY_Community 380|Community 380]]
@@ -193,7 +192,7 @@
 - [[_COMMUNITY_Community 407|Community 407]]
 - [[_COMMUNITY_Community 408|Community 408]]
 - [[_COMMUNITY_Community 409|Community 409]]
-- [[_COMMUNITY_Community 424|Community 424]]
+- [[_COMMUNITY_Community 410|Community 410]]
 - [[_COMMUNITY_Community 425|Community 425]]
 - [[_COMMUNITY_Community 426|Community 426]]
 - [[_COMMUNITY_Community 427|Community 427]]
@@ -227,10 +226,11 @@
 - [[_COMMUNITY_Community 455|Community 455]]
 - [[_COMMUNITY_Community 456|Community 456]]
 - [[_COMMUNITY_Community 457|Community 457]]
+- [[_COMMUNITY_Community 458|Community 458]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `GET()` - 865 edges
-2. `save()` - 128 edges
+1. `GET()` - 869 edges
+2. `save()` - 130 edges
 3. `split()` - 114 edges
 4. `_build_context()` - 104 edges
 5. `_build_adolescent_document()` - 92 edges
@@ -243,56 +243,56 @@
 ## Surprising Connections (you probably didn't know these)
 - `Escopo individual explícito, sem acesso clínico global por papel administrativo.` --uses--> `Evaluation`  [INFERRED]
   apps/common/clinical_access.py → /home/andre/neuro/apps/evaluations/models.py
+- `test_pdf_service_renders_template()` --calls--> `generate_pdf_bytes()`  [INFERRED]
+  apps/tests/tests.py → /home/andre/neuropsi/apps/tests/ebadep_a/pdf_service.py
+- `split()` --calls--> `env_list()`  [INFERRED]
+  /home/andre/neuro/apps/common/templatetags/form_helpers.py → config/settings/base.py
 - `formatDisplayDate()` --calls--> `split()`  [INFERRED]
   neuro-frontend/app/dashboard/evaluations/[id]/overview/page.tsx → /home/andre/neuro/apps/common/templatetags/form_helpers.py
-- `test_disabled_pilot_reports_configuration_without_breaking_report()` --calls--> `GET()`  [INFERRED]
-  apps/reports/test_specialist_pilot.py → /home/andre/neuropsi/neuro-frontend/app/pdf-render/bfp/[id]/route.ts
-- `test_status_explains_missing_eligible_instruments()` --calls--> `GET()`  [INFERRED]
-  apps/reports/test_specialist_pilot.py → /home/andre/neuropsi/neuro-frontend/app/pdf-render/bfp/[id]/route.ts
-- `test_missing_explicit_model_cannot_activate_pilot()` --calls--> `GET()`  [INFERRED]
-  apps/reports/test_specialist_pilot.py → /home/andre/neuropsi/neuro-frontend/app/pdf-render/bfp/[id]/route.ts
+- `test_routes_are_registered_on_the_main_api()` --calls--> `GET()`  [INFERRED]
+  apps/reports/test_report_preparation.py → /home/andre/neuropsi/neuro-frontend/app/pdf-render/bfp/[id]/route.ts
 
 ## Communities
 
 ### Community 0 - "Community 0"
 Cohesion: 0.01
-Nodes (417): env_list(), Base Django settings shared across environments., gerar_grafico_bpa(), gerar_grafico_bpa_bytes(), _render_bpa_chart(), _calcular_idade(), get_percentil_subteste(), Converte ponto ponderado (1-19) em percentil usando tabela normativa do WISC-IV. (+409 more)
+Nodes (418): gerar_grafico_bpa(), gerar_grafico_bpa_bytes(), _render_bpa_chart(), _calcular_idade(), get_percentil_subteste(), Converte ponto ponderado (1-19) em percentil usando tabela normativa do WISC-IV., build_percentile_chart(), get_severity_level() (+410 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.01
-Nodes (259): EvaluationAdmin, EvaluationDocumentAdmin, PatientAdmin, AIHealthcheckService, check(), ensure_available(), _timeout(), AILogService (+251 more)
+Nodes (243): EvaluationAdmin, EvaluationDocumentAdmin, PatientAdmin, AIHealthcheckService, bpa2_evidence_gaps(), bpa2_reading_guide(), Formato das novas gerações; não se aplica retroativamente às revisões., Mapeia fatos existentes; não recalcula nem cria escores/normas. (+235 more)
 
 ### Community 2 - "Community 2"
 Cohesion: 0.01
-Nodes (204): get_instrument_age_rule(), calc_age_parts(), calcAge(), get_faixa_wisc(), get_reference_date(), validate_instrument_age(), submit(), thcp_protocol() (+196 more)
+Nodes (207): get_instrument_age_rule(), calc_age_parts(), calcAge(), get_faixa_wisc(), get_reference_date(), validate_instrument_age(), submit(), thcp_protocol() (+199 more)
 
 ### Community 3 - "Community 3"
 Cohesion: 0.02
-Nodes (118): BaseCommand, bpa2_evidence_gaps(), bpa2_reading_guide(), Formato das novas gerações; não se aplica retroativamente às revisões., Mapeia fatos existentes; não recalcula nem cria escores/normas., Reporta ausências; nunca altera a saída nem cria citações., validate_bpa2_editorial_layout(), validate_bpa2_findings() (+110 more)
+Nodes (283): convert_a1_to_csv(), convert_composite_scores(), convert_psychometrics(), convert_supplementary(), expand_range_to_raw_scores(), main(), parse_range(), Conversor de tabelas XLSM/XLSX do WAIS-III para CSV.  Converte as tabelas normat (+275 more)
 
 ### Community 4 - "Community 4"
 Cohesion: 0.01
-Nodes (210): checker(), clearAcross(), hide(), ready(), reset(), show(), showClear(), showQuestion() (+202 more)
+Nodes (208): checker(), clearAcross(), hide(), ready(), reset(), show(), showClear(), showQuestion() (+200 more)
 
 ### Community 5 - "Community 5"
-Cohesion: 0.02
-Nodes (278): convert_a1_to_csv(), convert_composite_scores(), convert_psychometrics(), convert_supplementary(), expand_range_to_raw_scores(), main(), parse_range(), Conversor de tabelas XLSM/XLSX do WAIS-III para CSV.  Converte as tabelas normat (+270 more)
-
-### Community 6 - "Community 6"
-Cohesion: 0.02
-Nodes (187): Migration, seed_templates_v2(), AbstractUser, UserAdmin, BearerAuth, BaseUserAdmin, owned_evaluation_children(), owned_patients() (+179 more)
-
-### Community 7 - "Community 7"
 Cohesion: 0.01
 Nodes (204): 10.1. Objetivo, 10.2. Campos obrigatórios, 10.3. Regra de preenchimento, 10.4. Escores de processo comuns no WISC-IV, 10.5. Uso clínico, 10.6. Erros frequentes, 10. Tabela: Análise dos Escores de Processo, 11.1. Objetivo (+196 more)
 
-### Community 8 - "Community 8"
+### Community 6 - "Community 6"
 Cohesion: 0.01
 Nodes (201): 10.1 Título, 10.2 Definição, 10.3 Tabela, 10.4 Gráfico BPA-2, 10.5 Interpretação, 10. BPA-2 – Atenção, 11.1 Título, 11.2 Definição (+193 more)
 
-### Community 9 - "Community 9"
+### Community 7 - "Community 7"
 Cohesion: 0.01
 Nodes (190): 10. CSS dos gráficos, 11. HTML correto para processos com e sem erro, 12. Função para largura da barra, 13. Geração do PDF, 14. Checklist de auditoria, 15. Erros proibidos, 16. Exemplo de interpretação para perfil heterogêneo, 17. Critério de aprovação padrão ouro (+182 more)
+
+### Community 8 - "Community 8"
+Cohesion: 0.03
+Nodes (160): _ag_and_qualitative_paragraph(), _analysis_text(), _automatic_paragraph(), _available_core_indices(), build_bfp_interpretation(), build_bfp_interpretation_payload(), build_bfp_report_highlights(), _build_factor_paragraph() (+152 more)
+
+### Community 9 - "Community 9"
+Cohesion: 0.02
+Nodes (119): AILogService, log_generation_end(), log_generation_error(), log_generation_start(), build_anamnesis_snapshot(), audit_report(), _build_audit_payload(), _call_ai() (+111 more)
 
 ### Community 10 - "Community 10"
 Cohesion: 0.01
@@ -300,75 +300,75 @@ Nodes (182): 10. I.P. – Índice de Interferência Proativa, 11. A6 – recuper
 
 ### Community 11 - "Community 11"
 Cohesion: 0.03
-Nodes (141): _ag_and_qualitative_paragraph(), _analysis_text(), _automatic_paragraph(), _available_core_indices(), build_bfp_interpretation(), build_bfp_interpretation_payload(), build_bfp_report_highlights(), _build_factor_paragraph() (+133 more)
+Nodes (157): Migration, seed_templates_v2(), owned_evaluation_children(), owned_patients(), Escopo individual explícito, sem acesso clínico global por papel administrativo., get_default_templates(), create_admin(), send_anamnesis_invite_email() (+149 more)
 
 ### Community 12 - "Community 12"
+Cohesion: 0.02
+Nodes (75): ABC, AbstractUser, UserAdmin, check(), ensure_available(), _timeout(), TestAIInterpretationHandler, AnthropicProvider (+67 more)
+
+### Community 13 - "Community 13"
 Cohesion: 0.01
 Nodes (165): 10.1. Dados de entrada, 10.2. Texto-base, 10.3. Modelo interpretativo, 10. Módulo BPA-2, 11.1. Dados de entrada, 11.2. Texto-base, 11.3. Estrutura interpretativa obrigatória, 11.4. Fechamento clínico (+157 more)
 
-### Community 13 - "Community 13"
-Cohesion: 0.07
-Nodes (96): _class(), _education_label(), _normative_label(), _num(), _build_user_prompt(), generate_for_application(), _parse_json_response(), _provider_configured() (+88 more)
-
 ### Community 14 - "Community 14"
-Cohesion: 0.05
-Nodes (95): Vineland3SubmitIn, Meta, Status, TestApplication, TestApplicationQuerySet, Preview WAIS-III results without saving to database.          This endpoint is u, Preview WAIS-III results without saving to database.          This endpoint is u, Preview WAIS-III results without saving to database.          This endpoint is u (+87 more)
+Cohesion: 0.08
+Nodes (94): _class(), _education_label(), _normative_label(), _num(), _build_user_prompt(), generate_for_application(), _parse_json_response(), _provider_configured() (+86 more)
 
 ### Community 15 - "Community 15"
 Cohesion: 0.03
-Nodes (39): fetchAPI(), getToken(), resolveApiUrl(), stringifyApiError(), buildStatusSummary(), calcularEscores(), classificar(), clearForm() (+31 more)
+Nodes (58): backup(), ConfigError, connection(), main(), pg_environment(), private_write(), Mensagem controlada, sem conteúdo copiado da credencial., restore() (+50 more)
 
 ### Community 16 - "Community 16"
+Cohesion: 0.05
+Nodes (95): Vineland3SubmitIn, Meta, Status, TestApplication, TestApplicationQuerySet, Preview WAIS-III results without saving to database.          This endpoint is u, Preview WAIS-III results without saving to database.          This endpoint is u, Preview WAIS-III results without saving to database.          This endpoint is u (+87 more)
+
+### Community 17 - "Community 17"
+Cohesion: 0.03
+Nodes (40): fetchAPI(), getToken(), resolveApiUrl(), stringifyApiError(), buildStatusSummary(), calcularEscores(), classificar(), clearForm() (+32 more)
+
+### Community 18 - "Community 18"
 Cohesion: 0.02
 Nodes (110): 10.1 Velocidade de esquecimento, 10.2 I.P. – interferência proativa, 10.3 I.R. – interferência retroativa, 10. Regras para indicadores derivados, 11.1 Perfil globalmente preservado, 11.2 Perfil preservado com interferência rebaixada, 11.3 Perfil heterogêneo com Escore Total preservado e aprendizagem ao longo das tentativas rebaixada, 11.4 Perfil heterogêneo com retenção e reconhecimento preservados (+102 more)
 
-### Community 17 - "Community 17"
-Cohesion: 0.04
-Nodes (89): analyze_supplementary(), _b6_columns_for_age(), _b7_column_for_age(), _build_below_threshold_reason(), _build_discrepancy_interpretation(), _build_discrepancy_table(), _build_process_result(), _build_render_ready_tables() (+81 more)
-
-### Community 18 - "Community 18"
-Cohesion: 0.05
-Nodes (65): _age_metric(), BAICalculator, calculate_percentile_from_t(), _composite_result(), compute_wasi_payload(), estimate_confidence_interval(), estimate_percentile(), estimate_t_score() (+57 more)
-
 ### Community 19 - "Community 19"
-Cohesion: 0.02
-Nodes (105): 10.1. Título, 10.2. Definição, 10.3. Tabela E-TDAH-AD, 10.4. Interpretação E-TDAH-AD, 10.5. Gráfico E-TDAH-AD, 10. Capítulo E-TDAH-AD, 11.1. Título, 11.2. Definição (+97 more)
+Cohesion: 0.05
+Nodes (67): _age_metric(), BAICalculator, calculate_percentile_from_t(), _composite_result(), compute_wasi_payload(), estimate_confidence_interval(), estimate_percentile(), estimate_t_score() (+59 more)
 
 ### Community 20 - "Community 20"
 Cohesion: 0.02
-Nodes (103): 10. Classificação dos Escores Ponderados dos Subtestes, 11. Payload Computado Recomendado, 12. Regras de Segurança Psicométrica, 13. Estrutura da Seção no Laudo, 14. Modelo de Texto: Capacidade Cognitiva Global, 15.1. ICV, 15.2. IOP, 15.3. IMO (+95 more)
+Nodes (105): 10.1. Título, 10.2. Definição, 10.3. Tabela E-TDAH-AD, 10.4. Interpretação E-TDAH-AD, 10.5. Gráfico E-TDAH-AD, 10. Capítulo E-TDAH-AD, 11.1. Título, 11.2. Definição (+97 more)
 
 ### Community 21 - "Community 21"
 Cohesion: 0.02
-Nodes (91): 10. Comparação entre discrepâncias dos índices, 11. Comparação entre discrepâncias dos subtestes, 12.1 Médias obrigatórias, 12.2 Qual média usar, 12.3 Fórmula, 12.4 Critério, 12.5 Frequência acumulada, 12. Determinação das Facilidades e Dificuldades (+83 more)
+Nodes (103): 10. Classificação dos Escores Ponderados dos Subtestes, 11. Payload Computado Recomendado, 12. Regras de Segurança Psicométrica, 13. Estrutura da Seção no Laudo, 14. Modelo de Texto: Capacidade Cognitiva Global, 15.1. ICV, 15.2. IOP, 15.3. IMO (+95 more)
 
 ### Community 22 - "Community 22"
-Cohesion: 0.03
-Nodes (49): backup(), ConfigError, connection(), main(), pg_environment(), private_write(), Mensagem controlada, sem conteúdo copiado da credencial., restore() (+41 more)
+Cohesion: 0.02
+Nodes (91): 10. Comparação entre discrepâncias dos índices, 11. Comparação entre discrepâncias dos subtestes, 12.1 Médias obrigatórias, 12.2 Qual média usar, 12.3 Fórmula, 12.4 Critério, 12.5 Frequência acumulada, 12. Determinação das Facilidades e Dificuldades (+83 more)
 
 ### Community 23 - "Community 23"
-Cohesion: 0.05
-Nodes (41): _is_empty_application(), protocol(), compute_scores(), Vineland3Module, item_protocol(), normalize_item_responses(), Partial transcription supplied by the user; edition and form are unverified.  Th, Validate a partial record without treating blanks, N or D as zero. (+33 more)
+Cohesion: 0.04
+Nodes (42): _is_empty_application(), protocol(), compute_scores(), Vineland3Module, item_protocol(), normalize_item_responses(), Partial transcription supplied by the user; edition and form are unverified.  Th, Validate a partial record without treating blanks, N or D as zero. (+34 more)
 
 ### Community 24 - "Community 24"
 Cohesion: 0.02
 Nodes (94): 1. Objetivo do mapeamento, 2.1 Título e abertura institucional, 2.2 Macroestrutura do laudo, 2.3 Texto institucional fixo, 2. Partes fixas do modelo, 3.1 Identificação, 3.2 Descrição da demanda, 3.3 Procedimentos (+86 more)
 
 ### Community 25 - "Community 25"
-Cohesion: 0.03
-Nodes (75): 10. Uso das médias separadas de ICV e IOP, 11. Escores de processo, 12. Conferência dos gráficos, 13. Checklist final obrigatório, 14. Ajustes específicos que devem ser aplicados no relatório analisado, 15. Mensagem técnica final para inserir no relatório, se necessário, 16. Padrão de resposta da IA ao auditar uma tabela WISC-IV, 17. Regra de segurança psicométrica (+67 more)
+Cohesion: 0.04
+Nodes (77): analyze_supplementary(), _b6_columns_for_age(), _b7_column_for_age(), _build_below_threshold_reason(), _build_discrepancy_interpretation(), _build_discrepancy_table(), _build_process_result(), _build_render_ready_tables() (+69 more)
 
 ### Community 26 - "Community 26"
 Cohesion: 0.03
-Nodes (73): 1. Usar A4 real, 2. Não usar escala no Playwright, 3. Respeitar o CSS da página, 4. Usar `margin: 0` no PDF, 5. Reservar espaço para footer, 6. Evitar conteúdo automático infinito, 7. Cada página deve ser uma `<section class="page">`, Checklist de qualidade antes de liberar PDF (+65 more)
+Nodes (75): 10. Uso das médias separadas de ICV e IOP, 11. Escores de processo, 12. Conferência dos gráficos, 13. Checklist final obrigatório, 14. Ajustes específicos que devem ser aplicados no relatório analisado, 15. Mensagem técnica final para inserir no relatório, se necessário, 16. Padrão de resposta da IA ao auditar uma tabela WISC-IV, 17. Regra de segurança psicométrica (+67 more)
 
 ### Community 27 - "Community 27"
 Cohesion: 0.03
-Nodes (71): Arquivos principais, Bloco clínico destacado, Bloco de dados do avaliado, Cálculos obrigatórios, Cabeçalho institucional, Checklist técnico obrigatório, Checklist visual obrigatório, Classificação (+63 more)
+Nodes (73): 1. Usar A4 real, 2. Não usar escala no Playwright, 3. Respeitar o CSS da página, 4. Usar `margin: 0` no PDF, 5. Reservar espaço para footer, 6. Evitar conteúdo automático infinito, 7. Cada página deve ser uma `<section class="page">`, Checklist de qualidade antes de liberar PDF (+65 more)
 
 ### Community 28 - "Community 28"
-Cohesion: 0.05
-Nodes (43): classify_srs2_scores(), column_name(), column_number(), export_norms(), normalize_value(), Extract only extensive-form score tables, without copying PDF watermarks.  Run w, read_norm_cells(), _build_ravlt_chart_payload() (+35 more)
+Cohesion: 0.03
+Nodes (71): Arquivos principais, Bloco clínico destacado, Bloco de dados do avaliado, Cálculos obrigatórios, Cabeçalho institucional, Checklist técnico obrigatório, Checklist visual obrigatório, Classificação (+63 more)
 
 ### Community 29 - "Community 29"
 Cohesion: 0.03
@@ -387,16 +387,16 @@ Cohesion: 0.03
 Nodes (65): 1. Perfil Geral, 2. Perfil Interpretativo, Alternância, Análise de tempo e erros, Bloco: Utilização do relatório, Cabeçalho obrigatório, Classificação: desempenho limítrofe ou rebaixado, Classificação: desempenho preservado (+57 more)
 
 ### Community 33 - "Community 33"
-Cohesion: 0.05
-Nodes (41): _build_chart_series_item(), build_fdt_charts(), _build_scale_result(), calculate_derived_scores(), calculate_error_result(), calculate_fdt_results(), calculate_metric_result(), calculate_raw_scores() (+33 more)
-
-### Community 34 - "Community 34"
 Cohesion: 0.03
 Nodes (61): 1. Gráfico de perfil do escore total, 1. Tabela principal de escores, 2. Curva de posicionamento do escore, 2. Tabela de análise dos itens, 3. Gráfico de distribuição das respostas, 3. Tabela de estatísticas das respostas, `apps/tests/bai/calculators.py`, `apps/tests/bai/charts.py` (+53 more)
 
-### Community 35 - "Community 35"
+### Community 34 - "Community 34"
 Cohesion: 0.03
 Nodes (60): 10. Gráfico Perfil dos Pontos Ponderados dos Subtestes, 11. Gráfico Perfil dos Quocientes Intelectuais e Índices Fatoriais, 12. Página 3: análise técnica, 13. Página 4: interpretação clínica, 14. Página 5: síntese interpretativa, 15. Dados esperados para popular o relatório, 16. Regras para valores ausentes, 17. Regras de tipografia (+52 more)
+
+### Community 35 - "Community 35"
+Cohesion: 0.06
+Nodes (40): _build_chart_series_item(), build_fdt_charts(), _build_scale_result(), calculate_derived_scores(), calculate_error_result(), calculate_fdt_results(), calculate_metric_result(), calculate_raw_scores() (+32 more)
 
 ### Community 36 - "Community 36"
 Cohesion: 0.03
@@ -412,31 +412,31 @@ Nodes (54): Aparência correta do marcador, Código incorreto que deve ser evita
 
 ### Community 39 - "Community 39"
 Cohesion: 0.06
-Nodes (25): ABC, TestAIInterpretationHandler, AnthropicProvider, BaseAIProvider, generate(), BaseAIProvider, ICalculator, IClassifier (+17 more)
-
-### Community 40 - "Community 40"
-Cohesion: 0.06
 Nodes (34): calculateAge(), fetchPatientData(), formatDisplayDate(), getInstrumentAgeRangeLabel(), getInstrumentAgeRestriction(), getPatientAgeNumber(), getTestUrl(), handleBuildReport() (+26 more)
 
-### Community 41 - "Community 41"
+### Community 40 - "Community 40"
 Cohesion: 0.08
 Nodes (39): _b7_column_indexes(), _b8_column_name(), build_process_scores(), buscar_ponderado(), calculate_confidence_interval(), calculate_index_score(), calculate_qi_total(), _carregar_tabela_a8() (+31 more)
 
-### Community 42 - "Community 42"
+### Community 41 - "Community 41"
 Cohesion: 0.04
 Nodes (45): 10. CSS recomendado, 11. Modelo de dados recomendado para geração dinâmica, 12. Regras de qualidade para a IA, 13. Orientação para PDF, 14. Prompt resumido para outra IA, 1. Objetivo, 2.1. Características gerais, 2. Estrutura visual obrigatória (+37 more)
 
-### Community 43 - "Community 43"
+### Community 42 - "Community 42"
 Cohesion: 0.04
 Nodes (43): 10. GAI/IHG e CPI/IPC, 11. Modelo de fechamento interpretativo, 12. Síntese interpretativa para o laudo, 13. Frases que devem ser evitadas, 14. Regras de estilo, 15. Checklist final antes da entrega, 16. Prompt interno recomendado para a IA, 17. Saída esperada da IA (+35 more)
 
-### Community 44 - "Community 44"
+### Community 43 - "Community 43"
 Cohesion: 0.05
 Nodes (43): 1. Perfil dos Escores (Seção 12 da skill), 2.1. Média de referência:, 2.2. Payload esperado:, 2.3. Tabela B.3:, 2. Determinação de Facilidades e Dificuldades (Seção 13 da skill), 3.1. Fluxo:, 3.2. Payload esperado:, 3.3. Regras: (+35 more)
 
-### Community 45 - "Community 45"
+### Community 44 - "Community 44"
 Cohesion: 0.05
 Nodes (39): Checklist automático de auditoria, Considerações técnicas obrigatórias, Correto, Critério de coerência entre tabela e texto, Critérios de qualidade textual, Dados do avaliado, Errado, Escopo de aplicação (+31 more)
+
+### Community 45 - "Community 45"
+Cohesion: 0.06
+Nodes (15): Boolean(), DateField(), FieldRenderer(), formatDateForDisplay(), normalizeOptions(), completedMonths(), getGenerationDetails(), handleFinalize() (+7 more)
 
 ### Community 46 - "Community 46"
 Cohesion: 0.06
@@ -475,68 +475,68 @@ Cohesion: 0.07
 Nodes (26): 1.1. Identificação do laudo:, 1.2. Identificação da paciente:, A equipe multidisciplinar, ANÁLISE, ANÁLISE QUALIDATIVA, BPA-2 Bateria Psicológica para Avaliação da Atenção, Conclusão, DESCRIÇÃO DA DEMANDA (+18 more)
 
 ### Community 55 - "Community 55"
-Cohesion: 0.08
-Nodes (23): Código Python recomendado para geração do gráfico, code:json ({), code:json ("percentil"), code:json ({), code:python (BFP_FACETAS_RADAR = [), code:python (norma = [50] * 17), code:python (import numpy as np), code:python (percentis_bfp = [) (+15 more)
+Cohesion: 0.12
+Nodes (13): _calculate_clusters(), classify_wais3_payload(), _classify_wechsler(), _load_cluster_table(), _load_gai_table(), Load cluster table from CSV., Calculate clinical clusters C.2 to C.9., Classify Wechsler scale score. (+5 more)
 
 ### Community 56 - "Community 56"
 Cohesion: 0.08
-Nodes (25): Arquivos Envolvidos, Checklist de Auditoria, Cores (via classe CSS, sem inline no backend):, Erros Proibidos, Fonte de Dados, Gráfico (SVG), Interpretação Clínica — Seção 5 (Regras de Geração), Interpretação dinâmica dos indicadores (+17 more)
+Nodes (23): Código Python recomendado para geração do gráfico, code:json ({), code:json ("percentil"), code:json ({), code:python (BFP_FACETAS_RADAR = [), code:python (norma = [50] * 17), code:python (import numpy as np), code:python (percentis_bfp = [) (+15 more)
 
 ### Community 57 - "Community 57"
 Cohesion: 0.08
-Nodes (23): 1. API HTTP não significa processamento assíncrono, 1. Diagnóstico técnico correto, 2. Boa separação entre lacunas e opções de solução, 2. Falta separar melhor MVP de produção robusta, 3. Falta uma modelagem explícita do domínio de mensageria, 3. Recomendação compatível com a stack do projeto, 4. Risco operacional do Evolution API precisa ser descrito com mais cautela, 5. Falta prever estratégia de fallback (+15 more)
+Nodes (25): Arquivos Envolvidos, Checklist de Auditoria, Cores (via classe CSS, sem inline no backend):, Erros Proibidos, Fonte de Dados, Gráfico (SVG), Interpretação Clínica — Seção 5 (Regras de Geração), Interpretação dinâmica dos indicadores (+17 more)
 
 ### Community 58 - "Community 58"
 Cohesion: 0.08
-Nodes (23): Abertura, code:json ({), code:python (def gerar_interpretacao_bfp(nome: str, resultados: dict) -> ), Critérios de qualidade obrigatórios, Definição breve, Domínios e facetas obrigatórios, Entrada esperada, Estrutura da seção no laudo (+15 more)
+Nodes (23): 1. API HTTP não significa processamento assíncrono, 1. Diagnóstico técnico correto, 2. Boa separação entre lacunas e opções de solução, 2. Falta separar melhor MVP de produção robusta, 3. Falta uma modelagem explícita do domínio de mensageria, 3. Recomendação compatível com a stack do projeto, 4. Risco operacional do Evolution API precisa ser descrito com mais cautela, 5. Falta prever estratégia de fallback (+15 more)
 
 ### Community 59 - "Community 59"
 Cohesion: 0.08
-Nodes (24): 1.1. Identificação do laudo:, 1.2. Identificação do Paciente:, ANÁLISE, ANÁLISE QUALITATIVA, BPA-2 Bateria Psicológica para Avaliação da Atenção, Bpf - Bateria Fatorial de Personalidade, Conclusão, Considerações Finais (+16 more)
+Nodes (23): Abertura, code:json ({), code:python (def gerar_interpretacao_bfp(nome: str, resultados: dict) -> ), Critérios de qualidade obrigatórios, Definição breve, Domínios e facetas obrigatórios, Entrada esperada, Estrutura da seção no laudo (+15 more)
 
 ### Community 60 - "Community 60"
+Cohesion: 0.08
+Nodes (24): 1.1. Identificação do laudo:, 1.2. Identificação do Paciente:, ANÁLISE, ANÁLISE QUALITATIVA, BPA-2 Bateria Psicológica para Avaliação da Atenção, Bpf - Bateria Fatorial de Personalidade, Conclusão, Considerações Finais (+16 more)
+
+### Community 61 - "Community 61"
 Cohesion: 0.1
 Nodes (22): Arquivo, code:block1 (TestApplication.computed_payload), code:python (conclusao = cls._find_paragraph(document, "Conclusão") or cl), Correções Aplicadas em `apps/reports/services/report_export_service.py`, Correção, Correção em `apps/tests/wais3/templates/layout_relatorio_wais_3.html`, Fixes Adicionais em Testes, Fluxo de Dados WASI (+14 more)
 
-### Community 61 - "Community 61"
+### Community 62 - "Community 62"
 Cohesion: 0.08
 Nodes (23): 1.1. Identificação do laudo:, 1.2. Identificação do Paciente:, ANÁLISE, ANÁLISE QUALITATIVA, BPA-2 Bateria Psicológica para Avaliação da Atenção, Conclusão, Considerações Finais, DESCRIÇÃO DA DEMANDA (+15 more)
 
-### Community 62 - "Community 62"
+### Community 63 - "Community 63"
 Cohesion: 0.13
 Nodes (11): compute_ssrs_importance(), compute_ssrs_scores(), _item_score(), _normalize_response(), classify_ssrs_scores(), interpret_percentile(), interpret_ssrs_results(), format_percentile_range() (+3 more)
 
-### Community 63 - "Community 63"
-Cohesion: 0.1
-Nodes (20): 14. CONCLUSÃO, ANÁLISE, ANÁLISE QUALITATIVA, BPA-2 Bateria Psicológica para Avaliação da Atenção, DESCRIÇÃO DA DEMANDA, Desempenho da paciente no WISC-IV, epq-j, ETDAH-AD (+12 more)
-
 ### Community 64 - "Community 64"
-Cohesion: 0.1
-Nodes (20): 14. CONCLUSÃO, ANÁLISE, ANÁLISE QUALITATIVA, BPA-2 Bateria Psicológica para Avaliação da Atenção, DESCRIÇÃO DA DEMANDA, Desempenho da paciente no WISC-IV, epq-j, ETDAH-AD (+12 more)
-
-### Community 65 - "Community 65"
 Cohesion: 0.1
 Nodes (20): ============================================================, ============================================================, code:bash (# 1. Copie o arquivo de exemplo), code:bash (# 1. Copie o arquivo de exemplo), code:bash (# Ver logs), Comandos Uteis, Desenvolvimento Local, NeuroAvalia — Docker Compose Instructions (+12 more)
 
+### Community 65 - "Community 65"
+Cohesion: 0.1
+Nodes (20): 14. CONCLUSÃO, ANÁLISE, ANÁLISE QUALITATIVA, BPA-2 Bateria Psicológica para Avaliação da Atenção, DESCRIÇÃO DA DEMANDA, Desempenho da paciente no WISC-IV, epq-j, ETDAH-AD (+12 more)
+
 ### Community 66 - "Community 66"
+Cohesion: 0.1
+Nodes (20): 14. CONCLUSÃO, ANÁLISE, ANÁLISE QUALITATIVA, BPA-2 Bateria Psicológica para Avaliação da Atenção, DESCRIÇÃO DA DEMANDA, Desempenho da paciente no WISC-IV, epq-j, ETDAH-AD (+12 more)
+
+### Community 67 - "Community 67"
 Cohesion: 0.14
 Nodes (13): getDisplayName(), getRole(), getUserInitials(), getDisplayName(), getUserInitials(), cleanProfessionalName(), getStoredUser(), isFemaleUser() (+5 more)
 
-### Community 67 - "Community 67"
-Cohesion: 0.1
-Nodes (19): ANÁLISE, ANÁLISE QUALITATIVA, BAI INVENTÁRIO DE ANSIEDADE DE BECK, BFP- BATERIA FATORIAL DE PERSONALIDADE, BPA-2 BATERIA PSICOLÓGICA PARA AVALIAÇÃO DA ATENÇÃO, Conclusão, CONSIDERAÇÕES FINAIS, DESCRIÇÃO DA DEMANDA (+11 more)
-
 ### Community 68 - "Community 68"
 Cohesion: 0.1
-Nodes (18): Backend no Render, Banco PostgreSQL, Build command, Checklist Final, code:bash (pip install -r requirements.txt && python manage.py collects), code:bash (python manage.py migrate), code:bash (gunicorn config.wsgi:application --log-file -), Criar servico (+10 more)
+Nodes (19): ANÁLISE, ANÁLISE QUALITATIVA, BAI INVENTÁRIO DE ANSIEDADE DE BECK, BFP- BATERIA FATORIAL DE PERSONALIDADE, BPA-2 BATERIA PSICOLÓGICA PARA AVALIAÇÃO DA ATENÇÃO, Conclusão, CONSIDERAÇÕES FINAIS, DESCRIÇÃO DA DEMANDA (+11 more)
 
 ### Community 69 - "Community 69"
 Cohesion: 0.1
-Nodes (19): 1. Preparar infraestrutura no DigitalOcean, 2. Preparar o servidor, 3. Configurar o projeto, 4. Subir a stack, 5. Inicializacao obrigatoria, 6. Validacoes, 7. Operacao diaria, 8. Recomendacoes de producao (+11 more)
+Nodes (18): Backend no Render, Banco PostgreSQL, Build command, Checklist Final, code:bash (pip install -r requirements.txt && python manage.py collects), code:bash (python manage.py migrate), code:bash (gunicorn config.wsgi:application --log-file -), Criar servico (+10 more)
 
 ### Community 70 - "Community 70"
 Cohesion: 0.1
-Nodes (19): ANÁLISE, ANÁLISE QUALITATIVA, BAI INVENTÁRIO DE ANSIEDADE DE BECK, BFP- BATERIA FATORIAL DE PERSONALIDADE, BPA-2 BATERIA PSICOLÓGICA PARA AVALIAÇÃO DA ATENÇÃO, Conclusão, CONSIDERAÇÕES FINAIS, DESCRIÇÃO DA DEMANDA (+11 more)
+Nodes (19): 1. Preparar infraestrutura no DigitalOcean, 2. Preparar o servidor, 3. Configurar o projeto, 4. Subir a stack, 5. Inicializacao obrigatoria, 6. Validacoes, 7. Operacao diaria, 8. Recomendacoes de producao (+11 more)
 
 ### Community 71 - "Community 71"
 Cohesion: 0.1
@@ -555,52 +555,52 @@ Cohesion: 0.1
 Nodes (19): ANÁLISE, ANÁLISE QUALITATIVA, BAI INVENTÁRIO DE ANSIEDADE DE BECK, BFP- BATERIA FATORIAL DE PERSONALIDADE, BPA-2 BATERIA PSICOLÓGICA PARA AVALIAÇÃO DA ATENÇÃO, Conclusão, CONSIDERAÇÕES FINAIS, DESCRIÇÃO DA DEMANDA (+11 more)
 
 ### Community 75 - "Community 75"
+Cohesion: 0.1
+Nodes (19): ANÁLISE, ANÁLISE QUALITATIVA, BAI INVENTÁRIO DE ANSIEDADE DE BECK, BFP- BATERIA FATORIAL DE PERSONALIDADE, BPA-2 BATERIA PSICOLÓGICA PARA AVALIAÇÃO DA ATENÇÃO, Conclusão, CONSIDERAÇÕES FINAIS, DESCRIÇÃO DA DEMANDA (+11 more)
+
+### Community 76 - "Community 76"
 Cohesion: 0.11
 Nodes (17): 1. Barra superior de ações, 2. Faixa-resumo com os 5 domínios, 3. Página 1 do relatório, 4. Página 2 do relatório, 5. Tabela de resultados, 6. Síntese dos resultados, Arquivo principal, Estrutura geral da tela (+9 more)
 
-### Community 76 - "Community 76"
+### Community 77 - "Community 77"
 Cohesion: 0.21
 Nodes (9): CalculationError, ClassificationError, InstrumentNotFoundError, InterpretationError, InvalidAgeRangeError, InvalidEducationRangeError, NormTableNotFoundError, RawDataValidationError (+1 more)
 
-### Community 77 - "Community 77"
+### Community 78 - "Community 78"
 Cohesion: 0.11
 Nodes (16): Arquivo sugerido, Campo para gráfico, Checklist de validação, code:bash (pip install reportlab), code:bash (fdt_report_generator.py), code:python (from pathlib import Path), code:python (from fdt_report_generator import generate_fdt_pdf), code:bash (apt-get update) (+8 more)
 
-### Community 78 - "Community 78"
+### Community 79 - "Community 79"
 Cohesion: 0.12
 Nodes (16): Chart Population (Byte-Level), Chart Preservation Bug, code:block1 (ReportExportService.generate_docx_bytes(report)), code:block2 (Raw Scores → compute_wasi_payload() → computed_payload), code:block3 (clinical_interpretation (stale) → skipped), Consistency Problem: Gráfico vs. Texto, Data Flow per Test Instrument, Key Files (+8 more)
 
-### Community 79 - "Community 79"
-Cohesion: 0.12
-Nodes (14): code:text (neuro-frontend/), code:ts (import { api } from '@/lib/api'), Estrutura Atual, Frontend Structure, Integracao com a API, Layout e Navegacao, Observacoes Arquiteturais, Organizacao de Rotas (+6 more)
-
 ### Community 80 - "Community 80"
-Cohesion: 0.12
-Nodes (14): 1. Abrir o Formulário, 2. Verificar que carrega corretamente, 3. Testar Preview em Tempo Real, 4. Preencher Todos os Valores, 5. Testar Save, ✅ Checklist Final, code:block1 (URL: http://localhost:3000/dashboard/tests/wais3?evaluation_), 🚀 Como Testar (+6 more)
+Cohesion: 0.13
+Nodes (7): BaseCommand, Command, Management command to create an admin user from environment variables., Command, focusMappedHandler(), Command, Command
 
 ### Community 81 - "Community 81"
 Cohesion: 0.12
-Nodes (14): 🔄 Adaptações Necessárias para o Sistema, Análise Comparativa: Implementação do BAI, ⚠️ Atenção, code:block1 (apps/tests/bai/), Comparação com Outros Instrumentos do Sistema, Estrutura Final Criada, ✅ Manter, 🔧 Melhorias Futuras (+6 more)
+Nodes (14): code:text (neuro-frontend/), code:ts (import { api } from '@/lib/api'), Estrutura Atual, Frontend Structure, Integracao com a API, Layout e Navegacao, Observacoes Arquiteturais, Organizacao de Rotas (+6 more)
 
 ### Community 82 - "Community 82"
 Cohesion: 0.12
-Nodes (14): Checklist obrigatório antes de finalizar, Estrutura obrigatória da página, Exemplo aplicado: perfil Felipe, Limite de tamanho, Modelo-base obrigatório por índice, Modelo compacto aplicado, Objetivo, Princípio central (+6 more)
+Nodes (14): 1. Abrir o Formulário, 2. Verificar que carrega corretamente, 3. Testar Preview em Tempo Real, 4. Preencher Todos os Valores, 5. Testar Save, ✅ Checklist Final, code:block1 (URL: http://localhost:3000/dashboard/tests/wais3?evaluation_), 🚀 Como Testar (+6 more)
 
 ### Community 83 - "Community 83"
 Cohesion: 0.12
-Nodes (15): code:block1 (P1: O desempenho de {nome} revelou funcionamento mnésico ver), code:block2 (P1: ...predominantemente preservado, com pontos específicos ), code:block3 (P1: ...com oscilações no funcionamento mnésico verbal. Aquis), code:block4 (P1: ...com oscilações.), Comparação com a Implementação Atual, Decisão, Modelo de Estrutura por Perfil, O que a implementação atual já faz bem (+7 more)
+Nodes (14): 🔄 Adaptações Necessárias para o Sistema, Análise Comparativa: Implementação do BAI, ⚠️ Atenção, code:block1 (apps/tests/bai/), Comparação com Outros Instrumentos do Sistema, Estrutura Final Criada, ✅ Manter, 🔧 Melhorias Futuras (+6 more)
 
 ### Community 84 - "Community 84"
-Cohesion: 0.22
-Nodes (3): AIProvider, AIService, get_ai_service()
+Cohesion: 0.12
+Nodes (14): Checklist obrigatório antes de finalizar, Estrutura obrigatória da página, Exemplo aplicado: perfil Felipe, Limite de tamanho, Modelo-base obrigatório por índice, Modelo compacto aplicado, Objetivo, Princípio central (+6 more)
 
 ### Community 85 - "Community 85"
-Cohesion: 0.13
-Nodes (13): Adding a new icon, code:xml (<!--!Font Awesome Free 6.7.2 by @fontawesome - https://fonta), code:xml (<!--!Font Awesome Free X.Y.Z by @fontawesome - https://fonta), code:xml (<!--!Font Awesome Free 6.7.2 by @fontawesome - https://fonta), code:xml (<!--), code:xml (<svg width="13" height="13" xmlns="http://www.w3.org/2000/sv), Contributing SVG Icons, Example SVG Structure (+5 more)
+Cohesion: 0.12
+Nodes (15): code:block1 (P1: O desempenho de {nome} revelou funcionamento mnésico ver), code:block2 (P1: ...predominantemente preservado, com pontos específicos ), code:block3 (P1: ...com oscilações no funcionamento mnésico verbal. Aquis), code:block4 (P1: ...com oscilações.), Comparação com a Implementação Atual, Decisão, Modelo de Estrutura por Perfil, O que a implementação atual já faz bem (+7 more)
 
 ### Community 86 - "Community 86"
-Cohesion: 0.27
-Nodes (10): send_anamnesis_invite_email(), _send_via_django_mail(), _send_via_resend(), send_anamnesis_invite_via_email(), send_anamnesis_invite_via_whatsapp(), _build_whatsapp_link(), _normalize_phone(), Send WhatsApp message via Evolution API if configured, otherwise return wa.me li (+2 more)
+Cohesion: 0.13
+Nodes (13): Adding a new icon, code:xml (<!--!Font Awesome Free 6.7.2 by @fontawesome - https://fonta), code:xml (<!--!Font Awesome Free X.Y.Z by @fontawesome - https://fonta), code:xml (<!--!Font Awesome Free 6.7.2 by @fontawesome - https://fonta), code:xml (<!--), code:xml (<svg width="13" height="13" xmlns="http://www.w3.org/2000/sv), Contributing SVG Icons, Example SVG Structure (+5 more)
 
 ### Community 87 - "Community 87"
 Cohesion: 0.17
@@ -663,36 +663,36 @@ Cohesion: 0.25
 Nodes (6): Arquivos neste diretório, Faixas de classificação atuais, Normas do BAI (Beck Anxiety Inventory), Notas para atualização futura, Referência, Status atual
 
 ### Community 102 - "Community 102"
-Cohesion: 0.52
-Nodes (6): calcular_idade(), carregar_tabela(), classificar_escore(), main(), obter_faixa_etaria(), solicitar_dados_teste()
-
-### Community 103 - "Community 103"
 Cohesion: 0.48
 Nodes (5): handleSubmit(), loadInstruments(), normalizeTestCode(), todayIso(), toTestPath()
 
-### Community 104 - "Community 104"
+### Community 103 - "Community 103"
 Cohesion: 0.57
 Nodes (6): compareEvaluationsByDeadline(), formatDate(), getDaysUntil(), getEvaluationDeadlineMeta(), getToday(), parseDateValue()
 
-### Community 105 - "Community 105"
+### Community 104 - "Community 104"
 Cohesion: 0.33
 Nodes (1): AIGuard
 
-### Community 110 - "Community 110"
+### Community 109 - "Community 109"
 Cohesion: 0.5
 Nodes (3): InstrumentAdmin, TestApplicationAdmin, TestInterpretationTemplateAdmin
+
+### Community 110 - "Community 110"
+Cohesion: 0.5
+Nodes (1): Migration
 
 ### Community 111 - "Community 111"
 Cohesion: 0.5
 Nodes (1): Migration
 
-### Community 112 - "Community 112"
-Cohesion: 0.5
-Nodes (1): Migration
-
-### Community 114 - "Community 114"
+### Community 113 - "Community 113"
 Cohesion: 0.83
 Nodes (3): cycleTheme(), initTheme(), setTheme()
+
+### Community 114 - "Community 114"
+Cohesion: 0.5
+Nodes (2): env_list(), Base Django settings shared across environments.
 
 ### Community 115 - "Community 115"
 Cohesion: 0.83
@@ -834,277 +834,273 @@ Nodes (1): ASGI config for config project.  It exposes the ASGI callable as a mo
 Cohesion: 1.0
 Nodes (1): WSGI config for config project.  It exposes the WSGI callable as a module-level
 
-### Community 229 - "Community 229"
+### Community 230 - "Community 230"
 Cohesion: 1.0
 Nodes (1): Classifica o escore bruto do BAI conforme faixas normativas.
 
-### Community 230 - "Community 230"
+### Community 231 - "Community 231"
 Cohesion: 1.0
 Nodes (1): Classifica o escore T do BAI conforme faixas normativas.
 
-### Community 270 - "Community 270"
+### Community 271 - "Community 271"
 Cohesion: 1.0
 Nodes (1): Verifica se a avaliação possui dados mínimos para gerar um laudo clínico coerent
 
-### Community 272 - "Community 272"
+### Community 273 - "Community 273"
 Cohesion: 1.0
 Nodes (1): Regenera o texto de uma única seção baseando-se no snapshot de contexto original
 
-### Community 273 - "Community 273"
+### Community 274 - "Community 274"
 Cohesion: 1.0
 Nodes (1): Atualiza o conteúdo editado pelo profissional
-
-### Community 377 - "Community 377"
-Cohesion: 1.0
-Nodes (1): Run administrative tasks.
 
 ### Community 378 - "Community 378"
 Cohesion: 1.0
-Nodes (1): Procura na tabela normativa o T-Score e Percentil exatos para o Ponto Bruto.
+Nodes (1): Run administrative tasks.
 
 ### Community 379 - "Community 379"
 Cohesion: 1.0
-Nodes (1): Case reproduzindo os dados do WAIS-III 2020 para um adulto de 30 anos.      Os v
+Nodes (1): Procura na tabela normativa o T-Score e Percentil exatos para o Ponto Bruto.
 
 ### Community 380 - "Community 380"
 Cohesion: 1.0
-Nodes (1): Carrega Tabela B.1: valores críticos para discrepâncias entre índices.
+Nodes (1): Case reproduzindo os dados do WAIS-III 2020 para um adulto de 30 anos.      Os v
 
 ### Community 381 - "Community 381"
 Cohesion: 1.0
-Nodes (1): Carrega Tabela B.3: diferenças entre subteste e média.
+Nodes (1): Carrega Tabela B.1: valores críticos para discrepâncias entre índices.
 
 ### Community 382 - "Community 382"
 Cohesion: 1.0
-Nodes (1): Carrega Tabela B.6: Dígitos Ordem Direta e Inversa.
+Nodes (1): Carrega Tabela B.3: diferenças entre subteste e média.
 
 ### Community 383 - "Community 383"
 Cohesion: 1.0
-Nodes (1): Converte string '2,4' → 2.4 ou None.
+Nodes (1): Carrega Tabela B.6: Dígitos Ordem Direta e Inversa.
 
 ### Community 384 - "Community 384"
 Cohesion: 1.0
-Nodes (1): Mapeia 'idade_30-39' → chave B.1 '30-39'.
+Nodes (1): Converte string '2,4' → 2.4 ou None.
 
 ### Community 385 - "Community 385"
 Cohesion: 1.0
-Nodes (1): Mapeia faixa etaria para coluna B.6: retorna índice da coluna.
+Nodes (1): Mapeia 'idade_30-39' → chave B.1 '30-39'.
 
 ### Community 386 - "Community 386"
 Cohesion: 1.0
-Nodes (1): Executa análises complementares B.1, B.3, B.6, B.7.
+Nodes (1): Mapeia faixa etaria para coluna B.6: retorna índice da coluna.
 
 ### Community 387 - "Community 387"
 Cohesion: 1.0
-Nodes (1): Return the computed payload augmented with GAI and clusters using WAIS-III table
+Nodes (1): Executa análises complementares B.1, B.3, B.6, B.7.
 
 ### Community 388 - "Community 388"
 Cohesion: 1.0
-Nodes (1): Load GAI table from CSV.
+Nodes (1): Return the computed payload augmented with GAI and clusters using WAIS-III table
 
 ### Community 389 - "Community 389"
 Cohesion: 1.0
-Nodes (1): Load cluster table from CSV.
+Nodes (1): Load GAI table from CSV.
 
 ### Community 390 - "Community 390"
 Cohesion: 1.0
-Nodes (1): Calculate clinical clusters C.2 to C.9.
+Nodes (1): Load cluster table from CSV.
 
 ### Community 391 - "Community 391"
 Cohesion: 1.0
-Nodes (1): Classify Wechsler scale score.
+Nodes (1): Calculate clinical clusters C.2 to C.9.
 
 ### Community 392 - "Community 392"
 Cohesion: 1.0
-Nodes (1): Estimativa de fallback do QIT quando a soma está fora do range da tabela.     A
+Nodes (1): Classify Wechsler scale score.
 
 ### Community 393 - "Community 393"
 Cohesion: 1.0
-Nodes (1): Converte ponto ponderado (1-19) em percentil usando tabela normativa do WISC-IV.
+Nodes (1): Estimativa de fallback do QIT quando a soma está fora do range da tabela.     A
 
 ### Community 394 - "Community 394"
 Cohesion: 1.0
-Nodes (1): IC para escore ponderado de subteste (IC 95% por padrão).
+Nodes (1): Converte ponto ponderado (1-19) em percentil usando tabela normativa do WISC-IV.
 
 ### Community 395 - "Community 395"
 Cohesion: 1.0
-Nodes (1): Lookup composite score, percentile, and confidence intervals from equivalence ta
+Nodes (1): IC para escore ponderado de subteste (IC 95% por padrão).
 
 ### Community 396 - "Community 396"
 Cohesion: 1.0
-Nodes (1): Lookup GAI (General Ability Index) from Tabela-GAI.csv.     Returns: {'escore':
+Nodes (1): Lookup composite score, percentile, and confidence intervals from equivalence ta
 
 ### Community 397 - "Community 397"
 Cohesion: 1.0
-Nodes (1): Lookup CPI (Cognitive Proficiency Index) from Tabela-CPI.csv.     Returns: {'esc
+Nodes (1): Lookup GAI (General Ability Index) from Tabela-GAI.csv.     Returns: {'escore':
 
 ### Community 398 - "Community 398"
 Cohesion: 1.0
-Nodes (1): Preview WAIS-III results without saving to database.          This endpoint is u
+Nodes (1): Lookup CPI (Cognitive Proficiency Index) from Tabela-CPI.csv.     Returns: {'esc
 
 ### Community 399 - "Community 399"
 Cohesion: 1.0
-Nodes (1): Gera um resumo compacto (highlights) para uso em laudos e legendas de gráficos.
+Nodes (1): Preview WAIS-III results without saving to database.          This endpoint is u
 
 ### Community 400 - "Community 400"
 Cohesion: 1.0
-Nodes (1): Valida raw_scores do contexto.
+Nodes (1): Gera um resumo compacto (highlights) para uso em laudos e legendas de gráficos.
 
 ### Community 401 - "Community 401"
 Cohesion: 1.0
-Nodes (1): Calcula escores do BAI a partir do TestContext.
+Nodes (1): Valida raw_scores do contexto.
 
 ### Community 402 - "Community 402"
 Cohesion: 1.0
-Nodes (1): Classifica resultados do BAI.
+Nodes (1): Calcula escores do BAI a partir do TestContext.
 
 ### Community 403 - "Community 403"
 Cohesion: 1.0
-Nodes (1): Gera interpretação do BAI.
+Nodes (1): Classifica resultados do BAI.
 
 ### Community 404 - "Community 404"
 Cohesion: 1.0
-Nodes (1): Gera o gráfico WASI e salva em arquivo.
+Nodes (1): Gera interpretação do BAI.
 
 ### Community 405 - "Community 405"
 Cohesion: 1.0
-Nodes (1): Regenera o texto de uma única seção baseando-se no snapshot de contexto original
+Nodes (1): Gera o gráfico WASI e salva em arquivo.
 
 ### Community 406 - "Community 406"
 Cohesion: 1.0
-Nodes (1): Atualiza o conteúdo editado pelo profissional
+Nodes (1): Regenera o texto de uma única seção baseando-se no snapshot de contexto original
 
 ### Community 407 - "Community 407"
 Cohesion: 1.0
-Nodes (1): ASGI config for config project.  It exposes the ASGI callable as a module-level
+Nodes (1): Atualiza o conteúdo editado pelo profissional
 
 ### Community 408 - "Community 408"
 Cohesion: 1.0
-Nodes (1): WSGI config for config project.  It exposes the WSGI callable as a module-level
+Nodes (1): ASGI config for config project.  It exposes the ASGI callable as a module-level
 
 ### Community 409 - "Community 409"
 Cohesion: 1.0
-Nodes (1): Base Django settings shared across environments.
+Nodes (1): WSGI config for config project.  It exposes the WSGI callable as a module-level
 
-### Community 424 - "Community 424"
+### Community 410 - "Community 410"
 Cohesion: 1.0
-Nodes (1): Case reproduzindo os dados do WAIS-III 2020 para um adulto de 30 anos.      Os v
+Nodes (1): Base Django settings shared across environments.
 
 ### Community 425 - "Community 425"
 Cohesion: 1.0
-Nodes (1): Preview WAIS-III results without saving to database.          This endpoint is u
+Nodes (1): Case reproduzindo os dados do WAIS-III 2020 para um adulto de 30 anos.      Os v
 
 ### Community 426 - "Community 426"
 Cohesion: 1.0
-Nodes (1): Load cluster table from CSV.
+Nodes (1): Preview WAIS-III results without saving to database.          This endpoint is u
 
 ### Community 427 - "Community 427"
 Cohesion: 1.0
-Nodes (1): Calculate clinical clusters C.2 to C.9.
+Nodes (1): Load cluster table from CSV.
 
 ### Community 428 - "Community 428"
 Cohesion: 1.0
-Nodes (1): Classify Wechsler scale score.
+Nodes (1): Calculate clinical clusters C.2 to C.9.
 
 ### Community 429 - "Community 429"
 Cohesion: 1.0
-Nodes (1): Return the computed payload augmented with GAI and clusters using WAIS-III table
+Nodes (1): Classify Wechsler scale score.
 
 ### Community 430 - "Community 430"
 Cohesion: 1.0
-Nodes (1): Load GAI table from CSV.
+Nodes (1): Return the computed payload augmented with GAI and clusters using WAIS-III table
 
 ### Community 431 - "Community 431"
 Cohesion: 1.0
-Nodes (1): Load cluster table from CSV.
+Nodes (1): Load GAI table from CSV.
 
 ### Community 432 - "Community 432"
 Cohesion: 1.0
-Nodes (1): Calculate clinical clusters C.2 to C.9.
+Nodes (1): Load cluster table from CSV.
 
 ### Community 433 - "Community 433"
 Cohesion: 1.0
-Nodes (1): Classify Wechsler scale score.
+Nodes (1): Calculate clinical clusters C.2 to C.9.
 
 ### Community 434 - "Community 434"
 Cohesion: 1.0
-Nodes (1): Load GAI table from CSV.
+Nodes (1): Classify Wechsler scale score.
 
 ### Community 435 - "Community 435"
 Cohesion: 1.0
-Nodes (1): Load cluster table from CSV.
+Nodes (1): Load GAI table from CSV.
 
 ### Community 436 - "Community 436"
 Cohesion: 1.0
-Nodes (1): Calculate clinical clusters C.2 to C.9.
+Nodes (1): Load cluster table from CSV.
 
 ### Community 437 - "Community 437"
 Cohesion: 1.0
-Nodes (1): Classify Wechsler scale score.
+Nodes (1): Calculate clinical clusters C.2 to C.9.
 
 ### Community 438 - "Community 438"
 Cohesion: 1.0
-Nodes (1): Estimate CPI from sum of scaled scores.
+Nodes (1): Classify Wechsler scale score.
 
 ### Community 439 - "Community 439"
 Cohesion: 1.0
-Nodes (1): Preview WAIS-III results without saving to database.          This endpoint is u
+Nodes (1): Estimate CPI from sum of scaled scores.
 
 ### Community 440 - "Community 440"
 Cohesion: 1.0
-Nodes (1): Estimativa de fallback do QIT quando a soma está fora do range da tabela.     A
+Nodes (1): Preview WAIS-III results without saving to database.          This endpoint is u
 
 ### Community 441 - "Community 441"
 Cohesion: 1.0
-Nodes (1): Converte ponto ponderado (1-19) em percentil usando tabela normativa do WISC-IV.
+Nodes (1): Estimativa de fallback do QIT quando a soma está fora do range da tabela.     A
 
 ### Community 442 - "Community 442"
 Cohesion: 1.0
-Nodes (1): IC para escore ponderado de subteste (IC 95% por padrão).
+Nodes (1): Converte ponto ponderado (1-19) em percentil usando tabela normativa do WISC-IV.
 
 ### Community 443 - "Community 443"
 Cohesion: 1.0
-Nodes (1): Lookup composite score, percentile, and confidence intervals from equivalence ta
+Nodes (1): IC para escore ponderado de subteste (IC 95% por padrão).
 
 ### Community 444 - "Community 444"
 Cohesion: 1.0
-Nodes (1): Lookup GAI (General Ability Index) from Tabela-GAI.csv.     Returns: {'escore':
+Nodes (1): Lookup composite score, percentile, and confidence intervals from equivalence ta
 
 ### Community 445 - "Community 445"
 Cohesion: 1.0
-Nodes (1): Lookup CPI (Cognitive Proficiency Index) from Tabela-CPI.csv.     Returns: {'esc
+Nodes (1): Lookup GAI (General Ability Index) from Tabela-GAI.csv.     Returns: {'escore':
 
 ### Community 446 - "Community 446"
 Cohesion: 1.0
-Nodes (1): Preview WAIS-III results without saving to database.          This endpoint is u
+Nodes (1): Lookup CPI (Cognitive Proficiency Index) from Tabela-CPI.csv.     Returns: {'esc
 
 ### Community 447 - "Community 447"
 Cohesion: 1.0
-Nodes (1): Estimativa de fallback do QIT quando a soma está fora do range da tabela.     A
+Nodes (1): Preview WAIS-III results without saving to database.          This endpoint is u
 
 ### Community 448 - "Community 448"
 Cohesion: 1.0
-Nodes (1): Converte ponto ponderado (1-19) em percentil usando tabela normativa do WISC-IV.
+Nodes (1): Estimativa de fallback do QIT quando a soma está fora do range da tabela.     A
 
 ### Community 449 - "Community 449"
 Cohesion: 1.0
-Nodes (1): IC para escore ponderado de subteste (IC 95% por padrão).
+Nodes (1): Converte ponto ponderado (1-19) em percentil usando tabela normativa do WISC-IV.
 
 ### Community 450 - "Community 450"
 Cohesion: 1.0
-Nodes (1): Lookup composite score, percentile, and confidence intervals from equivalence ta
+Nodes (1): IC para escore ponderado de subteste (IC 95% por padrão).
 
 ### Community 451 - "Community 451"
 Cohesion: 1.0
-Nodes (1): Lookup GAI (General Ability Index) from Tabela-GAI.csv.     Returns: {'escore':
+Nodes (1): Lookup composite score, percentile, and confidence intervals from equivalence ta
 
 ### Community 452 - "Community 452"
 Cohesion: 1.0
-Nodes (1): Lookup CPI (Cognitive Proficiency Index) from Tabela-CPI.csv.     Returns: {'esc
+Nodes (1): Lookup GAI (General Ability Index) from Tabela-GAI.csv.     Returns: {'escore':
 
 ### Community 453 - "Community 453"
 Cohesion: 1.0
-Nodes (1): Preview WAIS-III results without saving to database.          This endpoint is u
+Nodes (1): Lookup CPI (Cognitive Proficiency Index) from Tabela-CPI.csv.     Returns: {'esc
 
 ### Community 454 - "Community 454"
 Cohesion: 1.0
@@ -1120,10 +1116,14 @@ Nodes (1): Preview WAIS-III results without saving to database.          This en
 
 ### Community 457 - "Community 457"
 Cohesion: 1.0
+Nodes (1): Preview WAIS-III results without saving to database.          This endpoint is u
+
+### Community 458 - "Community 458"
+Cohesion: 1.0
 Nodes (1): Run administrative tasks.
 
 ## Knowledge Gaps
-- **2220 isolated node(s):** `ReportStub`, `Patient`, `Run administrative tasks.`, `Migration`, `InstrumentAdmin` (+2215 more)
+- **2221 isolated node(s):** `ReportStub`, `Patient`, `Run administrative tasks.`, `Migration`, `InstrumentAdmin` (+2216 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **Thin community `Community 87`** (12 nodes): `page.tsx`, `page.tsx`, `page.tsx`, `page.tsx`, `page.tsx`, `page.tsx`, `page.tsx`, `page.tsx`, `page.tsx`, `page.tsx`, `page.tsx`, `TestEditPage()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
@@ -1131,11 +1131,13 @@ Nodes (1): Run administrative tasks.
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 - **Thin community `Community 98`** (8 nodes): `page.tsx`, `page.tsx`, `classificationStyle()`, `displayClassification()`, `formatValue()`, `loadResult()`, `PercentileBars()`, `scaleLabel()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 105`** (6 nodes): `__init__.py`, `AIGuard`, `check_output_length()`, `sanitize_output()`, `validate_data_safety()`, `validate_no_clinical_decision()`
+- **Thin community `Community 104`** (6 nodes): `__init__.py`, `AIGuard`, `check_output_length()`, `sanitize_output()`, `validate_data_safety()`, `validate_no_clinical_decision()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 111`** (4 nodes): `add_wais3_instrument()`, `Migration`, `remove_wais3_instrument()`, `0003_add_wais3_instrument.py`
+- **Thin community `Community 110`** (4 nodes): `add_wais3_instrument()`, `Migration`, `remove_wais3_instrument()`, `0003_add_wais3_instrument.py`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 112`** (4 nodes): `deactivate_v1_templates()`, `Migration`, `reactivate_v1_templates()`, `0003_deactivate_v1_templates.py`
+- **Thin community `Community 111`** (4 nodes): `deactivate_v1_templates()`, `Migration`, `reactivate_v1_templates()`, `0003_deactivate_v1_templates.py`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 114`** (4 nodes): `env_bool()`, `env_list()`, `Base Django settings shared across environments.`, `base.py`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 - **Thin community `Community 116`** (4 nodes): `page.tsx`, `page.tsx`, `page.tsx`, `Page()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
@@ -1205,141 +1207,139 @@ Nodes (1): Run administrative tasks.
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 - **Thin community `Community 167`** (2 nodes): `wsgi.py`, `WSGI config for config project.  It exposes the WSGI callable as a module-level`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 229`** (1 nodes): `Classifica o escore bruto do BAI conforme faixas normativas.`
+- **Thin community `Community 230`** (1 nodes): `Classifica o escore bruto do BAI conforme faixas normativas.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 230`** (1 nodes): `Classifica o escore T do BAI conforme faixas normativas.`
+- **Thin community `Community 231`** (1 nodes): `Classifica o escore T do BAI conforme faixas normativas.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 270`** (1 nodes): `Verifica se a avaliação possui dados mínimos para gerar um laudo clínico coerent`
+- **Thin community `Community 271`** (1 nodes): `Verifica se a avaliação possui dados mínimos para gerar um laudo clínico coerent`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 272`** (1 nodes): `Regenera o texto de uma única seção baseando-se no snapshot de contexto original`
+- **Thin community `Community 273`** (1 nodes): `Regenera o texto de uma única seção baseando-se no snapshot de contexto original`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 273`** (1 nodes): `Atualiza o conteúdo editado pelo profissional`
+- **Thin community `Community 274`** (1 nodes): `Atualiza o conteúdo editado pelo profissional`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 377`** (1 nodes): `Run administrative tasks.`
+- **Thin community `Community 378`** (1 nodes): `Run administrative tasks.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 378`** (1 nodes): `Procura na tabela normativa o T-Score e Percentil exatos para o Ponto Bruto.`
+- **Thin community `Community 379`** (1 nodes): `Procura na tabela normativa o T-Score e Percentil exatos para o Ponto Bruto.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 379`** (1 nodes): `Case reproduzindo os dados do WAIS-III 2020 para um adulto de 30 anos.      Os v`
+- **Thin community `Community 380`** (1 nodes): `Case reproduzindo os dados do WAIS-III 2020 para um adulto de 30 anos.      Os v`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 380`** (1 nodes): `Carrega Tabela B.1: valores críticos para discrepâncias entre índices.`
+- **Thin community `Community 381`** (1 nodes): `Carrega Tabela B.1: valores críticos para discrepâncias entre índices.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 381`** (1 nodes): `Carrega Tabela B.3: diferenças entre subteste e média.`
+- **Thin community `Community 382`** (1 nodes): `Carrega Tabela B.3: diferenças entre subteste e média.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 382`** (1 nodes): `Carrega Tabela B.6: Dígitos Ordem Direta e Inversa.`
+- **Thin community `Community 383`** (1 nodes): `Carrega Tabela B.6: Dígitos Ordem Direta e Inversa.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 383`** (1 nodes): `Converte string '2,4' → 2.4 ou None.`
+- **Thin community `Community 384`** (1 nodes): `Converte string '2,4' → 2.4 ou None.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 384`** (1 nodes): `Mapeia 'idade_30-39' → chave B.1 '30-39'.`
+- **Thin community `Community 385`** (1 nodes): `Mapeia 'idade_30-39' → chave B.1 '30-39'.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 385`** (1 nodes): `Mapeia faixa etaria para coluna B.6: retorna índice da coluna.`
+- **Thin community `Community 386`** (1 nodes): `Mapeia faixa etaria para coluna B.6: retorna índice da coluna.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 386`** (1 nodes): `Executa análises complementares B.1, B.3, B.6, B.7.`
+- **Thin community `Community 387`** (1 nodes): `Executa análises complementares B.1, B.3, B.6, B.7.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 387`** (1 nodes): `Return the computed payload augmented with GAI and clusters using WAIS-III table`
+- **Thin community `Community 388`** (1 nodes): `Return the computed payload augmented with GAI and clusters using WAIS-III table`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 388`** (1 nodes): `Load GAI table from CSV.`
+- **Thin community `Community 389`** (1 nodes): `Load GAI table from CSV.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 389`** (1 nodes): `Load cluster table from CSV.`
+- **Thin community `Community 390`** (1 nodes): `Load cluster table from CSV.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 390`** (1 nodes): `Calculate clinical clusters C.2 to C.9.`
+- **Thin community `Community 391`** (1 nodes): `Calculate clinical clusters C.2 to C.9.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 391`** (1 nodes): `Classify Wechsler scale score.`
+- **Thin community `Community 392`** (1 nodes): `Classify Wechsler scale score.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 392`** (1 nodes): `Estimativa de fallback do QIT quando a soma está fora do range da tabela.     A`
+- **Thin community `Community 393`** (1 nodes): `Estimativa de fallback do QIT quando a soma está fora do range da tabela.     A`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 393`** (1 nodes): `Converte ponto ponderado (1-19) em percentil usando tabela normativa do WISC-IV.`
+- **Thin community `Community 394`** (1 nodes): `Converte ponto ponderado (1-19) em percentil usando tabela normativa do WISC-IV.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 394`** (1 nodes): `IC para escore ponderado de subteste (IC 95% por padrão).`
+- **Thin community `Community 395`** (1 nodes): `IC para escore ponderado de subteste (IC 95% por padrão).`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 395`** (1 nodes): `Lookup composite score, percentile, and confidence intervals from equivalence ta`
+- **Thin community `Community 396`** (1 nodes): `Lookup composite score, percentile, and confidence intervals from equivalence ta`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 396`** (1 nodes): `Lookup GAI (General Ability Index) from Tabela-GAI.csv.     Returns: {'escore':`
+- **Thin community `Community 397`** (1 nodes): `Lookup GAI (General Ability Index) from Tabela-GAI.csv.     Returns: {'escore':`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 397`** (1 nodes): `Lookup CPI (Cognitive Proficiency Index) from Tabela-CPI.csv.     Returns: {'esc`
+- **Thin community `Community 398`** (1 nodes): `Lookup CPI (Cognitive Proficiency Index) from Tabela-CPI.csv.     Returns: {'esc`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 398`** (1 nodes): `Preview WAIS-III results without saving to database.          This endpoint is u`
+- **Thin community `Community 399`** (1 nodes): `Preview WAIS-III results without saving to database.          This endpoint is u`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 399`** (1 nodes): `Gera um resumo compacto (highlights) para uso em laudos e legendas de gráficos.`
+- **Thin community `Community 400`** (1 nodes): `Gera um resumo compacto (highlights) para uso em laudos e legendas de gráficos.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 400`** (1 nodes): `Valida raw_scores do contexto.`
+- **Thin community `Community 401`** (1 nodes): `Valida raw_scores do contexto.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 401`** (1 nodes): `Calcula escores do BAI a partir do TestContext.`
+- **Thin community `Community 402`** (1 nodes): `Calcula escores do BAI a partir do TestContext.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 402`** (1 nodes): `Classifica resultados do BAI.`
+- **Thin community `Community 403`** (1 nodes): `Classifica resultados do BAI.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 403`** (1 nodes): `Gera interpretação do BAI.`
+- **Thin community `Community 404`** (1 nodes): `Gera interpretação do BAI.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 404`** (1 nodes): `Gera o gráfico WASI e salva em arquivo.`
+- **Thin community `Community 405`** (1 nodes): `Gera o gráfico WASI e salva em arquivo.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 405`** (1 nodes): `Regenera o texto de uma única seção baseando-se no snapshot de contexto original`
+- **Thin community `Community 406`** (1 nodes): `Regenera o texto de uma única seção baseando-se no snapshot de contexto original`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 406`** (1 nodes): `Atualiza o conteúdo editado pelo profissional`
+- **Thin community `Community 407`** (1 nodes): `Atualiza o conteúdo editado pelo profissional`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 407`** (1 nodes): `ASGI config for config project.  It exposes the ASGI callable as a module-level`
+- **Thin community `Community 408`** (1 nodes): `ASGI config for config project.  It exposes the ASGI callable as a module-level`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 408`** (1 nodes): `WSGI config for config project.  It exposes the WSGI callable as a module-level`
+- **Thin community `Community 409`** (1 nodes): `WSGI config for config project.  It exposes the WSGI callable as a module-level`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 409`** (1 nodes): `Base Django settings shared across environments.`
+- **Thin community `Community 410`** (1 nodes): `Base Django settings shared across environments.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 424`** (1 nodes): `Case reproduzindo os dados do WAIS-III 2020 para um adulto de 30 anos.      Os v`
+- **Thin community `Community 425`** (1 nodes): `Case reproduzindo os dados do WAIS-III 2020 para um adulto de 30 anos.      Os v`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 425`** (1 nodes): `Preview WAIS-III results without saving to database.          This endpoint is u`
+- **Thin community `Community 426`** (1 nodes): `Preview WAIS-III results without saving to database.          This endpoint is u`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 426`** (1 nodes): `Load cluster table from CSV.`
+- **Thin community `Community 427`** (1 nodes): `Load cluster table from CSV.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 427`** (1 nodes): `Calculate clinical clusters C.2 to C.9.`
+- **Thin community `Community 428`** (1 nodes): `Calculate clinical clusters C.2 to C.9.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 428`** (1 nodes): `Classify Wechsler scale score.`
+- **Thin community `Community 429`** (1 nodes): `Classify Wechsler scale score.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 429`** (1 nodes): `Return the computed payload augmented with GAI and clusters using WAIS-III table`
+- **Thin community `Community 430`** (1 nodes): `Return the computed payload augmented with GAI and clusters using WAIS-III table`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 430`** (1 nodes): `Load GAI table from CSV.`
+- **Thin community `Community 431`** (1 nodes): `Load GAI table from CSV.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 431`** (1 nodes): `Load cluster table from CSV.`
+- **Thin community `Community 432`** (1 nodes): `Load cluster table from CSV.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 432`** (1 nodes): `Calculate clinical clusters C.2 to C.9.`
+- **Thin community `Community 433`** (1 nodes): `Calculate clinical clusters C.2 to C.9.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 433`** (1 nodes): `Classify Wechsler scale score.`
+- **Thin community `Community 434`** (1 nodes): `Classify Wechsler scale score.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 434`** (1 nodes): `Load GAI table from CSV.`
+- **Thin community `Community 435`** (1 nodes): `Load GAI table from CSV.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 435`** (1 nodes): `Load cluster table from CSV.`
+- **Thin community `Community 436`** (1 nodes): `Load cluster table from CSV.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 436`** (1 nodes): `Calculate clinical clusters C.2 to C.9.`
+- **Thin community `Community 437`** (1 nodes): `Calculate clinical clusters C.2 to C.9.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 437`** (1 nodes): `Classify Wechsler scale score.`
+- **Thin community `Community 438`** (1 nodes): `Classify Wechsler scale score.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 438`** (1 nodes): `Estimate CPI from sum of scaled scores.`
+- **Thin community `Community 439`** (1 nodes): `Estimate CPI from sum of scaled scores.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 439`** (1 nodes): `Preview WAIS-III results without saving to database.          This endpoint is u`
+- **Thin community `Community 440`** (1 nodes): `Preview WAIS-III results without saving to database.          This endpoint is u`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 440`** (1 nodes): `Estimativa de fallback do QIT quando a soma está fora do range da tabela.     A`
+- **Thin community `Community 441`** (1 nodes): `Estimativa de fallback do QIT quando a soma está fora do range da tabela.     A`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 441`** (1 nodes): `Converte ponto ponderado (1-19) em percentil usando tabela normativa do WISC-IV.`
+- **Thin community `Community 442`** (1 nodes): `Converte ponto ponderado (1-19) em percentil usando tabela normativa do WISC-IV.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 442`** (1 nodes): `IC para escore ponderado de subteste (IC 95% por padrão).`
+- **Thin community `Community 443`** (1 nodes): `IC para escore ponderado de subteste (IC 95% por padrão).`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 443`** (1 nodes): `Lookup composite score, percentile, and confidence intervals from equivalence ta`
+- **Thin community `Community 444`** (1 nodes): `Lookup composite score, percentile, and confidence intervals from equivalence ta`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 444`** (1 nodes): `Lookup GAI (General Ability Index) from Tabela-GAI.csv.     Returns: {'escore':`
+- **Thin community `Community 445`** (1 nodes): `Lookup GAI (General Ability Index) from Tabela-GAI.csv.     Returns: {'escore':`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 445`** (1 nodes): `Lookup CPI (Cognitive Proficiency Index) from Tabela-CPI.csv.     Returns: {'esc`
+- **Thin community `Community 446`** (1 nodes): `Lookup CPI (Cognitive Proficiency Index) from Tabela-CPI.csv.     Returns: {'esc`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 446`** (1 nodes): `Preview WAIS-III results without saving to database.          This endpoint is u`
+- **Thin community `Community 447`** (1 nodes): `Preview WAIS-III results without saving to database.          This endpoint is u`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 447`** (1 nodes): `Estimativa de fallback do QIT quando a soma está fora do range da tabela.     A`
+- **Thin community `Community 448`** (1 nodes): `Estimativa de fallback do QIT quando a soma está fora do range da tabela.     A`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 448`** (1 nodes): `Converte ponto ponderado (1-19) em percentil usando tabela normativa do WISC-IV.`
+- **Thin community `Community 449`** (1 nodes): `Converte ponto ponderado (1-19) em percentil usando tabela normativa do WISC-IV.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 449`** (1 nodes): `IC para escore ponderado de subteste (IC 95% por padrão).`
+- **Thin community `Community 450`** (1 nodes): `IC para escore ponderado de subteste (IC 95% por padrão).`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 450`** (1 nodes): `Lookup composite score, percentile, and confidence intervals from equivalence ta`
+- **Thin community `Community 451`** (1 nodes): `Lookup composite score, percentile, and confidence intervals from equivalence ta`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 451`** (1 nodes): `Lookup GAI (General Ability Index) from Tabela-GAI.csv.     Returns: {'escore':`
+- **Thin community `Community 452`** (1 nodes): `Lookup GAI (General Ability Index) from Tabela-GAI.csv.     Returns: {'escore':`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 452`** (1 nodes): `Lookup CPI (Cognitive Proficiency Index) from Tabela-CPI.csv.     Returns: {'esc`
-  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 453`** (1 nodes): `Preview WAIS-III results without saving to database.          This endpoint is u`
+- **Thin community `Community 453`** (1 nodes): `Lookup CPI (Cognitive Proficiency Index) from Tabela-CPI.csv.     Returns: {'esc`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 - **Thin community `Community 454`** (1 nodes): `Preview WAIS-III results without saving to database.          This endpoint is u`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
@@ -1347,23 +1347,25 @@ Nodes (1): Run administrative tasks.
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 - **Thin community `Community 456`** (1 nodes): `Preview WAIS-III results without saving to database.          This endpoint is u`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 457`** (1 nodes): `Run administrative tasks.`
+- **Thin community `Community 457`** (1 nodes): `Preview WAIS-III results without saving to database.          This endpoint is u`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 458`** (1 nodes): `Run administrative tasks.`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `GET()` connect `Community 0` to `Community 1`, `Community 2`, `Community 3`, `Community 4`, `Community 5`, `Community 6`, `Community 11`, `Community 13`, `Community 14`, `Community 15`, `Community 17`, `Community 18`, `Community 22`, `Community 23`, `Community 28`, `Community 33`, `Community 39`, `Community 40`, `Community 41`, `Community 62`, `Community 66`, `Community 84`, `Community 86`, `Community 91`, `Community 93`, `Community 102`, `Community 103`?**
-  _High betweenness centrality (0.189) - this node is a cross-community bridge._
-- **Why does `save()` connect `Community 2` to `Community 0`, `Community 1`, `Community 3`, `Community 6`, `Community 15`, `Community 22`, `Community 23`?**
-  _High betweenness centrality (0.020) - this node is a cross-community bridge._
-- **Why does `split()` connect `Community 0` to `Community 1`, `Community 2`, `Community 3`, `Community 4`, `Community 5`, `Community 6`, `Community 11`, `Community 13`, `Community 15`, `Community 17`, `Community 18`, `Community 22`, `Community 23`, `Community 28`, `Community 39`, `Community 40`, `Community 41`, `Community 66`, `Community 104`?**
+- **Why does `GET()` connect `Community 0` to `Community 1`, `Community 2`, `Community 3`, `Community 4`, `Community 8`, `Community 9`, `Community 11`, `Community 12`, `Community 14`, `Community 15`, `Community 16`, `Community 17`, `Community 19`, `Community 23`, `Community 25`, `Community 35`, `Community 39`, `Community 40`, `Community 45`, `Community 55`, `Community 63`, `Community 67`, `Community 80`, `Community 91`, `Community 93`, `Community 102`?**
+  _High betweenness centrality (0.175) - this node is a cross-community bridge._
+- **Why does `split()` connect `Community 0` to `Community 1`, `Community 2`, `Community 3`, `Community 4`, `Community 8`, `Community 9`, `Community 11`, `Community 12`, `Community 14`, `Community 15`, `Community 17`, `Community 19`, `Community 23`, `Community 39`, `Community 40`, `Community 45`, `Community 67`, `Community 103`, `Community 114`?**
   _High betweenness centrality (0.017) - this node is a cross-community bridge._
-- **Are the 861 inferred relationships involving `GET()` (e.g. with `evaluation_create_view()` and `_process_and_save_test()`) actually correct?**
-  _`GET()` has 861 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 297 inferred relationships involving `str` (e.g. with `_process_and_save_test()` and `.test_domain_level_bank_has_all_180_items_in_seven_sections()`) actually correct?**
-  _`str` has 297 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 127 inferred relationships involving `save()` (e.g. with `update_evaluation()` and `update_progress_entry()`) actually correct?**
-  _`save()` has 127 INFERRED edges - model-reasoned connections that need verification._
+- **Why does `_build_context()` connect `Community 3` to `Community 0`, `Community 8`, `Community 2`, `Community 14`?**
+  _High betweenness centrality (0.016) - this node is a cross-community bridge._
+- **Are the 865 inferred relationships involving `GET()` (e.g. with `evaluation_create_view()` and `_process_and_save_test()`) actually correct?**
+  _`GET()` has 865 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 299 inferred relationships involving `str` (e.g. with `_process_and_save_test()` and `domain_items()`) actually correct?**
+  _`str` has 299 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 129 inferred relationships involving `save()` (e.g. with `update_evaluation()` and `update_progress_entry()`) actually correct?**
+  _`save()` has 129 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 113 inferred relationships involving `split()` (e.g. with `.build_report_payload()` and `_clinical_box_text()`) actually correct?**
   _`split()` has 113 INFERRED edges - model-reasoned connections that need verification._

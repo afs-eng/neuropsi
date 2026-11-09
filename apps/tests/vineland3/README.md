@@ -8,7 +8,7 @@ Código canônico: `vineland3` (o antigo rótulo genérico `vineland` no exporta
 - Novas aplicações item a item usam `vineland3_parent_domain_180_v1`, de `domain_protocol.py`.
 - Fonte: `aux/vineland/Vineland3_Todas_As_Areas_180_Itens.md`, com correção dos erros de OCR por consulta visual a `aux/vineland/Vineland-formulario.pdf`, páginas 4–12. O Markdown original foi preservado.
 - Sete seções: Comunicação (40), Atividades de Vida Diária (40), Habilidades Sociais e Relacionamentos (40), Atividade Física opcional (25), Problemas de Comportamento A/B/C (13/11/11). Numeração independente por seção.
-- Respostas digitáveis `0/1/2`, Est. independente, observação por item e observações gerais. Binários: COM 26/33/39, AVD 40 e SOC 4 aceitam apenas `0/2`. N/D não pertencem ao novo protocolo.
+- Respostas digitáveis `0/1/2` e observações gerais. A tabela exibe apenas número, pergunta e resposta; estimativas e observações por item de registros anteriores continuam preservadas no payload. Binários: COM 26/33/39, AVD 40 e SOC 4 aceitam apenas `0/2`. N/D não pertencem ao novo protocolo.
 - Banco completo significa completude do **cadastro**, não aplicação completa ou homologação clínica. Rascunhos e seções opcionais vazias podem ser salvos; estimativa sem resposta numérica é rejeitada. Não há basal ou teto nessa versão.
 - Somente registro: `computed_payload` vazio, sem classificação, interpretação, correção normativa ou inclusão no laudo. Critérios complementares das páginas 2 e 15 continuam exigindo consulta/revisão clínica; as dicas impressas junto aos itens estão vinculadas às perguntas.
 - A API `/protocol` retorna o novo cadastro em `item_protocol` e o antigo em `legacy_item_protocol`. `/submit` aceita ambos por ID, com `entry_mode: "items"`, `form: null`, `raw_scores: {}`. Não se pode trocar o banco numa aplicação existente.
@@ -17,6 +17,15 @@ Código canônico: `vineland3` (o antigo rótulo genérico `vineland` no exporta
 - O profissional registra os dados; o campo respondente identifica o pai/cuidador informante. O preenchimento pelo profissional não altera a identidade do formulário para Entrevista.
 - A entrada padrão de `/dashboard/tests/vineland3` é o questionário. O link da avaliação explicita `entry=items`. Se o ID recebido pertencer a totais extensivos ou outro banco de itens com dados salvos, a tela abre um questionário novo, avisa qual registro será preservado e envia `application_id: null` ao salvar. Para consultar o lançamento original, o link usa `entry=totals`; a edição explícita (`edit=true`) também preserva seu modo. Questionários atuais são reabertos e salvos no próprio ID.
 - Rota de formulário unificada: `/dashboard/tests/vineland` contém a página; `/dashboard/tests/vineland3` reexporta a mesma página para compatibilidade. `lib/vineland-navigation.ts` gera o endereço usado pela avaliação, com `evaluation_id`, `application_id` e `entry=items`. A API e o código do instrumento continuam sendo `vineland3`; não há migração ou duplicação de dados.
+
+### Finalização e resultado descritivo
+
+- O formulário mantém o salvamento parcial e oferece **Finalizar teste e ver resultados**. A API recebe `finalize: true` somente para finalizar o banco de 180 perguntas. O banco legado não permite essa finalização.
+- COM, AVD e SOC precisam estar completas. Motor e comportamento A/B/C são opcionais: inteiramente vazios ficam não aplicados; se houver resposta, todos os itens da seção precisam ser preenchidos. Zero conta como resposta, vazio não. Os erros identificam a seção e os itens faltantes, sem alterar o registro salvo.
+- O servidor salva `completion_status: finalized` e `item_summary` em `raw_payload`, gerando somas descritivas, contagem de respostas e itens críticos individuais. A seção C não recebe soma; somente itens com resposta 1 ou 2 são destacados para revisão.
+- `/dashboard/tests/vineland/[id]/result` segue o layout WISC4: identificação, tabelas, perfil bruto, edição, retorno à avaliação e impressão via navegador (incluindo salvar como PDF). Não usa o endpoint de PDF WISC4.
+- O questionário finalizado reabre no resultado; `edit=true` restaura as respostas para edição. Nova finalização recalcula o resumo; salvar parcialmente remove o resumo anterior para não mostrar resultados desatualizados.
+- `computed_payload`, `classified_payload` e interpretação continuam vazios. Não há percentis, escores padrão, CCA, classificação clínica ou inclusão automática no laudo. O resultado explicita essas limitações. É necessário publicar frontend e backend juntos.
 
 ## Disponível
 

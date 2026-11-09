@@ -21,6 +21,20 @@ function load(react = React) {
   return mod.exports;
 }
 
+function loadResult() {
+  const filename = path.join(__dirname, 'VinelandQuestionnaireResult.tsx');
+  const mod = new Module(filename, module);
+  mod.paths = module.paths;
+  const original = mod.require.bind(mod);
+  mod.require = id => id === 'next/link'
+    ? { default: ({ href, children, ...props }) => React.createElement('a', { ...props, href }, children) }
+    : original(id);
+  mod._compile(ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
+  }).outputText, filename);
+  return mod.exports;
+}
+
 const protocol = {
   id: 'partial', title: 'Vineland (edição não confirmada)', description: 'Descrição do instrumento.',
   warning: 'Banco parcial, sem conversão normativa ou laudo.',
@@ -222,12 +236,13 @@ test('locked domain-level records disable responses and general observations', (
   }
 });
 
-async function loadPage(application, query = 'evaluation_id=13&application_id=78', route = 'vineland') {
+async function loadPage(application, query = 'evaluation_id=13&application_id=78', route = 'vineland', options = {}) {
   const filename = path.join(__dirname, `../../app/dashboard/tests/${route}/page.tsx`);
   const state = [];
   let cursor = 0;
   let effect;
   let posted;
+  const redirects = [];
   const definitions = {
     item_protocol: domainProtocol, legacy_item_protocol: protocol, technical_notes: [],
     forms: Object.fromEntries(['entrevista', 'pais_cuidadores', 'professores'].map(code => [code, { label: code, scales: [] }])),
@@ -257,18 +272,23 @@ async function loadPage(application, query = 'evaluation_id=13&application_id=78
       return canonical.exports;
     }
     if (id === 'react') return mockReact;
-    if (id === 'next/navigation') return { useRouter: () => ({ replace() {} }), useSearchParams: () => new URLSearchParams(query) };
+    if (id === 'next/navigation') return { useRouter: () => ({ replace(url) { redirects.push(url); } }), useSearchParams: () => new URLSearchParams(query), useParams: () => ({ id: new URLSearchParams(query).get('application_id') }) };
     if (id === 'next/link') return { default: ({ href, children, ...props }) => React.createElement('a', { ...props, href }, children) };
     if (id === '@/components/ui/button') return { Button: props => React.createElement('button', props) };
     if (id === '@/components/ui/input') return { Input: props => React.createElement('input', props) };
     if (id === '@/components/tests/VinelandItemFields') return load();
+    if (id === '@/components/tests/VinelandQuestionnaireResult') return loadResult();
     if (id === '@/lib/api') return { api: {
       async get(url) {
         if (url.endsWith('/protocol')) return definitions;
         if (url.includes('/applications/')) return application;
         return { id: Number(new URLSearchParams(query).get('evaluation_id')), patient_name: 'Paciente de teste', patient_birth_date: '2020-01-01', start_date: '2026-01-15' };
       },
-      async post(url, payload) { posted = { url, payload }; return { ...application, application_id: 78 }; },
+      async post(url, payload) {
+        posted = { url, payload };
+        if (options.postError) throw { message: options.postError };
+        return { ...application, application_id: application?.id || 78 };
+      },
     } };
     return original(id);
   };
@@ -277,12 +297,13 @@ async function loadPage(application, query = 'evaluation_id=13&application_id=78
   }).outputText, filename);
   function tree() {
     cursor = 0;
-    return mod.exports.default().props.children.type();
+    const page = mod.exports.default();
+    return route.endsWith('/result') ? page : page.props.children.type();
   }
   tree();
   effect();
   await new Promise(resolve => setImmediate(resolve));
-  return { tree, posted: () => posted };
+  return { tree, posted: () => posted, redirects };
 }
 
 test('page with evaluation/application URL renders questions and submits into the empty application', async () => {
@@ -409,4 +430,112 @@ test('vineland and vineland3 URLs render the same questionnaire, not separate im
   const direct = await loadPage(saved, query, 'vineland');
   const alias = await loadPage(saved, query, 'vineland3');
   assert.equal(renderToStaticMarkup(direct.tree()), renderToStaticMarkup(alias.tree()));
+});
+
+const finalizedQuestionnaire = {
+  id: 85, evaluation_id: 15, instrument_code: 'vineland3', patient_name: 'Paciente Vineland', status: 'completed',
+  applied_on: '2026-01-15', computed_payload: {}, interpretation_text: '', is_validated: false,
+  raw_payload: { entry_mode: 'items', item_protocol_id: domainProtocol.id, completion_status: 'finalized',
+    respondent: 'Cuidador', birth_date: '2020-01-01', general_observations: 'Nota preservada',
+    item_responses: { comunicacao: { '1': { response: '0', observation: '' } } },
+    item_summary: { protocol_id: domainProtocol.id, normative_scoring: false, answered: 120, applied_total: 120,
+      sections: [
+        { code: 'comunicacao', label: 'Comunicação', kind: 'adaptive', applied: true, answered: 40, total: 40, raw_score: 0, max_score: 80 },
+        { code: 'vida_diaria', label: 'Atividades de Vida Diária', kind: 'adaptive', applied: true, answered: 40, total: 40, raw_score: 60, max_score: 80 },
+        { code: 'socializacao', label: 'Habilidades Sociais', kind: 'adaptive', applied: true, answered: 40, total: 40, raw_score: 80, max_score: 80 },
+        { code: 'atividade_fisica', label: 'Habilidades Motoras', kind: 'adaptive', applied: false, answered: 0, total: 25, raw_score: null, max_score: 50 },
+        { code: 'comportamento_a', label: 'Internalizante', kind: 'behavior', applied: false, answered: 0, total: 13, raw_score: null, max_score: 26 },
+        { code: 'comportamento_b', label: 'Externalizante', kind: 'behavior', applied: false, answered: 0, total: 11, raw_score: null, max_score: 22 },
+        { code: 'comportamento_c', label: 'Itens críticos', kind: 'critical', applied: false, answered: 0, total: 11, raw_score: null, max_score: null },
+      ], critical_items: [],
+    },
+  },
+};
+
+test('finalize submits all current responses under the existing ID and opens its result page', async () => {
+  const saved = structuredClone(finalizedQuestionnaire);
+  delete saved.raw_payload.completion_status;
+  delete saved.raw_payload.item_summary;
+  const page = await loadPage(saved, 'evaluation_id=15&application_id=85');
+  const tree = page.tree();
+  assert.match(renderToStaticMarkup(tree), /Finalizar teste e ver resultados/);
+  assert.match(renderToStaticMarkup(tree), /Salvar registro parcial/);
+  const finalize = elements(tree).find(element => element.props?.value === 'finalize');
+  assert.equal(finalize.props.type, 'submit');
+  await elements(tree).find(element => element.type === 'form').props.onSubmit({
+    preventDefault() {}, nativeEvent: { submitter: { getAttribute: name => name === 'value' ? 'finalize' : null } },
+  });
+  assert.equal(page.posted().payload.finalize, true);
+  assert.equal(page.posted().payload.application_id, 85);
+  assert.equal(page.posted().payload.evaluation_id, 15);
+  assert.deepEqual(page.posted().payload.item_responses, saved.raw_payload.item_responses);
+  assert.equal(page.posted().payload.general_observations, 'Nota preservada');
+  assert.deepEqual(page.redirects, ['/dashboard/tests/vineland/85/result']);
+});
+
+test('partial save stays in the form, and failed finalization keeps answers without navigating', async () => {
+  const saved = structuredClone(finalizedQuestionnaire);
+  delete saved.raw_payload.completion_status;
+  delete saved.raw_payload.item_summary;
+  const partial = await loadPage(saved, 'evaluation_id=15&application_id=85');
+  await elements(partial.tree()).find(element => element.type === 'form').props.onSubmit({ preventDefault() {} });
+  assert.equal(partial.posted().payload.finalize, false);
+  assert.doesNotMatch(partial.redirects[0], /\/result/);
+  const failure = await loadPage(saved, 'evaluation_id=15&application_id=85', 'vineland', { postError: 'Comunicação: faltam respostas nos itens 2.' });
+  await elements(failure.tree()).find(element => element.type === 'form').props.onSubmit({
+    preventDefault() {}, nativeEvent: { submitter: { getAttribute: () => 'finalize' } },
+  });
+  assert.deepEqual(failure.redirects, []);
+  assert.match(renderToStaticMarkup(failure.tree()), /faltam respostas nos itens 2/);
+  const fields = elements(failure.tree()).find(element => element.props?.responses);
+  assert.deepEqual(fields.props.responses, saved.raw_payload.item_responses);
+});
+
+test('finalized questionnaire reopens with WISC-style result, zero scores, optional sections and editing link', async () => {
+  const page = await loadPage(finalizedQuestionnaire, 'evaluation_id=15&application_id=85');
+  const html = renderToStaticMarkup(page.tree());
+  assert.match(html, /Vineland-3 - Resultado/);
+  assert.match(html, /Paciente Vineland/);
+  assert.match(html, /Cuidador/);
+  assert.match(html, /15\/01\/2026/);
+  assert.match(html, /Resumo das áreas adaptativas/);
+  assert.match(html, /Perfil das somas brutas/);
+  assert.match(html, /120 de 120/);
+  assert.match(html, /font-bold text-blue-700">0<\/td>/);
+  assert.match(html, /Não aplicada/);
+  assert.match(html, /sem correção normativa/);
+  assert.match(html, /application_id=85&amp;edit=true/);
+  assert.match(html, /Imprimir \/ PDF/);
+  assert.match(html, /Nota preservada/);
+  assert.doesNotMatch(html, /<form|Escore Composto|QI Total/);
+  const edit = await loadPage(finalizedQuestionnaire, 'evaluation_id=15&application_id=85&edit=true');
+  assert.match(renderToStaticMarkup(edit.tree()), /<form/);
+  assert.match(renderToStaticMarkup(edit.tree()), /Finalizar teste e ver resultados/);
+});
+
+test('result page loads a finalized application and rejects incomplete or other-instrument applications', async () => {
+  const result = await loadPage(finalizedQuestionnaire, 'application_id=85', 'vineland/[id]/result');
+  assert.match(renderToStaticMarkup(result.tree()), /Vineland-3 - Resultado/);
+  for (const saved of [
+    { ...finalizedQuestionnaire, instrument_code: 'wisc4' },
+    { ...finalizedQuestionnaire, raw_payload: { completion_status: 'partial' } },
+  ]) {
+    const page = await loadPage(saved, 'application_id=85', 'vineland/[id]/result');
+    const html = renderToStaticMarkup(page.tree());
+    assert.match(html, /não possui um questionário Vineland finalizado/);
+    assert.doesNotMatch(html, /Resumo das áreas adaptativas/);
+  }
+});
+
+test('critical items are individual review entries, not a sum, and locked results cannot be edited', () => {
+  const saved = structuredClone(finalizedQuestionnaire);
+  saved.status = 'locked';
+  saved.raw_payload.item_summary.sections.at(-1).applied = true;
+  saved.raw_payload.item_summary.critical_items = [{ id: '2', response: '1', text: 'Comportamento a revisar.' }];
+  const { VinelandQuestionnaireResult } = loadResult();
+  const html = renderToStaticMarkup(React.createElement(VinelandQuestionnaireResult, { application: saved }));
+  assert.match(html, /Item 2 · Resposta 1/);
+  assert.match(html, /Comportamento a revisar/);
+  assert.match(html, /não recebe soma ou diagnóstico automático/);
+  assert.doesNotMatch(html, /edit=true/);
 });

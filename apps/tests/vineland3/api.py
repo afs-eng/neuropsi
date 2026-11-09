@@ -50,6 +50,7 @@ class Vineland3SubmitIn(Schema):
     item_responses: dict | None = None
     item_protocol_id: str | None = None
     general_observations: str = Field(default="", max_length=10000)
+    finalize: bool = False
 
 
 @router.get("/protocol", response={200: dict, 403: MessageOut}, auth=bearer_auth)
@@ -87,7 +88,7 @@ def submit(request, payload: Vineland3SubmitIn):
     reference = get_reference_date(evaluation, payload.applied_on)
     if reference > date.today():
         return 400, {"message": "A aplicação não pode estar no futuro."}
-    raw = payload.model_dump(exclude={"evaluation_id", "application_id", "applied_on"})
+    raw = payload.model_dump(exclude={"evaluation_id", "application_id", "applied_on", "finalize"})
     if "general_observations" not in payload.model_fields_set:
         raw.pop("general_observations", None)
     raw.update(birth_date=evaluation.patient.birth_date.isoformat(), reference_date=reference.isoformat())
@@ -104,7 +105,12 @@ def submit(request, payload: Vineland3SubmitIn):
                 raw["item_responses"] = domain_protocol.normalize_item_responses(payload.item_responses)
                 raw.update(item_source=domain_protocol.SOURCE, item_pdf_source=domain_protocol.PDF_SOURCE,
                            edition_verified=True, scoring_enabled=False)
+                raw["completion_status"] = "finalized" if payload.finalize else "partial"
+                if payload.finalize:
+                    raw["item_summary"] = domain_protocol.build_item_summary(raw["item_responses"])
             else:
+                if payload.finalize:
+                    raise ValueError("O banco parcial legado não permite finalização. Preserve o protocolo original.")
                 raw["item_responses"] = normalize_item_responses(payload.item_responses)
                 raw.update(item_source=SOURCE, edition_verified=False, scoring_enabled=False)
             computed = {}
@@ -150,5 +156,6 @@ def submit(request, payload: Vineland3SubmitIn):
         AuditService.track_create(request, "test_application", str(application.pk), {
             "evaluation_id": evaluation.pk, "instrument": "vineland3", "edited": payload.application_id is not None,
             "entry_mode": payload.entry_mode,
+            "finalized": payload.finalize,
         })
     return 200, {"application_id": application.pk, **serialize_test_application(application)}

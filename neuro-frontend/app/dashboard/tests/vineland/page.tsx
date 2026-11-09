@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { api } from '@/lib/api'
 import { VinelandItemFields, isEmptyVinelandApplication, vinelandEntryMode, restoreVinelandObservations, resolveVinelandItemProtocol, vinelandResponseError, type VinelandItemProtocol, type VinelandItemResponses } from '@/components/tests/VinelandItemFields'
+import { VinelandQuestionnaireResult, type VinelandItemSummary } from '@/components/tests/VinelandQuestionnaireResult'
 
 type FormCode = 'entrevista' | 'pais_cuidadores' | 'professores'
 interface Scale { code: string; label: string; max: number; optional: boolean; min_months: number; max_months: number | null }
@@ -15,8 +16,8 @@ interface Evaluation { id: number; patient_name: string; patient_birth_date: str
 interface Subdomain { scale: string; label: string; raw_score: number; v_scale: number }
 interface Domain { scale: string; label: string; standard_score: number; percentile: string }
 interface Application {
-  id: number; evaluation_id: number; instrument_code: string; status: string; is_validated: boolean; applied_on: string | null
-  raw_payload: { form?: FormCode; respondent?: string; raw_scores?: Record<string, number>; entry_mode?: 'totals' | 'items'; item_protocol_id?: string; item_responses?: VinelandItemResponses; general_observations?: string }
+  id: number; evaluation_id: number; instrument_code: string; patient_name?: string; status: string; is_validated: boolean; applied_on: string | null
+  raw_payload: { form?: FormCode; respondent?: string; raw_scores?: Record<string, number>; entry_mode?: 'totals' | 'items'; item_protocol_id?: string; item_responses?: VinelandItemResponses; general_observations?: string; completion_status?: string; item_summary?: VinelandItemSummary; birth_date?: string }
   computed_payload: { domains?: Domain[]; subdomains?: Subdomain[]; form_label?: string; respondent?: string; age_months?: number; norm_source?: { file: string; subdomain_pages: number[]; domain_pages: number[] } }
   interpretation_text: string
   classified_payload?: object
@@ -111,6 +112,7 @@ function Vineland3Form() {
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!evaluation || saving || locked) return
+    const finalize = (event.nativeEvent as SubmitEvent | undefined)?.submitter?.getAttribute('value') === 'finalize'
     setError('')
     setSuccess('')
     const raw: Record<string, number> = {}
@@ -134,8 +136,13 @@ function Vineland3Form() {
         evaluation_id: evaluation.id, application_id: application?.id ?? null,
         applied_on: appliedOn, form: entryMode === 'totals' ? form : null, respondent, entry_mode: entryMode, raw_scores: raw,
         ...(entryMode === 'items' ? { item_protocol_id: itemProtocol?.id, item_responses: itemResponses, general_observations: generalObservations } : {}),
+        ...(usesCurrentQuestions ? { finalize } : {}),
       })
       setApplication(result)
+      if (finalize) {
+        router.replace(`/dashboard/tests/vineland/${result.application_id}/result`)
+        return
+      }
       setSuccess(entryMode === 'items' ? 'Registro parcial salvo. Respostas e observações preservadas; sem cálculo normativo ou laudo.' : 'Pontuações salvas para revisão.')
       const savedEntry = entryMode === 'totals' || itemProtocol?.id !== protocol?.item_protocol.id ? 'totals' : 'items'
       router.replace(`/dashboard/tests/vineland?evaluation_id=${evaluation.id}&application_id=${result.application_id}&entry=${savedEntry}`)
@@ -147,6 +154,9 @@ function Vineland3Form() {
   }
 
   if (loading) return <p role="status" className="p-8">Carregando Vineland-3…</p>
+  if (!isEdit && application?.raw_payload.completion_status === 'finalized' && application.raw_payload.item_summary) {
+    return <VinelandQuestionnaireResult application={{ ...application, patient_name: application.patient_name || evaluation?.patient_name }} />
+  }
   return <main className="mx-auto max-w-5xl space-y-6 p-4 sm:p-8">
     <Link className="text-sm text-cyan-800 underline" href={evaluation ? `/dashboard/evaluations/${evaluation.id}/overview` : '/dashboard/evaluations'}>Voltar à avaliação</Link>
     <header><h1 className="text-2xl font-semibold text-slate-900">{!viewResult && entryMode === 'items' ? 'Vineland · Registro item a item' : `Vineland-3 · ${viewResult ? 'Resultados' : 'Correção'}`}</h1><p className="mt-2 text-slate-600">{evaluation?.patient_name}</p></header>
@@ -217,7 +227,11 @@ function Vineland3Form() {
           <p id={`vineland-${scale.code}-hint`} className="mt-1 text-xs text-slate-600">De 0 a {scale.max}.</p>
         </div>)}</div>
       </fieldset>}
-      <Button type="submit" disabled={saving || locked || (entryMode === 'totals' && activeScales.length === 0)}>{saving ? 'Salvando…' : entryMode === 'items' ? 'Salvar registro parcial (sem cálculo)' : 'Calcular e salvar para revisão'}</Button>
+      {usesCurrentQuestions && <p className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">Para finalizar, responda todos os itens de Comunicação, Atividades de Vida Diária e Habilidades Sociais. As seções opcionais podem ficar inteiramente vazias; se iniciadas, devem ser concluídas. O resultado apresenta somas brutas, sem conversão normativa.</p>}
+      <div className="flex flex-wrap gap-3">
+        <Button type="submit" name="action" value="partial" variant={usesCurrentQuestions ? 'outline' : 'default'} disabled={saving || locked || (entryMode === 'totals' && activeScales.length === 0)}>{saving ? 'Salvando…' : entryMode === 'items' ? 'Salvar registro parcial (sem cálculo)' : 'Calcular e salvar para revisão'}</Button>
+        {usesCurrentQuestions && <Button type="submit" name="action" value="finalize" disabled={saving || locked}>{saving ? 'Salvando…' : 'Finalizar teste e ver resultados'}</Button>}
+      </div>
     </form> : null}
     <details className="rounded-lg border p-4 text-sm"><summary className="cursor-pointer font-medium">Notas técnicas e limitações</summary><ul className="mt-3 list-disc space-y-2 pl-5">{protocol?.technical_notes.map(note => <li key={note}>{note}</li>)}</ul></details>
   </main>
