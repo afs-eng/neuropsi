@@ -1,7 +1,19 @@
-# Vineland-3 — correção normativa e registro parcial de itens
+# Vineland-3 — correção extensiva e cadastro de perguntas
 
 Formulários extensivos: `entrevista`, `pais_cuidadores`, `professores`.
 Código canônico: `vineland3` (o antigo rótulo genérico `vineland` no exportador não é um módulo de correção).
+
+## Formulário de Pais/Cuidadores dos Níveis de Domínio — 180 itens
+
+- Novas aplicações item a item usam `vineland3_parent_domain_180_v1`, de `domain_protocol.py`.
+- Fonte: `aux/vineland/Vineland3_Todas_As_Areas_180_Itens.md`, com correção dos erros de OCR por consulta visual a `aux/vineland/Vineland-formulario.pdf`, páginas 4–12. O Markdown original foi preservado.
+- Sete seções: Comunicação (40), Atividades de Vida Diária (40), Habilidades Sociais e Relacionamentos (40), Atividade Física opcional (25), Problemas de Comportamento A/B/C (13/11/11). Numeração independente por seção.
+- Respostas digitáveis `0/1/2`, Est. independente, observação por item e observações gerais. Binários: COM 26/33/39, AVD 40 e SOC 4 aceitam apenas `0/2`. N/D não pertencem ao novo protocolo.
+- Banco completo significa completude do **cadastro**, não aplicação completa ou homologação clínica. Rascunhos e seções opcionais vazias podem ser salvos; estimativa sem resposta numérica é rejeitada. Não há basal ou teto nessa versão.
+- Somente registro: `computed_payload` vazio, sem classificação, interpretação, correção normativa ou inclusão no laudo. Critérios complementares das páginas 2 e 15 continuam exigindo consulta/revisão clínica; as dicas impressas junto aos itens estão vinculadas às perguntas.
+- A API `/protocol` retorna o novo cadastro em `item_protocol` e o antigo em `legacy_item_protocol`. `/submit` aceita ambos por ID, com `entry_mode: "items"`, `form: null`, `raw_scores: {}`. Não se pode trocar o banco numa aplicação existente.
+- Aplicações antigas continuam com os 58 itens originais e os códigos N/D. Não há migração automática de respostas entre bancos.
+- O profissional registra os dados; o campo respondente identifica o pai/cuidador informante. O preenchimento pelo profissional não altera a identidade do formulário para Entrevista.
 
 ## Disponível
 
@@ -48,8 +60,8 @@ O modo `items` de `/api/tests/vineland3/submit` exige `item_protocol_id`, `form:
 
 ## Bloqueios / próximo incremento
 
-Os arquivos disponíveis não incluem os protocolos completos nem as regras de início, basal, teto, estimativas, respostas especiais e omissões. **Não inferir contagem de itens pelo máximo bruto nem usar soma simples.** O modo `items` permite apenas registro; a correção genérica continua rejeitando seu cálculo.
+O novo PDF identifica um protocolo completo **de níveis de domínio**, não os extensivos. Para automatizar sua correção ainda é necessário importar e conferir as colunas específicas de C.3 (inclusive CCA e IC), integrar as regras especiais e homologar casos. **Não reaproveitar a conversão de subdomínios extensivos.** O modo `items` permite apenas registro; a correção genérica continua rejeitando seu cálculo. As limitações do banco parcial antigo continuam válidas.
 
-As faixas de classificação qualitativa precisam de uma referência do manual confirmada. `classification_status=pending_manual_verification`; nenhuma classificação clínica é inventada. A interpretação atual é quantitativa e determinística.
+O manual de 33 páginas fornecido posteriormente apresenta faixas qualitativas, mas sua integração e homologação ainda não foram feitas. `classification_status=pending_manual_verification`; nenhuma classificação clínica é inventada. A interpretação extensiva atual é quantitativa e determinística.
 
 Ainda pendentes: correção normativa item a item e protocolos completos/confirmados; classificação qualitativa; IC; equivalentes etários/VEC; correção de comportamento mal adaptado (apêndice E); comparações inferenciais entre informantes; homologação clínica dos casos de referência. Esses recursos não devem ser apresentados como concluídos.

@@ -17,6 +17,7 @@ from apps.tests.api.serializers import serialize_test_application
 from apps.tests.models import Instrument, TestApplication
 
 from .calculators import compute_scores
+from . import domain_protocol
 from .config import FORMS, SUBDOMAINS, TECHNICAL_NOTES
 from .interpreters import interpret_results
 from .item_protocol import PROTOCOL_ID, SOURCE, item_protocol, normalize_item_responses
@@ -60,7 +61,8 @@ def protocol(request):
             for key, entries in representative.items() if entries
         ]}
     return 200, {"forms": forms, "entry_modes": ["totals", "items"],
-                 "item_protocol": item_protocol(), "technical_notes": TECHNICAL_NOTES}
+                 "item_protocol": domain_protocol.item_protocol(),
+                 "legacy_item_protocol": item_protocol(), "technical_notes": TECHNICAL_NOTES}
 
 
 @router.post("/submit", response={200: dict, 400: MessageOut, 403: MessageOut, 404: MessageOut}, auth=bearer_auth)
@@ -84,12 +86,17 @@ def submit(request, payload: Vineland3SubmitIn):
         if not payload.respondent.strip():
             raise ValueError("Identifique o respondente.")
         if payload.entry_mode == "items":
-            if payload.item_protocol_id != PROTOCOL_ID:
+            if payload.item_protocol_id not in {PROTOCOL_ID, domain_protocol.PROTOCOL_ID}:
                 raise ValueError("Identificador do banco de itens inválido.")
             if payload.form is not None or payload.raw_scores:
-                raise ValueError("Registro parcial de edição não confirmada não pode ser associado a normas ou totais Vineland-3.")
-            raw["item_responses"] = normalize_item_responses(payload.item_responses)
-            raw.update(item_source=SOURCE, edition_verified=False, scoring_enabled=False)
+                raise ValueError("Registro item a item não pode ser associado às normas ou totais dos formulários extensivos.")
+            if payload.item_protocol_id == domain_protocol.PROTOCOL_ID:
+                raw["item_responses"] = domain_protocol.normalize_item_responses(payload.item_responses)
+                raw.update(item_source=domain_protocol.SOURCE, item_pdf_source=domain_protocol.PDF_SOURCE,
+                           edition_verified=True, scoring_enabled=False)
+            else:
+                raw["item_responses"] = normalize_item_responses(payload.item_responses)
+                raw.update(item_source=SOURCE, edition_verified=False, scoring_enabled=False)
             computed = {}
         else:
             if payload.item_protocol_id is not None:
@@ -115,6 +122,8 @@ def submit(request, payload: Vineland3SubmitIn):
                 return 403, {"message": "Esta aplicação está travada e não pode ser editada."}
             if (application.raw_payload or {}).get("entry_mode", "totals") != payload.entry_mode:
                 return 400, {"message": "Crie uma aplicação separada para mudar o modo de entrada; preserve o registro original."}
+            if payload.entry_mode == "items" and ((application.raw_payload or {}).get("item_protocol_id") or PROTOCOL_ID) != payload.item_protocol_id:
+                return 400, {"message": "Crie uma aplicação separada para usar outro banco de perguntas; preserve o protocolo original."}
             if "general_observations" not in payload.model_fields_set and "general_observations" in (application.raw_payload or {}):
                 raw["general_observations"] = application.raw_payload["general_observations"]
         else:

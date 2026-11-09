@@ -18,6 +18,7 @@ from apps.tests.models import Instrument, TestApplication
 from apps.tests.registry import get_test_module
 from apps.tests.services.scoring_service import TestScoringService
 from apps.tests.vineland3 import Vineland3Module
+from apps.tests.vineland3 import domain_protocol
 from apps.tests.vineland3.calculators import compute_scores
 from apps.tests.vineland3.item_protocol import DOMAIN_ITEMS, PROTOCOL_ID, item_protocol, normalize_item_responses
 from apps.tests.vineland3.import_norms import age_range
@@ -38,6 +39,50 @@ def raw(form="professores", birth="2023-01-15", applied="2026-01-15"):
 
 
 class Vineland3NormTests(SimpleTestCase):
+    def test_domain_level_bank_has_all_180_items_in_seven_sections(self):
+        protocol = domain_protocol.item_protocol()
+        self.assertEqual([len(domain["items"]) for domain in protocol["domains"]], [40, 40, 40, 25, 13, 11, 11])
+        self.assertTrue(protocol["complete"])
+        self.assertTrue(protocol["supports_estimates"])
+        self.assertFalse(protocol["scoring_enabled"])
+        self.assertEqual(set(protocol["legend"]), {"2", "1", "0"})
+        for domain in protocol["domains"]:
+            self.assertEqual([item["id"] for item in domain["items"]], [str(i) for i in range(1, len(domain["items"]) + 1)])
+            for item in domain["items"]:
+                self.assertNotIn("TRANSCRIÇÃO NÃO RECUPERADA", item["text"])
+                self.assertNotIn("[", item["text"])
+        # OCR merged these questions into their predecessors; the PDF separates them.
+        self.assertTrue(domain_protocol.DOMAIN_ITEMS["comunicacao"][1][28].startswith("Compreende a ordem alfabética."))
+        self.assertTrue(domain_protocol.DOMAIN_ITEMS["vida_diaria"][1][30].startswith("Lava a louça."))
+        self.assertTrue(domain_protocol.DOMAIN_ITEMS["atividade_fisica"][1][0].startswith("Desembrulha pequenos objetos."))
+        self.assertIn("arranca o cabelo", domain_protocol.DOMAIN_ITEMS["comportamento_c"][1][2])
+
+    def test_domain_level_drafts_preserve_zero_blank_estimates_and_notes(self):
+        data = {"comunicacao": {"1": {"response": "0", "estimated": True, "observation": "Conferir"},
+                                "2": {"response": ""}}, "comportamento_c": {"11": {"response": "2"}}}
+        result = domain_protocol.normalize_item_responses(data)
+        self.assertEqual(result["comunicacao"]["1"], data["comunicacao"]["1"])
+        self.assertEqual(result["comunicacao"]["2"], {"response": "", "estimated": False, "observation": ""})
+        self.assertEqual(domain_protocol.normalize_item_responses({}), {})
+
+    def test_domain_level_binary_items_and_strict_estimates(self):
+        for domain, numbers in domain_protocol.BINARY_ITEMS.items():
+            for number in numbers:
+                for value in ("0", "2", ""):
+                    domain_protocol.normalize_item_responses({domain: {str(number): {"response": value}}})
+                with self.assertRaises(ValueError):
+                    domain_protocol.normalize_item_responses({domain: {str(number): {"response": "1"}}})
+        for entry in ({"response": "N"}, {"response": "D"}, {"response": 0}, {"response": True},
+                      {"response": "3"}, {"response": "20"}, {"response": " ", "estimated": False},
+                      {"response": "", "estimated": True}, {"response": "2", "estimated": "true"},
+                      {"response": "2", "estimated": 1}, {"response": "2", "observation": None},
+                      {"response": "2", "observation": "x" * 2001}, {"response": "2", "score": 2}):
+            with self.subTest(entry=entry), self.assertRaises(ValueError):
+                domain_protocol.normalize_item_responses({"comunicacao": {"1": entry}})
+        for data in (None, [], {"autonomia": {}}, {"vida_diaria": {"41": {}}}, {"comportamento_c": {"12": {}}}):
+            with self.assertRaises(ValueError):
+                domain_protocol.normalize_item_responses(data)
+
     def test_importer_understands_portuguese_and_english_age_ranges(self):
         for text, expected in [("Idades 0:2:0–0:2:30", (2, 2)), ("Ages 3:0–3:3", (36, 39)),
                                ("Ages 90+", (1080, None))]:
@@ -196,7 +241,8 @@ class Vineland3ApiTests(TestCase):
         response = self.client.get("/api/tests/vineland3/protocol", HTTP_AUTHORIZATION=f"Bearer {self.token}")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["entry_modes"], ["totals", "items"])
-        self.assertEqual(response.json()["item_protocol"]["id"], PROTOCOL_ID)
+        self.assertEqual(response.json()["item_protocol"]["id"], domain_protocol.PROTOCOL_ID)
+        self.assertEqual(response.json()["legacy_item_protocol"]["id"], PROTOCOL_ID)
         self.assertFalse(response.json()["item_protocol"]["scoring_enabled"])
         self.assertNotIn("scores", response.json())
         scales = response.json()["forms"]["pais_cuidadores"]["scales"]
@@ -257,6 +303,61 @@ class Vineland3ApiTests(TestCase):
                            item_responses={"comunicacao": {"1": {"response": "0", "observation": "Preservar zero"},
                                                            "2": {"response": "n", "observation": "Sem oportunidade"}},
                                            "autonomia": {"1": {"response": "", "observation": "Observar depois"}}}, **overrides)
+
+    def submit_domain_items(self, **overrides):
+        return self.submit(**{"form": None, "entry_mode": "items", "raw_scores": {},
+                              "item_protocol_id": domain_protocol.PROTOCOL_ID,
+                              "item_responses": {"comunicacao": {"1": {"response": "0", "estimated": True, "observation": "Conferir"}}},
+                              **overrides})
+
+    def test_domain_level_items_persist_reopen_edit_and_remain_unscored(self):
+        response = self.submit_domain_items(general_observations="Nota geral")
+        self.assertEqual(response.status_code, 200, response.content)
+        app = TestApplication.objects.get(pk=response.json()["application_id"])
+        self.assertEqual(app.raw_payload["item_protocol_id"], domain_protocol.PROTOCOL_ID)
+        self.assertTrue(app.raw_payload["edition_verified"])
+        self.assertFalse(app.raw_payload["scoring_enabled"])
+        read = self.client.get(f"/api/tests/applications/{app.pk}", HTTP_AUTHORIZATION=f"Bearer {self.token}")
+        self.assertEqual(read.json()["raw_payload"]["item_responses"], app.raw_payload["item_responses"])
+        self.assertEqual(self.submit_domain_items(application_id=app.pk, respondent="Informante atualizado").status_code, 200)
+        app.refresh_from_db()
+        self.assertEqual(app.raw_payload["general_observations"], "Nota geral")
+        self.assertTrue(app.raw_payload["item_responses"]["comunicacao"]["1"]["estimated"])
+        self.assertEqual(app.computed_payload, {})
+        self.assertEqual(app.classified_payload, {})
+        self.assertEqual(app.interpretation_text, "")
+        self.assertFalse(app.is_validated)
+        app.is_validated = True
+        app.save()
+        self.assertEqual(build_validated_tests_snapshot(self.evaluation), [])
+        self.assertFalse(TestScoringService.process(app)["ok"])
+        app.status = TestApplication.Status.LOCKED
+        app.save()
+        self.assertEqual(self.submit_domain_items(application_id=app.pk).status_code, 403)
+
+    def test_complete_domain_bank_can_be_saved_without_normative_scores(self):
+        items = {domain["code"]: {item["id"]: {"response": "0", "estimated": False} for item in domain["items"]}
+                 for domain in domain_protocol.item_protocol()["domains"]}
+        response = self.submit_domain_items(item_responses=items)
+        self.assertEqual(response.status_code, 200, response.content)
+        app = TestApplication.objects.get(pk=response.json()["application_id"])
+        self.assertEqual(sum(len(items) for items in app.raw_payload["item_responses"].values()), 180)
+        self.assertEqual(app.computed_payload, {})
+
+    def test_protocols_cannot_be_swapped_in_place(self):
+        old_id = self.submit_items().json()["application_id"]
+        self.assertEqual(self.submit_domain_items(application_id=old_id).status_code, 400)
+        self.assertEqual(TestApplication.objects.get(pk=old_id).raw_payload["item_protocol_id"], PROTOCOL_ID)
+        new_id = self.submit_domain_items().json()["application_id"]
+        self.assertEqual(self.submit_items(application_id=new_id).status_code, 400)
+        self.assertEqual(TestApplication.objects.get(pk=new_id).raw_payload["item_protocol_id"], domain_protocol.PROTOCOL_ID)
+
+    def test_domain_level_invalid_responses_are_rejected(self):
+        for items in ({"comunicacao": {"26": {"response": "1"}}}, {"vida_diaria": {"1": {"response": "N"}}},
+                      {"comunicacao": {"1": {"response": "", "estimated": True}}}):
+            self.assertEqual(self.submit_domain_items(item_responses=items).status_code, 400)
+        self.assertEqual(self.submit_domain_items(form="pais_cuidadores").status_code, 400)
+        self.assertEqual(TestApplication.objects.filter(instrument__code="vineland3").count(), 0)
 
     def test_partial_items_persist_without_scores_or_automatic_interpretation(self):
         response = self.submit_items()

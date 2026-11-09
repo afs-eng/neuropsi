@@ -34,7 +34,7 @@ const responses = {
   comunicacao: { '1': { response: '0', observation: 'Não confundir com vazio.' }, '2': { response: 'N', observation: '' }, '3': { response: 'D', observation: '' } },
   autonomia: { '1': { response: '', observation: 'Observação sem resposta.' } },
 };
-const { VinelandItemFields: Fields, restoreVinelandObservations } = load();
+const { VinelandItemFields: Fields, restoreVinelandObservations, resolveVinelandItemProtocol, vinelandResponseError } = load();
 const render = (extra = {}) => renderToStaticMarkup(React.createElement(Fields, { protocol, responses, observations: restoreVinelandObservations(protocol, responses), onObservationsChange() {}, onChange() {}, disabled: false, ...extra }));
 
 function elements(tree) {
@@ -43,12 +43,12 @@ function elements(tree) {
   return [tree, ...elements(tree.props?.children)];
 }
 
-function interactive() {
+function interactive(definition = protocol, initialResponses = responses, disabled = false) {
   let active;
   const { VinelandItemFields: Component } = load({ ...React, useState(initial) { return [active ?? initial, next => { active = next; }]; } });
-  let data = structuredClone(responses);
-  let observations = restoreVinelandObservations(protocol, data);
-  return Object.assign(() => Component({ protocol, responses: data, observations, onObservationsChange(next) { observations = next; }, onChange(next) { data = next; }, disabled: false }), { getResponses: () => data });
+  let data = structuredClone(initialResponses);
+  let observations = restoreVinelandObservations(definition, data);
+  return Object.assign(() => Component({ protocol: definition, responses: data, observations, onObservationsChange(next) { observations = next; }, onChange(next) { data = next; }, disabled }), { getResponses: () => data });
 }
 
 test('responses are single-character text inputs, never scoring selects or buttons', () => {
@@ -120,4 +120,83 @@ test('invalid input is flagged, not silently converted to another score', () => 
 test('saving and locked state disable all clinical data inputs', () => {
   const html = render({ disabled: true });
   assert.equal((html.match(/disabled=""/g) || []).length, 5);
+});
+
+const domainProtocol = {
+  id: 'domain-180', title: 'Vineland-3 — Pais/Cuidadores dos Níveis de Domínio',
+  description: 'Avalie o comportamento que a pessoa realiza sozinha, sem ajuda ou lembretes.',
+  warning: 'Cadastro de 180 itens; sem correção normativa.', supports_estimates: true, item_observations: true,
+  legend: { '2': 'Usualmente ou frequentemente', '1': 'Às vezes', '0': 'Nunca' },
+  domains: [
+    { code: 'comunicacao', label: 'Comunicação', pages: [4, 5], items: [
+      { id: '1', text: 'Pergunta adaptativa.', allowed_responses: ['2', '1', '0'] },
+      { id: '26', text: 'Pergunta binária.', allowed_responses: ['2', '0'], hint: 'Critério específico do formulário.' },
+    ] },
+    { code: 'comportamento_c', label: 'Problemas de Comportamento — Seção C', behavior_problems: true, items: [
+      { id: '8', text: 'Pergunta crítica.', allowed_responses: ['2', '1', '0'] },
+    ] },
+  ],
+};
+
+test('domain-level form has numeric text scores, binary constraints and separate estimate checkboxes', () => {
+  const html = render({ protocol: domainProtocol, responses: {} });
+  assert.equal((html.match(/type="text"/g) || []).length, 2);
+  assert.equal((html.match(/type="checkbox"/g) || []).length, 2);
+  assert.match(html, /pattern="\[210\]"/);
+  assert.match(html, /pattern="\[20\]"/);
+  assert.match(html, /Somente 2 = Sim ou 0 = Não/);
+  assert.match(html, /Critério específico do formulário/);
+  assert.match(html, /páginas 4 e 5/);
+  assert.doesNotMatch(html, /<select|\[210NnDd\]|edição não confirmada/);
+  assert.equal((html.match(/<textarea/g) || []).length, 3);
+});
+
+test('domain-level estimates and observations survive edits, tab navigation and reloading', () => {
+  const tree = interactive(domainProtocol, { comunicacao: { '1': { response: '0', observation: 'Nota', estimated: false } } });
+  const find = id => elements(tree()).find(element => element.props?.id === id || element.props?.name === id);
+  find('comunicacao.1.estimated').props.onChange({ target: { checked: true } });
+  find('vineland-item-comunicacao-1-observation').props.onChange({ target: { value: 'Nota atualizada' } });
+  elements(tree()).find(element => element.type === 'button' && element.props.children === 'Problemas de Comportamento — Seção C').props.onClick();
+  const html = renderToStaticMarkup(tree());
+  assert.match(html, /maior pontuação significa mais problemas/);
+  assert.match(html, /sem soma diagnóstica/);
+  elements(tree()).find(element => element.type === 'button' && element.props.children === 'Comunicação').props.onClick();
+  assert.equal(find('comunicacao.1.estimated').props.checked, true);
+  assert.equal(find('vineland-item-comunicacao-1').props.value, '0');
+  assert.equal(find('vineland-item-comunicacao-1-observation').props.value, 'Nota atualizada');
+  const reopened = interactive(domainProtocol, tree.getResponses());
+  assert.equal(elements(reopened()).find(element => element.props?.name === 'comunicacao.1.estimated').props.checked, true);
+  find('vineland-item-comunicacao-1').props.onChange({ target: { value: '' } });
+  assert.equal(find('comunicacao.1.estimated').props.checked, false);
+  assert.equal(find('comunicacao.1.estimated').props.disabled, true);
+  assert.equal(find('vineland-item-comunicacao-1-observation').props.value, 'Nota atualizada');
+});
+
+test('domain-level form rejects N/D and binary 1 without mutating the answer', () => {
+  const tree = interactive(domainProtocol, {});
+  const find = () => elements(tree()).find(element => element.props?.id === 'vineland-item-comunicacao-26');
+  for (const value of ['1', 'N', 'D', '3']) {
+    find().props.onChange({ target: { value } });
+    assert.equal(find().props.value, value);
+    assert.equal(find().props['aria-invalid'], true);
+    assert.match(vinelandResponseError(domainProtocol, tree.getResponses()), /item 26: use 2, 0/);
+  }
+  find().props.onChange({ target: { value: '0' } });
+  assert.equal(vinelandResponseError(domainProtocol, tree.getResponses()), '');
+  assert.match(vinelandResponseError(domainProtocol, { comunicacao: { '1': { response: '', estimated: true } } }), /Est. exige/);
+});
+
+test('new applications use 180-item bank while saved legacy applications keep their original questions', () => {
+  assert.equal(resolveVinelandItemProtocol(domainProtocol, protocol), domainProtocol);
+  assert.equal(resolveVinelandItemProtocol(domainProtocol, protocol, domainProtocol.id, true), domainProtocol);
+  assert.equal(resolveVinelandItemProtocol(domainProtocol, protocol, protocol.id, true), protocol);
+  assert.equal(resolveVinelandItemProtocol(domainProtocol, protocol, undefined, true), protocol);
+  assert.throws(() => resolveVinelandItemProtocol(domainProtocol, protocol, 'unknown', true), /não reconhecido/);
+});
+
+test('locked domain-level records disable scores, estimates and all observations', () => {
+  const tree = interactive(domainProtocol, { comunicacao: { '1': { response: '2', observation: '', estimated: true } } }, true);
+  for (const element of elements(tree()).filter(element => ['input', 'textarea'].includes(element.type))) {
+    assert.equal(element.props.disabled, true);
+  }
 });
