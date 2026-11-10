@@ -19,7 +19,7 @@ from apps.tests.models import TestApplication
 from apps.tests.test_vineland3 import domain_items, items_with_totals
 from apps.tests.vineland3.pdf_service import Vineland3PdfService
 from apps.tests.vineland3.domain_protocol import PROTOCOL_ID
-from apps.tests.vineland3.review import review_state
+from apps.tests.vineland3.review import CORRECTION_VERSION, review_state
 
 
 class VinelandClinicalReviewTests(TestCase):
@@ -214,7 +214,7 @@ class VinelandClinicalReviewTests(TestCase):
     def test_signed_approval_rejects_a_changed_algorithm_version(self):
         self.review()
         self.application.refresh_from_db()
-        with patch("apps.tests.vineland3.review.CORRECTION_VERSION", 2):
+        with patch("apps.tests.vineland3.review.CORRECTION_VERSION", CORRECTION_VERSION + 1):
             self.assertFalse(review_state(self.application)["validated"])
 
     def test_revoking_review_preserves_answers_and_prevents_new_report_inclusion(self):

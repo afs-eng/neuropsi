@@ -4,6 +4,7 @@ def interpret_results(data):
     prefix = f"Vineland-3 — {data['form_label']}; respondente: {data['respondent']}."
     lines = [prefix]
     for row in data["domains"]:
-        lines.append(f"{row['label']}: escore padrão {row['standard_score']}, percentil {row['percentile']}.")
-    lines.append("Resultados obtidos com normas americanas. A classificação qualitativa não foi emitida nesta versão; requer revisão do profissional responsável.")
+        ci = "–".join(map(str, row["confidence_interval"])) if row.get("confidence_interval") else "indisponível"
+        lines.append(f"{row['label']}: escore padrão {row['standard_score']}, percentil {row['percentile']}, IC95% {ci}; {row.get('classification', 'indisponível')}.")
+    lines.append("Resultados obtidos com normas americanas; requerem revisão profissional e não estabelecem diagnóstico isoladamente.")
     return "\n".join(lines)

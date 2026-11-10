@@ -33,6 +33,9 @@ class Vineland3PdfService:
         ).template
         template = engines["django"].from_string(cls.TEMPLATE_PATH.read_text(encoding="utf-8"))
         if context.get("form_level") == "extensivo":
+            for key in ("strengths", "pairs"):
+                context[f"{key}_template"] = engines["django"].from_string(
+                    cls.TEMPLATE_PATH.with_name(f"vineland3_{key}.html").read_text(encoding="utf-8")).template
             context["base_template"] = template.template
             template = engines["django"].from_string(
                 cls.TEMPLATE_PATH.with_name("vineland3_extensive_report.html").read_text(encoding="utf-8"))
@@ -61,8 +64,8 @@ class Vineland3PdfService:
                              "reference_date": applied.isoformat() if applied else None})
         examiner = evaluation.examiner
         professional = (examiner.full_name or examiner.get_full_name() or examiner.username) if examiner else "Não informado"
-        if examiner and examiner.crp:
-            professional = f"{professional} · CRP {examiner.crp}"
+        if examiner:
+            professional = f"{professional} · CRP {examiner.crp or 'não informado'}"
         adaptive = []
         behavior = []
         for section in summary["sections"]:
@@ -133,15 +136,16 @@ class Vineland3PdfService:
                                  "reference_date": applied.isoformat()})
         examiner = application.evaluation.examiner
         professional = (examiner.full_name or examiner.get_full_name() or examiner.username) if examiner else "Não informado"
-        if examiner and examiner.crp:
-            professional += f" · CRP {examiner.crp}"
+        if examiner:
+            professional += f" · CRP {examiner.crp or 'não informado'}"
         form = result["form"]
         appendix = {"entrevista": "B", "pais_cuidadores": "C", "professores": "D"}[form]
         members = domain_members(form)
         order = [key for group in members.values() for key in group]
-        subdomains = sorted((dict(row) for row in result["subdomains"]), key=lambda row: order.index(row["scale"]))
+        analysis = result["analysis"]
+        subdomains = sorted((dict(row) for row in analysis["subdomains"]), key=lambda row: order.index(row["scale"]))
         for index, row in enumerate(subdomains):
-            row.update(plot_x=55 + index * 48, plot_y=230 - (row["v_scale"] - 1) * 8,
+            row.update(bar_y=20 + index * 21, bar_width=row["v_scale"] * 15,
                        domain=next(key for key, group in members.items() if row["scale"] in group))
         by_scale = {row["scale"]: row for row in result["domains"]}
         domains = []
@@ -149,11 +153,19 @@ class Vineland3PdfService:
             row = by_scale.get(code)
             if row:
                 row = {**row, "display_code": "CCA" if code == "ABC" else code,
-                       "plot_x": 75 + index * 100, "plot_y": 300 - (row["standard_score"] - 20) * 2}
+                       "plot_x": 75 + index * 100, "plot_y": int(300 - row["standard_score"] * 1.75),
+                       "plot_low": int(300 - (row["confidence_interval"] or [row["standard_score"]])[0] * 1.75),
+                       "plot_high": int(300 - (row["confidence_interval"] or [row["standard_score"]])[-1] * 1.75),
+                       "ci_label": " – ".join(map(str, row["confidence_interval"])) if row["confidence_interval"] else "—"}
             else:
                 row = {"scale": code, "display_code": "CCA" if code == "ABC" else code, "label": DOMAINS[code],
-                       "standard_score": None, "sum_v_scale": None, "percentile": None, "plot_x": 75 + index * 100}
+                       "standard_score": None, "sum_v_scale": None, "percentile": None, "ci_label": "—", "plot_x": 75 + index * 100}
             domains.append(row)
+        sub_pairs = [dict(row) for row in analysis["subdomain_pairs"]]
+        for row in sub_pairs:
+            row["first_display"] = "CMD" if row["first"] == "com" else row["first"].upper()
+            row["second_display"] = "CMD" if row["second"] == "com" else row["second"].upper()
+        additional = [row for row in sub_pairs if not row["within_domain"]]
         return {
             "form_level": "extensivo", "form_label": result["form_label"], "appendix": appendix,
             "name": patient.full_name, "respondent": result["respondent"],
@@ -163,7 +175,9 @@ class Vineland3PdfService:
             "age": f"{result['age_months'] // 12} anos e {result['age_months'] % 12} meses",
             "application_code": f"AVL-{application.pk:03d}", "report_code": f"RPT-VINELAND3-{application.pk:03d}",
             "subdomains": subdomains, "extensive_domains": domains, "result": result,
-            "plot_ticks": [{"value": score, "y": 300 - (score - 20) * 2} for score in range(20, 161, 20)],
-            "subdomain_ticks": [{"value": score, "y": 230 - (score - 1) * 8} for score in (1, 5, 10, 15, 20, 24)],
+            "analysis": analysis, "within_pairs": [row for row in sub_pairs if row["within_domain"]],
+            "additional_pages": [additional[i:i + 24] for i in range(0, len(additional), 24)],
+            "motor_applied": "HMOT" in by_scale, "clinical_review": review_state(application, analysis),
+            "plot_ticks": [{"value": score, "y": int(300 - score * 1.75)} for score in range(20, 161, 20)],
             "observations": raw.get("general_observations") or "Nenhuma observação geral registrada.",
         }

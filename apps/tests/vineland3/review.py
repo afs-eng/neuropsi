@@ -1,4 +1,4 @@
-"""Explicit, signed clinical review of domain-level questionnaires and protocol totals."""
+"""Explicit, signed review of current Vineland results, extensive or domain-level."""
 
 import hashlib
 import json
@@ -12,6 +12,7 @@ from .domain_protocol import build_item_summary
 
 SALT = "vineland3.domain-review.v1"
 CORRECTION_VERSION = 1
+EXTENSIVE_CORRECTION_VERSION = 2
 
 
 def can_review(user):
@@ -26,9 +27,10 @@ def review_state(application, result=None):
         return {"eligible": False, "validated": False, "reason": str(error)}
     if not result or not result.get("normative_scoring"):
         return {"eligible": False, "validated": False,
-                "reason": "Conclua uma aplicação de Níveis de Domínio com resultados normativos disponíveis para a idade."}
+                "reason": "Conclua uma aplicação com resultados normativos disponíveis para o formulário e idade."}
     patient = application.evaluation.patient
-    material = {"version": CORRECTION_VERSION, "application": application.pk, "evaluation": getattr(application, "evaluation_id", None),
+    version = EXTENSIVE_CORRECTION_VERSION if result.get("form_level") == "extensivo" else CORRECTION_VERSION
+    material = {"version": version, "application": application.pk, "evaluation": getattr(application, "evaluation_id", None),
                 "patient": patient.pk, "patient_name": patient.full_name, "birth_date": str(patient.birth_date),
                 "applied_on": str(application.applied_on), "raw": application.raw_payload, "results": result}
     fingerprint = hashlib.sha256(json.dumps(material, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode()).hexdigest()
@@ -53,11 +55,14 @@ def report_data(application):
     if not state["validated"]:
         return {}
     rows = [row for row in result["adaptive"] + [result["cca"]] if row["standard_score"] is not None]
-    totals = (application.raw_payload or {}).get("entry_mode") == "totals"
+    totals = (application.raw_payload or {}).get("entry_mode", "totals") == "totals"
     form_label = result.get("form_label", "Pais/Cuidadores — Níveis de Domínio")
+    extensive = result.get("form_level") == "extensivo"
     return {"form_label": form_label, "respondent": application.raw_payload.get("respondent", ""),
-            "domains": rows, "results": rows + [r for r in result["behavior"] if r["v_scale"] is not None],
-            "normative_results": result, "clinical_review": state, "domain_level": True,
+            "domains": rows, "results": result.get("subdomains", []) + rows + [r for r in result["behavior"] if r["v_scale"] is not None],
+            "normative_results": result, "clinical_review": state, "domain_level": not extensive,
+            "subdomains": result.get("subdomains", []),
+            "general_observations": application.raw_payload.get("general_observations", ""),
             "critical_items": [] if totals else build_item_summary(application.raw_payload.get("item_responses"))["critical_items"],
             "technical_notes": [f"Normas americanas de {form_label}; IC 95%; p = 0,05.",
                                 *(["Entrada por totais do protocolo; sem respostas item a item ou avaliação individual de itens críticos neste registro."] if totals else []),
@@ -75,5 +80,7 @@ def report_summary(data):
             lines.append(f"{row['label']}: bruto {row['raw_score']}, escala-v {row['v_scale']}.")
     for row in data["critical_items"]:
         lines.append(f"Item crítico {row['id']}, resposta {row['response']}: {row['text']}")
+    if data.get("general_observations"):
+        lines.append(f"Observações gerais: {data['general_observations']}")
     lines.append(f"Revisão profissional: {data['clinical_review']['clinical_note']}")
     return "\n".join(lines)

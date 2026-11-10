@@ -128,6 +128,17 @@ def compute_summary_results(summary, birth_date, reference_date, norms):
 
 def results_for_application(application):
     raw = application.raw_payload or {}
+    if (application.instrument.code == "vineland3" and raw and raw.get("entry_mode", "totals") == "totals"
+            and raw.get("form_level", "extensivo") == "extensivo"):
+        from .calculators import compute_scores
+
+        if not application.applied_on or application.applied_on > date.today():
+            raise ValueError("Informe uma data de aplicação válida, não futura.")
+        if raw.get("item_protocol_id") is not None:
+            raise ValueError("Totais extensivos não podem conter banco de perguntas.")
+        patient = application.evaluation.patient
+        return compute_scores({**raw, "birth_date": patient.birth_date.isoformat() if patient.birth_date else None,
+                               "reference_date": application.applied_on.isoformat()})["analysis"]
     if application.instrument.code == "vineland3" and raw.get("entry_mode") == "totals" and raw.get("form_level") == "niveis_dominio":
         from .domain_totals import compute_domain_totals
 

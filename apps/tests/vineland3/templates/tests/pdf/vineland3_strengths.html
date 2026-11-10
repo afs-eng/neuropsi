@@ -1,0 +1,3 @@
+<table style="font-size:7pt"><thead><tr><th scope="col">Área</th><th scope="col">{{ metric }}</th><th scope="col">Diferença da média</th><th scope="col">Valor crítico</th><th scope="col">Resultado</th><th scope="col">Taxa de base</th></tr></thead><tbody>
+{% for row in rows %}<tr><th scope="row">{{ row.label }}</th><td>{{ row.score|default_if_none:'—' }}</td><td>{{ row.difference|floatformat:2|default:'—' }}</td><td>{{ row.critical_value|floatformat:2|default:'—' }}</td><td>{{ row.finding }}</td><td>{{ row.base_rate|default_if_none:'—' }}</td></tr>{% endfor %}
+</tbody></table>

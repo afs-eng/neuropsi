@@ -590,7 +590,7 @@ class ReportExportService:
     @classmethod
     def _insert_vineland3_results(cls, document: Document, context: dict):
         from apps.tests.vineland3.interpreters import interpret_results
-        from apps.tests.vineland3.presentation import analysis_tables, build_chart, docx_rows
+        from apps.tests.vineland3.presentation import analysis_tables, build_chart, build_subdomain_chart, docx_rows
         from apps.tests.vineland3.review import report_summary
 
         tests = cls._find_tests(context, "vineland3")
@@ -612,19 +612,19 @@ class ReportExportService:
             cls._format_table(table, "default")
             anchor = cls._insert_paragraph_after_table(table, "Bruto: domínio; CCA: soma dos escores padrão de COM + AVD + SOC; HMOT não entra no CCA." if data.get("domain_level") else "Bruto: subdomínio; soma: escalas-v por domínio ou escores padrão para o CCA.")
             cls._format_caption_paragraph(anchor)
-            if data.get("domain_level"):
+            if data.get("normative_results"):
                 for heading, rows in analysis_tables(data):
                     anchor = cls._insert_paragraph_after(anchor, heading)
                     cls._format_subtitle_paragraph(anchor)
                     extra_table = cls._insert_table_after(anchor, rows, "default")
                     cls._format_table(extra_table, "default")
                     anchor = cls._insert_paragraph_after_table(extra_table, "")
-            image = build_chart(data)
-            if image:
-                anchor = cls._insert_paragraph_after(anchor, "")
-                anchor.add_run().add_picture(BytesIO(image), width=cls.IMAGE_WIDTH)
-                anchor.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            anchor = cls._insert_interpretation_block_after(anchor, report_summary(data) if data.get("domain_level") else interpret_results(data))
+            for image in (build_chart(data), build_subdomain_chart(data)):
+                if image:
+                    anchor = cls._insert_paragraph_after(anchor, "")
+                    anchor.add_run().add_picture(BytesIO(image), width=cls.IMAGE_WIDTH)
+                    anchor.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            anchor = cls._insert_interpretation_block_after(anchor, report_summary(data) if data.get("normative_results") else interpret_results(data))
             for note in data.get("technical_notes", []):
                 anchor = cls._insert_paragraph_after(anchor, note)
                 cls._format_body_paragraph(anchor)

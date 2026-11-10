@@ -19,7 +19,8 @@ DOMAINS = {
 TECHNICAL_NOTES = [
     "Normas americanas dos apêndices B, C e D do manual Vineland-3, edição em português (2019).",
     "Entrada por pontuações brutas do protocolo, já corrigidas pelo profissional responsável.",
-    "Nos totais extensivos, classificação qualitativa, intervalos de confiança, equivalentes etários e comportamento mal adaptado ainda não estão habilitados neste fluxo.",
+    "Totais extensivos: IC95%, classificação adaptativa, equivalentes/VEC, forças/fraquezas e comparações de uma aplicação pelas tabelas específicas; p = 0,05. Equivalente etário não é idade global de desenvolvimento.",
+    "Comportamento mal adaptativo e itens críticos não são inferidos dos totais extensivos; confira o protocolo original. Comparações longitudinais não estão habilitadas.",
     "Registros antigos preservam o banco parcial de edição não confirmada e seus códigos N/D, sem cálculo normativo ou laudo; não são migrados para o novo formulário.",
     "Níveis de Domínio: Entrevista, Pais/Cuidadores e Professores por totais brutos de domínio, com IC95%, classificações e revisão profissional explícita; não misturar com brutos de subdomínios extensivos.",
     "Questionário de 180 itens disponível somente para Pais/Cuidadores — Níveis de Domínio; 0/1/2, sem basal/teto; finalização calcula resultados, mas não valida automaticamente.",

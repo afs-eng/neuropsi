@@ -1,5 +1,6 @@
 from copy import deepcopy
 from datetime import date, timedelta
+import re
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
@@ -50,12 +51,19 @@ class VinelandExtensivePdfTests(TestCase):
                 self.assertIn("Perfil de escala-v", html)
                 self.assertIn("Perfil dos escores padrão", html)
                 self.assertIn("Síntese e limites de utilização", html)
-                self.assertIn("Não habilitados na correção Extensiva", html)
+                self.assertIn("Análise dos domínios", html)
+                self.assertIn("Análise dos subdomínios", html)
+                self.assertIn("IC95%", html)
+                self.assertNotIn("HMOT ausente", html)
                 self.assertNotIn("NOME DE OUTRO PACIENTE", html)
                 self.assertNotIn("Modalidade antiga", html)
                 self.assertNotIn("999", html)
                 self.assertNotIn("{%", html)
-                self.assertEqual(html.count('<section class="page">'), 4)
+                for svg in re.findall(r"<svg\b.*?</svg>", html, re.DOTALL):
+                    coordinates = re.findall(r'\b(?:x|y|x1|x2|y1|y2|cx|cy)="([^"]+)"', svg)
+                    self.assertTrue(coordinates)
+                    self.assertTrue(all(re.fullmatch(r"-?\d+(?:\.\d+)?", value) for value in coordinates), coordinates)
+                self.assertEqual(html.count('<section class="page">'), 6 + len(context["additional_pages"]))
                 self.assertNotIn("Resumo da pontuação adaptativa", html)
                 app.refresh_from_db()
                 self.assertEqual(app.raw_payload, original)

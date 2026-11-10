@@ -18,7 +18,8 @@ export default function VinelandResultPage() {
     setError('')
     api.get<VinelandResultApplication>(`/api/tests/applications/${params.id}`).then(data => {
       if (!active) return
-      if (data.instrument_code !== 'vineland3' || data.raw_payload.completion_status !== 'finalized' || (!data.raw_payload.item_summary && !(data.raw_payload.form_level === 'niveis_dominio' && data.raw_payload.entry_mode === 'totals'))) {
+      const extensive = data.normative_results?.form_level === 'extensivo' || data.raw_payload.form && data.raw_payload.form_level !== 'niveis_dominio' && data.raw_payload.entry_mode !== 'items'
+      if (data.instrument_code !== 'vineland3' || !extensive && (data.raw_payload.completion_status !== 'finalized' || (!data.raw_payload.item_summary && !(data.raw_payload.form_level === 'niveis_dominio' && data.raw_payload.entry_mode === 'totals')))) {
         setError('Este registro não possui um questionário Vineland finalizado.')
         setApplication(null)
       } else {

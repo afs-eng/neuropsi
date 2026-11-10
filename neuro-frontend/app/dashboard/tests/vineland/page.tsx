@@ -147,16 +147,17 @@ function Vineland3Form() {
         evaluation_id: evaluation.id, application_id: application?.id ?? null,
         applied_on: appliedOn, form: entryMode === 'totals' ? form : null, respondent, entry_mode: entryMode, raw_scores: raw,
         form_level: formLevel,
-        ...(entryMode === 'items' ? { item_protocol_id: itemProtocol?.id, item_responses: itemResponses, general_observations: generalObservations } : {}),
+        general_observations: generalObservations,
+        ...(entryMode === 'items' ? { item_protocol_id: itemProtocol?.id, item_responses: itemResponses } : {}),
         ...(usesCurrentQuestions ? { finalize } : {}),
       })
-      if (finalize || (entryMode === 'totals' && formLevel === 'niveis_dominio')) {
+      if (finalize || entryMode === 'totals') {
         router.replace(`/dashboard/tests/vineland/${result.application_id}/result`)
         return
       }
       setApplication(result)
       setSuccess(entryMode === 'items' ? 'Registro parcial salvo. Respostas e observações preservadas; sem cálculo normativo ou laudo.' : 'Pontuações salvas para revisão.')
-      const savedEntry = entryMode === 'totals' || itemProtocol?.id !== protocol?.item_protocol.id ? 'totals' : 'items'
+      const savedEntry = itemProtocol?.id !== protocol?.item_protocol.id ? 'totals' : 'items'
       router.replace(`/dashboard/tests/vineland?evaluation_id=${evaluation.id}&application_id=${result.application_id}&entry=${savedEntry}`)
     } catch (err) {
       setError(errorMessage(err))
@@ -166,7 +167,7 @@ function Vineland3Form() {
   }
 
   if (loading) return <p role="status" className="p-8">Carregando Vineland-3…</p>
-  if (!isEdit && application?.raw_payload.completion_status === 'finalized' && (application.raw_payload.item_summary || application.raw_payload.form_level === 'niveis_dominio')) {
+  if (!isEdit && application && (application.raw_payload.form && application.raw_payload.form_level !== 'niveis_dominio' && application.raw_payload.entry_mode !== 'items' || application.raw_payload.completion_status === 'finalized' && (application.raw_payload.item_summary || application.raw_payload.form_level === 'niveis_dominio'))) {
     return <VinelandQuestionnaireResult application={{ ...application, patient_name: application.patient_name || evaluation?.patient_name }} />
   }
   return <main className="mx-auto max-w-5xl space-y-6 p-4 sm:p-8">
@@ -249,6 +250,7 @@ function Vineland3Form() {
           <p id={`vineland-${scale.code}-hint`} className="mt-1 text-xs text-slate-600">De 0 a {scale.max}.</p>
         </div>)}</div>
       </fieldset>}
+      {entryMode === 'totals' && <div className="space-y-2 rounded-xl border bg-white p-5"><label htmlFor="vineland-total-observations" className="font-medium">Observações gerais (opcional)</label><textarea id="vineland-total-observations" maxLength={10000} rows={4} disabled={saving || locked} value={generalObservations} onChange={event => setGeneralObservations(event.target.value)} className="w-full rounded-md border border-slate-300 p-3" /><p className="text-sm text-slate-600">Preservadas no registro e no PDF; não substituem o registro individual dos itens críticos no protocolo.</p></div>}
       {usesCurrentQuestions && <p className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">Para finalizar, responda todos os itens de Comunicação, Atividades de Vida Diária e Habilidades Sociais. As seções opcionais podem ficar inteiramente vazias; se iniciadas, devem ser concluídas. A correção usa normas específicas de Pais/Cuidadores — Níveis de Domínio, com IC95%.</p>}
       <div className="flex flex-wrap gap-3">
         <Button type="submit" name="action" value="partial" variant={usesCurrentQuestions ? 'outline' : 'default'} disabled={saving || locked || (entryMode === 'totals' && activeScales.length === 0)}>{saving ? 'Salvando…' : entryMode === 'items' ? 'Salvar registro parcial (sem cálculo)' : 'Calcular e salvar para revisão'}</Button>

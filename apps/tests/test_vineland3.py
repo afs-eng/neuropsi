@@ -333,13 +333,15 @@ class Vineland3NormTests(SimpleTestCase):
         data["raw_scores"]["cmg"] = 0
         self.assertTrue(validate_input(data))
 
-    def test_classification_is_explicitly_pending_and_text_uses_computed_scores(self):
+    def test_classification_is_quantitative_and_text_requires_clinical_review(self):
         module = Vineland3Module()
         context = TestContext(patient_name="Paciente", evaluation_id=1, instrument_code="vineland3", raw_scores=raw())
         data = module.compute(context)
-        self.assertEqual(module.classify(data), {"classification_status": "pending_manual_verification"})
+        self.assertEqual(module.classify(data)["classification_status"], "quantitative_requires_clinical_review")
+        self.assertEqual(module.classify(data)["domain_classifications"]["ABC"], data["domains"][-1]["classification"])
         self.assertIn("normas americanas", module.interpret(context, data))
-        self.assertIn("não foi emitida", module.interpret(context, data))
+        self.assertIn("revisão profissional", module.interpret(context, data))
+        self.assertIn("IC95%", module.interpret(context, data))
         self.assertEqual(module.build_report_payload(context, data)["chart_payload"]["metric"], "standard_score")
         self.assertTrue(data["requires_clinical_review"])
 
@@ -362,7 +364,16 @@ class Vineland3ApiTests(TestCase):
 
     def submit(self, **overrides):
         return self.client.post("/api/tests/vineland3/submit", data=json.dumps({**self.payload, **overrides}),
-                                content_type="application/json", HTTP_AUTHORIZATION=f"Bearer {self.token}")
+                                 content_type="application/json", HTTP_AUTHORIZATION=f"Bearer {self.token}")
+
+    def approve(self, application):
+        from apps.tests.vineland3.review import review_state
+
+        response = self.client.post(f"/api/tests/vineland3/applications/{application.pk}/review",
+                                    data=json.dumps({"fingerprint": review_state(application)["fingerprint"],
+                                                     "confirmed": True, "clinical_note": "Conferência dos resultados extensivos de referência."}),
+                                    content_type="application/json", HTTP_AUTHORIZATION=f"Bearer {self.token}")
+        self.assertEqual(response.status_code, 200, response.content)
 
     def test_protocol_authentication_and_no_normative_tables_leaked(self):
         self.assertEqual(self.client.get("/api/tests/vineland3/protocol").status_code, 401)
@@ -387,6 +398,9 @@ class Vineland3ApiTests(TestCase):
         self.assertFalse(first.json()["is_validated"])
         self.assertEqual(build_validated_tests_snapshot(self.evaluation), [])
         TestApplication.objects.filter(instrument__code="vineland3").update(is_validated=True)
+        self.assertEqual(build_validated_tests_snapshot(self.evaluation), [])
+        for application in TestApplication.objects.filter(instrument__code="vineland3"):
+            self.approve(application)
         snapshot = build_validated_tests_snapshot(self.evaluation)
         self.assertEqual(len(snapshot), 3)
         self.assertIn("Outro professor", {item["respondent_name"] for item in snapshot})
@@ -829,6 +843,7 @@ class Vineland3ApiTests(TestCase):
         app.is_validated = True
         app.interpretation_text = "Texto antigo incompatível 999"
         app.save()
+        self.approve(app)
         snapshot = build_validated_tests_snapshot(self.evaluation)
         self.assertEqual(len(snapshot[0]["result_rows"]), 16)
         context = {"validated_tests": snapshot}
@@ -836,9 +851,12 @@ class Vineland3ApiTests(TestCase):
         document.add_paragraph("14. CONCLUSÃO")
         ReportExportService._insert_vineland3_results(document, context)
         ReportExportService._remove_empty_paragraphs(document)
-        self.assertEqual(len(document.tables), 1)
-        self.assertEqual(len(document.inline_shapes), 1)
-        self.assertEqual(len(document.tables[0].rows), 17)
+        self.assertEqual(len(document.tables), 7)
+        self.assertEqual(len(document.inline_shapes), 2)
+        self.assertEqual(len(document.tables[0].rows), 6)
+        cells = "\n".join(cell.text for table in document.tables for row in table.rows for cell in row.cells)
+        self.assertIn("Equiv. etário", cells)
+        self.assertIn("Valor crítico", cells)
         text = "\n".join(p.text for p in document.paragraphs)
         self.assertIn("escore padrão 99", text)
         self.assertNotIn("999", text)
@@ -846,4 +864,4 @@ class Vineland3ApiTests(TestCase):
         output = BytesIO()
         document.save(output)
         restored = Document(BytesIO(output.getvalue()))
-        self.assertEqual(len(restored.inline_shapes), 1)
+        self.assertEqual(len(restored.inline_shapes), 2)

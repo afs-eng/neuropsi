@@ -41,9 +41,8 @@ def serialize_test_application(application):
     if application.instrument.code == "vineland3":
         from apps.tests.vineland3.domain_scoring import results_for_application
         from apps.tests.vineland3.domain_protocol import build_item_summary
-        from apps.tests.vineland3.domain_totals import is_domain_application
 
-        if is_domain_application(application):
+        if raw_payload:
             raw_payload = {**raw_payload,
                            "birth_date": patient.birth_date.isoformat() if patient and patient.birth_date else None,
                            "reference_date": application.applied_on.isoformat() if application.applied_on else None}
@@ -56,7 +55,7 @@ def serialize_test_application(application):
                                "reference_date": application.applied_on.isoformat() if application.applied_on else None}
         except ValueError as error:
             normative_results = {"error": str(error)}
-        if is_domain_application(application):
+        if raw_payload:
             from apps.tests.vineland3.review import review_state
 
             clinical_review = review_state(application)

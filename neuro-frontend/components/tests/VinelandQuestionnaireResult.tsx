@@ -59,7 +59,7 @@ export function VinelandQuestionnaireResult({ application }: { application: Vine
   const [confirmed, setConfirmed] = useState(false)
   const [reviewing, setReviewing] = useState(false)
   const [reviewError, setReviewError] = useState('')
-  const totals = application.raw_payload.entry_mode === 'totals'
+  const totals = application.raw_payload.entry_mode === 'totals' || application.normative_results?.form_level === 'extensivo' || Boolean(application.raw_payload.form && application.raw_payload.form_level !== 'niveis_dominio' && application.raw_payload.entry_mode !== 'items')
   const summary = application.raw_payload.item_summary || { sections: [], critical_items: [], answered: 0, applied_total: 0 }
   const adaptive = summary.sections.filter(section => section.kind === 'adaptive')
   const behavior = summary.sections.filter(section => section.kind === 'behavior')
@@ -175,7 +175,7 @@ export function VinelandQuestionnaireResult({ application }: { application: Vine
         </header>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div><h1 className="text-3xl font-medium tracking-tight text-zinc-900">Vineland-3 - Resultado</h1>
-            <p className="mt-1 text-sm text-zinc-600">{application.patient_name} · {application.normative_results?.form_label || 'Pais/Cuidadores — Níveis de Domínio'}</p>
+            <p className="mt-1 text-sm text-zinc-600">{application.patient_name} · {application.normative_results?.form_label || (totals ? `${application.raw_payload.form || 'Informante'} — ${application.raw_payload.form_level === 'niveis_dominio' ? 'Níveis de Domínio' : 'Extensivo'}` : 'Pais/Cuidadores — Níveis de Domínio')}</p>
           </div>
           <div className="flex flex-wrap gap-3 print:hidden report-print-hide">
             {application.status !== 'locked' && <Link href={editUrl} className="rounded-full border border-black/10 bg-white px-4 py-3 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50">Editar</Link>}
@@ -194,7 +194,8 @@ export function VinelandQuestionnaireResult({ application }: { application: Vine
           </dl>
           <p className="mt-4 font-medium text-slate-800">{totals ? 'Entrada por totais do protocolo. Não contém respostas item a item.' : `Preenchimento finalizado · ${summary.answered} de ${summary.applied_total} itens das seções aplicadas respondidos.`}</p>
         </section>
-        {application.normative_results ? <VinelandNormativeResults result={application.normative_results} /> : <>
+        {totals && <p className="rounded-xl border border-cyan-200 bg-cyan-50 p-4 text-sm">O questionário Pais/Cuidadores — Níveis de Domínio exige uma aplicação separada, sem copiar ou substituir este lançamento. <Link className="underline" href={`/dashboard/tests/vineland?evaluation_id=${application.evaluation_id}`}>Abrir formulário de 180 perguntas</Link></p>}
+        {application.normative_results ? <VinelandNormativeResults result={application.normative_results} /> : totals ? <p role="alert">Correção normativa indisponível. Reabra os resultados ou confira as datas e os totais; cálculos antigos não são exibidos.</p> : <>
         <aside className="space-y-2 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950">
           <h2 className="font-semibold">Resultado descritivo — sem correção normativa</h2>
           <p>As somas abaixo são das respostas registradas. Não são escores padrão, percentis, classificação clínica ou CCA. A conversão normativa deste formulário ainda não está habilitada.</p>

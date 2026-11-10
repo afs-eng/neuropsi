@@ -21,9 +21,7 @@ class TestReportPayloadService:
 
     @classmethod
     def build_for_application(cls, application) -> dict:
-        from apps.tests.vineland3.domain_totals import is_domain_application
-
-        if is_domain_application(application):
+        if application.instrument.code == "vineland3":
             from apps.tests.vineland3.review import report_data, report_summary
 
             try:

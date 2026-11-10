@@ -337,13 +337,14 @@ test('page with evaluation/application URL renders questions and submits into th
   assert.equal(page.posted().payload.item_protocol_id, domainProtocol.id);
 });
 
-test('page with saved extensive results offers a separate question form without replacing results', async () => {
+test('page with saved extensive results offers a separate question form without trusting cached text', async () => {
   const page = await loadPage({ id: 78, evaluation_id: 13, instrument_code: 'vineland3', status: 'scored',
     raw_payload: { form: 'entrevista', raw_scores: { rec: 10 } },
     computed_payload: { domains: [{ scale: 'COM', label: 'Comunicação', standard_score: 90, percentile: '25' }] },
     interpretation_text: 'Síntese preservada', is_validated: false }, 'evaluation_id=13&application_id=78&entry=totals');
   const html = renderToStaticMarkup(page.tree());
-  assert.match(html, /Síntese preservada/);
+  assert.doesNotMatch(html, /Síntese preservada/);
+  assert.match(html, /Correção normativa indisponível/);
   assert.match(html, /Abrir formulário de 180 perguntas/);
   assert.match(html, /href="\/dashboard\/tests\/vineland\?evaluation_id=13"/);
   assert.doesNotMatch(html, /Pergunta adaptativa/);
@@ -634,6 +635,30 @@ test('normative result error blocks the numeric panels rather than displaying ca
   assert.match(html, /role="alert"/);
   assert.match(html, /faltam respostas/);
   assert.doesNotMatch(html, /<table|<svg/);
+});
+
+test('extensive results group subdomains by code, preserve missing motor and collapse exploratory pairs', () => {
+  const { VinelandNormativeResults } = loadNormative();
+  const score = (scale, value) => ({ code: scale, scale, label: scale, raw_score: null, sum_v_scale: 30,
+    standard_score: value, percentile: value === null ? null : '4', confidence_interval: value === null ? null : [67, 79],
+    classification: value === null ? null : 'Moderadamente baixo', unavailable_reason: value === null ? 'Não informado' : null });
+  const result = { form_level: 'extensivo', form: 'entrevista', form_label: 'Entrevista extensiva',
+    normative_scoring: true, confidence_level: 95, age_months: 72, population: 'Normas americanas', table_codes: 'B.1–B.6',
+    adaptive: [score('COM', 73), score('AVD', 98), score('SOC', 72), score('HMOT', null)],
+    cca: { ...score('CCA', 78), sum_standard_scores: 243 }, behavior: [], mean_standard_score: 81, mean_domain_count: 3,
+    strengths: [], pairs: [], subdomain_mean_v_scale: 19, subdomain_count: 2,
+    subdomains: [{ scale: 'com', display_code: 'CMD', domain: 'AVD', label: 'Comunidade', raw_score: 58, v_scale: 19, age_equivalent: '6:0', growth_value: 100 }],
+    subdomain_strengths: [], subdomain_pairs: [
+      { first: 'rec', second: 'exp', first_score: 7, second_score: 4, relation: '>', difference: 3, critical_value: 2.22, significant: true, base_rate: '> 15%', within_domain: true },
+      { first: 'rec', second: 'com', first_score: 7, second_score: 19, relation: '<', difference: -12, critical_value: 3, significant: true, base_rate: '≤ 2%', within_domain: false },
+    ] };
+  const original = structuredClone(result);
+  const html = renderToStaticMarkup(React.createElement(VinelandNormativeResults, { result }));
+  for (const text of ['CMD · Comunidade', 'Soma de entrada', '67 – 79', '243', 'Equiv. etário', 'Comparações no mesmo domínio', 'REC – EXP', 'REC – CMD', 'Não informado']) assert.ok(html.includes(text), text);
+  assert.match(html, /<details[^>]*><summary/);
+  assert.doesNotMatch(html, /<details[^>]* open|COM – CMD|Sem norma|Internalizante/);
+  assert.equal((html.match(/<circle/g) || []).length, 4, 'Missing motor has no score marker');
+  assert.deepEqual(result, original);
 });
 
 const pendingReview = { eligible: true, validated: false, fingerprint: 'a'.repeat(64), reason: 'Revisão profissional pendente.' };

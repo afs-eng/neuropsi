@@ -27,7 +27,7 @@ from .item_protocol import PROTOCOL_ID, SOURCE, item_protocol, normalize_item_re
 from .norms import age_months, age_table, load_norms
 from .validators import validate_input
 from .review import SALT, can_review, review_state
-from .domain_totals import domain_total_scales, is_domain_application
+from .domain_totals import domain_total_scales
 
 router = Router(tags=["tests"])
 
@@ -77,8 +77,6 @@ def revoke_review(request, application_id: int):
         ).first()
         if not application:
             return 404, {"message": "Questionário Vineland-3 não encontrado."}
-        if not is_domain_application(application):
-            return 403, {"message": "Use a revisão específica dos Níveis de Domínio."}
         if application.status == TestApplication.Status.LOCKED:
             return 403, {"message": "Esta aplicação está travada."}
         application.is_validated = False
@@ -233,7 +231,8 @@ def submit(request, payload: Vineland3SubmitIn):
         application.applied_on = reference
         application.raw_payload = raw
         application.computed_payload = computed
-        application.classified_payload = {"classification_status": "pending_manual_verification"} if computed else {}
+        application.classified_payload = {"classification_status": "quantitative_requires_clinical_review",
+                                          "domain_classifications": {r["scale"]: r["classification"] for r in computed["domains"]}} if computed else {}
         application.interpretation_text = interpret_results(computed) if computed else ""
         application.reviewed_payload = {}
         application.is_validated = False
@@ -241,6 +240,6 @@ def submit(request, payload: Vineland3SubmitIn):
         AuditService.track_create(request, "test_application", str(application.pk), {
             "evaluation_id": evaluation.pk, "instrument": "vineland3", "edited": payload.application_id is not None,
             "entry_mode": payload.entry_mode,
-            "finalized": payload.finalize,
+            "finalized": payload.finalize or payload.entry_mode == "totals",
         })
     return 200, {"application_id": application.pk, **serialize_test_application(application)}

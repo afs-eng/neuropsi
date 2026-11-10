@@ -18,8 +18,8 @@ class Vineland3Module(BaseTestModule):
         return compute_scores(context.raw_scores)
 
     def classify(self, computed_data):
-        # The supplied appendices contain score tables, not qualitative cutoffs.
-        return {"classification_status": "pending_manual_verification"}
+        return {"classification_status": "quantitative_requires_clinical_review",
+                "domain_classifications": {row["scale"]: row.get("classification") for row in computed_data.get("domains", [])}}
 
     def interpret(self, context, merged_data):
         return interpret_results(merged_data)

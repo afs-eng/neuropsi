@@ -34,11 +34,13 @@ def compute_scores(raw):
     domains.append({"scale": "ABC", "label": DOMAINS["ABC"], "sum_standard_scores": total,
                     "standard_score": score, "percentile": percentile})
     source = load_norms()["forms"][form]
-    return {
+    from .extensive_analysis import enrich_extensive
+
+    return enrich_extensive({
         "form": form, "form_label": FORMS[form], "respondent": raw["respondent"].strip(),
         "age_months": months, "entry_mode": "totals", "form_level": "extensivo", "subdomains": subdomains,
         "domains": domains, "results": subdomains + domains,
         "norm_source": {"population": "Normas americanas", "file": source["file"], "sha256": source["sha256"],
                         "subdomain_pages": subtable["pages"], "domain_pages": domtable["pages"]},
         "technical_notes": list(TECHNICAL_NOTES), "requires_clinical_review": True,
-    }
+    })
