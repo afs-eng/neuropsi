@@ -9,6 +9,7 @@ import { api } from '@/lib/api'
 import { VinelandItemFields, isEmptyVinelandApplication, vinelandEntryMode, restoreVinelandObservations, resolveVinelandItemProtocol, vinelandResponseError, type VinelandItemProtocol, type VinelandItemResponses } from '@/components/tests/VinelandItemFields'
 import { VinelandQuestionnaireResult, type VinelandItemSummary, type VinelandResultApplication } from '@/components/tests/VinelandQuestionnaireResult'
 import type { VinelandNormativeResultsData } from '@/components/tests/VinelandNormativeResults'
+import { VinelandPdfButton } from '@/components/tests/VinelandPdfButton'
 
 type FormCode = 'entrevista' | 'pais_cuidadores' | 'professores'
 interface Scale { code: string; label: string; max: number; optional: boolean; min_months: number; max_months: number | null }
@@ -192,6 +193,7 @@ function Vineland3Form() {
         <p>Respondente: {application.computed_payload.respondent} · Aplicação: {application.applied_on}</p>
         <p>Idade: {Math.floor((application.computed_payload.age_months || 0) / 12)} anos e {(application.computed_payload.age_months || 0) % 12} meses.</p>
         <p className="font-medium">{application.is_validated ? 'Revisado pelo profissional.' : 'Aguardando revisão clínica; ainda não incluído no laudo.'}</p>
+        <VinelandPdfButton applicationId={application.id} />
         {!locked && <Link className="inline-block text-cyan-800 underline" href={`/dashboard/tests/vineland?evaluation_id=${evaluation?.id}&application_id=${application.id}&edit=true`}>Editar lançamento</Link>}
       </section>
       <section className="overflow-x-auto rounded-xl border bg-white p-5">

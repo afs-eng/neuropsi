@@ -78,6 +78,7 @@
   </style>
 </head>
 <body>
+  {% block report_pages %}
   <section class="page">
     <div class="brand">NEUROAVALIA</div>
     <div class="cover-head">
@@ -163,5 +164,6 @@
     <p class="small">A análise clínica depende da conferência dos critérios do formulário, das condições da aplicação, do contexto de desenvolvimento e dos demais dados da avaliação. O preenchimento finalizado não representa validação clínica automática. O registro item a item permanece fora da inclusão automática no laudo.</p>
     <p class="source">{% if entry_mode == 'totals' %}Fonte normativa: {{ table_codes }}, bloco Níveis de Domínio da modalidade identificada. Entrada por totais, sem questionário reconstruído.{% else %}Fonte das perguntas: Vineland-3, Formulário de Pais/Cuidadores dos Níveis de Domínio fornecido ao projeto (180 itens, sete seções).{% endif %} Relatório gerado pelo NeuroAvalia. Modelo visual inspirado no relatório WISC-IV; os instrumentos e suas regras de pontuação permanecem separados.</p>
   </section>
+  {% endblock %}
 </body>
 </html>

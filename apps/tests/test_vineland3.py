@@ -703,12 +703,11 @@ class Vineland3ApiTests(TestCase):
         self.assertIn(self.patient.full_name, renderer.call_args.args[0])
         self.assertIn("Resumo da pontuação adaptativa", renderer.call_args.args[0])
 
-    def test_pdf_route_rejects_drafts_legacy_totals_and_incomplete_finalized_records(self):
+    def test_pdf_route_rejects_drafts_legacy_and_incomplete_finalized_records(self):
         partial_id = self.submit_domain_items().json()["application_id"]
         legacy_id = self.submit_items().json()["application_id"]
-        totals_id = self.submit().json()["application_id"]
         with patch("apps.tests.vineland3.pdf_service.generate_pdf_from_html") as renderer:
-            for app_id in (partial_id, legacy_id, totals_id):
+            for app_id in (partial_id, legacy_id):
                 result = self.client.get(f"/api/tests/applications/{app_id}/export-pdf", HTTP_AUTHORIZATION=f"Bearer {self.token}")
                 self.assertEqual(result.status_code, 404, result.content)
             app = TestApplication.objects.get(pk=partial_id)

@@ -21,8 +21,8 @@ function load(react = React) {
   return mod.exports;
 }
 
-function loadResult(react = React) {
-  const filename = path.join(__dirname, 'VinelandQuestionnaireResult.tsx');
+function loadResult(react = React, component = 'VinelandQuestionnaireResult.tsx') {
+  const filename = path.join(__dirname, component);
   const mod = new Module(filename, module);
   mod.paths = module.paths;
   const original = mod.require.bind(mod);
@@ -292,6 +292,7 @@ async function loadPage(application, query = 'evaluation_id=13&application_id=78
     if (id === '@/components/ui/input') return { Input: props => React.createElement('input', props) };
     if (id === '@/components/tests/VinelandItemFields') return load();
     if (id === '@/components/tests/VinelandQuestionnaireResult') return loadResult();
+    if (id === '@/components/tests/VinelandPdfButton') return { VinelandPdfButton: () => React.createElement('button', { type: 'button' }, 'Imprimir / PDF') };
     if (id === '@/lib/api') return { api: {
       async get(url) {
         if (url.endsWith('/protocol')) return definitions;
@@ -554,19 +555,20 @@ test('critical items are individual review entries, not a sum, and locked result
   assert.doesNotMatch(html, /edit=true/);
 });
 
-function interactiveResult(application = finalizedQuestionnaire) {
+function interactiveResult(application = finalizedQuestionnaire, extensive = false) {
   const state = [];
   let cursor;
-  const { VinelandQuestionnaireResult } = loadResult({ ...React, useState(initial) {
+  const components = loadResult({ ...React, useState(initial) {
     const index = cursor++;
     if (!(index in state)) state[index] = initial;
     return [state[index], next => { state[index] = next; }];
-  } });
-  return () => { cursor = 0; return VinelandQuestionnaireResult({ application }); };
+  } }, extensive ? 'VinelandPdfButton.tsx' : 'VinelandQuestionnaireResult.tsx');
+  return () => { cursor = 0; return extensive ? components.VinelandPdfButton({ applicationId: application.id }) : components.VinelandQuestionnaireResult({ application }); };
 }
 
-test('PDF button fetches the authenticated server PDF, shows progress and downloads it instead of printing HTML', async t => {
-  const tree = interactiveResult();
+for (const extensive of [false, true]) {
+test(`PDF button fetches the authenticated server PDF, shows progress and downloads it instead of printing HTML (${extensive ? 'extensive' : 'domain'})`, async t => {
+  const tree = interactiveResult(finalizedQuestionnaire, extensive);
   let resolveFetch;
   const fetchMock = t.mock.method(global, 'fetch', () => new Promise(resolve => { resolveFetch = resolve; }));
   const blob = new Blob(['%PDF-1.4 test'], { type: 'application/pdf' });
@@ -597,16 +599,17 @@ test('PDF button fetches the authenticated server PDF, shows progress and downlo
   }
 });
 
-test('PDF errors remain visible and allow retry without altering the questionnaire', async t => {
-  const tree = interactiveResult();
+test(`PDF errors remain visible and allow retry without altering the questionnaire (${extensive ? 'extensive' : 'domain'})`, async t => {
+  const tree = interactiveResult(finalizedQuestionnaire, extensive);
   t.mock.method(global, 'fetch', async () => ({ ok: false, status: 404, json: async () => ({ message: 'Finalize o questionário Vineland antes de gerar o PDF.' }) }));
   const button = () => elements(tree()).find(element => element.type === 'button' && element.props['aria-busy'] !== undefined);
   await button().props.onClick();
   assert.equal(button().props.disabled, false);
   const alert = elements(tree()).find(element => element.props?.role === 'alert');
   assert.equal(alert.props.children, 'Finalize o questionário Vineland antes de gerar o PDF.');
-  assert.match(renderToStaticMarkup(tree()), /Resumo das áreas adaptativas/);
+  if (!extensive) assert.match(renderToStaticMarkup(tree()), /Resumo das áreas adaptativas/);
 });
+}
 
 test('normative results replace raw-only panels with standard scores, CCA, IC95 and statistical analysis', () => {
   const { VinelandQuestionnaireResult } = loadResult();

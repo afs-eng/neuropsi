@@ -1,0 +1,72 @@
+{% extends base_template %}
+{% block report_pages %}
+  <section class="page">
+    <div class="brand">NEUROAVALIA</div>
+    <div class="cover-head">
+      <div><div class="cover-title">Vineland<span>-3</span></div><p class="subtitle">Escalas de Comportamento Adaptativo</p><p class="small">{{ form_label }}<br>Relatório de pontuação · Correção normativa</p></div>
+      <dl class="metadata"><dt>Código do avaliado</dt><dd>{{ application_code }}</dd><dt>Código do relatório</dt><dd>{{ report_code }}</dd><dt>Data da aplicação</dt><dd>{{ applied_on }}</dd></dl>
+    </div>
+    <h2>Dados do avaliado</h2>
+    <dl class="identity">
+      <dt>Nome</dt><dd>{{ name }}</dd><dt>Sexo</dt><dd>{{ sex }}</dd><dt>Nascimento</dt><dd>{{ birth_date }}</dd><dt>Idade no teste</dt><dd>{{ age }}</dd><dt>Escolaridade</dt><dd>{{ schooling }}</dd><dt>Profissional</dt><dd>{{ professional }}</dd><dt>Informante</dt><dd>{{ respondent }}</dd>
+      <dt>Aplicação</dt><dd>Totais por subdomínio do protocolo Extensivo; sem respostas item a item</dd>
+      <dt>Tabela normativa</dt><dd>{{ form_label }} · Normas americanas · {{ appendix }}.1 e {{ appendix }}.3</dd>
+    </dl>
+    <div class="intro-row"><h2>Introdução</h2><div><p>O Vineland-3 investiga comportamentos adaptativos do cotidiano a partir de informações do informante identificado. Este relatório utiliza exclusivamente o formulário Extensivo da modalidade indicada, sem reutilizar normas dos Níveis de Domínio.</p></div></div>
+    <div class="intro-row"><h2>Correção</h2><div><p>Os brutos por subdomínio são convertidos em escala-v pela Tabela {{ appendix }}.1. As somas de escala-v formam os escores padrão dos domínios pela {{ appendix }}.3. O Composto de Comportamento Adaptativo (CCA, denominado ABC na fonte) deriva da soma dos escores padrão de Comunicação, Atividades de Vida Diária e Socialização; não inclui Habilidades Motoras.</p></div></div>
+    <div class="intro-row"><h2>Utilização</h2><div><p>Os resultados quantitativos devem ser integrados à entrevista, ao histórico e aos demais dados da avaliação. A geração do PDF não valida a aplicação, não autoriza automaticamente inclusão no laudo e não estabelece diagnóstico.</p><p class="small">As normas são americanas, não brasileiras. Não há extrapolação fora dos intervalos publicados para idade, modalidade ou pontuação.</p></div></div>
+  </section>
+
+  <section class="page">
+    {% include header_template %}
+    <h1>Resultados por subdomínio</h1>
+    <p class="small">{{ name }} · {{ age }} · Informante: {{ respondent }}</p>
+    <table><thead><tr><th scope="col">Domínio</th><th scope="col">Subdomínio</th><th scope="col">Bruto</th><th scope="col">Escala-v</th></tr></thead><tbody>
+      {% for row in subdomains %}<tr><th scope="row">{{ row.domain }}</th><td style="text-align:left">{{ row.label }} ({{ row.scale|upper }})</td><td>{{ row.raw_score }}</td><td class="score">{{ row.v_scale }}</td></tr>{% endfor %}
+    </tbody></table>
+    <h2 class="section-heading">Perfil de escala-v</h2>
+    <p class="small muted">Escala de 1 a 24; média normativa 15. Não comparar diretamente com escores padrão dos domínios.</p>
+    <svg viewBox="0 0 600 270" role="img" aria-label="Perfil de escala-v dos subdomínios extensivos" style="width:100%;max-height:82mm">
+      {% for tick in subdomain_ticks %}<line x1="35" x2="580" y1="{{ tick.y }}" y2="{{ tick.y }}" stroke="{% if tick.value == 15 %}#1f6fb2{% else %}#cbd5e1{% endif %}"/><text x="27" y="{{ tick.y }}" text-anchor="end" font-size="11">{{ tick.value }}</text>{% endfor %}
+      {% for row in subdomains %}<text x="{{ row.plot_x }}" y="255" text-anchor="middle" font-size="11">{{ row.scale|upper }}</text><circle cx="{{ row.plot_x }}" cy="{{ row.plot_y }}" r="5" fill="#082d5f"/><text x="{{ row.plot_x|add:9 }}" y="{{ row.plot_y }}" font-size="11">{{ row.v_scale }}</text>{% endfor %}
+    </svg>
+    <p class="source">Fonte: Tabela {{ appendix }}.1 · {{ result.norm_source.file }} · páginas físicas {{ result.norm_source.subdomain_pages|join:', ' }}. Apenas subdomínios aplicáveis e informados são apresentados. Ausência não equivale a zero.</p>
+  </section>
+
+  <section class="page">
+    {% include header_template %}
+    <h1>Domínios e composto adaptativo</h1>
+    <table><thead><tr><th scope="col">Domínio / composto</th><th scope="col">Soma de entrada</th><th scope="col">Escore padrão</th><th scope="col">Percentil</th></tr></thead><tbody>
+      {% for row in extensive_domains %}<tr><th scope="row">{{ row.label }} ({{ row.display_code }})</th><td>{% if row.scale == 'ABC' %}{{ row.sum_standard_scores }} EP{% else %}{{ row.sum_v_scale|default_if_none:'—' }}{% if row.standard_score != None %} escala-v{% endif %}{% endif %}</td><td class="score">{{ row.standard_score|default_if_none:'—' }}</td><td>{{ row.percentile|default_if_none:'—' }}</td></tr>{% endfor %}
+    </tbody></table>
+    <p class="small muted">HMOT ausente: não informado ou não aplicável à idade; não entra no CCA. Percentis extremos são preservados como &lt;1 / &gt;99.</p>
+    <h2 class="section-heading">Perfil dos escores padrão</h2>
+    <p class="small muted">Média normativa 100. Marcadores representam somente os escores; intervalos de confiança não estão habilitados neste fluxo Extensivo.</p>
+    <svg viewBox="0 0 600 340" role="img" aria-label="Perfil dos escores padrão extensivos COM, AVD, SOC, CCA e HMOT" style="width:100%;max-height:96mm">
+      {% for tick in plot_ticks %}<line x1="42" x2="570" y1="{{ tick.y }}" y2="{{ tick.y }}" stroke="{% if tick.value == 100 %}#1f6fb2{% else %}#cbd5e1{% endif %}"/><text x="34" y="{{ tick.y }}" text-anchor="end" font-size="11">{{ tick.value }}</text>{% endfor %}
+      {% for row in extensive_domains %}<text x="{{ row.plot_x }}" y="325" text-anchor="middle" font-size="12">{{ row.display_code }}</text>{% if row.standard_score != None %}<circle cx="{{ row.plot_x }}" cy="{{ row.plot_y }}" r="5" fill="#082d5f"/><text x="{{ row.plot_x|add:9 }}" y="{{ row.plot_y }}" font-size="11">{{ row.standard_score }}</text>{% else %}<text x="{{ row.plot_x }}" y="290" text-anchor="middle" font-size="11">—</text>{% endif %}{% endfor %}
+    </svg>
+    <p class="source">Fonte: Tabela {{ appendix }}.3 · bloco Extensivo · páginas físicas {{ result.norm_source.domain_pages|join:', ' }}. Escore padrão e escala-v possuem métricas distintas.</p>
+  </section>
+
+  <section class="page">
+    {% include header_template %}
+    <h1>Síntese e limites de utilização</h1>
+    <div class="prose">
+      <p>O formulário {{ form_label }} do Vineland-3 foi registrado para <strong>{{ name }}</strong>, com informações de {{ respondent }}, na aplicação de {{ applied_on }}. Os resultados foram recalculados a partir dos totais do protocolo e das datas atuais do paciente e da aplicação.</p>
+      <p>{% for row in extensive_domains %}{% if row.standard_score != None %}{{ row.label }} ({{ row.display_code }}): escore padrão {{ row.standard_score }}, percentil {{ row.percentile }}. {% else %}{{ row.label }} ({{ row.display_code }}): não informado ou não aplicável à idade. {% endif %}{% endfor %}</p>
+    </div>
+    <div class="notice"><strong>Revisão profissional necessária</strong><p>Este PDF é um relatório quantitativo, não uma homologação clínica. Sua emissão não concede validação nem autorização automática de inclusão no laudo. Não contém diagnóstico gerado automaticamente.</p></div>
+    <h2 class="section-heading">Indicadores indisponíveis neste fluxo</h2>
+    <table><thead><tr><th scope="col">Indicador</th><th scope="col">Situação</th></tr></thead><tbody>
+      <tr><th scope="row">IC 95% e classificação adaptativa</th><td>Não habilitados na correção Extensiva atual; não inferidos a partir dos Níveis de Domínio.</td></tr>
+      <tr><th scope="row">Forças/fraquezas e diferenças emparelhadas</th><td>Não calculadas neste fluxo.</td></tr>
+      <tr><th scope="row">Equivalentes etários / VEC</th><td>Não calculados neste fluxo.</td></tr>
+      <tr><th scope="row">Comportamento mal adaptativo e itens críticos</th><td>Não registrados nesta entrada por subdomínios. Conferir individualmente no protocolo original; não é possível inferir ausência.</td></tr>
+      <tr><th scope="row">Comparação entre informantes</th><td>Não realizada; o relatório contém uma única aplicação.</td></tr>
+    </tbody></table>
+    <h2 class="section-heading">Observações gerais</h2>
+    <div class="observations">{{ observations }}</div>
+    <p class="source">Rastreabilidade: {{ result.norm_source.file }} · SHA-256 {{ result.norm_source.sha256 }}. Normas americanas das tabelas {{ appendix }}.1 e {{ appendix }}.3, modalidade Extensiva identificada. Layout NeuroAvalia inspirado no WISC-IV, sem utilizar suas normas ou dados pessoais.</p>
+  </section>
+{% endblock %}
