@@ -2,6 +2,8 @@ from datetime import date
 from typing import Any, Literal
 
 from django.db import transaction
+from django.core import signing
+from django.utils import timezone
 from ninja import Router, Schema
 from pydantic import ConfigDict, Field
 
@@ -24,6 +26,8 @@ from .interpreters import interpret_results
 from .item_protocol import PROTOCOL_ID, SOURCE, item_protocol, normalize_item_responses
 from .norms import age_months, age_table, load_norms
 from .validators import validate_input
+from .review import SALT, can_review, review_state
+from .domain_totals import domain_total_scales, is_domain_application
 
 router = Router(tags=["tests"])
 
@@ -45,6 +49,7 @@ class Vineland3SubmitIn(Schema):
     application_id: int | None = None
     applied_on: date | None = None
     form: Literal["entrevista", "pais_cuidadores", "professores"] | None = None
+    form_level: Literal["extensivo", "niveis_dominio"] | None = None
     respondent: str = Field(min_length=1, max_length=200)
     entry_mode: Literal["totals", "items"] = "totals"
     raw_scores: dict[str, Any] = Field(default_factory=dict)
@@ -52,6 +57,69 @@ class Vineland3SubmitIn(Schema):
     item_protocol_id: str | None = None
     general_observations: str = Field(default="", max_length=10000)
     finalize: bool = False
+
+
+class VinelandReviewIn(Schema):
+    model_config = ConfigDict(extra="forbid")
+    fingerprint: str = Field(min_length=64, max_length=64)
+    confirmed: Literal[True]
+    clinical_note: str = Field(min_length=10, max_length=10000)
+
+
+@router.post("/applications/{application_id}/review/revoke", response={200: dict, 403: MessageOut, 404: MessageOut}, auth=bearer_auth)
+def revoke_review(request, application_id: int):
+    if not can_review(request.auth):
+        return 403, {"message": "Você não tem permissão para retirar a validação clínica."}
+    with transaction.atomic():
+        application = TestApplication.objects.select_for_update().select_related("instrument", "evaluation__patient").filter(
+            pk=application_id, instrument__code="vineland3",
+            evaluation__in=owned_evaluations(Evaluation.objects.all(), request.auth),
+        ).first()
+        if not application:
+            return 404, {"message": "Questionário Vineland-3 não encontrado."}
+        if not is_domain_application(application):
+            return 403, {"message": "Use a revisão específica dos Níveis de Domínio."}
+        if application.status == TestApplication.Status.LOCKED:
+            return 403, {"message": "Esta aplicação está travada."}
+        application.is_validated = False
+        application.reviewed_payload = {}
+        application.save(update_fields=["is_validated", "reviewed_payload", "updated_at"])
+        AuditService.log(request, "revoke_review", "test_application", resource_id=str(application.pk),
+                         metadata={"instrument": "vineland3"})
+    return 200, serialize_test_application(application)
+
+
+@router.post("/applications/{application_id}/review", response={200: dict, 400: MessageOut, 403: MessageOut, 404: MessageOut}, auth=bearer_auth)
+def review_application(request, application_id: int, payload: VinelandReviewIn):
+    if not can_review(request.auth):
+        return 403, {"message": "Somente um profissional com permissão de revisão pode validar este questionário."}
+    with transaction.atomic():
+        application = TestApplication.objects.select_for_update().select_related("instrument", "evaluation__patient").filter(
+            pk=application_id, instrument__code="vineland3",
+            evaluation__in=owned_evaluations(Evaluation.objects.all(), request.auth),
+        ).first()
+        if not application:
+            return 404, {"message": "Aplicação Vineland-3 não encontrada."}
+        if application.status == TestApplication.Status.LOCKED:
+            return 403, {"message": "Esta aplicação está travada."}
+        state = review_state(application)
+        if not state["eligible"]:
+            return 400, {"message": state["reason"]}
+        if state["fingerprint"] != payload.fingerprint:
+            return 400, {"message": "Os dados ou normas mudaram. Reabra os resultados e revise a versão atual."}
+        note = payload.clinical_note.strip()
+        if len(note) < 10:
+            return 400, {"message": "Registre uma nota de revisão com pelo menos 10 caracteres."}
+        user = request.auth
+        review = {"fingerprint": state["fingerprint"], "reviewed_at": timezone.now().isoformat(), "clinical_note": note,
+                  "reviewer": {"id": user.pk, "name": user.full_name or user.get_full_name() or user.username,
+                               "crp": user.crp or ""}}
+        application.reviewed_payload = {"vineland_domain_review": signing.dumps(review, salt=SALT)}
+        application.is_validated = True
+        application.save(update_fields=["reviewed_payload", "is_validated", "updated_at"])
+        AuditService.log(request, "review", "test_application", resource_id=str(application.pk),
+                         metadata={"instrument": "vineland3", "fingerprint": state["fingerprint"]})
+    return 200, serialize_test_application(application)
 
 
 @router.get("/protocol", response={200: dict, 403: MessageOut}, auth=bearer_auth)
@@ -73,6 +141,9 @@ def protocol(request):
             for key, entries in representative.items() if entries
         ]}
     return 200, {"forms": forms, "entry_modes": ["totals", "items"],
+                  "form_levels": {"extensivo": "Formulário Extensivo", "niveis_dominio": "Formulário Níveis de Domínio"},
+                  "domain_forms": {form: {"label": label.replace(" extensiva", "").replace(" extensivo", ""),
+                                           "scales": domain_total_scales(form)} for form, label in FORMS.items()},
                  "item_protocol": domain_protocol.item_protocol(),
                  "legacy_item_protocol": item_protocol(), "technical_notes": TECHNICAL_NOTES}
 
@@ -93,11 +164,14 @@ def submit(request, payload: Vineland3SubmitIn):
     if "general_observations" not in payload.model_fields_set:
         raw.pop("general_observations", None)
     raw.update(birth_date=evaluation.patient.birth_date.isoformat(), reference_date=reference.isoformat())
+    raw["form_level"] = payload.form_level or ("niveis_dominio" if payload.entry_mode == "items" else "extensivo")
     try:
         age_months(raw)
         if not payload.respondent.strip():
             raise ValueError("Identifique o respondente.")
         if payload.entry_mode == "items":
+            if raw["form_level"] != "niveis_dominio":
+                raise ValueError("O questionário disponível pertence aos Níveis de Domínio — Pais/Cuidadores.")
             if payload.item_protocol_id not in {PROTOCOL_ID, domain_protocol.PROTOCOL_ID}:
                 raise ValueError("Identificador do banco de itens inválido.")
             if payload.form is not None or payload.raw_scores:
@@ -124,6 +198,9 @@ def submit(request, payload: Vineland3SubmitIn):
             if errors:
                 raise ValueError("; ".join(errors))
             computed = compute_scores(raw)
+            if raw["form_level"] == "niveis_dominio":
+                raw.update(completion_status="finalized", scoring_enabled=computed["normative_scoring"])
+                computed = {}  # Fresh normative_results + signed review, never a trusted cached correction.
     except ValueError as error:
         return 400, {"message": str(error)}
     ensure_required_instruments()
@@ -144,6 +221,11 @@ def submit(request, payload: Vineland3SubmitIn):
                 return 400, {"message": "Crie uma aplicação separada para mudar o modo de entrada; preserve o registro original."}
             if not empty_application and payload.entry_mode == "items" and ((application.raw_payload or {}).get("item_protocol_id") or PROTOCOL_ID) != payload.item_protocol_id:
                 return 400, {"message": "Crie uma aplicação separada para usar outro banco de perguntas; preserve o protocolo original."}
+            if not empty_application:
+                previous = application.raw_payload or {}
+                old_level = previous.get("form_level") or ("niveis_dominio" if previous.get("entry_mode") == "items" else "extensivo")
+                if old_level != raw["form_level"] or (payload.entry_mode == "totals" and previous.get("form") != payload.form):
+                    return 400, {"message": "Crie uma aplicação separada para mudar tipo de formulário ou informante; preserve o registro original."}
             if "general_observations" not in payload.model_fields_set and "general_observations" in (application.raw_payload or {}):
                 raw["general_observations"] = application.raw_payload["general_observations"]
         else:

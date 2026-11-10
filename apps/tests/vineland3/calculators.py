@@ -7,6 +7,10 @@ def compute_scores(raw):
     errors = validate_input(raw)
     if errors:
         raise ValueError("; ".join(errors))
+    if raw.get("form_level") == "niveis_dominio":
+        from .domain_totals import compute_domain_totals
+
+        return compute_domain_totals(raw)
     form = raw["form"]
     months = age_months(raw)
     subtable = age_table(form, "subdomains", months)
@@ -32,7 +36,7 @@ def compute_scores(raw):
     source = load_norms()["forms"][form]
     return {
         "form": form, "form_label": FORMS[form], "respondent": raw["respondent"].strip(),
-        "age_months": months, "entry_mode": "totals", "subdomains": subdomains,
+        "age_months": months, "entry_mode": "totals", "form_level": "extensivo", "subdomains": subdomains,
         "domains": domains, "results": subdomains + domains,
         "norm_source": {"population": "Normas americanas", "file": source["file"], "sha256": source["sha256"],
                         "subdomain_pages": subtable["pages"], "domain_pages": domtable["pages"]},

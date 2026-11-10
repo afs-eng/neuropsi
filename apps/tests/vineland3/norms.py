@@ -1,14 +1,14 @@
-import json
 from datetime import date
 from functools import lru_cache
-from pathlib import Path
 
 from dateutil.relativedelta import relativedelta
+
+from .csv_tables import extensive_norms_from_csv
 
 
 @lru_cache(maxsize=1)
 def load_norms():
-    return json.loads(Path(__file__).with_name("norms.json").read_text())
+    return extensive_norms_from_csv()
 
 
 def age_months(raw):

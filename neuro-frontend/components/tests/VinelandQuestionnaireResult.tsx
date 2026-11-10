@@ -36,25 +36,75 @@ export interface VinelandResultApplication {
   applied_on: string | null
   status: string
   normative_results?: VinelandNormativeResultsData | null
+  clinical_review?: { eligible: boolean; validated: boolean; reason: string; fingerprint?: string; reviewer?: { name: string; crp: string }; reviewed_at?: string; clinical_note?: string } | null
   raw_payload: {
+    form?: string
+    form_level?: string
+    entry_mode?: string
     respondent?: string
     birth_date?: string
     item_protocol_id?: string
     completion_status?: string
     general_observations?: string
     item_summary?: VinelandItemSummary
+    item_responses?: Record<string, Record<string, { response: string; estimated?: boolean; observation?: string }>>
   }
 }
 
 export function VinelandQuestionnaireResult({ application }: { application: VinelandResultApplication }) {
   const [exportingPdf, setExportingPdf] = useState(false)
   const [pdfError, setPdfError] = useState('')
-  const summary = application.raw_payload.item_summary!
+  const [review, setReview] = useState(application.clinical_review)
+  const [reviewNote, setReviewNote] = useState('')
+  const [confirmed, setConfirmed] = useState(false)
+  const [reviewing, setReviewing] = useState(false)
+  const [reviewError, setReviewError] = useState('')
+  const totals = application.raw_payload.entry_mode === 'totals'
+  const summary = application.raw_payload.item_summary || { sections: [], critical_items: [], answered: 0, applied_total: 0 }
   const adaptive = summary.sections.filter(section => section.kind === 'adaptive')
   const behavior = summary.sections.filter(section => section.kind === 'behavior')
   const critical = summary.sections.find(section => section.kind === 'critical')
   const evaluationUrl = `/dashboard/evaluations/${application.evaluation_id}/overview`
   const editUrl = `/dashboard/tests/vineland?evaluation_id=${application.evaluation_id}&application_id=${application.id}&edit=true`
+  const historicalNotes = Object.entries(application.raw_payload.item_responses || {}).flatMap(([section, items]) =>
+    Object.entries(items).filter(([, item]) => item.estimated || item.observation?.trim()).map(([id, item]) => ({ section, id, ...item })))
+
+  async function revokeReview() {
+    if (reviewing || !window.confirm('Retirar a validação para novos laudos? Laudos já finalizados não serão alterados.')) return
+    setReviewing(true)
+    setReviewError('')
+    try {
+      const token = getToken()
+      const response = await fetch(resolveApiUrl(`/api/tests/vineland3/applications/${application.id}/review/revoke`), {
+        method: 'POST', headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.message || 'Não foi possível retirar a validação.')
+      setReview(data.clinical_review)
+      setConfirmed(false)
+    } catch (error) {
+      setReviewError(error instanceof Error ? error.message : 'Não foi possível retirar a validação.')
+    } finally { setReviewing(false) }
+  }
+
+  async function validateReview(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (reviewing || !confirmed || !review?.fingerprint) return
+    setReviewing(true)
+    setReviewError('')
+    try {
+      const token = getToken()
+      const response = await fetch(resolveApiUrl(`/api/tests/vineland3/applications/${application.id}/review`), {
+        method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ fingerprint: review.fingerprint, confirmed: true, clinical_note: reviewNote.trim() }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.message || 'Não foi possível registrar a revisão.')
+      setReview(data.clinical_review)
+    } catch (error) {
+      setReviewError(error instanceof Error ? error.message : 'Não foi possível registrar a revisão. Reabra o resultado e tente novamente.')
+    } finally { setReviewing(false) }
+  }
 
   async function exportPdf() {
     if (exportingPdf) return
@@ -125,7 +175,7 @@ export function VinelandQuestionnaireResult({ application }: { application: Vine
         </header>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div><h1 className="text-3xl font-medium tracking-tight text-zinc-900">Vineland-3 - Resultado</h1>
-            <p className="mt-1 text-sm text-zinc-600">{application.patient_name} · Pais/Cuidadores — Níveis de Domínio</p>
+            <p className="mt-1 text-sm text-zinc-600">{application.patient_name} · {application.normative_results?.form_label || 'Pais/Cuidadores — Níveis de Domínio'}</p>
           </div>
           <div className="flex flex-wrap gap-3 print:hidden report-print-hide">
             {application.status !== 'locked' && <Link href={editUrl} className="rounded-full border border-black/10 bg-white px-4 py-3 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50">Editar</Link>}
@@ -142,7 +192,7 @@ export function VinelandQuestionnaireResult({ application }: { application: Vine
             <div><dt className="text-slate-500">Aplicação</dt><dd className="font-medium">{dateLabel(application.applied_on)}</dd></div>
             <div><dt className="text-slate-500">Nascimento</dt><dd className="font-medium">{dateLabel(application.raw_payload.birth_date)}</dd></div>
           </dl>
-          <p className="mt-4 font-medium text-slate-800">Preenchimento finalizado · {summary.answered} de {summary.applied_total} itens das seções aplicadas respondidos.</p>
+          <p className="mt-4 font-medium text-slate-800">{totals ? 'Entrada por totais do protocolo. Não contém respostas item a item.' : `Preenchimento finalizado · ${summary.answered} de ${summary.applied_total} itens das seções aplicadas respondidos.`}</p>
         </section>
         {application.normative_results ? <VinelandNormativeResults result={application.normative_results} /> : <>
         <aside className="space-y-2 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950">
@@ -171,10 +221,23 @@ export function VinelandQuestionnaireResult({ application }: { application: Vine
         <section aria-labelledby="vineland-critical-items" className="rounded-xl border border-slate-200 bg-white p-5">
           <h2 id="vineland-critical-items" className="mb-3 font-semibold text-slate-900">Itens críticos — Seção C</h2>
           <p className="mb-3 text-sm text-slate-600">Itens com resposta 1 ou 2 são apresentados individualmente para revisão profissional. Esta seção não recebe soma ou diagnóstico automático.</p>
-          {!critical?.applied ? <p className="text-sm">Seção não aplicada.</p> : summary.critical_items.length === 0 ? <p className="text-sm">Nenhum item com resposta 1 ou 2 nesta seção.</p> :
+          {totals ? <p className="text-sm">Itens críticos não registrados neste lançamento por totais. Confira-os individualmente no protocolo original; não é possível inferir ausência de comportamentos críticos.</p> : !critical?.applied ? <p className="text-sm">Seção não aplicada.</p> : summary.critical_items.length === 0 ? <p className="text-sm">Nenhum item com resposta 1 ou 2 nesta seção.</p> :
             <ul className="space-y-3">{summary.critical_items.map(item => <li key={item.id} className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950"><strong>Item {item.id} · Resposta {item.response}</strong><p className="mt-1">{item.text}</p></li>)}</ul>}
         </section>
         {application.raw_payload.general_observations && <section className="rounded-xl border border-slate-200 bg-white p-5"><h2 className="mb-3 font-semibold text-slate-900">Observações gerais</h2><p className="whitespace-pre-wrap text-sm text-slate-700">{application.raw_payload.general_observations}</p></section>}
+        {review && <section className="space-y-3 rounded-xl border border-slate-200 bg-white p-5" aria-labelledby="vineland-review">
+          <h2 id="vineland-review" className="font-semibold">Revisão profissional para o laudo</h2>
+          <p role="status" className="text-sm">{review.reason}</p>
+          {historicalNotes.length > 0 && <details className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm"><summary className="cursor-pointer font-medium">Estimativas e observações históricas por item ({historicalNotes.length})</summary><ul className="mt-3 space-y-2">{historicalNotes.map(item => <li key={`${item.section}-${item.id}`}><strong>{summary.sections.find(section => section.code === item.section)?.label || item.section} · Item {item.id}</strong> · Resposta {item.response || 'não preenchida'}{item.estimated ? ' · Estimativa registrada' : ''}{item.observation && <p className="whitespace-pre-wrap">{item.observation}</p>}</li>)}</ul></details>}
+          {review.validated ? <div className="space-y-2 text-sm"><p>Revisado por {review.reviewer?.name}{review.reviewer?.crp ? ` · CRP ${review.reviewer.crp}` : ''}{review.reviewed_at ? ` · ${new Date(review.reviewed_at).toLocaleString('pt-BR')}` : ''}.</p><p className="whitespace-pre-wrap">{review.clinical_note}</p>{application.status !== 'locked' && <button type="button" disabled={reviewing} onClick={revokeReview} className="rounded-lg border border-red-200 px-4 py-3 text-red-800 print:hidden">Retirar validação</button>}</div> : review.eligible && application.status !== 'locked' ? <form onSubmit={validateReview} className="space-y-3 print:hidden">
+            <p className="text-sm text-slate-600">Apenas profissionais autorizados podem validar. Confira respostas, datas, estimativas históricas, itens críticos e aplicabilidade das normas americanas. Alterações exigem nova revisão.</p>
+            <label className="block text-sm font-medium" htmlFor="vineland-review-note">Nota da revisão profissional</label>
+            <textarea id="vineland-review-note" required minLength={10} maxLength={10000} disabled={reviewing} value={reviewNote} onChange={event => setReviewNote(event.target.value)} className="w-full rounded-lg border border-slate-300 p-3 text-sm" rows={4} />
+            <label className="flex items-start gap-3 text-sm"><input type="checkbox" checked={confirmed} disabled={reviewing} onChange={event => setConfirmed(event.target.checked)} className="mt-1" />Conferi os resultados e os itens críticos e autorizo sua inclusão no laudo, sem atribuição automática de diagnóstico.</label>
+            <button type="submit" disabled={reviewing || !confirmed || reviewNote.trim().length < 10} aria-busy={reviewing} className="rounded-full bg-blue-800 px-5 py-3 text-sm font-medium text-white disabled:opacity-50">{reviewing ? 'Registrando revisão…' : 'Validar para inclusão no laudo'}</button>
+          </form> : null}
+          {reviewError && <p role="alert" className="text-sm text-red-800">{reviewError}</p>}
+        </section>}
       </div>
     </div>
   </main>

@@ -1,12 +1,13 @@
-"""Domain-level Parent/Caregiver scoring; separate from extensive-form norms."""
+"""Domain-level scoring, with informant-specific norms separate from extensive forms."""
 
-import json
 from functools import lru_cache
 from itertools import combinations
-from pathlib import Path
+from datetime import date
+from copy import deepcopy
 
 from .domain_protocol import PROTOCOL_ID, build_item_summary
 from .norms import age_months
+from .csv_tables import domain_norms_from_csv
 
 SCALES = {"comunicacao": "COM", "vida_diaria": "AVD", "socializacao": "SOC", "atividade_fisica": "HMOT",
           "comportamento_a": "internalizante", "comportamento_b": "externalizante"}
@@ -16,7 +17,7 @@ LABELS = {"COM": "Comunicação", "AVD": "Atividades de Vida Diária", "SOC": "S
 
 @lru_cache(maxsize=1)
 def load_domain_norms():
-    return json.loads(Path(__file__).with_name("domain_norms.json").read_text(encoding="utf-8"))
+    return domain_norms_from_csv()
 
 
 def _table(groups, months):
@@ -35,6 +36,8 @@ def _classification(score):
 
 
 def _base_rate(magnitude, cutoffs):
+    if any(cutoff is None for cutoff in cutoffs):
+        return None  # Missing published thresholds cannot be treated as zero or interpolated.
     previous = 0
     for percentage, cutoff in zip((2, 5, 10, 15, 25), cutoffs):
         if magnitude >= cutoff:
@@ -45,8 +48,11 @@ def _base_rate(magnitude, cutoffs):
 
 def compute_domain_results(responses, birth_date, reference_date):
     summary = build_item_summary(responses)
+    return compute_summary_results(summary, birth_date, reference_date, load_domain_norms())
+
+
+def compute_summary_results(summary, birth_date, reference_date, norms):
     months = age_months({"birth_date": birth_date, "reference_date": reference_date})
-    norms = load_domain_norms()
     table = _table(norms["domains"], months)
     adaptive, behavior = [], []
     for section in summary["sections"]:
@@ -89,7 +95,7 @@ def compute_domain_results(responses, birth_date, reference_date):
     strengths = []
     stable = _table(norms["strengths"], months)
     for row in adaptive:
-        numbers = stable["rows"][row["scale"]] if stable else []
+        numbers = stable["rows"].get(row["scale"], []) if stable else []
         diff = row["standard_score"] - mean if row["standard_score"] is not None and mean is not None else None
         critical = numbers[1] if numbers else None  # p = .05; independent of the score's CI.
         significant = abs(diff) >= critical if diff is not None and critical is not None else None
@@ -100,15 +106,20 @@ def compute_domain_results(responses, birth_date, reference_date):
     pairs = []
     for first, second in combinations(adaptive, 2):
         diff = first["standard_score"] - second["standard_score"] if all(r["standard_score"] is not None for r in (first, second)) else None
-        values = norms["pairs"][f"{first['scale']}{'>' if diff is not None and diff >= 0 else '<'}{second['scale']}"]
-        values = values[:7] if months < 84 else values[7:]
+        key = f"{first['scale']}{'>' if diff is not None and diff >= 0 else '<'}{second['scale']}"
+        if "pairs_by_age" in norms:
+            ptable = _table(norms["pairs_by_age"], months)
+            values = ptable["rows"].get(key, [None] * 7) if ptable else [None] * 7
+        else:
+            values = norms["pairs"][key]
+            values = values[:7] if months < 84 else values[7:]
         pairs.append({"first": first["scale"], "second": second["scale"],
-                      "difference": diff, "critical_value": values[1] if diff is not None else None,
-                      "significant": abs(diff) >= values[1] if diff is not None else None,
+                       "difference": diff, "critical_value": values[1] if diff is not None else None,
+                       "significant": abs(diff) >= values[1] if diff is not None and values[1] is not None else None,
                       "base_rate": _base_rate(abs(diff), values[2:]) if diff is not None else None})
     return {"normative_scoring": cca["standard_score"] is not None, "protocol_id": PROTOCOL_ID,
             "confidence_level": 95, "significance_level": .05, "age_months": months,
-            "population": norms["population"], "source_version": norms["version"], "sources": norms["sources"],
+            "population": norms["population"], "source_version": norms["version"], "sources": deepcopy(norms["sources"]),
             "normative_age_range": {"min_months": table["min_months"], "max_months": table["max_months"]} if table else None,
             "source_pages": table["pages"] if table else [], "adaptive": adaptive, "cca": cca, "behavior": behavior,
             "mean_standard_score": round(mean, 2) if mean is not None else None, "mean_domain_count": len(available),
@@ -117,9 +128,19 @@ def compute_domain_results(responses, birth_date, reference_date):
 
 def results_for_application(application):
     raw = application.raw_payload or {}
+    if application.instrument.code == "vineland3" and raw.get("entry_mode") == "totals" and raw.get("form_level") == "niveis_dominio":
+        from .domain_totals import compute_domain_totals
+
+        if raw.get("completion_status") != "finalized":
+            return None
+        patient = application.evaluation.patient
+        return compute_domain_totals({**raw, "birth_date": patient.birth_date.isoformat() if patient.birth_date else None,
+                                      "reference_date": application.applied_on.isoformat() if application.applied_on else None})
     if (application.instrument.code != "vineland3" or raw.get("entry_mode") != "items"
             or raw.get("item_protocol_id") != PROTOCOL_ID or raw.get("completion_status") != "finalized"):
         return None
     patient = application.evaluation.patient
+    if application.applied_on and application.applied_on > date.today():
+        raise ValueError("A aplicação não pode estar no futuro.")
     return compute_domain_results(raw.get("item_responses"), patient.birth_date.isoformat() if patient.birth_date else None,
                                   application.applied_on.isoformat() if application.applied_on else None)

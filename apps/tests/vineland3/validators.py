@@ -5,6 +5,16 @@ from .norms import age_months, age_table, lookup
 def validate_input(raw):
     if not isinstance(raw, dict):
         return ["Dados Vineland-3 inválidos."]
+    if raw.get("form_level", "extensivo") not in {"extensivo", "niveis_dominio"}:
+        return ["Tipo de formulário inválido."]
+    if raw.get("form_level") == "niveis_dominio":
+        from .domain_totals import compute_domain_totals
+
+        try:
+            compute_domain_totals(raw)
+        except ValueError as error:
+            return [str(error)]
+        return []
     if raw.get("entry_mode", "totals") != "totals" or raw.get("item_responses") is not None:
         return ["Correção item a item bloqueada: os cadastros de perguntas permitem somente registro, sem conversão normativa habilitada."]
     if raw.get("form") not in FORMS:

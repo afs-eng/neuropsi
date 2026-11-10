@@ -7,6 +7,8 @@ from apps.tests.services.playwright_pdf_service import generate_pdf_from_html
 from .domain_protocol import DOMAIN_ITEMS, PROTOCOL_ID, build_item_summary
 from .norms import age_months
 from .domain_scoring import results_for_application
+from .review import review_state
+from .domain_totals import totals_summary
 
 
 class Vineland3PdfService:
@@ -31,14 +33,15 @@ class Vineland3PdfService:
     @classmethod
     def _build_context(cls, application):
         raw = application.raw_payload or {}
-        if (application.instrument.code != "vineland3" or raw.get("entry_mode") != "items"
-                or raw.get("item_protocol_id") != PROTOCOL_ID):
-            raise ValueError("Este PDF é exclusivo do formulário Vineland de Pais/Cuidadores dos Níveis de Domínio.")
+        totals = raw.get("entry_mode") == "totals" and raw.get("form_level") == "niveis_dominio"
+        if (application.instrument.code != "vineland3" or not totals and (raw.get("entry_mode") != "items"
+                or raw.get("item_protocol_id") != PROTOCOL_ID)):
+            raise ValueError("Este PDF é exclusivo dos Níveis de Domínio: questionário Pais/Cuidadores ou totais do protocolo.")
         if raw.get("completion_status") != "finalized":
             raise ValueError("Finalize o questionário Vineland antes de gerar o PDF.")
         # Rebuild from the recorded answers; never export a stale cached summary.
-        summary = build_item_summary(raw.get("item_responses"))
         normative = results_for_application(application)
+        summary = totals_summary(normative) if totals else build_item_summary(raw.get("item_responses"))
         evaluation = application.evaluation
         patient = evaluation.patient
         applied = application.applied_on
@@ -64,8 +67,8 @@ class Vineland3PdfService:
             elif section["kind"] == "behavior":
                 row["short_label"] = "Internalizante (A)" if section["code"] == "comportamento_a" else "Externalizante (B)"
                 behavior.append(row)
-        critical = next(section for section in summary["sections"] if section["kind"] == "critical")
-        critical_responses = raw["item_responses"].get("comportamento_c", {})
+        critical = next((section for section in summary["sections"] if section["kind"] == "critical"), {"applied": False})
+        critical_responses = (raw.get("item_responses") or {}).get("comportamento_c", {})
         critical_rows = [{"id": str(index), "text": text,
                           "response": critical_responses.get(str(index), {}).get("response", "") or "—",
                           "flagged": critical_responses.get(str(index), {}).get("response") in {"1", "2"}}
@@ -83,6 +86,11 @@ class Vineland3PdfService:
                 row["plot_high"] = 300 - (interval[1] - 20) * 2
         return {
             "name": patient.full_name,
+            "entry_mode": "totals" if totals else "items",
+            "form_label": normative.get("form_label", "Pais/Cuidadores — Níveis de Domínio"),
+            "table_codes": normative.get("table_codes", "C.3, C.4, C.5 e E.2"),
+            "appendix": {"entrevista": "B", "professores": "D"}.get(raw.get("form"), "C"),
+            "behavior_table": {"entrevista": "E.1", "professores": "E.3"}.get(raw.get("form"), "E.2"),
             "sex": {"M": "Masculino", "F": "Feminino", "O": "Outro"}.get(patient.sex, patient.sex or "Não informado"),
             "schooling": patient.get_schooling_display() or "Não informado",
             "age": f"{months // 12} anos e {months % 12} meses",
@@ -93,6 +101,7 @@ class Vineland3PdfService:
             "report_code": f"RPT-VINELAND3-{application.pk:03d}",
             "adaptive": adaptive, "behavior": behavior, "summary": summary,
             "normative": normative, "normative_rows": normative_rows,
+            "clinical_review": review_state(application, normative),
             "plot_ticks": [{"value": s, "y": 300 - (s - 20) * 2} for s in range(20, 161, 20)],
             "critical_applied": critical["applied"], "critical_rows": critical_rows,
             "observations": raw.get("general_observations") or "Nenhuma observação geral registrada.",

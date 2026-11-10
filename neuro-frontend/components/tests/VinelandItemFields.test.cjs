@@ -554,7 +554,7 @@ test('critical items are individual review entries, not a sum, and locked result
   assert.doesNotMatch(html, /edit=true/);
 });
 
-function interactiveResult() {
+function interactiveResult(application = finalizedQuestionnaire) {
   const state = [];
   let cursor;
   const { VinelandQuestionnaireResult } = loadResult({ ...React, useState(initial) {
@@ -562,7 +562,7 @@ function interactiveResult() {
     if (!(index in state)) state[index] = initial;
     return [state[index], next => { state[index] = next; }];
   } });
-  return () => { cursor = 0; return VinelandQuestionnaireResult({ application: finalizedQuestionnaire }); };
+  return () => { cursor = 0; return VinelandQuestionnaireResult({ application }); };
 }
 
 test('PDF button fetches the authenticated server PDF, shows progress and downloads it instead of printing HTML', async t => {
@@ -631,4 +631,73 @@ test('normative result error blocks the numeric panels rather than displaying ca
   assert.match(html, /role="alert"/);
   assert.match(html, /faltam respostas/);
   assert.doesNotMatch(html, /<table|<svg/);
+});
+
+const pendingReview = { eligible: true, validated: false, fingerprint: 'a'.repeat(64), reason: 'Revisão profissional pendente.' };
+
+test('clinical review requires confirmation and a note, authenticates and binds approval to the displayed version', async t => {
+  const application = { ...finalizedQuestionnaire, clinical_review: pendingReview };
+  const tree = interactiveResult(application);
+  const form = () => elements(tree()).find(element => element.type === 'form');
+  const button = () => elements(tree()).find(element => element.props?.type === 'submit');
+  assert.equal(button().props.disabled, true);
+  elements(tree()).find(element => element.type === 'textarea').props.onChange({ target: { value: 'Dados e itens críticos conferidos.' } });
+  assert.equal(button().props.disabled, true);
+  elements(tree()).find(element => element.props?.type === 'checkbox').props.onChange({ target: { checked: true } });
+  assert.equal(button().props.disabled, false);
+  let done;
+  const mock = t.mock.method(global, 'fetch', () => new Promise(resolve => { done = resolve; }));
+  const request = form().props.onSubmit({ preventDefault() {} });
+  assert.equal(button().props.disabled, true);
+  assert.equal(button().props.children, 'Registrando revisão…');
+  const [url, options] = mock.mock.calls[0].arguments;
+  assert.equal(url, 'https://api.example.test/api/tests/vineland3/applications/85/review');
+  assert.equal(options.method, 'POST');
+  assert.equal(options.headers.Authorization, 'Bearer test-token');
+  assert.deepEqual(JSON.parse(options.body), { fingerprint: pendingReview.fingerprint, confirmed: true, clinical_note: 'Dados e itens críticos conferidos.' });
+  done({ ok: true, json: async () => ({ clinical_review: { ...pendingReview, validated: true, reason: 'Revisado para inclusão no laudo.', reviewer: { name: 'Profissional fictício', crp: '00/000' }, clinical_note: 'Dados conferidos.' } }) });
+  await request;
+  assert.equal(form(), undefined);
+  assert.match(renderToStaticMarkup(tree()), /Profissional fictício|00\/000/);
+  assert.match(renderToStaticMarkup(tree()), /Retirar validação/);
+  assert.equal(application.clinical_review.validated, false, 'Never mutate the received application');
+});
+
+test('stale-version and permission errors stay visible without marking the questionnaire reviewed', async t => {
+  const tree = interactiveResult({ ...finalizedQuestionnaire, clinical_review: pendingReview });
+  elements(tree()).find(element => element.type === 'textarea').props.onChange({ target: { value: 'Conferência das respostas.' } });
+  elements(tree()).find(element => element.props?.type === 'checkbox').props.onChange({ target: { checked: true } });
+  t.mock.method(global, 'fetch', async () => ({ ok: false, json: async () => ({ message: 'Os dados ou normas mudaram. Reabra os resultados.' }) }));
+  await elements(tree()).find(element => element.type === 'form').props.onSubmit({ preventDefault() {} });
+  assert.match(renderToStaticMarkup(tree()), /role="alert"/);
+  assert.match(renderToStaticMarkup(tree()), /Reabra os resultados/);
+  assert.equal(elements(tree()).find(element => element.props?.type === 'submit').props.disabled, false);
+  assert.doesNotMatch(renderToStaticMarkup(tree()), /Retirar validação/);
+});
+
+test('clinical review is unavailable when locked or without applicable norms and displays historical estimates read-only', () => {
+  const { VinelandQuestionnaireResult } = loadResult();
+  for (const changes of [{ status: 'locked', clinical_review: pendingReview }, { clinical_review: { eligible: false, validated: false, reason: 'Sem norma para a idade' } }]) {
+    const html = renderToStaticMarkup(React.createElement(VinelandQuestionnaireResult, { application: { ...finalizedQuestionnaire, ...changes } }));
+    assert.doesNotMatch(html, /Validar para inclusão no laudo|<textarea/);
+  }
+  const html = renderToStaticMarkup(React.createElement(VinelandQuestionnaireResult, { application: { ...finalizedQuestionnaire, clinical_review: pendingReview,
+    raw_payload: { ...finalizedQuestionnaire.raw_payload, item_responses: { comunicacao: { '1': { response: '0', estimated: true, observation: 'Nota histórica preservada' } } } } } }));
+  assert.match(html, /Estimativa registrada/);
+  assert.match(html, /Nota histórica preservada/);
+});
+
+test('revoking approval uses its authenticated action and restores the review form without changing responses', async t => {
+  const reviewed = { ...pendingReview, validated: true, reason: 'Revisado', reviewer: { name: 'Clínico' } };
+  const tree = interactiveResult({ ...finalizedQuestionnaire, clinical_review: reviewed });
+  const originalWindow = global.window;
+  global.window = { confirm: () => true };
+  try {
+    const mock = t.mock.method(global, 'fetch', async () => ({ ok: true, json: async () => ({ clinical_review: pendingReview }) }));
+    await elements(tree()).find(element => element.props?.children === 'Retirar validação').props.onClick();
+    assert.equal(mock.mock.calls[0].arguments[0], 'https://api.example.test/api/tests/vineland3/applications/85/review/revoke');
+    assert.equal(mock.mock.calls[0].arguments[1].headers.Authorization, 'Bearer test-token');
+    assert.match(renderToStaticMarkup(tree()), /Validar para inclusão no laudo/);
+    assert.doesNotMatch(renderToStaticMarkup(tree()), /Retirar validação/);
+  } finally { if (originalWindow === undefined) delete global.window; else global.window = originalWindow; }
 });

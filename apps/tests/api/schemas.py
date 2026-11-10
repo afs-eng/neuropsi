@@ -54,6 +54,7 @@ class TestApplicationOut(Schema):
     raw_payload: dict[str, Any]
     computed_payload: dict[str, Any]
     normative_results: Optional[dict[str, Any]] = None
+    clinical_review: Optional[dict[str, Any]] = None
     classified_payload: dict[str, Any]
     reviewed_payload: dict[str, Any]
     interpretation_text: str

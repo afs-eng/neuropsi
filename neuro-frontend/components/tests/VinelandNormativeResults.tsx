@@ -5,6 +5,7 @@ export interface VinelandNormativeScore {
 }
 
 export interface VinelandNormativeResultsData {
+  form_label?: string; table_codes?: string; form?: string
   error?: string; normative_scoring: boolean; confidence_level: number; significance_level: number
   age_months: number; population: string; adaptive: VinelandNormativeScore[]; cca: VinelandNormativeScore
   behavior: VinelandNormativeScore[]; mean_standard_score: number | null; mean_domain_count: number
@@ -23,7 +24,7 @@ export function VinelandNormativeResults({ result }: { result: VinelandNormative
   return <>
     <aside className="rounded-xl border border-blue-200 bg-blue-50 p-5 text-sm text-blue-950">
       <h2 className="font-semibold">Correção normativa — {result.population} · IC {result.confidence_level}%</h2>
-      <p>Tabelas C.3, C.4, C.5 e E.2 de Pais/Cuidadores — Níveis de Domínio. Idade: {Math.floor(result.age_months / 12)} anos e {result.age_months % 12} meses.</p>
+      <p>Tabelas {result.table_codes || 'C.3, C.4, C.5 e E.2'} de {result.form_label || 'Pais/Cuidadores — Níveis de Domínio'}. Idade: {Math.floor(result.age_months / 12)} anos e {result.age_months % 12} meses.</p>
       <p>Requer revisão clínica; não inclui automaticamente o registro no laudo. Resultados sem norma para a idade permanecem indisponíveis.</p>
     </aside>
     <section className="overflow-x-auto rounded-xl border border-slate-200 bg-white p-5">
@@ -45,16 +46,16 @@ export function VinelandNormativeResults({ result }: { result: VinelandNormative
       </svg>
     </section>
     <section className="overflow-x-auto rounded-xl border border-slate-200 bg-white p-5">
-      <h2 className="mb-4 font-semibold">Comportamento mal adaptativo — Tabela E.2</h2>
+      <h2 className="mb-4 font-semibold">Comportamento mal adaptativo — Tabela E.{result.form === 'entrevista' ? '1' : result.form === 'professores' ? '3' : '2'}</h2>
       <table className="w-full text-sm"><thead className={heading}><tr><th className={cell}>Seção</th><th className={cell}>Bruto</th><th className={cell}>Escala-v</th><th className={cell}>Situação</th></tr></thead><tbody>{result.behavior.map(row => <tr key={row.code}><th className={`${cell} text-left`}>{row.scale === 'internalizante' ? 'Internalizante (A)' : 'Externalizante (B)'}</th><td className={cell}>{row.raw_score ?? '—'}</td><td className={cell}>{row.v_scale ?? '—'}</td><td className={cell}>{row.unavailable_reason ?? 'Calculado'}</td></tr>)}</tbody></table>
       <p className="mt-3 text-sm">Maior pontuação indica maior frequência dos comportamentos relatados, não melhor habilidade adaptativa.</p>
     </section>
     <section className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
       <h2 className="font-semibold">Página de Análise — p = 0,05</h2>
       <p className="text-sm">Média dos escores padrão: {number(result.mean_standard_score)} ({result.mean_domain_count} domínios com conversão disponível). A significância estatística não equivale a diagnóstico.</p>
-      <h3 className="font-medium">Análise de força / fraqueza — C.4</h3>
+      <h3 className="font-medium">Análise de força / fraqueza — {result.form === 'entrevista' ? 'B' : result.form === 'professores' ? 'D' : 'C'}.4</h3>
       <div className="overflow-x-auto"><table className="w-full text-sm tabular-nums"><thead className={heading}><tr>{['Domínio', 'Escore padrão', 'Diferença da média', 'Valor crítico', 'Força / fraqueza', 'Taxa de base'].map(text => <th key={text} className={cell}>{text}</th>)}</tr></thead><tbody>{result.strengths.map(row => <tr key={row.scale}><th className={cell}>{row.scale}</th><td className={cell}>{number(row.standard_score)}</td><td className={cell}>{number(row.difference)}</td><td className={cell}>{number(row.critical_value)}</td><td className={cell}>{row.finding}</td><td className={cell}>{row.base_rate ?? '—'}</td></tr>)}</tbody></table></div>
-      <h3 className="font-medium">Comparação das diferenças emparelhadas — C.5</h3>
+      <h3 className="font-medium">Comparação das diferenças emparelhadas — {result.form === 'entrevista' ? 'B' : result.form === 'professores' ? 'D' : 'C'}.5</h3>
       <div className="overflow-x-auto"><table className="w-full text-sm tabular-nums"><thead className={heading}><tr>{['Domínios', 'Diferença', 'Valor crítico', 'Significância', 'Taxa de base'].map(text => <th key={text} className={cell}>{text}</th>)}</tr></thead><tbody>{result.pairs.map(row => <tr key={`${row.first}-${row.second}`}><th className={cell}>{row.first} – {row.second}</th><td className={cell}>{number(row.difference)}</td><td className={cell}>{number(row.critical_value)}</td><td className={cell}>{row.significant === null ? '—' : row.significant ? 'Sim' : 'Não'}</td><td className={cell}>{row.base_rate ?? '—'}</td></tr>)}</tbody></table></div>
       <p className="text-xs text-slate-600">Taxas de base em faixas conforme as tabelas, não percentis exatos. — = não aplicado ou sem conversão normativa.</p>
     </section>

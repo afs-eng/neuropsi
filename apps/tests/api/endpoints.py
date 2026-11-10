@@ -282,6 +282,9 @@ def update_test_application_endpoint(
 
     data = payload.dict(exclude_unset=True)
 
+    if application.instrument.code == "vineland3" and ((application.raw_payload or {}).get("entry_mode") == "items" or (application.raw_payload or {}).get("form_level") == "niveis_dominio"):
+        return 403, {"message": "Use o formulário Vineland para editar respostas e a ação de revisão profissional para validar."}
+
     if "evaluation_id" in data:
         evaluation = owned_evaluations(Evaluation.objects.all(), request.auth).filter(id=data["evaluation_id"]).first()
         if not evaluation:

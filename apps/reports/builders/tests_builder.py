@@ -286,6 +286,10 @@ def _is_effectively_applied_test(item) -> bool:
     reviewed_payload = getattr(item, "reviewed_payload", None) or {}
 
     if instrument_code == "vineland3":
+        if raw_payload.get("entry_mode") == "items" or raw_payload.get("form_level") == "niveis_dominio":
+            from apps.tests.vineland3.review import review_state
+
+            return review_state(item)["validated"]
         return raw_payload.get("entry_mode", "totals") == "totals" and bool(computed_payload.get("domains"))
 
     if instrument_code == "bfp":
@@ -699,7 +703,13 @@ def build_validated_tests_snapshot(evaluation) -> list[dict]:
 
         module = get_test_module(item.instrument.code)
         report_payload = TestReportPayloadService.build_for_application(item)
-        if module:
+        domain_vineland = item.instrument.code == "vineland3" and ((item.raw_payload or {}).get("entry_mode") == "items" or (item.raw_payload or {}).get("form_level") == "niveis_dominio")
+        if domain_vineland:
+            structured_results = report_payload.get("computed_payload") or {}
+            if not structured_results:
+                continue
+            clinical_interpretation = report_payload.get("interpretation", "")
+        if module and not domain_vineland:
             try:
                 context = TestContext(
                     patient_name=item.evaluation.patient.full_name,
@@ -762,7 +772,7 @@ def build_validated_tests_snapshot(evaluation) -> list[dict]:
                 "summary": summary,
                 "structured_results": structured_results,
                 "classified_payload": item.classified_payload or {},
-                "computed_payload": item.computed_payload or {},
+                "computed_payload": structured_results if domain_vineland else item.computed_payload or {},
                 "clinical_interpretation": clinical_interpretation,
                 "interpretation_text": clinical_interpretation,
                 "report_payload": report_payload,

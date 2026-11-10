@@ -37,19 +37,33 @@ def serialize_test_application(application):
     patient = application.evaluation.patient if application.evaluation else None
     raw_payload = application.raw_payload or {}
     normative_results = None
+    clinical_review = None
     if application.instrument.code == "vineland3":
         from apps.tests.vineland3.domain_scoring import results_for_application
         from apps.tests.vineland3.domain_protocol import build_item_summary
+        from apps.tests.vineland3.domain_totals import is_domain_application
 
+        if is_domain_application(application):
+            raw_payload = {**raw_payload,
+                           "birth_date": patient.birth_date.isoformat() if patient and patient.birth_date else None,
+                           "reference_date": application.applied_on.isoformat() if application.applied_on else None}
         try:
             normative_results = results_for_application(application)
-            if normative_results is not None:
+            if normative_results is not None and raw_payload.get("entry_mode") == "items":
                 raw_payload = {**raw_payload, "item_summary": build_item_summary(raw_payload.get("item_responses")),
                                "scoring_enabled": normative_results["normative_scoring"],
                                "birth_date": patient.birth_date.isoformat() if patient.birth_date else None,
                                "reference_date": application.applied_on.isoformat() if application.applied_on else None}
         except ValueError as error:
             normative_results = {"error": str(error)}
+        if is_domain_application(application):
+            from apps.tests.vineland3.review import review_state
+
+            clinical_review = review_state(application)
+    status = application.status
+    status_display = application.get_status_display()
+    if clinical_review is not None and not clinical_review["validated"] and status == "reviewed":
+        status, status_display = "completed", "Aplicação concluída — revisão pendente"
     return {
         "id": application.id,
         "evaluation_id": application.evaluation_id,
@@ -62,12 +76,13 @@ def serialize_test_application(application):
         "applied_on": application.applied_on,
         "raw_payload": raw_payload,
         "normative_results": normative_results,
+        "clinical_review": clinical_review,
         "computed_payload": application.computed_payload or {},
         "classified_payload": application.classified_payload or {},
         "reviewed_payload": application.reviewed_payload or {},
         "interpretation_text": application.interpretation_text or "",
         "report_payload": TestReportPayloadService.build_for_application(application),
-        "is_validated": application.is_validated,
-        "status": application.status,
-        "status_display": application.get_status_display(),
+        "is_validated": clinical_review["validated"] if clinical_review is not None else application.is_validated,
+        "status": status,
+        "status_display": status_display,
     }

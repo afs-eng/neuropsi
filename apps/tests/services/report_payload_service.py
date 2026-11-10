@@ -21,6 +21,20 @@ class TestReportPayloadService:
 
     @classmethod
     def build_for_application(cls, application) -> dict:
+        from apps.tests.vineland3.domain_totals import is_domain_application
+
+        if is_domain_application(application):
+            from apps.tests.vineland3.review import report_data, report_summary
+
+            try:
+                data = report_data(application)
+            except ValueError:
+                data = {}
+            return {"test_code": "vineland3", "application_id": application.pk,
+                    "results": data.get("results", []), "computed_payload": data,
+                    "summary_for_report": report_summary(data) if data else "",
+                    "interpretation": report_summary(data) if data else "",
+                    "technical_notes": data.get("technical_notes", [])}
         module = get_test_module(application.instrument.code)
         merged_payload = {
             **(application.computed_payload or {}),

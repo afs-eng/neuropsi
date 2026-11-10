@@ -81,17 +81,17 @@
   <section class="page">
     <div class="brand">NEUROAVALIA</div>
     <div class="cover-head">
-      <div><div class="cover-title">Vineland<span>-3</span></div><p class="subtitle">Escalas de Comportamento Adaptativo</p><p class="small">Formulário de Pais/Cuidadores dos Níveis de Domínio<br>Relatório de pontuação · Correção normativa</p></div>
+      <div><div class="cover-title">Vineland<span>-3</span></div><p class="subtitle">Escalas de Comportamento Adaptativo</p><p class="small">{{ form_label }}<br>Relatório de pontuação · Correção normativa</p></div>
       <dl class="metadata"><dt>Código do avaliado</dt><dd>{{ application_code }}</dd><dt>Código do relatório</dt><dd>{{ report_code }}</dd><dt>Data da aplicação</dt><dd>{{ applied_on }}</dd></dl>
     </div>
     <h2>Dados do avaliado</h2>
     <dl class="identity">
-      <dt>Nome</dt><dd>{{ name }}</dd><dt>Sexo</dt><dd>{{ sex }}</dd><dt>Nascimento</dt><dd>{{ birth_date }}</dd><dt>Idade no teste</dt><dd>{{ age }}</dd><dt>Escolaridade</dt><dd>{{ schooling }}</dd><dt>Profissional</dt><dd>{{ professional }}</dd><dt>Pais / cuidador</dt><dd>{{ respondent }}</dd><dt>Aplicação</dt><dd>Preenchimento finalizado · {{ summary.answered }}/{{ summary.applied_total }} itens das seções aplicadas</dd>
-      <dt>Tabela normativa</dt><dd>Pais/Cuidadores — Níveis de Domínio · Normas americanas · IC 95%</dd>
+      <dt>Nome</dt><dd>{{ name }}</dd><dt>Sexo</dt><dd>{{ sex }}</dd><dt>Nascimento</dt><dd>{{ birth_date }}</dd><dt>Idade no teste</dt><dd>{{ age }}</dd><dt>Escolaridade</dt><dd>{{ schooling }}</dd><dt>Profissional</dt><dd>{{ professional }}</dd><dt>Informante</dt><dd>{{ respondent }}</dd><dt>Aplicação</dt><dd>{% if entry_mode == 'totals' %}Totais do protocolo — sem respostas item a item{% else %}Preenchimento finalizado · {{ summary.answered }}/{{ summary.applied_total }} itens das seções aplicadas{% endif %}</dd>
+      <dt>Tabela normativa</dt><dd>{{ form_label }} · Normas americanas · IC 95%</dd>
     </dl>
-    <div class="intro-row"><h2>Introdução</h2><div><p>O Vineland-3 investiga comportamentos adaptativos do cotidiano, a partir de informações fornecidas por pais ou cuidadores. Este formulário reúne Comunicação, Atividades de Vida Diária e Socialização, além das seções opcionais de Habilidades Motoras e Problemas de Comportamento.</p><p>As respostas descrevem o que a pessoa realiza habitualmente de forma independente, e não apenas o que seria capaz de fazer.</p></div></div>
+    <div class="intro-row"><h2>Introdução</h2><div><p>O Vineland-3 investiga comportamentos adaptativos do cotidiano, a partir de informações fornecidas pelo informante da modalidade identificada. Este formulário reúne Comunicação, Atividades de Vida Diária e Socialização, além das seções opcionais de Habilidades Motoras e Problemas de Comportamento.</p><p>As respostas descrevem o que a pessoa realiza habitualmente de forma independente, e não apenas o que seria capaz de fazer.</p></div></div>
     <div class="intro-row"><h2>Definição</h2><div><p>As pontuações brutas correspondem à soma das respostas das seções aplicadas. Em Comunicação, Atividades de Vida Diária, Socialização e Habilidades Motoras, os valores referem-se à frequência das habilidades relatadas.</p><p>Nas seções Internalizante e Externalizante, maior soma indica maior frequência dos comportamentos relatados. Os itens críticos são apresentados individualmente, sem soma diagnóstica.</p></div></div>
-    <div class="intro-row"><h2>Utilização do relatório</h2><div><p>A correção utiliza as tabelas C.3, C.4, C.5 e E.2 específicas de Pais/Cuidadores, com normas americanas e intervalos de confiança de 95%. Os resultados devem ser integrados ao histórico, à entrevista, às observações e aos demais instrumentos da avaliação.</p><p class="small"><strong>Limitação:</strong> não há extrapolação quando a tabela não apresenta norma para a idade. A correção quantitativa não equivale a diagnóstico, validação clínica ou inclusão no laudo.</p></div></div>
+    <div class="intro-row"><h2>Utilização do relatório</h2><div><p>A correção utiliza as tabelas {{ table_codes }} específicas de {{ form_label }}, com normas americanas e intervalos de confiança de 95%. Os resultados devem ser integrados ao histórico, à entrevista, às observações e aos demais instrumentos da avaliação.</p><p class="small"><strong>Limitação:</strong> não há extrapolação quando a tabela não apresenta norma para a idade. A correção quantitativa não equivale a diagnóstico, validação clínica ou inclusão no laudo.</p></div></div>
   </section>
 
   <section class="page">
@@ -115,15 +115,15 @@
           {% for tick in plot_ticks %}<line x1="42" x2="405" y1="{{ tick.y }}" y2="{{ tick.y }}" stroke="{% if tick.value == 100 %}#1f6fb2{% else %}#cbd5e1{% endif %}"/><text x="34" y="{{ tick.y }}" text-anchor="end" font-size="11">{{ tick.value }}</text>{% endfor %}
           {% for row in normative_rows %}<text x="{{ row.plot_x }}" y="325" text-anchor="middle" font-size="12">{{ row.abbreviation }}</text>{% if row.standard_score != None %}<line x1="{{ row.plot_x }}" x2="{{ row.plot_x }}" y1="{{ row.plot_low }}" y2="{{ row.plot_high }}" stroke="#1f6fb2" stroke-width="3"/><circle cx="{{ row.plot_x }}" cy="{{ row.plot_y }}" r="5" fill="#082d5f"/><text x="{{ row.plot_x|add:9 }}" y="{{ row.plot_y }}" font-size="11">{{ row.standard_score }}</text>{% else %}<text x="{{ row.plot_x }}" y="290" text-anchor="middle" font-size="11">—</text>{% endif %}{% endfor %}
         </svg>
-        <p class="tiny muted">Conversão direta dos brutos pela C.3, bloco Níveis de Domínio. Ausência de marcador: seção não aplicada ou sem norma para a idade.</p>
+        <p class="tiny muted">Conversão direta dos brutos pela {{ appendix }}.3, bloco Níveis de Domínio. Ausência de marcador: seção não aplicada ou sem norma para a idade.</p>
       </div>
     </div>
     <div class="panel">
       <h2 class="band">Comportamento mal adaptativo</h2>
-      <table><thead><tr><th scope="col">Seção</th><th scope="col">Pontuação bruta</th><th scope="col">Escala-v</th><th scope="col">Itens respondidos</th><th scope="col">Situação</th></tr></thead><tbody>{% for row in behavior %}<tr><th scope="row">{{ row.short_label }}</th><td class="score">{{ row.score_label }}</td><td>{{ row.v_scale|default_if_none:'—' }}</td><td>{{ row.answered }}/{{ row.total }}</td><td>{{ row.unavailable_reason|default_if_none:'Calculado' }}</td></tr>{% endfor %}</tbody></table>
-      <p class="small muted">Escala-v pela Tabela E.2 de Pais/Cuidadores. Maior pontuação indica maior frequência dos comportamentos relatados. A Seção C é apresentada individualmente, sem soma diagnóstica.</p>
+      <table><thead><tr><th scope="col">Seção</th><th scope="col">Pontuação bruta</th><th scope="col">Escala-v</th><th scope="col">Itens respondidos</th><th scope="col">Situação</th></tr></thead><tbody>{% for row in behavior %}<tr><th scope="row">{{ row.short_label }}</th><td class="score">{{ row.score_label }}</td><td>{{ row.v_scale|default_if_none:'—' }}</td><td>{% if entry_mode == 'totals' %}Não registrados{% else %}{{ row.answered }}/{{ row.total }}{% endif %}</td><td>{{ row.unavailable_reason|default_if_none:'Calculado' }}</td></tr>{% endfor %}</tbody></table>
+      <p class="small muted">Escala-v pela Tabela {{ behavior_table }} de {{ form_label }}. Maior pontuação indica maior frequência dos comportamentos relatados. Não há soma diagnóstica de itens críticos.</p>
     </div>
-    <p class="small muted">Somas obtidas das respostas salvas. Não foram utilizadas normas extensivas ou do WISC-IV. Zero é uma resposta válida; seção não aplicada não equivale a zero.</p>
+    <p class="small muted">{% if entry_mode == 'totals' %}Totais informados pelo profissional a partir do protocolo identificado.{% else %}Somas obtidas das respostas salvas.{% endif %} Não foram utilizadas normas extensivas ou do WISC-IV. Zero é uma resposta válida; seção não aplicada não equivale a zero.</p>
   </section>
 
   <section class="page">
@@ -139,11 +139,11 @@
       <table><thead><tr><th scope="col">Domínios</th><th scope="col">Diferença</th><th scope="col">Valor crítico</th><th scope="col">Signif.</th><th scope="col">Taxa de base</th></tr></thead><tbody>{% for row in normative.pairs %}<tr><th scope="row">{{ row.first }} – {{ row.second }}</th><td>{{ row.difference|default_if_none:'—' }}</td><td>{{ row.critical_value|floatformat:2|default:'—' }}</td><td>{{ row.significant|yesno:'Sim,Não,—' }}</td><td>{{ row.base_rate|default_if_none:'—' }}</td></tr>{% endfor %}</tbody></table>
     </div>
     </div>
-    <p class="small muted">C.4 / C.5, p = 0,05. Média EP = {{ normative.mean_standard_score|floatformat:2|default:'—' }} ({{ normative.mean_domain_count }} domínios). Taxas de base em faixas, não percentis exatos. Significância estatística não equivale a diagnóstico. — = não disponível.</p>
+    <p class="small muted">{{ appendix }}.4 / {{ appendix }}.5, p = 0,05. Média EP = {{ normative.mean_standard_score|floatformat:2|default:'—' }} ({{ normative.mean_domain_count }} domínios). Taxas de base em faixas, não percentis exatos. Significância estatística não equivale a diagnóstico. — = não disponível.</p>
     <h2>Itens críticos — Seção C</h2>
     {% if critical_applied %}<p class="small muted">Respostas 1 ou 2 são destacadas para revisão profissional. Não representam, isoladamente, diagnóstico ou nível de risco.</p>
     <table class="critical-table"><thead><tr><th scope="col">Item</th><th scope="col">Comportamento relatado</th><th scope="col">Resposta</th></tr></thead><tbody>{% for row in critical_rows %}<tr{% if row.flagged %} class="flagged"{% endif %}><th scope="row">{{ row.id }}</th><td>{{ row.text }}</td><td class="score">{{ row.response }}</td></tr>{% endfor %}</tbody></table>
-    {% else %}<div class="notice">Seção C não aplicada. Ausência de respostas não significa ausência de comportamentos críticos.</div>{% endif %}
+    {% else %}<div class="notice">{% if entry_mode == 'totals' %}Itens críticos não registrados neste lançamento por totais. Confira-os no protocolo original.{% else %}Seção C não aplicada.{% endif %} Ausência de respostas não significa ausência de comportamentos críticos.</div>{% endif %}
   </section>
 
   <section class="page">
@@ -151,16 +151,17 @@
     <h1>Síntese do registro</h1>
     <h2 class="section-heading">Síntese dos resultados</h2>
     <div class="prose">
-      <p>O formulário de Pais/Cuidadores dos Níveis de Domínio do Vineland-3 foi preenchido para <strong>{{ name }}</strong>, com informações de {{ respondent }}, na aplicação de {{ applied_on }}. Foram respondidos {{ summary.answered }} de {{ summary.applied_total }} itens das seções aplicadas.</p>
+      <p>O formulário {{ form_label }} do Vineland-3 foi preenchido para <strong>{{ name }}</strong>, com informações de {{ respondent }}, na aplicação de {{ applied_on }}. {% if entry_mode == 'totals' %}Foram registrados os totais do protocolo; este registro não contém respostas individuais.{% else %}Foram respondidos {{ summary.answered }} de {{ summary.applied_total }} itens das seções aplicadas.{% endif %}</p>
       <p>{% for row in normative_rows %}{% if row.standard_score != None %}{{ row.display_label }} ({{ row.abbreviation }}): escore padrão {{ row.standard_score }}, percentil {{ row.percentile }}, IC 95% {{ row.ci_label }}; nível {{ row.classification|lower }}. {% else %}{{ row.display_label }} ({{ row.abbreviation }}): {{ row.unavailable_reason|lower }}. {% endif %}{% endfor %}</p>
-      <p>{% for row in behavior %}{% if row.applied %}{{ row.short_label }}: pontuação bruta {{ row.raw_score }}, escala-v {{ row.v_scale|default_if_none:'não disponível para a idade' }}. {% else %}{{ row.short_label }}: seção não aplicada. {% endif %}{% endfor %}{% if critical_applied %}A Seção C possui {{ summary.critical_items|length }} item(ns) com resposta 1 ou 2 para conferência individual.{% else %}A Seção C não foi aplicada.{% endif %}</p>
+      <p>{% for row in behavior %}{% if row.applied %}{{ row.short_label }}: pontuação bruta {{ row.raw_score }}, escala-v {{ row.v_scale|default_if_none:'não disponível para a idade' }}. {% else %}{{ row.short_label }}: seção não aplicada. {% endif %}{% endfor %}{% if critical_applied %}A Seção C possui {{ summary.critical_items|length }} item(ns) com resposta 1 ou 2 para conferência individual.{% elif entry_mode == 'totals' %}Itens críticos não registrados por totais.{% else %}A Seção C não foi aplicada.{% endif %}</p>
     </div>
     <div class="notice"><strong>Revisão clínica necessária</strong><p>As classificações e análises são quantitativas, com normas americanas específicas deste formulário. Este relatório não gera diagnóstico nem substitui a interpretação profissional integrada. Itens críticos exigem revisão individual.</p></div>
     <h2 class="section-heading">Observações gerais</h2>
+    {% if clinical_review.validated %}<div class="notice"><strong>Revisão profissional registrada</strong><p>{{ clinical_review.reviewer.name }}{% if clinical_review.reviewer.crp %} · CRP {{ clinical_review.reviewer.crp }}{% endif %} · {{ clinical_review.reviewed_at }}</p><p style="white-space:pre-wrap">{{ clinical_review.clinical_note }}</p></div>{% else %}<p class="small"><strong>Revisão profissional pendente.</strong> Este registro não está liberado para inclusão no laudo.</p>{% endif %}
     <div class="prose observations">{{ observations }}</div>
     <h2 class="section-heading">Condições de utilização</h2>
     <p class="small">A análise clínica depende da conferência dos critérios do formulário, das condições da aplicação, do contexto de desenvolvimento e dos demais dados da avaliação. O preenchimento finalizado não representa validação clínica automática. O registro item a item permanece fora da inclusão automática no laudo.</p>
-    <p class="source">Fonte das perguntas: Vineland-3, Formulário de Pais/Cuidadores dos Níveis de Domínio fornecido ao projeto (180 itens, sete seções). Relatório gerado pelo NeuroAvalia. Modelo visual inspirado no relatório WISC-IV; os instrumentos e suas regras de pontuação permanecem separados.</p>
+    <p class="source">{% if entry_mode == 'totals' %}Fonte normativa: {{ table_codes }}, bloco Níveis de Domínio da modalidade identificada. Entrada por totais, sem questionário reconstruído.{% else %}Fonte das perguntas: Vineland-3, Formulário de Pais/Cuidadores dos Níveis de Domínio fornecido ao projeto (180 itens, sete seções).{% endif %} Relatório gerado pelo NeuroAvalia. Modelo visual inspirado no relatório WISC-IV; os instrumentos e suas regras de pontuação permanecem separados.</p>
   </section>
 </body>
 </html>
