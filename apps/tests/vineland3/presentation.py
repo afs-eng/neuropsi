@@ -92,6 +92,7 @@ def analysis_tables(data):
 
 def build_subdomain_chart(data):
     from matplotlib.figure import Figure
+    from matplotlib.patches import Rectangle
     from .profile_chart import subdomain_profile
 
     result = data.get("normative_results") or {}
@@ -101,23 +102,35 @@ def build_subdomain_chart(data):
     fig = Figure(figsize=(9, 6), layout="constrained")
     ax = fig.subplots()
     columns = profile["columns"]
+    ax.axhspan(14.5, 15.5, facecolor="#c6e9fa", zorder=0)
+    ax.scatter([index for index in range(len(columns)) for _ in range(1, 25)],
+               list(range(1, 25)) * len(columns), s=3, color="#143d70", zorder=1)
     ax.plot(range(len(columns)), [r["score"] if r["score"] is not None else float("nan") for r in columns],
-            color="#0e7490", marker="o", markersize=4, linewidth=1.8)
+            color="#0e7490", marker="o", markersize=4, linewidth=1.8, zorder=3)
     for index, row in enumerate(columns):
         if row["score"] is not None:
             ax.annotate(str(row["score"]), (index, row["score"]), xytext=(0, 7), textcoords="offset points", ha="center", fontsize=8)
     for tick in profile["ticks"]:
-        ax.axhline(tick["value"], color="#475569" if tick["reference"] else "#e2e8f0",
-                   linestyle="--" if tick["reference"] else "-", linewidth=1 if tick["reference"] else .5, zorder=0)
+        if tick["reference"]:
+            ax.axhline(tick["value"], color="#2278b5", linestyle="--", linewidth=.8, zorder=1)
     for group in profile["groups"]:
         start = (group["x"] - 48) / 44 - .5
         width = group["width"] / 44
-        ax.axvline(start, color="#94a3b8", linewidth=.7)
-        ax.text(start + width / 2, 25, group["code"], ha="center", fontsize=10, fontweight="bold")
-    ax.set(xlim=(-.5, len(columns) - .5), ylim=(1, 26), yticks=range(1, 25),
-           xticks=range(len(columns)), xticklabels=[r["display_code"] for r in columns], ylabel="Escala-v")
-    ax.set_xlabel("COM: Comunicação · AVD: Vida Diária · SOC: Socialização · HMOT: Motor\n"
-                  "CMD = Comunidade · Tracejados: 15, 12, 9 e 6 (referências visuais)\n"
+        ax.add_patch(Rectangle((start, 27), width, 3, facecolor="#a8d8f4", edgecolor="white"))
+        ax.text(start + width / 2, 28.5, "\n".join(group["header_lines"]), ha="center", va="center",
+                fontsize=8, fontweight="bold", color="#082d5f")
+    ax.add_patch(Rectangle((-.5, 30), len(columns), 2, facecolor="#084881", edgecolor="white"))
+    ax.text((len(columns) - 1) / 2, 31, "Subdomínio do Perfil da Pontuação da Vineland-3",
+            ha="center", va="center", fontsize=11, fontweight="bold", color="white")
+    for index, row in enumerate(columns):
+        ax.vlines(index - .5, 1, 25, color="#78a9cb", linewidth=.7, zorder=0)
+        ax.add_patch(Rectangle((index - .5, 25), 1, 2, facecolor="#1268a5", edgecolor="white"))
+        ax.text(index, 26, row["display_code"], ha="center", va="center", fontsize=9, fontweight="bold", color="white")
+    ax.set(xlim=(-.5, len(columns) - .5), ylim=(1, 32), yticks=range(1, 25),
+           xticks=[], ylabel="Escala-v")
+    ax.tick_params(axis="y", labelright=True, right=True, labelcolor="#082d5f")
+    ax.set_xlabel("Pontos pequenos: grade; linha e marcadores maiores: resultados. CMD = Comunidade.\n"
+                  "Faixa azul: média 15 · Tracejados: 15, 12, 9 e 6 (referências visuais)\n"
                   "Ausências interrompem a linha; não equivalem a zero.", fontsize=8)
     output = BytesIO()
     fig.savefig(output, format="png", dpi=150)

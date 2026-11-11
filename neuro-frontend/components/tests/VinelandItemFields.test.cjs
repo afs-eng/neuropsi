@@ -70,11 +70,17 @@ test('subdomain line profile has four reference lines and breaks for missing sco
   }));
   assert.equal((html.match(/stroke-dasharray="6 4"/g) || []).length, 4);
   assert.equal((html.match(/<polyline/g) || []).length, 2);
-  assert.equal((html.match(/<circle/g) || []).length, 2);
+  assert.equal((html.match(/r="3"/g) || []).length, 2, 'Only available results have large markers');
+  assert.equal((html.match(/<pattern/g) || []).length, 1);
+  assert.equal((html.match(/text-anchor="end" font-size="10" fill="#082d5f"/g) || []).length, 24);
+  assert.equal((html.match(/x="541"/g) || []).length, 24, 'Scale is repeated on the right');
+  assert.match(html, /y="190" width="556" height="12" fill="#c6e9fa"/);
   assert.match(html, /NUM/);
   assert.match(html, /CME/);
   assert.match(html, /HMOT/);
   assert.match(html, /não pontos de corte diagnósticos/);
+  for (const text of ['Subdomínio do Perfil da Pontuação da Vineland-3', 'COMUNICAÇÃO', 'ATIVIDADES DE VIDA', 'DIÁRIA', 'SOCIALIZAÇÃO', 'HABILIDADES', 'MOTORAS']) assert.ok(html.includes(text), text);
+  assert.match(html, /y="56" width="44" height="20"/);
 });
 
 const protocol = {
@@ -685,7 +691,7 @@ test('extensive results group subdomains by code, preserve missing motor and col
   for (const text of ['CMD · Comunidade', 'Soma de entrada', '67 – 79', '243', 'Equiv. etário', 'Comparações no mesmo domínio', 'REC – EXP', 'REC – CMD', 'Não informado']) assert.ok(html.includes(text), text);
   assert.match(html, /<details[^>]*><summary/);
   assert.doesNotMatch(html, /<details[^>]* open|COM – CMD|Sem norma|Internalizante/);
-  assert.equal((html.match(/<circle/g) || []).length, 5, 'Four domain markers and one available subdomain; missing motor has no marker');
+  assert.equal((html.match(/<circle/g) || []).length, 6, 'Four domain markers, one available subdomain and one grid pattern; missing motor has no result marker');
   assert.deepEqual(result, original);
 });
 

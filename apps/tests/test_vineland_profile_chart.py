@@ -14,6 +14,9 @@ class SubdomainProfileTests(SimpleTestCase):
                 chart = subdomain_profile(result)
                 self.assertEqual(len(chart["columns"]), 11)
                 self.assertEqual([g["code"] for g in chart["groups"]], ["COM", "AVD", "SOC", "HMOT"])
+                self.assertEqual([g["header_lines"] for g in chart["groups"]],
+                                 [["COMUNICAÇÃO"], ["ATIVIDADES DE VIDA", "DIÁRIA"], ["SOCIALIZAÇÃO"], ["HABILIDADES", "MOTORAS"]])
+                self.assertGreater(chart["ticks"][-1]["y"], 76, "Scores must stay below the three-tier header")
                 self.assertEqual([t["value"] for t in chart["ticks"] if t["reference"]], [6, 9, 12, 15])
                 self.assertEqual([t["value"] for t in chart["ticks"]], list(range(1, 25)))
                 self.assertTrue(all(isinstance(c["y"], int) for c in chart["columns"]))

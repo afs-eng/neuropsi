@@ -1,7 +1,7 @@
 # Graph Report - neuropsi  (2026-11-11)
 
 ## Corpus Check
-- 786 files · ~1,069,944 words
+- 786 files · ~1,070,310 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
