@@ -13,6 +13,7 @@ from .domain_totals import totals_summary
 from .calculators import compute_scores
 from .norms import domain_members
 from .config import DOMAINS
+from .extensive_interpretation import build_extensive_interpretation
 
 
 class Vineland3PdfService:
@@ -166,6 +167,14 @@ class Vineland3PdfService:
             row["first_display"] = "CMD" if row["first"] == "com" else row["first"].upper()
             row["second_display"] = "CMD" if row["second"] == "com" else row["second"].upper()
         additional = [row for row in sub_pairs if not row["within_domain"]]
+        interpretation = build_extensive_interpretation(analysis)
+        details = []
+        for block in interpretation["domains"]:
+            rows = [{**row, "bar_y": 36 + index * 35, "bar_width": row["v_scale"] * 14}
+                    for index, row in enumerate(block["subdomains"])]
+            details.append({**block, "subdomains": rows,
+                            "mean_x": 180 + round(analysis["subdomain_mean_v_scale"] * 14),
+                            "pairs": [row for row in sub_pairs if row["within_domain"] and row["first"] in {s["scale"] for s in rows}]})
         return {
             "form_level": "extensivo", "form_label": result["form_label"], "appendix": appendix,
             "name": patient.full_name, "respondent": result["respondent"],
@@ -176,6 +185,8 @@ class Vineland3PdfService:
             "application_code": f"AVL-{application.pk:03d}", "report_code": f"RPT-VINELAND3-{application.pk:03d}",
             "subdomains": subdomains, "extensive_domains": domains, "result": result,
             "analysis": analysis, "within_pairs": [row for row in sub_pairs if row["within_domain"]],
+            "interpretation": interpretation, "domain_details": details, "pdf_content_version": "Extensivo analítico · 2026.11",
+            "detail_ticks": [{"value": value, "x": 180 + value * 14} for value in (0, 5, 10, 15, 20, 24)],
             "additional_pages": [additional[i:i + 24] for i in range(0, len(additional), 24)],
             "motor_applied": "HMOT" in by_scale, "clinical_review": review_state(application, analysis),
             "plot_ticks": [{"value": score, "y": int(300 - score * 1.75)} for score in range(20, 161, 20)],
