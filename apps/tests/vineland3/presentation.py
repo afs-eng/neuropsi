@@ -102,7 +102,7 @@ def build_subdomain_chart(data):
     fig = Figure(figsize=(9, 6), layout="constrained")
     ax = fig.subplots()
     columns = profile["columns"]
-    ax.axhspan(14.5, 15.5, facecolor="#c6e9fa", zorder=0)
+    ax.axhspan(14.5, 15.5, facecolor="#EFF6FF", zorder=0)
     ax.scatter([index for index in range(len(columns)) for _ in range(1, 25)],
                list(range(1, 25)) * len(columns), s=3, color="#143d70", zorder=1)
     ax.plot(range(len(columns)), [r["score"] if r["score"] is not None else float("nan") for r in columns],
@@ -116,16 +116,19 @@ def build_subdomain_chart(data):
     for group in profile["groups"]:
         start = (group["x"] - 48) / 44 - .5
         width = group["width"] / 44
-        ax.add_patch(Rectangle((start, 27), width, 3, facecolor="#a8d8f4", edgecolor="white"))
+        ax.add_patch(Rectangle((start, 27), width, 3, facecolor="#EFF6FF", edgecolor="#93a4b8", linewidth=.7))
         ax.text(start + width / 2, 28.5, "\n".join(group["header_lines"]), ha="center", va="center",
                 fontsize=8, fontweight="bold", color="#082d5f")
-    ax.add_patch(Rectangle((-.5, 30), len(columns), 2, facecolor="#084881", edgecolor="white"))
+    ax.add_patch(Rectangle((-.5, 30), len(columns), 2, facecolor="#EFF6FF", edgecolor="#93a4b8", linewidth=.7))
     ax.text((len(columns) - 1) / 2, 31, "Subdomínio do Perfil da Pontuação da Vineland-3",
-            ha="center", va="center", fontsize=11, fontweight="bold", color="white")
+            ha="center", va="center", fontsize=11, fontweight="bold", color="#082d5f")
     for index, row in enumerate(columns):
-        ax.vlines(index - .5, 1, 25, color="#78a9cb", linewidth=.7, zorder=0)
-        ax.add_patch(Rectangle((index - .5, 25), 1, 2, facecolor="#1268a5", edgecolor="white"))
-        ax.text(index, 26, row["display_code"], ha="center", va="center", fontsize=9, fontweight="bold", color="white")
+        ax.vlines(index - .5, 1, 25, color="#93a4b8", linewidth=.7, zorder=0)
+        ax.add_patch(Rectangle((index - .5, 25), 1, 2, facecolor="#EFF6FF", edgecolor="#93a4b8", linewidth=.7))
+        ax.text(index, 26, row["display_code"], ha="center", va="center", fontsize=9, fontweight="bold", color="#082d5f")
+    for spine in ax.spines.values():
+        spine.set_color("#93a4b8")
+        spine.set_linewidth(.7)
     ax.set(xlim=(-.5, len(columns) - .5), ylim=(1, 32), yticks=range(1, 25),
            xticks=[], ylabel="Escala-v")
     ax.tick_params(axis="y", labelright=True, right=True, labelcolor="#082d5f")

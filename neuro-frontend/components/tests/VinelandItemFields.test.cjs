@@ -74,7 +74,9 @@ test('subdomain line profile has four reference lines and breaks for missing sco
   assert.equal((html.match(/<pattern/g) || []).length, 1);
   assert.equal((html.match(/text-anchor="end" font-size="10" fill="#082d5f"/g) || []).length, 24);
   assert.equal((html.match(/x="541"/g) || []).length, 24, 'Scale is repeated on the right');
-  assert.match(html, /y="190" width="556" height="12" fill="#c6e9fa"/);
+  assert.match(html, /y="190" width="556" height="12" fill="#EFF6FF"/);
+  assert.match(html, /viewBox="12 0 556 390"/);
+  assert.doesNotMatch(html, /rx="7"|#084881|#a8d8f4|<image|<img/);
   assert.match(html, /NUM/);
   assert.match(html, /CME/);
   assert.match(html, /HMOT/);
