@@ -92,21 +92,33 @@ def analysis_tables(data):
 
 def build_subdomain_chart(data):
     from matplotlib.figure import Figure
+    from .profile_chart import subdomain_profile
 
-    rows = (data.get("normative_results") or {}).get("subdomains", [])
-    if not rows:
+    result = data.get("normative_results") or {}
+    if not result.get("subdomains"):
         return b""
-    fig = Figure(figsize=(8, 4.5), layout="constrained")
+    profile = subdomain_profile(result)
+    fig = Figure(figsize=(9, 6), layout="constrained")
     ax = fig.subplots()
-    bars = ax.barh([f"{r['domain']} · {r['display_code']}" for r in rows], [r["v_scale"] for r in rows], color="#0e7490")
-    ax.bar_label(bars, padding=3)
-    ax.axvline(15, color="#082d5f", linestyle="--", label="Média normativa 15")
-    ax.set_xlim(0, 26)
-    ax.set_xticks([0, 5, 10, 15, 20, 24])
-    ax.set_xlabel("Escala-v (1–24) — normas americanas; CMD = Comunidade")
-    ax.invert_yaxis()
-    ax.spines[["top", "right"]].set_visible(False)
-    ax.legend(loc="lower right")
+    columns = profile["columns"]
+    ax.plot(range(len(columns)), [r["score"] if r["score"] is not None else float("nan") for r in columns],
+            color="#0e7490", marker="o", markersize=4, linewidth=1.8)
+    for index, row in enumerate(columns):
+        if row["score"] is not None:
+            ax.annotate(str(row["score"]), (index, row["score"]), xytext=(0, 7), textcoords="offset points", ha="center", fontsize=8)
+    for tick in profile["ticks"]:
+        ax.axhline(tick["value"], color="#475569" if tick["reference"] else "#e2e8f0",
+                   linestyle="--" if tick["reference"] else "-", linewidth=1 if tick["reference"] else .5, zorder=0)
+    for group in profile["groups"]:
+        start = (group["x"] - 48) / 44 - .5
+        width = group["width"] / 44
+        ax.axvline(start, color="#94a3b8", linewidth=.7)
+        ax.text(start + width / 2, 25, group["code"], ha="center", fontsize=10, fontweight="bold")
+    ax.set(xlim=(-.5, len(columns) - .5), ylim=(1, 26), yticks=range(1, 25),
+           xticks=range(len(columns)), xticklabels=[r["display_code"] for r in columns], ylabel="Escala-v")
+    ax.set_xlabel("COM: Comunicação · AVD: Vida Diária · SOC: Socialização · HMOT: Motor\n"
+                  "CMD = Comunidade · Tracejados: 15, 12, 9 e 6 (referências visuais)\n"
+                  "Ausências interrompem a linha; não equivalem a zero.", fontsize=8)
     output = BytesIO()
     fig.savefig(output, format="png", dpi=150)
     return output.getvalue()

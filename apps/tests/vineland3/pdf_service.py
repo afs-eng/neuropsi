@@ -13,6 +13,7 @@ from .domain_totals import totals_summary
 from .calculators import compute_scores
 from .norms import domain_members
 from .config import DOMAINS
+from .profile_chart import subdomain_profile
 from .extensive_interpretation import build_extensive_interpretation
 
 
@@ -184,6 +185,7 @@ class Vineland3PdfService:
             "age": f"{result['age_months'] // 12} anos e {result['age_months'] % 12} meses",
             "application_code": f"AVL-{application.pk:03d}", "report_code": f"RPT-VINELAND3-{application.pk:03d}",
             "subdomains": subdomains, "extensive_domains": domains, "result": result,
+            "subdomain_profile": subdomain_profile(analysis),
             "analysis": analysis, "within_pairs": [row for row in sub_pairs if row["within_domain"]],
             "interpretation": interpretation, "domain_details": details, "pdf_content_version": "Extensivo analítico · 2026.11",
             "detail_ticks": [{"value": value, "x": 180 + value * 14} for value in (0, 5, 10, 15, 20, 24)],

@@ -1,3 +1,5 @@
+import { VinelandSubdomainProfile } from './VinelandSubdomainProfile'
+
 export interface VinelandNormativeScore {
   code: string; scale: string; label: string; raw_score: number | null; standard_score: number | null
   percentile: string | null; confidence_interval: number[] | null; classification: string | null
@@ -44,10 +46,7 @@ export function VinelandNormativeResults({ result }: { result: VinelandNormative
       <h2 className="font-semibold">Subdomínios — perfil de escala-v</h2>
       <p className="text-sm">Escala-v: 1–24, média normativa 15. CMD = Comunidade; COM = Comunicação. Equivalente etário (anos:meses) não é idade global de desenvolvimento ou diagnóstico.</p>
       <div className="overflow-x-auto"><table className="w-full text-sm tabular-nums"><thead className={heading}><tr>{['Domínio', 'Subdomínio', 'Bruto', 'Escala-v', 'Equiv. etário (a:m)', 'VEC'].map(label => <th key={label} scope="col" className={cell}>{label}</th>)}</tr></thead><tbody>{result.subdomains?.map(row => <tr key={row.scale}><td className={cell}>{row.domain}</td><th scope="row" className={cell}>{row.label} ({row.display_code})</th><td className={cell}>{row.raw_score}</td><td className={cell}>{row.v_scale}</td><td className={cell}>{row.age_equivalent ?? '—'}</td><td className={cell}>{row.growth_value ?? '—'}</td></tr>)}</tbody></table></div>
-      {['COM', 'AVD', 'SOC', 'HMOT'].map(domain => {
-        const subdomains = result.subdomains?.filter(row => row.domain === domain) || []
-        return <div key={domain} className="space-y-2"><h3 className="font-medium">{result.adaptive.find(row => row.scale === domain)?.label || domain}</h3>{subdomains.length ? subdomains.map(row => <div key={row.scale}><div className="flex justify-between text-sm"><span>{row.display_code} · {row.label}</span><strong>{row.v_scale}</strong></div><div aria-hidden="true" className="relative h-3 bg-slate-100"><div className="h-3 bg-cyan-700" style={{ width: `${row.v_scale / 24 * 100}%` }} /><span className="absolute inset-y-0 border-l-2 border-slate-800" style={{ left: '62.5%' }} /></div></div>) : <p className="text-sm">Não informado ou não aplicável à idade; não representado como zero.</p>}</div>
-      })}
+      <VinelandSubdomainProfile rows={result.subdomains || []} form={result.form} />
     </section>}
     <section className="overflow-x-auto rounded-xl border border-slate-200 bg-white p-5">
       <h2 className="mb-4 font-semibold">Resumo da pontuação adaptativa</h2>

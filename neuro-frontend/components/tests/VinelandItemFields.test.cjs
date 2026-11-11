@@ -43,11 +43,39 @@ function loadNormative() {
   const filename = path.join(__dirname, 'VinelandNormativeResults.tsx');
   const mod = new Module(filename, module);
   mod.paths = module.paths;
+  mod.require = id => id === './VinelandSubdomainProfile' ? loadProfile() : require(id);
   mod._compile(ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
   }).outputText, filename);
   return mod.exports;
 }
+
+function loadProfile() {
+  const filename = path.join(__dirname, 'VinelandSubdomainProfile.tsx');
+  const mod = new Module(filename, module);
+  mod.paths = module.paths;
+  mod._compile(ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
+  }).outputText, filename);
+  return mod.exports;
+}
+
+test('subdomain line profile has four reference lines and breaks for missing scores', () => {
+  const { VinelandSubdomainProfile } = loadProfile();
+  const html = renderToStaticMarkup(React.createElement(VinelandSubdomainProfile, {
+    form: 'professores', rows: [
+      { scale: 'rec', domain: 'COM', label: 'Receptiva', display_code: 'REC', v_scale: 15 },
+      { scale: 'esc', domain: 'COM', label: 'Escrita', display_code: 'ESC', v_scale: 6 },
+    ],
+  }));
+  assert.equal((html.match(/stroke-dasharray="6 4"/g) || []).length, 4);
+  assert.equal((html.match(/<polyline/g) || []).length, 2);
+  assert.equal((html.match(/<circle/g) || []).length, 2);
+  assert.match(html, /NUM/);
+  assert.match(html, /CME/);
+  assert.match(html, /HMOT/);
+  assert.match(html, /não pontos de corte diagnósticos/);
+});
 
 const protocol = {
   id: 'partial', title: 'Vineland (edição não confirmada)', description: 'Descrição do instrumento.',
@@ -657,7 +685,7 @@ test('extensive results group subdomains by code, preserve missing motor and col
   for (const text of ['CMD · Comunidade', 'Soma de entrada', '67 – 79', '243', 'Equiv. etário', 'Comparações no mesmo domínio', 'REC – EXP', 'REC – CMD', 'Não informado']) assert.ok(html.includes(text), text);
   assert.match(html, /<details[^>]*><summary/);
   assert.doesNotMatch(html, /<details[^>]* open|COM – CMD|Sem norma|Internalizante/);
-  assert.equal((html.match(/<circle/g) || []).length, 4, 'Missing motor has no score marker');
+  assert.equal((html.match(/<circle/g) || []).length, 5, 'Four domain markers and one available subdomain; missing motor has no marker');
   assert.deepEqual(result, original);
 });
 
